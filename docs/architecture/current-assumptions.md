@@ -1,13 +1,14 @@
 # Current assumptions
 
-- `demo` is a fake tenant for local fixtures. Real tenant identity and authorization are unresolved.
-- SQLite is a local prototype source. No Odoo schema, API, synchronization, or freshness guarantee is assumed.
-- Currency values are synthetic and have no approved currency or tax policy. Percentage and duration metrics use illustrative units.
-- The synthetic seed spans two years and the suggested entity breadth (six branches, twelve salespeople, 360 customers, 160 products, and 150 assets). It models seasonality, branch growth/decline, rising overdue balances, stock pressure, and increasing failures, but does not produce audited accounting.
-- Additive metrics sum by default. Gross margin is gross profit divided by net revenue, AOV is revenue divided by order count, and win rate uses won opportunity count divided by closed opportunity count; Malik must confirm which states count as closed in production. MTBF uses operating hours divided by failures; MTTR uses repair hours divided by completed repairs. These are provisional formulas pending Malik's approval.
-- Outstanding/overdue balances and inventory measures are point-in-time snapshots. A source adapter must supply stable entity IDs for those measures. Snapshot rows are selected on or before the requested period end and summed across entities, never across dates. Date ranges define snapshot time scope; event-month filters are rejected for snapshots.
-- Date filtering uses inclusive ISO calendar dates and UTC calendar arithmetic. For a grouped comparison, the prior bucket is complete even when the current selected bucket is partial. Fiscal calendars and time zones are unresolved.
-- AnalyticsResult's optional `sourceAsOf` is adapter-supplied freshness metadata. Fact event dates are not automatically treated as ingestion freshness.
-- The JSON Schemas are the public DashboardSpec and DashboardPatch structural contracts; TypeScript applies semantic compatibility rules.
-- The demo planner supports a bounded executive-sales prompt and five edit intents in English or Arabic. It is a deterministic stand-in, not a measure of LLM quality or general natural-language coverage.
-- `demo.db` is created locally by the seed command; the API defaults to this repository-root path. There is no migration or persistence for generated dashboards.
+- `demo-iq` and `demo-eg` are controlled synthetic tenants; Iraq is the default demonstration market. The selector is not production identity or authorization.
+- The Iraqi and Egyptian branch names denote synthetic demonstration geography, not actual El-Dabbous branches or customers.
+- TenantProfile on the server governs country, reporting currency, default locale, Arabic dialect metadata, time zone, and display geography. Normal Arabic UI labels use Modern Standard Arabic. Iraqi/Egyptian colloquial terms appear in conversational examples and placeholders, synonyms, demo planning, and evaluations.
+- All synthetic canonical monetary facts within one tenant are assumed to share that tenant's reporting currency: IQD for Iraq, EGP for Egypt. The prototype does no FX conversion. Transaction, company/base, and reporting currency must be distinguished in a future operational adapter; mixed currencies must not be summed without an approved conversion policy.
+- The seed spans two years and uses six branches, twelve salespeople, 420 Iraqi or 360 Egyptian customers, 160 products, and 150 assets. It models seasonality, branch growth/decline, overdue balances, stock pressure, and failures, but is not audited accounting.
+- Gross margin is gross profit/net revenue, AOV is revenue/order count, and win rate is won/closed opportunities. Malik must confirm the production closed-state definition. MTBF is operating hours/failures; MTTR is repair hours/completed repairs. These formulas remain provisional.
+- Receivables and inventory are entity-level snapshots, not additive across dates. Date ranges define snapshot time scope; event-month filters are rejected for snapshots.
+- Query dates are inclusive ISO dates. Comparisons use UTC calendar arithmetic and complete prior buckets. Template presets resolve against the tenant's time zone. Fiscal calendars remain unresolved.
+- `dataThrough` reflects the latest relevant tenant business/event date for each metric and is independent of the query period. The SQLite and mock adapters omit `sourceAsOf` unless a real synchronization/extraction timestamp is explicitly configured.
+- DashboardSpec v1 was the initial single-metric prototype schema. V2 is the active multi-series schema and patch contract. No persisted production specs require migration.
+- The mock planner demonstrates bounded sales intent and five edits; it is not an LLM or a general dialect parser. Planning can be disabled while templates continue working.
+- Planned metrics in the product registry are recognized concepts only. They have no executable formula or approved source data and cannot enter a DashboardSpec.

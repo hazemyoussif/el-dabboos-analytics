@@ -26,10 +26,22 @@ export interface SemanticMetric {
   labels: LocalizedText;
   descriptions: LocalizedText;
   synonyms: { en: readonly string[]; ar: readonly string[] };
+  dialectSynonyms?: { iq?: readonly string[]; eg?: readonly string[] };
   type: MetricType;
   semantics: MetricSemantics;
   dimensions: readonly DimensionId[];
   presentation: { decimals: number; unit?: string };
+}
+export interface TenantProfile {
+  id: 'demo-iq' | 'demo-eg';
+  countryCode: 'IQ' | 'EG';
+  defaultLocale: Locale;
+  arabicDialect: 'iq' | 'eg';
+  reportingCurrency: 'IQD' | 'EGP';
+  timeZone: 'Asia/Baghdad' | 'Africa/Cairo';
+  labels: LocalizedText;
+  branchLabels: Readonly<Record<string, LocalizedText>>;
+  exampleBranchIds: readonly [string, string];
 }
 export interface AnalyticsContext { tenantId: string; locale: Locale }
 export interface DateRange { from: string; to: string }
@@ -67,6 +79,9 @@ export interface AnalyticsResult {
   metadata: {
     sourceId: string;
     executedAt: string;
+    /** Latest event date among tenant facts needed for this metric, independent of the query period. */
+    dataThrough?: string;
+    /** Source extraction/synchronization timestamp, only when supplied by the adapter. */
     sourceAsOf?: string;
     metricType: MetricType;
     unit?: string;
@@ -77,16 +92,18 @@ export interface AnalyticsRepository {
   execute(query: AnalyticsQuery, context: AnalyticsContext): Promise<AnalyticsResult>;
 }
 export type WidgetType = 'kpi' | 'line' | 'bar' | 'table';
+/** In a multi-series widget, only the first series may use topN; its keys select the displayed rows. */
+export interface DashboardSeries { id: string; metric: MetricId; analysis?: AnalysisSpec }
 export interface DashboardWidget {
   id: string;
   type: WidgetType;
   title?: LocalizedText;
-  metric: MetricId;
+  series: DashboardSeries[];
   dimension?: DimensionId;
-  analysis?: AnalysisSpec;
 }
+/** v2 replaces v1 widget.metric with stable, independently executable series. */
 export interface DashboardSpec {
-  schemaVersion: 1;
+  schemaVersion: 2;
   id: string;
   title: LocalizedText;
   locale: Locale;
@@ -95,7 +112,7 @@ export interface DashboardSpec {
   widgets: DashboardWidget[];
 }
 export type DashboardPatch = {
-  schemaVersion: 1;
+  schemaVersion: 2;
   operations: Array<
     | { op: 'add'; widget: DashboardWidget }
     | { op: 'remove'; widgetId: string }
@@ -104,10 +121,10 @@ export type DashboardPatch = {
     | { op: 'set_filters'; filters: DashboardSpec['filters'] }
   >;
 };
-export interface DashboardGenerationRequest { prompt: string; locale: Locale; context: AnalyticsContext }
+export interface DashboardGenerationRequest { prompt: string; locale: Locale; context: AnalyticsContext; tenantProfile: TenantProfile }
 export interface DashboardPlanner {
   generate(request: DashboardGenerationRequest): Promise<DashboardSpec>;
-  edit(current: DashboardSpec, instruction: string): Promise<DashboardPatch>;
+  edit(current: DashboardSpec, instruction: string, tenantProfile: TenantProfile): Promise<DashboardPatch>;
 }
 export interface StructuredOutputRequest {
   messages: readonly { role: 'system' | 'user'; content: string }[];

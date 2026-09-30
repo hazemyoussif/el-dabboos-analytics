@@ -4,13 +4,13 @@
 
 ```mermaid
 C4Context
-  Person(customer, "Customer", "Requests and explores analytics")
-  System(platform, "El-Dabbous Analytics", "Bilingual governed dashboards")
-  System_Ext(source, "Customer data source", "Odoo, PostgreSQL, or API")
-  System_Ext(model, "LLM provider", "Optional planning")
-  Rel(customer, platform, "Uses", "English / Arabic")
-  Rel(platform, source, "Reads analytics data")
-  Rel(platform, model, "Requests domain specification")
+  Person(customer, "Customer", "Uses English or Modern Standard Arabic analytics")
+  System(platform, "El-Dabbous Analytics", "Market-aware governed dashboards")
+  System_Ext(source, "Operational source", "Future Odoo, PostgreSQL or API adapter")
+  System_Ext(model, "LLM provider", "Future optional planning")
+  Rel(customer, platform, "Uses")
+  Rel(platform, source, "Reads canonical analytics data")
+  Rel(platform, model, "Optional structured planning")
 ```
 
 ## C4 container
@@ -19,43 +19,51 @@ C4Context
 C4Container
   Person(customer, "Customer")
   System_Boundary(platform, "Analytics platform") {
-    Container(ui, "React renderer", "React / Vite / Recharts", "Localized dashboards and prompt/edit controls")
-    Container(api, "Analytics API", "Fastify", "Demo tenant gate, validation, orchestration")
-    Container(application, "Application", "TypeScript", "Mock planner and per-widget executor")
-    Container(domain, "Domain", "TypeScript", "Contracts and semantic catalog")
-    Container(data, "Repository adapters", "TypeScript", "Canonical query execution")
+    Container(ui, "Web renderer", "React / Vite / Recharts", "Tenant selector, template library, bilingual multi-series UI")
+    Container(api, "Analytics API", "Fastify", "Controlled tenant resolution and orchestration")
+    Container(application, "Application", "TypeScript", "Template catalog, mock planner, per-series executor")
+    Container(domain, "Domain", "TypeScript", "Profiles, metric registry, v2 contracts and validation")
+    Container(data, "Repository adapters", "TypeScript", "Tenant-scoped canonical query execution")
   }
-  ContainerDb(sqlite, "SQLite", "SQLite", "Local normalized facts")
+  ContainerDb(sqlite, "SQLite", "SQLite", "Synthetic Iraq and Egypt facts")
   Rel(customer, ui, "Uses")
-  Rel(ui, api, "Requests dashboards/results")
-  Rel(api, application, "Plans and executes")
-  Rel(application, domain, "Validates")
+  Rel(ui, api, "Template, planning and execution requests")
+  Rel(api, domain, "Resolves governed tenant")
+  Rel(api, application, "Instantiates and executes")
   Rel(application, data, "Queries through repository port")
-  Rel(data, sqlite, "Reads tenant-scoped facts")
+  Rel(data, sqlite, "Reads tenant-bound facts")
 ```
 
-## Generation sequence
+## Template and generation sequence
 
 ```mermaid
 sequenceDiagram
   actor User
+  participant Web
   participant API
+  participant Profiles
+  participant Template
   participant Planner
   participant Validator
   participant Executor
   participant Repository
-  participant Renderer
-  User->>API: Natural-language request + tenant
-  API->>Planner: generate(request)
-  Planner-->>API: DashboardSpec
-  API->>Validator: schema + semantic validation
-  Validator-->>API: valid spec
-  API->>Executor: execute spec + demo tenant
-  Executor->>Repository: canonical query per widget
-  Repository-->>Executor: AnalyticsResult
-  Executor-->>API: per-widget success/error
-  API-->>Renderer: spec + results
-  Renderer-->>User: localized dashboard
+  User->>Web: Select market and template, or enter prompt
+  Web->>API: Tenant ID + locale + action
+  API->>Profiles: Resolve controlled profile
+  alt Template selection
+    API->>Template: Instantiate market-neutral template at local date
+  else Supported prompt
+    API->>Planner: Generate with governed profile
+  end
+  API->>Validator: Validate DashboardSpec v2 and available metrics
+  API->>Executor: Execute spec with tenant context
+  loop Each widget series
+    Executor->>Repository: Canonical AnalyticsQuery + tenant
+    Repository-->>Executor: AnalyticsResult or error
+  end
+  Executor-->>API: Aligned rows + per-series states
+  API-->>Web: Spec + execution
+  Web-->>User: Localized multi-series dashboard
 ```
 
 ## Editing sequence
@@ -66,37 +74,29 @@ sequenceDiagram
   participant API
   participant Planner
   participant Validator
-  User->>API: Edit instruction + current spec
-  API->>Planner: edit(current, instruction)
-  Planner-->>API: DashboardPatch
-  API->>Validator: validate patch and apply
-  Validator->>Validator: validate resulting spec
-  API->>Repository: execute patched dashboard
-  Repository-->>API: widget results
-  API-->>User: updated dashboard + results
+  participant Executor
+  User->>API: Instruction + current v2 spec + tenant
+  API->>Planner: Edit using governed tenant profile
+  Planner-->>API: DashboardPatch v2
+  API->>Validator: Validate patch and resulting spec atomically
+  API->>Executor: Re-execute every series
+  Executor-->>API: Per-series results and aligned rows
+  API-->>User: Updated dashboard and execution
 ```
 
-## Analytics data flow
+## Analytics data flow and trust boundary
 
 ```mermaid
 flowchart LR
-  Q[Canonical AnalyticsQuery] --> R[AnalyticsRepository]
-  R --> A{Adapter}
-  A --> S[(SQLite facts)]
-  A --> M[Mock facts]
-  S --> E[Deterministic engine]
-  M --> E
-  E --> O[AnalyticsResult]
-```
-
-## Trust boundaries
-
-```mermaid
-flowchart LR
-  U[Untrusted user/model text] --> V[Spec schema + semantic validation]
-  V --> Q[Canonical query]
-  Q --> T[Tenant context check]
-  T --> R[Repository port]
-  R --> D[(Tenant-scoped data)]
-  U -. blocked .-> D
+  U[User or future model text] --> V[v2 schema and semantic validation]
+  T[Controlled tenant registry] --> Q[DashboardExecutor]
+  V --> Q
+  Q --> S[Canonical query per series]
+  S --> R[AnalyticsRepository]
+  R --> D[(Tenant-scoped SQLite facts)]
+  R --> M[(Mock facts)]
+  R --> A[Deterministic AnalyticsResult]
+  A --> K[Key alignment with nulls]
+  K --> W[Localized renderer]
+  U -. no SQL or currency authority .-> D
 ```

@@ -1,33 +1,28 @@
 # El-Dabbous AI Analytics
 
-A bilingual deterministic analytics prototype. Manual DashboardSpecs and supported English/Arabic prompts use one path: Fastify API → DashboardExecutor → tenant-scoped AnalyticsRepository → SQLite canonical measures → AnalyticsResult → React renderer. The prompt planner is a deterministic mock; no LLM provider is connected.
+A source-independent, bilingual analytics prototype with two controlled synthetic markets, a ready-made dashboard library, and DashboardSpec v2 multi-metric visualizations. The default local tenant is Iraq (`demo-iq`); Egypt (`demo-eg`) uses the same templates and metrics.
 
 ## Local startup
 
-Requires Node.js 24 and pnpm 12.6.0. From the repository root, run:
+Requires Node.js 24 and pnpm 12.6.0. From the repository root:
 
 ```bash
 pnpm install --frozen-lockfile
-pnpm run seed demo.db demo
+pnpm run seed demo.db
 pnpm run dev:api
 ```
 
-In another terminal, also from the repository root:
+In another terminal:
 
 ```bash
 pnpm run dev:web
 ```
 
-Open <http://127.0.0.1:5173/>. The API listens on <http://127.0.0.1:3001/>. The web app sends the controlled `x-tenant-id: demo` header; this is a local demonstration gate, not production authentication. The API uses the repository-root `demo.db` by default, including when started from its built bundle. Set `SQLITE_DB_PATH` to override it, or set `ANALYTICS_PROVIDER=mock` to run with in-memory canonical facts. `postgres` and `api` source providers are reserved but not implemented. To use the bundle, run `pnpm run build` then `pnpm --filter @el-dabbous/api start`.
+Open <http://127.0.0.1:5173/>. The API listens at <http://127.0.0.1:3001/>. The seed command adds both `demo-iq` and `demo-eg` to a fresh local SQLite file; it refuses to overwrite existing facts for either tenant. If you retain an older v1 `demo.db`, the command can add the two new tenants to it. To use another path, pass it to `pnpm run seed <path>` and set `SQLITE_DB_PATH=<path>` for the API. The built API starts with `pnpm run build` followed by `pnpm --filter @el-dabbous/api start`. `ANALYTICS_PROVIDER=mock` uses in-memory synthetic facts for both tenants.
 
-The first screen loads the manual Executive Sales dashboard. Select Finance & Receivables or Maintenance Operations in the sidebar for other manual specs. For the planner path, enter either:
+The app opens the `Sales Performance` template under Iraq. Use the market selector to switch to Egypt, the language buttons for English/Arabic, and the sidebar for ten ready-made templates. The same template ID and widget definition are reused across markets. No AI service is required. The mock planner recognizes a bounded sales request such as `أريد dashboard للمبيعات ويّاه أعلى الزبائن والمديونيات` or `Create a sales dashboard`, then supports a few edits such as adding a three-month moving average or removing receivables. Unsupported intents return a structured error.
 
-- `Create an executive sales dashboard for this year showing revenue, gross margin, order count, monthly revenue vs last year, top customers and outstanding receivables.`
-- `اعمل لي لوحة لمتابعة المبيعات السنة دي فيها الإيرادات وهامش الربح وعدد الطلبات وأعلى العملاء والمديونيات`
-
-The edit box supports replacing order count with average order value, filtering Cairo and Alexandria, changing top customers to gross profit, adding a three-month moving average, and removing outstanding receivables. English and Arabic versions are supported. Other prompt/edit intents return a structured unsupported-intent error. The language switch changes layout direction, labels, dates, and numeric formatting; chart dates remain chronological.
-
-## Verification
+## Checks
 
 ```bash
 pnpm run lint
@@ -36,12 +31,14 @@ pnpm test
 pnpm run build
 ```
 
-CI runs frozen install plus all four checks. `apps/api` can be checked independently using `pnpm --filter @el-dabbous/api build`; the web bundle uses `pnpm --filter @el-dabbous/web build`. The seeded database and build output are local artifacts and are ignored by Git. Seed into a fresh database path when resetting; the seed command refuses to overwrite existing tenant facts.
+CI runs frozen install, lint, typecheck, all tests, and both builds.
 
-## Model and boundaries
+## Product model
 
-`packages/domain` owns source-independent metric IDs, aggregation recipes, the semantic catalog, bounded analysis contracts, and DashboardSpec/Patch v1 schemas. `packages/data` owns canonical source measures, deterministic calculations, SQLite and mock adapters, and the two-year fixture. `packages/application` owns the mock planner, three manual specs, and per-widget execution. `apps/api` wires dependencies once and validates tenant context; `apps/web` sends dashboard actions to the API and renders returned results. React never opens SQLite or directly executes a repository query.
+`packages/domain` owns 24 executable canonical metric definitions, a wider available/planned product metric registry, two server-governed TenantProfiles, and DashboardSpec/Patch v2 schemas. V1 schema files remain for historical reference; new routes accept v2 only. `packages/application` owns the market-neutral template catalog, mock planner, and per-series executor. `packages/data` owns canonical source measures, deterministic calculations, and tenant-scoped mock/SQLite adapters. React never talks to SQLite or constructs AnalyticsQuery.
 
-Additive measures sum by default; ratios and durations divide aggregated components; sales growth derives from a revenue comparison. Stock and receivable balances select the latest observation per stable entity on or before the requested date. Moving averages and running totals require ordered time; monthly and quarterly comparisons align to prior calendar buckets using UTC calendar arithmetic. The API accepts no SQL.
+KPI widgets have one series. Line/bar widgets can combine compatible metrics such as revenue and gross profit, with one dimension and one presentation unit; currency and percentage cannot share a single axis. Tables may mix metric types and format each column independently. A failed series can leave the rest of its widget usable. Aligned rows retain null for missing values. Chronological ordering does not reverse in RTL.
 
-The fixture spans October 2024 through September 2026 with six branches, twelve salespeople, 360 customers, 160 products, five warehouses, and 150 assets. Patterns are intentionally synthetic. Currency is provisionally displayed in EGP; production currency and accounting rules require business validation. Each result carries source ID, execution time, optional source-as-of time, and metric metadata. See [current assumptions](docs/architecture/current-assumptions.md), [integration questions](docs/integration/questions-for-malik.md), [architecture overview](docs/architecture/overview.md), and [ADRs](docs/architecture/adr/).
+The browser receives currency, time zone, locale, and branch labels from the server's controlled profile. Synthetic Iraqi monetary facts are nominal IQD and Egyptian facts nominal EGP; there is no FX conversion. In an operational source, transaction currency, company/base currency, and reporting currency must be distinguished before any aggregation. Unrelated currencies must not be summed without an approved conversion policy. Arabic UI uses Modern Standard Arabic; Iraqi and Egyptian dialect synonyms support future planning/evaluation, not ordinary labels. The demo selector is not authentication.
+
+The fixture spans October 2024 through September 2026 with synthetic branch/customer geography. No branch or customer represents actual El-Dabbous operations. Planned metric concepts are discoverable but cannot execute until their data/formulas are approved. See [current assumptions](docs/architecture/current-assumptions.md), [architecture overview](docs/architecture/overview.md), and [ADRs](docs/architecture/adr/).

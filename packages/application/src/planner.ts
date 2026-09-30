@@ -1,36 +1,45 @@
 import { validateDashboardSpec } from '@el-dabbous/domain';
-import type { DashboardGenerationRequest, DashboardPatch, DashboardPlanner, DashboardSpec } from '@el-dabbous/domain';
-import { demoDashboards } from './demos.ts';
+import type { DashboardGenerationRequest, DashboardPatch, DashboardPlanner, DashboardSpec, TenantProfile } from '@el-dabbous/domain';
+import { getDashboardTemplate, instantiateDashboardTemplate } from './templates.ts';
 
 export class UnsupportedDemoIntentError extends Error { readonly code = 'UNSUPPORTED_DEMO_INTENT'; }
+const salesIntent = /(sales|revenue|مبيعات|المبيعات|الإيرادات|ايرادات|بايع|بيع)/iu;
 export class MockDashboardPlanner implements DashboardPlanner {
   constructor(private readonly clock: () => Date = () => new Date()) {}
   async generate(request: DashboardGenerationRequest): Promise<DashboardSpec> {
-    if (!request.context.tenantId.trim() || !['en', 'ar'].includes(request.locale)) throw new Error('Invalid planner context');
+    if (request.context.tenantId !== request.tenantProfile.id || !['en', 'ar'].includes(request.locale)) throw new Error('Invalid planner context');
     const prompt = request.prompt.trim().toLowerCase();
-    if (!prompt || !/(sales|revenue|مبيعات|المبيعات|الإيرادات|ايرادات)/iu.test(prompt)) throw new UnsupportedDemoIntentError('This demo planner supports executive sales requests.');
-    const spec = structuredClone(demoDashboards(this.clock())[0]!);
-    spec.locale = request.locale;
-    validateDashboardSpec(spec);
-    return spec;
+    if (!prompt || !salesIntent.test(prompt)) throw new UnsupportedDemoIntentError('This demo planner supports sales dashboard requests.');
+    const template = getDashboardTemplate('sales-performance')!;
+    const dashboard = instantiateDashboardTemplate(template, request.tenantProfile, this.clock(), request.locale);
+    if (/(this month|هذا الشهر|الشهر ده)/iu.test(prompt) && dashboard.filters.dateRange)
+      dashboard.filters.dateRange.from = `${dashboard.filters.dateRange.to.slice(0, 7)}-01`;
+    return dashboard;
   }
-  async edit(current: DashboardSpec, instruction: string): Promise<DashboardPatch> {
+  async edit(current: DashboardSpec, instruction: string, profile: TenantProfile): Promise<DashboardPatch> {
     validateDashboardSpec(current);
     const prompt = instruction.trim().toLowerCase();
-    const replace = (widgetId: string, metric: DashboardSpec['widgets'][number]['metric']): DashboardPatch => {
+    const replace = (widgetId: string, next: (widget: DashboardSpec['widgets'][number]) => DashboardSpec['widgets'][number]): DashboardPatch => {
       const previous = current.widgets.find(w => w.id === widgetId);
       if (!previous) throw new UnsupportedDemoIntentError(`Widget ${widgetId} is unavailable.`);
-      return { schemaVersion: 1, operations: [{ op: 'replace', widgetId, widget: { ...previous, metric } }] };
+      return { schemaVersion: 2, operations: [{ op: 'replace', widgetId, widget: next(previous) }] };
     };
-    if (/(average order value|متوسط قيمة الطلب)/iu.test(prompt) && /(order count|orders|الطلبات)/iu.test(prompt)) return replace('order-count', 'average_order_value');
-    if (/(cairo|القاهرة)/iu.test(prompt) && /(alexandria|الإسكندرية|اسكندرية)/iu.test(prompt)) return { schemaVersion: 1, operations: [{ op: 'set_filters', filters: { ...current.filters, dimensions: [{ dimension: 'branch', values: ['cairo', 'alexandria'] }] } }] };
-    if (/(top customers|أعلى العملاء|العملاء)/iu.test(prompt) && /(gross profit|إجمالي الربح|الربح)/iu.test(prompt)) return replace('top-customers', 'gross_profit');
-    if (/(moving average|متوسط متحرك)/iu.test(prompt)) {
-      const previous = current.widgets.find(w => w.id === 'monthly-revenue');
-      if (!previous) throw new UnsupportedDemoIntentError('Monthly revenue is unavailable.');
-      return { schemaVersion: 1, operations: [{ op: 'replace', widgetId: previous.id, widget: { ...previous, analysis: { ...previous.analysis, movingAverage: { window: 3 } } } }] };
+    if (/(average order value|متوسط قيمة الطلب)/iu.test(prompt) && /(order count|orders|الطلبات|الطلبيات)/iu.test(prompt))
+      return replace('order-count', previous => ({ ...previous, series: [{ id: 'average-order-value', metric: 'average_order_value' }] }));
+    const mentionsExampleBranches = profile.exampleBranchIds.every(id => {
+      const labels = profile.branchLabels[id];
+      return labels && [labels.en, labels.ar].some(label => prompt.includes(label.toLowerCase()));
+    });
+    if (mentionsExampleBranches) {
+      const values = [...profile.exampleBranchIds];
+      return { schemaVersion: 2, operations: [{ op: 'set_filters', filters: { ...current.filters, dimensions: [{ dimension: 'branch', values }] } }] };
     }
-    if (/(remove|delete|احذف|شيل)/iu.test(prompt) && /(outstanding|receivables|المديونيات|المستحقة)/iu.test(prompt)) return { schemaVersion: 1, operations: [{ op: 'remove', widgetId: 'outstanding' }] };
+    if (/(top customers|أعلى العملاء|أعلى الزبائن|العملاء|الزبائن)/iu.test(prompt) && /(gross profit|إجمالي الربح|الربح)/iu.test(prompt))
+      return replace('top-customers', previous => ({ ...previous, series: [{ id: 'gross-profit', metric: 'gross_profit', analysis: { topN: { direction: 'top', limit: 10 } } }] }));
+    if (/(moving average|متوسط متحرك)/iu.test(prompt))
+      return replace('revenue-profit', previous => ({ ...previous, series: previous.series.map(series => series.id === 'revenue' ? { ...series, analysis: { ...series.analysis, movingAverage: { window: 3 } } } : series) }));
+    if (/(remove|delete|احذف|شيل)/iu.test(prompt) && /(outstanding|receivables|المديونيات|المستحقة|الديون)/iu.test(prompt))
+      return { schemaVersion: 2, operations: [{ op: 'remove', widgetId: 'outstanding' }] };
     throw new UnsupportedDemoIntentError('This edit is outside the supported demo intents.');
   }
 }

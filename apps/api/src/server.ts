@@ -11,11 +11,10 @@ if (provider === 'sqlite') {
   const defaultDatabasePath = fileURLToPath(new URL('../../../demo.db', import.meta.url));
   const db = new DatabaseSync(process.env.SQLITE_DB_PATH ?? defaultDatabasePath);
   createSqliteSchema(db);
-  const asOf = db.prepare('SELECT max(event_date) AS date FROM analytics_facts WHERE tenant_id = ?').get('demo')?.date;
-  repository = new SqliteAnalyticsRepository(db, typeof asOf === 'string' ? { sourceAsOf: `${asOf}T00:00:00.000Z` } : {});
+  repository = new SqliteAnalyticsRepository(db);
   close = () => db.close();
 } else if (provider === 'mock') {
-  repository = new MockAnalyticsRepository(generateSeedFacts());
+  repository = new MockAnalyticsRepository([...generateSeedFacts('demo-iq'), ...generateSeedFacts('demo-eg')]);
 } else {
   throw new Error(`ANALYTICS_PROVIDER=${provider} is reserved but not implemented. Use sqlite or mock.`);
 }
