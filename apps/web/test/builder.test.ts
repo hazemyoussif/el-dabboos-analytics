@@ -17,6 +17,15 @@ test('empty draft is distinct from executable DashboardSpec until first widget',
   assert.equal(next.execute, true);
   assert.equal(next.history.present.kind === 'dashboard' && next.history.present.spec.layout.items?.length, 1);
 });
+test('removing the final widget returns to an empty draft and can be undone', () => {
+  const removed = commitBuilderCommand(startBuilder({ kind: 'dashboard', spec }), { type: 'remove-last' });
+  assert.equal(removed.history.present.kind, 'empty');
+  assert.equal(removed.execute, true);
+  const restored = undoBuilder(removed.history);
+  assert.equal(restored.history.present.kind, 'dashboard');
+  assert.equal(restored.execute, true);
+  assert.equal(redoBuilder(restored.history).history.present.kind, 'empty');
+});
 test('layout edits and their undo/redo never request analytics; semantic edits do', () => {
   let history = startBuilder({ kind: 'dashboard', spec });
   const layout = { columns: 12 as const, items: [{ widgetId: 'revenue', x: 3, y: 2, w: 3, h: 2 }] };
@@ -29,6 +38,19 @@ test('layout edits and their undo/redo never request analytics; semantic edits d
   step = undoBuilder(history); assert.equal(step.execute, true);
   assert.equal(step.history.present.kind === 'dashboard' && step.history.present.spec.widgets[0]?.series[0]?.metric, 'revenue');
   assert.equal(startBuilder({ kind: 'dashboard', spec }).past.length, 0);
+});
+test('filter edits execute, undo and redo; a new tenant session starts without old history', () => {
+  const start = startBuilder({ kind: 'dashboard', spec });
+  const filtered = commitBuilderCommand(start, { type: 'patch', patch: { schemaVersion: 2, operations: [{ op: 'set_filters', filters: {
+    dimensions: [{ dimension: 'branch', values: ['baghdad'] }],
+  } }] } });
+  assert.equal(filtered.execute, true);
+  assert.equal(undoBuilder(filtered.history).execute, true);
+  assert.equal(redoBuilder(undoBuilder(filtered.history).history).execute, true);
+  const egyptSpec = { ...spec, filters: {}, id: 'egypt-dashboard' };
+  const switched = startBuilder({ kind: 'dashboard', spec: egyptSpec });
+  assert.equal(switched.past.length, 0);
+  assert.equal(switched.present.kind === 'dashboard' && switched.present.spec.filters.dimensions, undefined);
 });
 test('metric picker excludes planned concepts and checks unit and common dimension rules', () => {
   assert.equal(productMetricCatalog.find(metric => metric.id === 'days_sales_outstanding')?.availability, 'planned');

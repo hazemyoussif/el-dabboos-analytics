@@ -56,6 +56,11 @@ test('same Sales Performance template executes under both markets without duplic
   assert.equal(iraq.dashboard.schemaVersion, 2);
   assert.equal(iraq.execution.widgetResults.revenue.seriesResults.revenue.result.rows[0].value, 100);
   assert.equal(egypt.execution.widgetResults.revenue.seriesResults.revenue.result.rows[0].value, 250);
+  const iraqFiltered = { ...iraq.dashboard, filters: { ...iraq.dashboard.filters, dimensions: [{ dimension: 'branch', values: ['baghdad'] }] } };
+  const scoped = (await app.inject({ method: 'POST', url: '/api/dashboards/execute', headers: iq, payload: { dashboard: iraqFiltered } })).json();
+  assert.equal(scoped.widgetResults.revenue.seriesResults.revenue.result.rows[0].value, 100);
+  assert.equal(egypt.dashboard.filters.dimensions, undefined);
+  assert.equal(egypt.execution.widgetResults.revenue.seriesResults.revenue.result.rows[0].value, 250);
   assert.equal((await app.inject({ method: 'GET', url: '/api/dashboard-templates/unknown/instantiate', headers: iq })).statusCode, 404);
 });
 test('v2 manual execution, Iraqi generation and edit complete the workflow', async () => {
