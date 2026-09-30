@@ -1,15 +1,20 @@
-import { semanticCatalog, validateQuery } from '@el-dabbous/domain';
-import type { AnalyticsContext, AnalyticsQuery, AnalyticsResult, AnalyticsRow, Aggregation, DimensionId } from '@el-dabbous/domain';
+import { requiredMeasures, semanticCatalog, timeDimensions, validateQuery } from '@el-dabbous/domain';
+import type { AdditiveAggregation, AnalyticsContext, AnalyticsQuery, AnalyticsResult, AnalyticsRow, DateRange, DimensionId, FactMeasureId, MetricId } from '@el-dabbous/domain';
+import { periodKeys, periodRange, previousTimeKey, shiftRange, timeKey } from './calendar.ts';
 import type { AnalyticsFact } from './facts.ts';
 
+export interface ExecutionMetadata { sourceId: string; executedAt: string; sourceAsOf?: string }
+const isTime = (id: DimensionId | undefined): boolean => !!id && timeDimensions.includes(id);
 function dimension(f: AnalyticsFact, id: DimensionId): string | undefined {
-  if (id === 'date') return f.date;
-  if (id === 'month') return f.date.slice(0, 7);
-  if (id === 'year') return f.date.slice(0, 4);
-  if (id === 'quarter') return `${f.date.slice(0, 4)}-Q${Math.floor((Number(f.date.slice(5, 7)) - 1) / 3) + 1}`;
-  return f.dimensions[id];
+  return isTime(id) ? timeKey(f.date, id) : f.dimensions[id];
 }
-function aggregate(values: number[], kind: Aggregation): number {
+function inRange(f: AnalyticsFact, range: DateRange | undefined): boolean {
+  return !range || (f.date >= range.from && f.date <= range.to);
+}
+function filtered(f: AnalyticsFact, query: AnalyticsQuery): boolean {
+  return !query.filters || query.filters.every(filter => filter.values.includes(dimension(f, filter.dimension) ?? ''));
+}
+function aggregate(values: number[], kind: AdditiveAggregation): number {
   if (!values.length) return 0;
   switch (kind) {
     case 'sum': return values.reduce((a, b) => a + b, 0);
@@ -19,64 +24,135 @@ function aggregate(values: number[], kind: Aggregation): number {
     case 'max': return Math.max(...values);
   }
 }
-function grouped(facts: AnalyticsFact[], query: AnalyticsQuery): AnalyticsRow[] {
-  const filtered = facts.filter(f =>
-    (!query.dateRange || f.date >= query.dateRange.from && f.date <= query.dateRange.to) &&
-    (!query.filters || query.filters.every(filter => filter.values.includes(dimension(f, filter.dimension) ?? '')))
-  );
-  const groups = new Map<string | null, number[]>();
-  for (const fact of filtered) {
-    const key = query.groupBy ? dimension(fact, query.groupBy) : null;
-    if (key === undefined) continue;
-    const values = groups.get(key) ?? [];
-    values.push(fact.value);
-    groups.set(key, values);
+function latestSnapshots(facts: readonly AnalyticsFact[], measureId: FactMeasureId, end?: string): AnalyticsFact[] {
+  const latest = new Map<string, AnalyticsFact>();
+  for (const fact of facts) {
+    if (fact.measureId !== measureId || (end && fact.date > end)) continue;
+    if (!fact.entityId) throw new Error(`Snapshot measure ${measureId} requires entityId`);
+    const old = latest.get(fact.entityId);
+    if (old?.date === fact.date) throw new Error(`Duplicate snapshot for ${measureId}/${fact.entityId}/${fact.date}`);
+    if (!old || fact.date > old.date) latest.set(fact.entityId, fact);
   }
-  if (!query.groupBy && !groups.size) groups.set(null, []);
-  const aggregation = query.aggregation ?? semanticCatalog[query.metric].defaultAggregation;
-  return [...groups].map(([key, values]) => ({ key, value: aggregate(values, aggregation) }))
-    .sort((a, b) => String(a.key).localeCompare(String(b.key)));
+  return [...latest.values()];
 }
-function shiftRange(range: NonNullable<AnalyticsQuery['dateRange']>, kind: string): NonNullable<AnalyticsQuery['dateRange']> {
-  const from = new Date(`${range.from}T00:00:00Z`);
-  const to = new Date(`${range.to}T00:00:00Z`);
-  if (kind === 'year_over_year') { from.setUTCFullYear(from.getUTCFullYear() - 1); to.setUTCFullYear(to.getUTCFullYear() - 1); }
-  else if (kind === 'month_over_month') { from.setUTCMonth(from.getUTCMonth() - 1); to.setUTCMonth(to.getUTCMonth() - 1); }
-  else {
-    const span = Math.round((to.getTime() - from.getTime()) / 86400000) + 1;
-    from.setUTCDate(from.getUTCDate() - span); to.setUTCDate(to.getUTCDate() - span);
+function evaluate(facts: readonly AnalyticsFact[], metricId: MetricId, query: AnalyticsQuery, range: DateRange | undefined, key: string | null): number | null {
+  const semantics = semanticCatalog[metricId].semantics;
+  const groupBy = query.groupBy;
+  const matches = (fact: AnalyticsFact): boolean => filtered(fact, query) && inRange(fact, range) &&
+    (key === null || !groupBy || dimension(fact, groupBy) === key);
+  const measure = (id: FactMeasureId, aggregation: AdditiveAggregation = 'sum'): number =>
+    aggregate(facts.filter(f => f.measureId === id && matches(f)).map(f => f.value), aggregation);
+  if (semantics.kind === 'additive') return measure(semantics.measure, metricId === query.metric ? query.aggregation ?? 'sum' : 'sum');
+  if (semantics.kind === 'ratio' || semantics.kind === 'duration_derived') {
+    const denominator = measure(semantics.denominator);
+    return denominator === 0 ? null : measure(semantics.numerator) / denominator * semantics.scale;
   }
-  return { from: from.toISOString().slice(0, 10), to: to.toISOString().slice(0, 10) };
+  if (semantics.kind === 'snapshot') {
+    const snapshots = latestSnapshots(facts, semantics.measure, range?.to).filter(f => filtered(f, query) &&
+      (key === null || !groupBy || isTime(groupBy) || dimension(f, groupBy) === key));
+    return snapshots.length ? snapshots.reduce((sum, f) => sum + f.value, 0) : null;
+  }
+  throw new Error('Comparison-derived metrics require comparison evaluation');
 }
-export function executeFacts(facts: readonly AnalyticsFact[], query: AnalyticsQuery, context: AnalyticsContext): AnalyticsResult {
+function currentKeys(facts: readonly AnalyticsFact[], query: AnalyticsQuery): Array<string | null> {
+  if (!query.groupBy) return [null];
+  const groupBy = query.groupBy;
+  const semantics = semanticCatalog[query.metric].semantics;
+  const source = semantics.kind === 'snapshot'
+    ? latestSnapshots(facts, semantics.measure, query.dateRange?.to)
+    : facts.filter(f => inRange(f, query.dateRange));
+  const keys = new Set(source.filter(f => filtered(f, query) && (semantics.kind === 'snapshot' || inRange(f, query.dateRange)))
+    .map(f => dimension(f, groupBy)).filter((k): k is string => k !== undefined));
+  if (semantics.kind === 'snapshot' && isTime(groupBy)) {
+    if (query.dateRange) return periodKeys(query.dateRange, groupBy);
+    return [...new Set(facts.filter(f => f.measureId === semantics.measure && filtered(f, query))
+      .map(f => dimension(f, groupBy)).filter((k): k is string => k !== undefined))].sort();
+  }
+  return [...keys].sort();
+}
+function rangeForKey(query: AnalyticsQuery, key: string | null): DateRange | undefined {
+  if (key === null || !query.groupBy || !isTime(query.groupBy)) return query.dateRange;
+  const period = periodRange(key, query.groupBy);
+  if (!query.dateRange) return period;
+  return { from: period.from > query.dateRange.from ? period.from : query.dateRange.from,
+    to: period.to < query.dateRange.to ? period.to : query.dateRange.to };
+}
+function comparisonRange(query: AnalyticsQuery, key: string | null, comparison: NonNullable<AnalyticsQuery['analysis']>['comparison']): { range: DateRange; key: string | null } {
+  if (!comparison || !query.dateRange) throw new Error('Comparison requires a date range');
+  if (key !== null && query.groupBy && isTime(query.groupBy)) {
+    const previous = previousTimeKey(key, query.groupBy, comparison);
+    return { range: periodRange(previous, query.groupBy), key: previous };
+  }
+  return { range: shiftRange(query.dateRange, comparison), key };
+}
+function compare(value: number | null, prior: number | null): Pick<AnalyticsRow, 'comparisonValue' | 'absoluteChange' | 'percentageChange'> {
+  const difference = value === null || prior === null ? null : value - prior;
+  return { comparisonValue: prior, absoluteChange: difference,
+    percentageChange: difference === null || prior === null || prior === 0 ? null : difference / Math.abs(prior) * 100 };
+}
+function average(values: Array<number | null>): number | null {
+  const present = values.filter((v): v is number => v !== null);
+  return present.length ? present.reduce((sum, v) => sum + v, 0) / present.length : null;
+}
+function numericOrder(a: AnalyticsRow, b: AnalyticsRow, direction: 'top' | 'bottom'): number {
+  if (a.value === null) return b.value === null ? String(a.key).localeCompare(String(b.key)) : 1;
+  if (b.value === null) return -1;
+  return (direction === 'top' ? b.value - a.value : a.value - b.value) || String(a.key).localeCompare(String(b.key));
+}
+export function executeFacts(facts: readonly AnalyticsFact[], query: AnalyticsQuery, context: AnalyticsContext, execution: ExecutionMetadata): AnalyticsResult {
   validateQuery(query, context);
-  const scoped = facts.filter(f => f.tenantId === context.tenantId && f.metricId === query.metric);
-  let rows = grouped(scoped, query);
-  const op = query.operation;
-  if (op && ['previous_period', 'month_over_month', 'year_over_year', 'absolute_change', 'percentage_change'].includes(op.kind)) {
-    if (!query.dateRange) throw new Error('Comparison requires a date range');
-    const prior = grouped(scoped, { ...query, dateRange: shiftRange(query.dateRange, op.kind) });
-    const priorMap = new Map(prior.map(row => [row.key, row.value]));
-    rows = rows.map(row => {
-      const comparisonValue = priorMap.get(row.key) ?? (query.groupBy && ['date', 'month', 'quarter', 'year'].includes(query.groupBy) ? prior.reduce((s, r) => s + r.value, 0) : 0);
-      const absoluteChange = row.value - comparisonValue;
-      return { ...row, comparisonValue, absoluteChange, percentageChange: comparisonValue === 0 ? null : absoluteChange / Math.abs(comparisonValue) * 100 };
+  if (!execution.sourceId.trim() || Number.isNaN(Date.parse(execution.executedAt))) throw new Error('Execution metadata is required');
+  const metric = semanticCatalog[query.metric];
+  const measures = new Set(requiredMeasures(query.metric));
+  const scoped = facts.filter(f => f.tenantId === context.tenantId && measures.has(f.measureId));
+  const comparison = query.analysis?.comparison ?? (metric.semantics.kind === 'comparison_derived' ? metric.semantics.defaultComparison : undefined);
+  let rows: AnalyticsRow[] = currentKeys(scoped, query).map(key => {
+    const currentRange = rangeForKey(query, key);
+    const base = metric.semantics.kind === 'comparison_derived' ? metric.semantics.base : query.metric;
+    const value = evaluate(scoped, base, query, currentRange, key);
+    if (!comparison) return { key, value };
+    const previous = comparisonRange(query, key, comparison);
+    const prior = evaluate(scoped, base, query, previous.range, previous.key);
+    const changes = compare(value, prior);
+    if (metric.semantics.kind === 'comparison_derived') return { key, value: changes.percentageChange ?? null };
+    return { key, value, ...changes };
+  });
+  if (query.analysis?.movingAverage) {
+    const window = query.analysis.movingAverage.window;
+    const before = rows;
+    rows = before.map((row, i) => {
+      const slice = before.slice(Math.max(0, i - window + 1), i + 1);
+      const value = average(slice.map(r => r.value));
+      return comparison ? { key: row.key, value, ...compare(value, average(slice.map(r => r.comparisonValue ?? null))) } : { key: row.key, value };
     });
-  } else if (op?.kind === 'top_n' || op?.kind === 'bottom_n') {
-    if (!query.groupBy) throw new Error('Top/bottom N requires groupBy');
-    rows = [...rows].sort((a, b) => (op.kind === 'top_n' ? b.value - a.value : a.value - b.value) || String(a.key).localeCompare(String(b.key))).slice(0, op.n);
-  } else if (op?.kind === 'running_total') {
-    let total = 0; rows = rows.map(row => ({ ...row, value: total += row.value }));
-  } else if (op?.kind === 'percentage_contribution') {
-    const total = rows.reduce((s, row) => s + row.value, 0);
-    rows = rows.map(row => ({ ...row, value: total === 0 ? 0 : row.value / total * 100 }));
-  } else if (op?.kind === 'moving_average') {
-    const window = op.window ?? 2;
-    rows = rows.map((row, i) => ({ ...row, value: rows.slice(Math.max(0, i - window + 1), i + 1).reduce((s, r) => s + r.value, 0) / Math.min(window, i + 1) }));
-  } else if (op?.kind === 'ranking') {
-    const ranked = [...rows].sort((a, b) => b.value - a.value || String(a.key).localeCompare(String(b.key)));
-    const ranks = new Map(ranked.map((row, i) => [row.key, i + 1]));
+  }
+  if (query.analysis?.runningTotal) {
+    let total = 0;
+    let priorTotal = 0;
+    rows = rows.map(row => {
+      total += row.value ?? 0;
+      if (!comparison) return { key: row.key, value: total };
+      priorTotal += row.comparisonValue ?? 0;
+      return { key: row.key, value: total, ...compare(total, priorTotal) };
+    });
+  }
+  if (query.analysis?.percentageContribution) {
+    const total = rows.reduce((sum, row) => sum + (row.value ?? 0), 0);
+    rows = rows.map(row => ({ key: row.key, value: total === 0 ? null : (row.value ?? 0) / total * 100 }));
+  }
+  if (query.analysis?.ranking) {
+    const ranked = [...rows].sort((a, b) => numericOrder(a, b, 'top'));
+    const ranks = new Map(ranked.map((row, index) => [row.key, index + 1]));
     rows = rows.map(row => ({ ...row, rank: ranks.get(row.key)! }));
   }
-  return { metric: query.metric, groupBy: query.groupBy ?? null, rows };
+  if (query.analysis?.topN) {
+    rows = [...rows].sort((a, b) => numericOrder(a, b, query.analysis!.topN!.direction)).slice(0, query.analysis.topN.limit);
+  }
+  const percentage = !!query.analysis?.percentageContribution;
+  return { metric: query.metric, groupBy: query.groupBy ?? null, rows,
+    metadata: { sourceId: execution.sourceId, executedAt: execution.executedAt,
+      ...(execution.sourceAsOf ? { sourceAsOf: execution.sourceAsOf } : {}),
+      metricType: percentage ? 'percentage' : metric.type,
+      ...(percentage ? { unit: '%' } : metric.presentation.unit ? { unit: metric.presentation.unit } : {}),
+      semantics: metric.semantics.kind } };
 }

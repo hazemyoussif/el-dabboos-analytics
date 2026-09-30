@@ -21,3 +21,14 @@ test('patch rejects duplicate IDs, unsupported dimensions and empty dashboards',
   assert.throws(() => applyDashboardPatch(original, { schemaVersion: 1, operations: [{ op: 'add', widget: { id: 'bad', type: 'line', metric: 'revenue', dimension: 'equipment' } }] }));
   assert.throws(() => applyDashboardPatch(original, { schemaVersion: 1, operations: [{ op: 'remove', widgetId: 'revenue' }] }));
 });
+test('patch schema rejects unknown fields and validates the completed dashboard atomically', () => {
+  assert.throws(() => applyDashboardPatch(original, { schemaVersion: 1, operations: [
+    { op: 'add', widget: { id: 'extra', type: 'kpi', metric: 'revenue', sql: 'SELECT 1' } },
+  ] } as unknown as Parameters<typeof applyDashboardPatch>[1]));
+  const next = applyDashboardPatch(original, { schemaVersion: 1, operations: [
+    { op: 'add', widget: { id: 'growth', type: 'line', metric: 'sales_growth', dimension: 'month', analysis: { comparison: 'year_over_year' } } },
+    { op: 'set_filters', filters: { dateRange: { from: '2026-01-01', to: '2026-06-30' } } },
+  ] });
+  assert.equal(next.widgets[1]?.metric, 'sales_growth');
+  assert.equal(original.filters.dateRange, undefined);
+});

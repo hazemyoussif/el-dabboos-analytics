@@ -6,48 +6,72 @@ export type MetricId =
   | 'collected_amount' | 'outstanding_amount' | 'overdue_amount'
   | 'stock_on_hand' | 'inventory_value' | 'low_stock_count'
   | 'maintenance_requests' | 'failure_count' | 'mtbf' | 'mttr' | 'maintenance_cost';
+export type DerivedMetricId = 'average_order_value' | 'gross_margin' | 'sales_growth' | 'win_rate' | 'mtbf' | 'mttr';
+export type InternalMeasureId = 'won_opportunity_count' | 'operating_hours' | 'repair_hours' | 'completed_repair_count';
+export type FactMeasureId = Exclude<MetricId, DerivedMetricId> | InternalMeasureId;
 export type DimensionId = 'date' | 'month' | 'quarter' | 'year' | 'customer' | 'branch'
   | 'region' | 'salesperson' | 'product' | 'product_category' | 'warehouse'
   | 'equipment' | 'equipment_category' | 'technician';
-export type Aggregation = 'sum' | 'count' | 'average' | 'min' | 'max';
-export type AnalyticsOperation = 'top_n' | 'bottom_n' | 'previous_period' | 'month_over_month'
-  | 'year_over_year' | 'absolute_change' | 'percentage_change' | 'running_total'
-  | 'percentage_contribution' | 'moving_average' | 'ranking';
+export type AdditiveAggregation = 'sum' | 'count' | 'average' | 'min' | 'max';
+export type MetricType = 'currency' | 'number' | 'percentage' | 'duration';
+export type MetricSemantics =
+  | { kind: 'additive'; measure: FactMeasureId }
+  | { kind: 'ratio'; numerator: FactMeasureId; denominator: FactMeasureId; scale: number }
+  | { kind: 'snapshot'; measure: FactMeasureId }
+  | { kind: 'comparison_derived'; base: MetricId; defaultComparison: ComparisonPeriod }
+  | { kind: 'duration_derived'; numerator: FactMeasureId; denominator: FactMeasureId; scale: number };
 export interface LocalizedText { en: string; ar: string }
 export interface SemanticMetric {
   id: MetricId;
   labels: LocalizedText;
   descriptions: LocalizedText;
   synonyms: { en: readonly string[]; ar: readonly string[] };
-  type: 'currency' | 'number' | 'percentage' | 'duration';
-  defaultAggregation: Aggregation;
+  type: MetricType;
+  semantics: MetricSemantics;
   dimensions: readonly DimensionId[];
-  operations: readonly AnalyticsOperation[];
   presentation: { decimals: number; unit?: string };
 }
 export interface AnalyticsContext { tenantId: string; locale: Locale }
 export interface DateRange { from: string; to: string }
 export interface AnalyticsFilter { dimension: DimensionId; values: string[] }
+export type ComparisonPeriod = 'previous_period' | 'month_over_month' | 'year_over_year';
+/** A fixed pipeline of named analyses, not an expression language. */
+export interface AnalysisSpec {
+  comparison?: ComparisonPeriod;
+  movingAverage?: { window: number };
+  runningTotal?: true;
+  percentageContribution?: true;
+  ranking?: true;
+  topN?: { direction: 'top' | 'bottom'; limit: number };
+}
 export interface AnalyticsQuery {
   metric: MetricId;
-  aggregation?: Aggregation;
+  aggregation?: AdditiveAggregation;
   groupBy?: DimensionId;
   dateRange?: DateRange;
   filters?: AnalyticsFilter[];
-  operation?: { kind: AnalyticsOperation; n?: number; window?: number };
+  analysis?: AnalysisSpec;
 }
 export interface AnalyticsRow {
   key: string | null;
-  value: number;
+  value: number | null;
   rank?: number;
-  comparisonValue?: number;
-  absoluteChange?: number;
+  comparisonValue?: number | null;
+  absoluteChange?: number | null;
   percentageChange?: number | null;
 }
 export interface AnalyticsResult {
   metric: MetricId;
   groupBy: DimensionId | null;
   rows: AnalyticsRow[];
+  metadata: {
+    sourceId: string;
+    executedAt: string;
+    sourceAsOf?: string;
+    metricType: MetricType;
+    unit?: string;
+    semantics: MetricSemantics['kind'];
+  };
 }
 export interface AnalyticsRepository {
   execute(query: AnalyticsQuery, context: AnalyticsContext): Promise<AnalyticsResult>;
@@ -59,7 +83,7 @@ export interface DashboardWidget {
   title?: LocalizedText;
   metric: MetricId;
   dimension?: DimensionId;
-  operation?: AnalyticsQuery['operation'];
+  analysis?: AnalysisSpec;
 }
 export interface DashboardSpec {
   schemaVersion: 1;
@@ -85,6 +109,18 @@ export interface DashboardPlanner {
   generate(request: DashboardGenerationRequest): Promise<DashboardSpec>;
   edit(current: DashboardSpec, instruction: string): Promise<DashboardPatch>;
 }
+export interface StructuredOutputRequest {
+  messages: readonly { role: 'system' | 'user'; content: string }[];
+  locale: Locale;
+  responseFormat: { name: string; jsonSchema: Readonly<Record<string, unknown>>; strict: true };
+}
+export interface StructuredOutputResponse {
+  output: unknown;
+  providerId: string;
+  latencyMs: number;
+  attempts: number;
+}
+/** Output remains unknown until schema and semantic validation succeed. */
 export interface LLMProvider {
-  complete(request: { system: string; user: string; locale: Locale }): Promise<{ text: string; latencyMs: number }>;
+  generateStructured(request: StructuredOutputRequest): Promise<StructuredOutputResponse>;
 }

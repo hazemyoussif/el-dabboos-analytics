@@ -1,52 +1,80 @@
-import type { AnalyticsContext, AnalyticsQuery, DashboardSpec, DashboardWidget, DateRange } from './contracts.ts';
-import { isDimensionId, isMetricId, semanticCatalog } from './catalog.ts';
+import type { AnalyticsContext, AnalyticsQuery, DashboardPatch, DashboardSpec, DashboardWidget, DateRange, DimensionId, MetricId } from './contracts.ts';
+import { isDimensionId, isMetricId, semanticCatalog, timeDimensions } from './catalog.ts';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import dashboardSchema from './dashboard-spec.schema.json' with { type: 'json' };
+import patchSchema from './dashboard-patch.schema.json' with { type: 'json' };
 
 const ajv = new Ajv2020.default({ allErrors: true });
 addFormats.default(ajv);
 const checkDashboardSchema = ajv.compile(dashboardSchema);
-
+const checkPatchSchema = ajv.compile(patchSchema);
 const record = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === 'object' && !Array.isArray(v);
-const keys = (v: Record<string, unknown>, allowed: string[], required: string[] = []): boolean =>
+const exactKeys = (v: Record<string, unknown>, allowed: readonly string[], required: readonly string[] = []): boolean =>
   Object.keys(v).every(k => allowed.includes(k)) && required.every(k => Object.hasOwn(v, k));
-const text = (v: unknown): boolean => record(v) && keys(v, ['en', 'ar'], ['en', 'ar']) &&
-  typeof v.en === 'string' && v.en.length > 0 && typeof v.ar === 'string' && v.ar.length > 0;
-const id = (v: unknown): v is string => typeof v === 'string' && /^[a-z0-9][a-z0-9_-]*$/.test(v) && v.length <= 80;
-const date = (v: unknown): v is string => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) &&
+const validDate = (v: unknown): v is string => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) &&
   !Number.isNaN(Date.parse(`${v}T00:00:00Z`)) && new Date(`${v}T00:00:00Z`).toISOString().slice(0, 10) === v;
-export const validDateRange = (v: unknown): v is DateRange => record(v) && keys(v, ['from', 'to'], ['from', 'to']) && date(v.from) && date(v.to) && v.from <= v.to;
-const validFilter = (v: unknown): boolean => record(v) && keys(v, ['dimension', 'values'], ['dimension', 'values']) &&
-  typeof v.dimension === 'string' && isDimensionId(v.dimension) && Array.isArray(v.values) && v.values.length > 0 && v.values.every(x => typeof x === 'string' && x.length > 0);
-const validFilters = (v: unknown): boolean => record(v) && keys(v, ['dateRange', 'dimensions']) &&
-  (v.dateRange === undefined || validDateRange(v.dateRange)) &&
-  (v.dimensions === undefined || (Array.isArray(v.dimensions) && v.dimensions.every(validFilter)));
-const kinds = ['top_n', 'bottom_n', 'previous_period', 'month_over_month', 'year_over_year', 'absolute_change', 'percentage_change', 'running_total', 'percentage_contribution', 'moving_average', 'ranking'];
-export const validOperation = (v: unknown): boolean => record(v) && keys(v, ['kind', 'n', 'window'], ['kind']) &&
-  typeof v.kind === 'string' && kinds.includes(v.kind) &&
-  (v.n === undefined || (Number.isInteger(v.n) && (v.n as number) >= 1 && (v.n as number) <= 100)) &&
-  (v.window === undefined || (Number.isInteger(v.window) && (v.window as number) >= 2 && (v.window as number) <= 24)) &&
-  (v.kind !== 'top_n' && v.kind !== 'bottom_n' || v.n !== undefined) &&
-  (v.kind !== 'moving_average' || v.window !== undefined);
-export const validWidget = (v: unknown): v is DashboardWidget => record(v) &&
-  keys(v, ['id', 'type', 'title', 'metric', 'dimension', 'operation'], ['id', 'type', 'metric']) &&
-  id(v.id) && ['kpi', 'line', 'bar', 'table'].includes(String(v.type)) &&
-  (v.title === undefined || text(v.title)) && typeof v.metric === 'string' && isMetricId(v.metric) &&
-  (v.dimension === undefined || (typeof v.dimension === 'string' && isDimensionId(v.dimension) && semanticCatalog[v.metric].dimensions.includes(v.dimension))) &&
-  (v.operation === undefined || (validOperation(v.operation) && record(v.operation) && typeof v.operation.kind === "string" && semanticCatalog[v.metric].operations.includes(v.operation.kind as typeof semanticCatalog[typeof v.metric]["operations"][number]))) &&
-  (v.type !== 'line' || v.dimension !== undefined);
+export const validDateRange = (v: unknown): v is DateRange => record(v) && exactKeys(v, ['from', 'to'], ['from', 'to']) &&
+  validDate(v.from) && validDate(v.to) && v.from <= v.to;
+const validFilter = (v: unknown): boolean => record(v) && exactKeys(v, ['dimension', 'values'], ['dimension', 'values']) &&
+  typeof v.dimension === 'string' && isDimensionId(v.dimension) && Array.isArray(v.values) && v.values.length > 0 &&
+  v.values.every(x => typeof x === 'string' && x.length > 0);
+const comparisons = ['previous_period', 'month_over_month', 'year_over_year'];
+export function validateAnalysis(analysis: unknown, metricId: MetricId, groupBy?: DimensionId, dateRange?: DateRange): void {
+  const semantics = semanticCatalog[metricId].semantics;
+  if (analysis === undefined) {
+    if (semantics.kind === 'comparison_derived' && !dateRange) throw new Error('Comparison-derived metric requires a date range');
+    return;
+  }
+  if (!record(analysis) || !exactKeys(analysis, ['comparison', 'movingAverage', 'runningTotal', 'percentageContribution', 'ranking', 'topN'])) throw new Error('Invalid analysis');
+  if (analysis.comparison !== undefined && (!comparisons.includes(String(analysis.comparison)) || !dateRange)) throw new Error('Comparison requires a date range');
+  if (semantics.kind === 'comparison_derived' && !dateRange) throw new Error('Comparison-derived metric requires a date range');
+  if (analysis.comparison === 'month_over_month' && (groupBy === 'quarter' || groupBy === 'year')) throw new Error('Month-over-month requires date or month grouping');
+  if (analysis.movingAverage !== undefined) {
+    if (!record(analysis.movingAverage) || !exactKeys(analysis.movingAverage, ['window'], ['window']) ||
+      !Number.isInteger(analysis.movingAverage.window) || Number(analysis.movingAverage.window) < 2 || Number(analysis.movingAverage.window) > 24 ||
+      !groupBy || !timeDimensions.includes(groupBy) || semantics.kind === 'comparison_derived') throw new Error('Moving average requires an ordered time dimension and window 2–24');
+  }
+  if (analysis.runningTotal !== undefined && (analysis.runningTotal !== true || !groupBy || !timeDimensions.includes(groupBy) || semantics.kind !== 'additive')) throw new Error('Running total requires an additive metric and ordered time dimension');
+  if (analysis.percentageContribution !== undefined && (analysis.percentageContribution !== true || !groupBy || semantics.kind !== 'additive')) throw new Error('Percentage contribution requires grouped additive metric');
+  if (analysis.ranking !== undefined && (analysis.ranking !== true || !groupBy)) throw new Error('Ranking requires grouping');
+  if (analysis.topN !== undefined && (!record(analysis.topN) || !exactKeys(analysis.topN, ['direction', 'limit'], ['direction', 'limit']) ||
+    !['top', 'bottom'].includes(String(analysis.topN.direction)) || !Number.isInteger(analysis.topN.limit) ||
+    Number(analysis.topN.limit) < 1 || Number(analysis.topN.limit) > 100 || !groupBy)) throw new Error('Top/bottom N requires grouping and limit 1–100');
+  if (analysis.movingAverage && (analysis.runningTotal || analysis.topN || analysis.percentageContribution)) throw new Error('Incompatible analysis combination');
+  if (analysis.runningTotal && (analysis.topN || analysis.percentageContribution)) throw new Error('Incompatible analysis combination');
+  if (analysis.percentageContribution && analysis.comparison) throw new Error('Incompatible analysis combination');
+}
+function validateMetricUse(metric: unknown, groupBy: unknown, analysis: unknown, dateRange: DateRange | undefined, filters: unknown): asserts metric is MetricId {
+  if (typeof metric !== 'string' || !isMetricId(metric)) throw new Error('Unknown metric');
+  if (groupBy !== undefined && (typeof groupBy !== 'string' || !isDimensionId(groupBy) || !semanticCatalog[metric].dimensions.includes(groupBy))) throw new Error('Unsupported dimension');
+  if (filters !== undefined && (!Array.isArray(filters) || filters.some(f => !validFilter(f) || !semanticCatalog[metric].dimensions.includes(f.dimension)))) throw new Error('Unsupported filter');
+  if (semanticCatalog[metric].semantics.kind === 'snapshot' && Array.isArray(filters) && filters.some(f => timeDimensions.includes(f.dimension))) throw new Error('Snapshot time scope must use dateRange');
+  validateAnalysis(analysis, metric, groupBy as DimensionId | undefined, dateRange);
+}
+export function validWidget(v: unknown, dateRange?: DateRange): v is DashboardWidget {
+  if (!record(v) || !['kpi', 'line', 'bar', 'table'].includes(String(v.type)) || typeof v.id !== 'string' ||
+    !/^[a-z0-9][a-z0-9_-]*$/.test(v.id) || v.id.length > 80 || (v.type === 'line' && v.dimension === undefined)) return false;
+  try { validateMetricUse(v.metric, v.dimension, v.analysis, dateRange, undefined); return true; } catch { return false; }
+}
 export function validateDashboardSpec(v: unknown): asserts v is DashboardSpec {
-  if (!checkDashboardSchema(v) || !record(v) || !Array.isArray(v.widgets) ||
-    !v.widgets.every(validWidget) || new Set(v.widgets.map(w => w.id)).size !== v.widgets.length ||
-    !validFilters(v.filters)) throw new Error('Invalid DashboardSpec v1');
+  if (!checkDashboardSchema(v) || !record(v) || !record(v.filters) || !Array.isArray(v.widgets)) throw new Error('Invalid DashboardSpec v1');
+  const range = v.filters.dateRange;
+  if (range !== undefined && !validDateRange(range)) throw new Error('Invalid dashboard date range');
+  if (new Set(v.widgets.map(w => record(w) ? w.id : undefined)).size !== v.widgets.length) throw new Error('Duplicate widget ID');
+  for (const widget of v.widgets) {
+    if (!validWidget(widget, range as DateRange | undefined)) throw new Error('Invalid dashboard widget');
+    validateMetricUse(widget.metric, widget.dimension, widget.analysis, range as DateRange | undefined, v.filters.dimensions);
+  }
 }
 export function validateQuery(query: AnalyticsQuery, context: AnalyticsContext): void {
   if (!context?.tenantId?.trim() || !['en', 'ar'].includes(context.locale)) throw new Error('Tenant context and locale are required');
-  if (!isMetricId(query.metric)) throw new Error('Unknown metric');
-  if (query.groupBy && (!isDimensionId(query.groupBy) || !semanticCatalog[query.metric].dimensions.includes(query.groupBy))) throw new Error('Unsupported dimension');
-  if (query.dateRange && !validDateRange(query.dateRange)) throw new Error('Invalid date range');
-  if (query.filters?.some(f => !validFilter(f) || !semanticCatalog[query.metric].dimensions.includes(f.dimension))) throw new Error('Unsupported filter');
-  if (query.operation && (!validOperation(query.operation) || !semanticCatalog[query.metric].operations.includes(query.operation.kind))) throw new Error('Unsupported operation');
-  if (query.aggregation && !['sum', 'count', 'average', 'min', 'max'].includes(query.aggregation)) throw new Error('Unsupported aggregation');
+  if (!record(query) || !exactKeys(query, ['metric', 'aggregation', 'groupBy', 'dateRange', 'filters', 'analysis'], ['metric'])) throw new Error('Invalid analytics query');
+  if (query.dateRange !== undefined && !validDateRange(query.dateRange)) throw new Error('Invalid date range');
+  validateMetricUse(query.metric, query.groupBy, query.analysis, query.dateRange, query.filters);
+  if (query.aggregation !== undefined && (!['sum', 'count', 'average', 'min', 'max'].includes(query.aggregation) || semanticCatalog[query.metric].semantics.kind !== 'additive')) throw new Error('Aggregation override requires an additive metric');
+}
+
+export function validateDashboardPatch(v: unknown): asserts v is DashboardPatch {
+  if (!checkPatchSchema(v)) throw new Error('Invalid DashboardPatch v1');
 }

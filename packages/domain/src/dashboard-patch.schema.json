@@ -1,0 +1,278 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://el-dabbous.example/schemas/dashboard-patch/v1",
+  "title": "DashboardPatch v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "operations"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "operations": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 30,
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "op",
+              "widget"
+            ],
+            "properties": {
+              "op": {
+                "const": "add"
+              },
+              "widget": {
+                "$ref": "#/$defs/widget"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "op",
+              "widgetId"
+            ],
+            "properties": {
+              "op": {
+                "const": "remove"
+              },
+              "widgetId": {
+                "$ref": "#/$defs/id"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "op",
+              "widgetId",
+              "widget"
+            ],
+            "properties": {
+              "op": {
+                "const": "replace"
+              },
+              "widgetId": {
+                "$ref": "#/$defs/id"
+              },
+              "widget": {
+                "$ref": "#/$defs/widget"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "op",
+              "title"
+            ],
+            "properties": {
+              "op": {
+                "const": "set_title"
+              },
+              "title": {
+                "$ref": "#/$defs/text"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "op",
+              "filters"
+            ],
+            "properties": {
+              "op": {
+                "const": "set_filters"
+              },
+              "filters": {
+                "$ref": "#/$defs/filters"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]*$",
+      "maxLength": 80
+    },
+    "text": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "en",
+        "ar"
+      ],
+      "properties": {
+        "en": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ar": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "dateRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "to"
+      ],
+      "properties": {
+        "from": {
+          "type": "string",
+          "format": "date"
+        },
+        "to": {
+          "type": "string",
+          "format": "date"
+        }
+      }
+    },
+    "filter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dimension",
+        "values"
+      ],
+      "properties": {
+        "dimension": {
+          "type": "string"
+        },
+        "values": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "filters": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "dateRange": {
+          "$ref": "#/$defs/dateRange"
+        },
+        "dimensions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/filter"
+          }
+        }
+      }
+    },
+    "widget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "metric"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "type": {
+          "enum": [
+            "kpi",
+            "line",
+            "bar",
+            "table"
+          ]
+        },
+        "title": {
+          "$ref": "#/$defs/text"
+        },
+        "metric": {
+          "type": "string"
+        },
+        "dimension": {
+          "type": "string"
+        },
+        "analysis": {
+          "$ref": "#/$defs/analysis"
+        }
+      }
+    },
+    "analysis": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "comparison": {
+          "enum": [
+            "previous_period",
+            "month_over_month",
+            "year_over_year"
+          ]
+        },
+        "movingAverage": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "window"
+          ],
+          "properties": {
+            "window": {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 24
+            }
+          }
+        },
+        "runningTotal": {
+          "const": true
+        },
+        "percentageContribution": {
+          "const": true
+        },
+        "ranking": {
+          "const": true
+        },
+        "topN": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "direction",
+            "limit"
+          ],
+          "properties": {
+            "direction": {
+              "enum": [
+                "top",
+                "bottom"
+              ]
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        }
+      }
+    }
+  }
+}
