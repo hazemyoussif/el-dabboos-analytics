@@ -1,13 +1,9 @@
 # Scope
 
-## Deterministic foundation (completed)
+## Implemented prototype
 
-Monorepo, versioned dashboard contracts, semantic catalog, canonical source measures, mock and SQLite repositories, bounded analytics, tests, and architectural records.
-
-## First visible vertical slice (completed)
-
-Fastify API, application-level dashboard executor, three manual DashboardSpecs, richer two-year fixture, React/Vite renderer, English/Arabic RTL interface, and a deterministic mock planner for supported generation/edit intents. Manual dashboards work without a planner. The mock planner is a workflow demonstration, not an LLM evaluation.
+Source-independent semantic catalog and deterministic analytics, two controlled synthetic Iraq/Egypt tenants, an available/planned common metric registry, ten market-neutral templates, DashboardSpec/Patch v2 multi-series execution, tenant-aware Fastify API, and bilingual React renderer. The app opens under `demo-iq`; a controlled selector changes data, geography, currency, and locale context. A bounded mock planner demonstrates prompt generation and edits. Manual templates work without planning.
 
 ## Later
 
-Real LLM provider adapters and evaluation, operational source adapters, validated financial definitions, production authentication and tenancy, dashboard persistence, and the management report. These depend on integration answers and are not claimed by this slice.
+Real LLM provider adapters and evaluations, operational source adapters, approved accounting/currency definitions and FX policy, production authentication, dashboard persistence, forecasting, anomaly detection, and a management report. None are claimed by this slice.
