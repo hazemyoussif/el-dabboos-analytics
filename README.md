@@ -1,6 +1,6 @@
 # El-Dabbous AI Analytics
 
-A source-independent, bilingual analytics prototype with two controlled synthetic markets, a ready-made dashboard library, and DashboardSpec v2 multi-metric visualizations. The default local tenant is Iraq (`demo-iq`); Egypt (`demo-eg`) uses the same templates and metrics.
+A source-independent, bilingual analytics prototype with two controlled synthetic markets, a ready-made dashboard library, a session-only manual Dashboard Builder, and DashboardSpec v2 multi-metric visualizations. The default local tenant is Iraq (`demo-iq`); Egypt (`demo-eg`) uses the same templates and metrics.
 
 ## Local startup
 
@@ -42,3 +42,7 @@ KPI widgets have one series. Line/bar widgets can combine compatible metrics suc
 The browser receives currency, time zone, locale, and branch labels from the server's controlled profile. Synthetic Iraqi monetary facts are nominal IQD and Egyptian facts nominal EGP; there is no FX conversion. In an operational source, transaction currency, company/base currency, and reporting currency must be distinguished before any aggregation. Unrelated currencies must not be summed without an approved conversion policy. Arabic UI uses Modern Standard Arabic; Iraqi and Egyptian dialect synonyms support future planning/evaluation, not ordinary labels. The demo selector is not authentication.
 
 The fixture spans October 2024 through September 2026 with synthetic branch/customer geography. No branch or customer represents actual El-Dabbous operations. Planned metric concepts are discoverable but cannot execute until their data/formulas are approved. See [current assumptions](docs/architecture/current-assumptions.md), [architecture overview](docs/architecture/overview.md), and [ADRs](docs/architecture/adr/).
+
+## Manual Dashboard Builder
+
+Open a template and choose **Edit**, or choose **New dashboard** for an empty draft. Drag and resize cards, edit metrics and analyses, set dashboard filters, and use Undo/Redo. Layout changes stay local; semantic changes preview real tenant-scoped analytics through the existing API. Choose **View** to return to the dashboard. Builder changes are not persisted and switching markets reloads the active template. The demo planner’s generated dashboards can also enter Edit mode.

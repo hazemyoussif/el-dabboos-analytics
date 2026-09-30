@@ -113,6 +113,7 @@ export interface DashboardSpec {
   id: string;
   title: LocalizedText;
   locale: Locale;
+  /** User-requested filters. Future policy-enforced filters belong outside DashboardSpec. */
   filters: { dateRange?: DateRange; dimensions?: AnalyticsFilter[] };
   layout: DashboardLayout;
   widgets: DashboardWidget[];
