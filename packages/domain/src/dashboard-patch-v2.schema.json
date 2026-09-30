@@ -101,6 +101,22 @@
                 "$ref": "#/$defs/filters"
               }
             }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "op",
+              "layout"
+            ],
+            "properties": {
+              "op": {
+                "const": "set_layout"
+              },
+              "layout": {
+                "$ref": "#/$defs/layout"
+              }
+            }
           }
         ]
       }
@@ -292,6 +308,77 @@
         },
         "analysis": {
           "$ref": "#/$defs/analysis"
+        }
+      }
+    },
+    "gridItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "widgetId",
+        "x",
+        "y",
+        "w",
+        "h"
+      ],
+      "properties": {
+        "widgetId": {
+          "$ref": "#/$defs/id"
+        },
+        "x": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 11
+        },
+        "y": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 200
+        },
+        "w": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12
+        },
+        "h": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        },
+        "minW": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12
+        },
+        "minH": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        }
+      }
+    },
+    "layout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "columns"
+      ],
+      "properties": {
+        "columns": {
+          "enum": [
+            1,
+            2,
+            3,
+            4,
+            12
+          ]
+        },
+        "items": {
+          "type": "array",
+          "maxItems": 30,
+          "items": {
+            "$ref": "#/$defs/gridItem"
+          }
         }
       }
     }

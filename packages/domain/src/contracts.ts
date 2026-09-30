@@ -92,6 +92,9 @@ export interface AnalyticsRepository {
   execute(query: AnalyticsQuery, context: AnalyticsContext): Promise<AnalyticsResult>;
 }
 export type WidgetType = 'kpi' | 'line' | 'bar' | 'table';
+export interface DashboardGridItem { widgetId: string; x: number; y: number; w: number; h: number; minW?: number; minH?: number }
+/** Explicit items use a canonical 12-column desktop grid; older v2 layouts may omit them. */
+export interface DashboardLayout { columns: 1 | 2 | 3 | 4 | 12; items?: DashboardGridItem[] }
 /** In a multi-series widget, only the first series may use topN; its keys select the displayed rows. */
 export interface DashboardSeries { id: string; metric: MetricId; analysis?: AnalysisSpec }
 export interface DashboardWidget {
@@ -108,7 +111,7 @@ export interface DashboardSpec {
   title: LocalizedText;
   locale: Locale;
   filters: { dateRange?: DateRange; dimensions?: AnalyticsFilter[] };
-  layout: { columns: 1 | 2 | 3 | 4 };
+  layout: DashboardLayout;
   widgets: DashboardWidget[];
 }
 export type DashboardPatch = {
@@ -119,6 +122,7 @@ export type DashboardPatch = {
     | { op: 'replace'; widgetId: string; widget: DashboardWidget }
     | { op: 'set_title'; title: LocalizedText }
     | { op: 'set_filters'; filters: DashboardSpec['filters'] }
+    | { op: 'set_layout'; layout: DashboardLayout }
   >;
 };
 export interface DashboardGenerationRequest { prompt: string; locale: Locale; context: AnalyticsContext; tenantProfile: TenantProfile }
