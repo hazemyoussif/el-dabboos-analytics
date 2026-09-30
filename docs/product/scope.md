@@ -1,13 +1,13 @@
 # Scope
 
-## First pass
+## Deterministic foundation (completed)
 
-Monorepo, contracts, schema, semantic catalog, normalized seed architecture, mock and SQLite repositories, contract tests, and architectural records.
+Monorepo, versioned dashboard contracts, semantic catalog, canonical source measures, mock and SQLite repositories, bounded analytics, tests, and architectural records.
 
-## October 3 prototype target
+## First visible vertical slice (completed)
 
-Add API, declarative React renderer, English/Arabic and RTL, mock planner, one local LLM provider when practical, generation/editing, comparison analytics, and evaluation cases. The prototype must also work with the LLM disabled.
+Fastify API, application-level dashboard executor, three manual DashboardSpecs, richer two-year fixture, React/Vite renderer, English/Arabic RTL interface, and a deterministic mock planner for supported generation/edit intents. Manual dashboards work without a planner. The mock planner is a workflow demonstration, not an LLM evaluation.
 
 ## Later
 
-Operational source adapters, validated financial definitions, production authentication and tenancy, full-scale seed data, more LLM providers, and a management report. These depend on integration answers and are not claimed by this first pass.
+Real LLM provider adapters and evaluation, operational source adapters, validated financial definitions, production authentication and tenancy, dashboard persistence, and the management report. These depend on integration answers and are not claimed by this slice.

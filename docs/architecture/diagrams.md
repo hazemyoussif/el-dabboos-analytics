@@ -19,16 +19,18 @@ C4Context
 C4Container
   Person(customer, "Customer")
   System_Boundary(platform, "Analytics platform") {
-    Container(ui, "React renderer", "React", "Declarative dashboard UI")
-    Container(api, "Analytics API", "TypeScript", "Validation and orchestration")
+    Container(ui, "React renderer", "React / Vite / Recharts", "Localized dashboards and prompt/edit controls")
+    Container(api, "Analytics API", "Fastify", "Demo tenant gate, validation, orchestration")
+    Container(application, "Application", "TypeScript", "Mock planner and per-widget executor")
     Container(domain, "Domain", "TypeScript", "Contracts and semantic catalog")
     Container(data, "Repository adapters", "TypeScript", "Canonical query execution")
   }
   ContainerDb(sqlite, "SQLite", "SQLite", "Local normalized facts")
   Rel(customer, ui, "Uses")
   Rel(ui, api, "Requests dashboards/results")
-  Rel(api, domain, "Validates")
-  Rel(api, data, "Executes")
+  Rel(api, application, "Plans and executes")
+  Rel(application, domain, "Validates")
+  Rel(application, data, "Queries through repository port")
   Rel(data, sqlite, "Reads tenant-scoped facts")
 ```
 
@@ -40,6 +42,7 @@ sequenceDiagram
   participant API
   participant Planner
   participant Validator
+  participant Executor
   participant Repository
   participant Renderer
   User->>API: Natural-language request + tenant
@@ -47,8 +50,10 @@ sequenceDiagram
   Planner-->>API: DashboardSpec
   API->>Validator: schema + semantic validation
   Validator-->>API: valid spec
-  API->>Repository: execute canonical queries
-  Repository-->>API: AnalyticsResult
+  API->>Executor: execute spec + demo tenant
+  Executor->>Repository: canonical query per widget
+  Repository-->>Executor: AnalyticsResult
+  Executor-->>API: per-widget success/error
   API-->>Renderer: spec + results
   Renderer-->>User: localized dashboard
 ```
@@ -66,7 +71,9 @@ sequenceDiagram
   Planner-->>API: DashboardPatch
   API->>Validator: validate patch and apply
   Validator->>Validator: validate resulting spec
-  API-->>User: updated dashboard
+  API->>Repository: execute patched dashboard
+  Repository-->>API: widget results
+  API-->>User: updated dashboard + results
 ```
 
 ## Analytics data flow
