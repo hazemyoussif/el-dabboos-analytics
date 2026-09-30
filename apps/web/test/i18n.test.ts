@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { tenantProfiles } from '@el-dabbous/domain';
-import { conversationalCopy, copy, formatDate, formatKey, formatValue, localeTag } from '../src/i18n.ts';
+import { conversationalCopy, copy, formatDate, formatKey, formatTimestamp, formatValue, localeTag } from '../src/i18n.ts';
 const iq = tenantProfiles['demo-iq'];
 const eg = tenantProfiles['demo-eg'];
 test('Iraqi and Egyptian profiles control currency and locale formatting', () => {
@@ -33,4 +33,12 @@ test('conversational guidance follows the selected market without changing MSA l
   assert.equal(conversationalCopy('en', iq).placeholder, conversationalCopy('en', eg).placeholder);
   assert.equal(copy.ar.market, 'السوق');
   assert.equal(copy.ar.promptTitle, 'صف لوحة المعلومات التي تحتاجها');
+});
+test('data coverage and optional source update labels are distinct and localized', () => {
+  assert.equal(copy.en.dataThrough, 'Data through');
+  assert.equal(copy.en.sourceUpdated, 'Source updated');
+  assert.equal(copy.ar.dataThrough, 'البيانات حتى');
+  assert.equal(copy.ar.sourceUpdated, 'تحديث المصدر');
+  assert.match(formatTimestamp('2026-01-30T08:00:00.000Z', 'en', iq), /11:00/u);
+  assert.match(formatTimestamp('2026-01-30T08:00:00.000Z', 'en', eg), /10:00/u);
 });

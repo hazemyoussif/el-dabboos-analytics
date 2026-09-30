@@ -8,7 +8,7 @@
 - Gross margin is gross profit/net revenue, AOV is revenue/order count, and win rate is won/closed opportunities. Malik must confirm the production closed-state definition. MTBF is operating hours/failures; MTTR is repair hours/completed repairs. These formulas remain provisional.
 - Receivables and inventory are entity-level snapshots, not additive across dates. Date ranges define snapshot time scope; event-month filters are rejected for snapshots.
 - Query dates are inclusive ISO dates. Comparisons use UTC calendar arithmetic and complete prior buckets. Template presets resolve against the tenant's time zone. Fiscal calendars remain unresolved.
-- `sourceAsOf` from the SQLite fixture is the tenant's latest event date, not a verified ingestion timestamp.
+- `dataThrough` reflects the latest relevant tenant business/event date for each metric and is independent of the query period. The SQLite and mock adapters omit `sourceAsOf` unless a real synchronization/extraction timestamp is explicitly configured.
 - DashboardSpec v1 was the initial single-metric prototype schema. V2 is the active multi-series schema and patch contract. No persisted production specs require migration.
 - The mock planner demonstrates bounded sales intent and five edits; it is not an LLM or a general dialect parser. Planning can be disabled while templates continue working.
 - Planned metrics in the product registry are recognized concepts only. They have no executable formula or approved source data and cannot enter a DashboardSpec.

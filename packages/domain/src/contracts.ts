@@ -79,6 +79,9 @@ export interface AnalyticsResult {
   metadata: {
     sourceId: string;
     executedAt: string;
+    /** Latest event date among tenant facts needed for this metric, independent of the query period. */
+    dataThrough?: string;
+    /** Source extraction/synchronization timestamp, only when supplied by the adapter. */
     sourceAsOf?: string;
     metricType: MetricType;
     unit?: string;

@@ -7,7 +7,7 @@ export const copy = {
     promptPlaceholder: 'Create an executive sales dashboard for this year showing revenue, gross margin, order count, monthly revenue vs last year, top customers and outstanding receivables.',
     generate: 'Generate dashboard', editTitle: 'Refine this dashboard', editPlaceholder: 'e.g. Add a three-month moving average', apply: 'Apply edit',
     loading: 'Building your dashboard…', empty: 'No data for this selection', failed: 'This widget could not be loaded',
-    source: 'Source', fresh: 'Data as of', period: 'Period', widgets: 'widgets', partial: 'Some widgets need attention',
+    source: 'Source', dataThrough: 'Data through', sourceUpdated: 'Source updated', period: 'Period', widgets: 'widgets', partial: 'Some widgets need attention',
     results: 'Results', value: 'Value', change: 'Change', rank: 'Rank', manual: 'Template dashboard', generated: 'Generated with demo planner',
     select: 'Choose a dashboard', noDashboard: 'Choose a template or describe a dashboard to begin.',
     examples: ['Replace order count with average order value', 'Show only Cairo and Alexandria', 'Change top customers from revenue to gross profit', 'Add a three-month moving average', 'Remove outstanding receivables'],
@@ -20,7 +20,7 @@ export const copy = {
     promptPlaceholder: 'أنشئ لوحة للمبيعات تعرض الإيرادات وهامش الربح وأعلى العملاء والمديونيات',
     generate: 'إنشاء لوحة', editTitle: 'عدّل هذه اللوحة', editPlaceholder: 'مثال: أضف متوسط متحرك لثلاثة أشهر', apply: 'تطبيق التعديل',
     loading: 'جارٍ تجهيز لوحة المعلومات…', empty: 'لا توجد بيانات لهذا الاختيار', failed: 'تعذّر تحميل هذه البطاقة',
-    source: 'المصدر', fresh: 'البيانات حتى', period: 'الفترة', widgets: 'بطاقات', partial: 'بعض البطاقات تحتاج إلى مراجعة',
+    source: 'المصدر', dataThrough: 'البيانات حتى', sourceUpdated: 'تحديث المصدر', period: 'الفترة', widgets: 'بطاقات', partial: 'بعض البطاقات تحتاج إلى مراجعة',
     results: 'النتائج', value: 'القيمة', change: 'التغير', rank: 'الترتيب', manual: 'لوحة من القوالب', generated: 'أنشئت بمخطط تجريبي',
     select: 'اختر لوحة', noDashboard: 'اختر قالب لوحة أو صف لوحة جديدة للبدء.',
     examples: ['استبدل عدد الطلبات بمتوسط قيمة الطلب', 'اعرض فرعين فقط', 'غيّر أعلى العملاء إلى إجمالي الربح', 'أضف متوسط متحرك لثلاثة أشهر', 'أزل المديونيات'],
@@ -50,6 +50,9 @@ export function formatValue(value: number | null, type: MetricType, locale: Loca
 }
 export function formatDate(value: string, locale: Locale, profile: TenantProfile): string {
   return new Intl.DateTimeFormat(localeTag(locale, profile), { dateStyle: 'medium', timeZone: profile.timeZone }).format(new Date(`${value}T12:00:00Z`));
+}
+export function formatTimestamp(value: string, locale: Locale, profile: TenantProfile): string {
+  return new Intl.DateTimeFormat(localeTag(locale, profile), { dateStyle: 'medium', timeStyle: 'short', timeZone: profile.timeZone }).format(new Date(value));
 }
 export function formatKey(key: string | null, dimension: DimensionId | undefined, locale: Locale, profile: TenantProfile): string {
   if (key === null) return '—';

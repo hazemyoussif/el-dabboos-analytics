@@ -26,6 +26,8 @@ test('analytics requires a registered tenant and isolates Iraq from Egypt', asyn
   const iraq = await app.inject({ method: 'POST', url: '/api/analytics/query', headers: { ...iq, 'x-currency': 'EGP', 'x-country': 'EG' }, payload });
   const egypt = await app.inject({ method: 'POST', url: '/api/analytics/query', headers: eg, payload });
   assert.equal(iraq.json().rows[0].value, 100);
+  assert.equal(iraq.json().metadata.dataThrough, '2026-01-15');
+  assert.equal(iraq.json().metadata.sourceAsOf, undefined);
   assert.equal(egypt.json().rows[0].value, 250);
   assert.equal((await app.inject({ method: 'GET', url: '/api/tenant-profile', headers: iq })).json().reportingCurrency, 'IQD');
 });

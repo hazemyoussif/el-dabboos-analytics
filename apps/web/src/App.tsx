@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { DashboardExecutionResult, DashboardTemplate } from '@el-dabbous/application';
 import type { DashboardSpec, Locale, ProductMetric, SemanticMetric, TenantProfile } from '@el-dabbous/domain';
 import { DashboardRenderer } from './Renderer.tsx';
-import { conversationalCopy, copy, formatDate } from './i18n.ts';
+import { conversationalCopy, copy, formatDate, formatTimestamp } from './i18n.ts';
 
 type ApiError = { error?: { code: string; message: string } };
 async function api<T>(path: string, tenantId: string, locale: Locale, method = 'GET', body?: unknown): Promise<T> {
@@ -103,7 +103,7 @@ export default function App() {
       <details className="catalog-panel"><summary>{t.metricCatalog} · {metricRegistry.filter(item => item.availability === 'available').length} {t.available} · {metricRegistry.filter(item => item.availability === 'planned').length} {t.planned}</summary><div className="catalog-list">{metricRegistry.map(item => <div key={item.id} className="catalog-metric"><span>{item.labels[locale]}</span><span className={item.availability === 'available' ? 'metric-available' : 'metric-planned'}>{item.availability === 'available' ? t.available : t.planned}</span></div>)}</div></details>
       {error && <div className="global-error" role="alert"><span>!</span>{error}<button onClick={() => setError(null)} aria-label="Dismiss">×</button></div>}
       <section className="dashboard-section"><div className="dashboard-title-row"><div><div className="eyebrow eyebrow-light">{mode === 'generated' ? t.generated : t.manual}</div><h2>{dashboard?.title[locale] ?? t.noDashboard}</h2></div>{dashboard && <span className="widget-count">{dashboard.widgets.length} {t.widgets}</span>}</div>
-      {dashboard && profile && <div className="meta-strip"><div><span>{t.period}</span><strong>{dashboard.filters.dateRange ? `${formatDate(dashboard.filters.dateRange.from, locale, profile)} — ${formatDate(dashboard.filters.dateRange.to, locale, profile)}` : '—'}</strong></div><div><span>{t.source}</span><strong>{metadata?.sourceId ?? '—'}</strong></div><div><span>{t.fresh}</span><strong>{metadata?.sourceAsOf ? formatDate(metadata.sourceAsOf.slice(0, 10), locale, profile) : '—'}</strong></div></div>}
+      {dashboard && profile && <div className="meta-strip"><div><span>{t.period}</span><strong>{dashboard.filters.dateRange ? `${formatDate(dashboard.filters.dateRange.from, locale, profile)} — ${formatDate(dashboard.filters.dateRange.to, locale, profile)}` : '—'}</strong></div><div><span>{t.source}</span><strong>{metadata?.sourceId ?? '—'}</strong></div><div><span>{t.dataThrough}</span><strong>{metadata?.dataThrough ? formatDate(metadata.dataThrough, locale, profile) : '—'}</strong></div>{metadata?.sourceAsOf && <div><span>{t.sourceUpdated}</span><strong>{formatTimestamp(metadata.sourceAsOf, locale, profile)}</strong></div>}</div>}
       {execution?.metadata.failedSeries ? <div className="partial-note">{t.partial}: {execution.metadata.failedSeries}</div> : null}
       {loading && <div className="loading-state" role="status"><span className="spinner" />{t.loading}</div>}
       {!loading && execution && profile && <DashboardRenderer execution={execution} catalog={catalog} locale={locale} profile={profile} />}

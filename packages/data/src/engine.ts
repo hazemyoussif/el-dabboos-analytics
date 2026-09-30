@@ -105,6 +105,7 @@ export function executeFacts(facts: readonly AnalyticsFact[], query: AnalyticsQu
   const metric = semanticCatalog[query.metric];
   const measures = new Set(requiredMeasures(query.metric));
   const scoped = facts.filter(f => f.tenantId === context.tenantId && measures.has(f.measureId));
+  const dataThrough = scoped.reduce<string | undefined>((latest, fact) => !latest || fact.date > latest ? fact.date : latest, undefined);
   const comparison = query.analysis?.comparison ?? (metric.semantics.kind === 'comparison_derived' ? metric.semantics.defaultComparison : undefined);
   let rows: AnalyticsRow[] = currentKeys(scoped, query).map(key => {
     const currentRange = rangeForKey(query, key);
@@ -151,6 +152,7 @@ export function executeFacts(facts: readonly AnalyticsFact[], query: AnalyticsQu
   const percentage = !!query.analysis?.percentageContribution;
   return { metric: query.metric, groupBy: query.groupBy ?? null, rows,
     metadata: { sourceId: execution.sourceId, executedAt: execution.executedAt,
+      ...(dataThrough ? { dataThrough } : {}),
       ...(execution.sourceAsOf ? { sourceAsOf: execution.sourceAsOf } : {}),
       metricType: percentage ? 'percentage' : metric.type,
       ...(percentage ? { unit: '%' } : metric.presentation.unit ? { unit: metric.presentation.unit } : {}),

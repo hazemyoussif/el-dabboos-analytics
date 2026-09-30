@@ -31,13 +31,17 @@ function contract(name: string, create: () => AnalyticsRepository) {
     const revenue = await repo.execute({ metric: 'revenue', dateRange }, context);
     assert.deepEqual(revenue.rows, [{ key: null, value: 350 }]);
     assert.deepEqual(revenue.metadata, { sourceId: name, executedAt: '2026-09-30T12:00:00.000Z',
-      sourceAsOf: '2026-09-30T08:00:00.000Z', metricType: 'currency', semantics: 'additive' });
+      dataThrough: '2026-02-16', sourceAsOf: '2026-09-30T08:00:00.000Z', metricType: 'currency', semantics: 'additive' });
     assert.deepEqual((await repo.execute({ metric: 'revenue', dateRange, groupBy: 'branch' }, context)).rows,
       [{ key: 'cairo', value: 300 }, { key: 'giza', value: 50 }]);
     assert.deepEqual((await repo.execute({ metric: 'revenue', dateRange, groupBy: 'branch', analysis: { topN: { direction: 'top', limit: 1 } } }, context)).rows,
       [{ key: 'cairo', value: 300 }]);
-    assert.equal((await repo.execute({ metric: 'average_order_value', dateRange }, context)).rows[0]?.value, 350 / 6);
-    assert.equal((await repo.execute({ metric: 'stock_on_hand', dateRange }, context)).rows[0]?.value, 20);
+    const aov = await repo.execute({ metric: 'average_order_value', dateRange }, context);
+    assert.equal(aov.rows[0]?.value, 350 / 6);
+    assert.equal(aov.metadata.dataThrough, '2026-02-16');
+    const stock = await repo.execute({ metric: 'stock_on_hand', dateRange }, context);
+    assert.equal(stock.rows[0]?.value, 20);
+    assert.equal(stock.metadata.dataThrough, '2026-02-15');
     assert.equal((await repo.execute({ metric: 'revenue', dateRange, groupBy: 'branch', filters: [{ dimension: 'customer', values: ['two'] }] }, context)).rows[0]?.value, 50);
     assert.equal((await repo.execute({ metric: 'revenue', dateRange, groupBy: 'month', analysis: { runningTotal: true } }, context)).rows[1]?.value, 350);
     assert.equal((await repo.execute({ metric: 'revenue', dateRange, analysis: { comparison: 'year_over_year' } }, context)).rows[0]?.comparisonValue, 125);
@@ -66,19 +70,33 @@ test('seed is deterministic and contains only canonical source measures', () => 
   assert.equal(first[0]?.tenantId, 'demo-iq');
   assert.equal(new Set(first.filter(f => f.measureId === 'revenue').map(f => f.dimensions.branch)).size, 6);
 });
-test('SQLite source-as-of is computed for each tenant independently', async () => {
+test('SQLite data coverage is tenant and metric scoped and does not fabricate source freshness', async () => {
   const db = new DatabaseSync(':memory:');
   createSqliteSchema(db);
   insertFacts(db, [
     { tenantId: 'demo-iq', measureId: 'revenue', date: '2026-08-15', value: 10, dimensions: { branch: 'baghdad' } },
     { tenantId: 'demo-eg', measureId: 'revenue', date: '2026-09-20', value: 20, dimensions: { branch: 'cairo' } },
+    { tenantId: 'demo-iq', measureId: 'order_count', date: '2026-09-25', value: 1, dimensions: { branch: 'baghdad' } },
   ]);
   const repo = new SqliteAnalyticsRepository(db);
   const iq = await repo.execute({ metric: 'revenue' }, { tenantId: 'demo-iq', locale: 'ar' });
   const eg = await repo.execute({ metric: 'revenue' }, { tenantId: 'demo-eg', locale: 'ar' });
-  assert.equal(iq.metadata.sourceAsOf, '2026-08-15T00:00:00.000Z');
-  assert.equal(eg.metadata.sourceAsOf, '2026-09-20T00:00:00.000Z');
+  assert.equal(iq.metadata.dataThrough, '2026-08-15');
+  assert.equal(eg.metadata.dataThrough, '2026-09-20');
+  assert.equal(iq.metadata.sourceAsOf, undefined);
+  assert.equal(eg.metadata.sourceAsOf, undefined);
   assert.equal(iq.rows[0]?.value, 10);
   assert.equal(eg.rows[0]?.value, 20);
   db.close();
+});
+test('mock coverage is metric scoped and source freshness is absent unless configured', async () => {
+  const repo = new MockAnalyticsRepository(facts);
+  const revenue = await repo.execute({ metric: 'revenue', dateRange: { from: '2026-01-01', to: '2026-01-31' } }, context);
+  assert.equal(revenue.metadata.dataThrough, '2026-02-16');
+  assert.equal(revenue.metadata.sourceAsOf, undefined);
+  const stock = await repo.execute({ metric: 'stock_on_hand' }, context);
+  assert.equal(stock.metadata.dataThrough, '2026-02-15');
+  assert.equal(stock.metadata.sourceAsOf, undefined);
+  const missing = await repo.execute({ metric: 'revenue' }, { tenantId: 'missing', locale: 'en' });
+  assert.equal(missing.metadata.dataThrough, undefined);
 });
