@@ -17,8 +17,8 @@ test('management fixture has useful entity breadth and stable snapshot identitie
 test('fixture contains intentional sales, overdue, stock, and maintenance patterns', () => {
   const early = (f: (typeof facts)[number]) => f.date < '2025-04-01';
   const late = (f: (typeof facts)[number]) => f.date >= '2026-04-01';
-  assert.ok(sum(by('revenue', f => f.dimensions.branch === 'cairo' && late(f))) > sum(by('revenue', f => f.dimensions.branch === 'cairo' && early(f))));
-  assert.ok(sum(by('revenue', f => f.dimensions.branch === 'giza' && late(f))) < sum(by('revenue', f => f.dimensions.branch === 'giza' && early(f))));
+  assert.ok(sum(by('revenue', f => f.dimensions.branch === 'baghdad' && late(f))) > sum(by('revenue', f => f.dimensions.branch === 'baghdad' && early(f))));
+  assert.ok(sum(by('revenue', f => f.dimensions.branch === 'basra' && late(f))) < sum(by('revenue', f => f.dimensions.branch === 'basra' && early(f))));
   assert.ok(sum(by('overdue_amount', f => f.dimensions.customer === 'customer_001' && late(f))) > sum(by('overdue_amount', f => f.dimensions.customer === 'customer_001' && early(f))));
   assert.ok(sum(by('stock_on_hand', f => f.dimensions.product === 'product_001' && late(f))) < sum(by('stock_on_hand', f => f.dimensions.product === 'product_001' && early(f))));
   assert.ok(sum(by('failure_count', f => f.dimensions.equipment_category === 'compressor' && late(f))) > sum(by('failure_count', f => f.dimensions.equipment_category === 'compressor' && early(f))));
@@ -30,6 +30,18 @@ test('fixture contains intentional sales, overdue, stock, and maintenance patter
 test('generator is deterministic for a fixed seed and differs for another seed', () => {
   const again = generateSeedFacts();
   assert.deepEqual(again, facts);
-  const changed = generateSeedFacts('demo', 20261004);
+  const changed = generateSeedFacts('demo-iq', 20261004);
   assert.notEqual(changed[0]?.value, facts[0]?.value);
+});
+
+test('Iraq and Egypt fixtures use distinct controlled geography and tenant IDs', () => {
+  const egypt = generateSeedFacts('demo-eg');
+  const iraqBranches = new Set(by('revenue', () => true).map(f => f.dimensions.branch));
+  const egyptBranches = new Set(egypt.filter(f => f.measureId === 'revenue').map(f => f.dimensions.branch));
+  assert.deepEqual(iraqBranches, new Set(['baghdad', 'basra', 'erbil', 'najaf', 'mosul', 'karbala']));
+  assert.deepEqual(egyptBranches, new Set(['cairo', 'giza', 'alexandria', 'mansoura', 'tanta', 'aswan']));
+  assert.ok(facts.every(f => f.tenantId === 'demo-iq'));
+  assert.ok(egypt.every(f => f.tenantId === 'demo-eg'));
+  assert.ok(new Set(egypt.filter(f => f.measureId === 'revenue').map(f => f.dimensions.customer)).size >= 300);
+  assert.ok(facts.length > egypt.length);
 });

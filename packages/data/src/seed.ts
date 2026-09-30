@@ -1,20 +1,25 @@
 import type { AnalyticsFact } from './facts.ts';
+import { tenantProfiles } from '@el-dabbous/domain';
+import type { TenantProfile } from '@el-dabbous/domain';
 
-const branches = ['cairo', 'giza', 'alexandria', 'mansoura', 'tanta', 'aswan'] as const;
-const warehouses = ['cairo-main', 'giza-main', 'alex-main', 'delta-main', 'south-main'] as const;
 const categories = Array.from({ length: 18 }, (_, i) => `category_${String(i + 1).padStart(2, '0')}`);
-const customers = Array.from({ length: 360 }, (_, i) => `customer_${String(i + 1).padStart(3, '0')}`);
 const products = Array.from({ length: 160 }, (_, i) => `product_${String(i + 1).padStart(3, '0')}`);
 const equipment = Array.from({ length: 150 }, (_, i) => `equipment_${String(i + 1).padStart(3, '0')}`);
 const technicians = Array.from({ length: 8 }, (_, i) => `technician_${i + 1}`);
+const monetaryMeasures = new Set<AnalyticsFact['measureId']>(['revenue', 'net_revenue', 'gross_profit', 'pipeline_value', 'weighted_pipeline', 'invoiced_amount', 'collected_amount', 'outstanding_amount', 'overdue_amount', 'inventory_value', 'maintenance_cost']);
 
 /** Two years of canonical source measures with fixed, discoverable business patterns. */
-export function generateSeedFacts(tenantId = 'demo', seed = 20261003): AnalyticsFact[] {
+export function generateSeedFacts(tenantId: TenantProfile['id'] = 'demo-iq', seed = 20261003): AnalyticsFact[] {
+  const profile = tenantProfiles[tenantId];
+  const branches = Object.keys(profile.branchLabels);
+  const warehouses = branches.slice(0, 5).map(branch => `${branch}-main`);
+  const customersPerBranch = tenantId === 'demo-iq' ? 70 : 60;
+  const customers = Array.from({ length: branches.length * customersPerBranch }, (_, i) => `customer_${String(i + 1).padStart(3, '0')}`);
   let state = seed >>> 0;
   const random = () => ((state = (1664525 * state + 1013904223) >>> 0) / 4294967296);
   const facts: AnalyticsFact[] = [];
   const add = (measureId: AnalyticsFact['measureId'], date: string, value: number, dimensions: AnalyticsFact['dimensions'], entityId?: string) => {
-    facts.push({ tenantId, measureId, date, value: Math.round(value * 100) / 100, dimensions,
+    facts.push({ tenantId, measureId, date, value: Math.round(value * (tenantId === 'demo-iq' && monetaryMeasures.has(measureId) ? 100 : 1) * 100) / 100, dimensions,
       ...(entityId ? { entityId } : {}) });
   };
   for (let month = 0; month < 24; month++) {
@@ -25,10 +30,10 @@ export function generateSeedFacts(tenantId = 'demo', seed = 20261003): Analytics
     for (let b = 0; b < branches.length; b++) {
       const branch = branches[b]!;
       const trend = b === 0 ? 1 + month * 0.035 : b === 1 ? 1 - month * 0.018 : 1 + month * 0.004;
-      const region = b < 2 ? 'greater_cairo' : b === 5 ? 'upper_egypt' : 'delta_coast';
-      for (let order = 0; order < 48; order++) {
+      const region = tenantId === 'demo-iq' ? (b < 2 ? 'central_south' : b === 4 ? 'north' : 'central') : (b < 2 ? 'greater_cairo' : b === 5 ? 'upper_egypt' : 'delta_coast');
+      for (let order = 0; order < (tenantId === 'demo-iq' ? 54 : 48); order++) {
         const date = `${ym}-${String(1 + (order * 7 + b) % 28).padStart(2, '0')}`;
-        const customerIndex = (b * 60 + order * 11 + month * 7) % customers.length;
+        const customerIndex = (b * customersPerBranch + order * 11 + month * 7) % customers.length;
         const customer = customers[customerIndex]!;
         const productIndex = (order * 13 + month * 5 + b * 17) % products.length;
         const product = products[productIndex]!;
@@ -65,11 +70,11 @@ export function generateSeedFacts(tenantId = 'demo', seed = 20261003): Analytics
     }
     for (let c = 0; c < customers.length; c++) {
       const customer = customers[c]!;
-      const b = Math.floor(c / 60);
+      const b = Math.floor(c / customersPerBranch);
       const branch = branches[b]!;
       const growth = c < 8 ? 1 + month * 0.065 : 1 + month * 0.003;
       const balance = (c < 12 ? 16000 : 1800 + (c % 13) * 160) * growth * (0.9 + random() * 0.2);
-      const dims = { customer, branch, region: b < 2 ? 'greater_cairo' : b === 5 ? 'upper_egypt' : 'delta_coast' };
+      const dims = { customer, branch, region: tenantId === 'demo-iq' ? (b < 2 ? 'central_south' : b === 4 ? 'north' : 'central') : (b < 2 ? 'greater_cairo' : b === 5 ? 'upper_egypt' : 'delta_coast') };
       add('outstanding_amount', `${ym}-25`, balance, dims, `receivable:${customer}`);
       add('overdue_amount', `${ym}-25`, balance * (c < 8 ? 0.68 : c < 36 ? 0.3 : 0.09), dims, `overdue:${customer}`);
     }

@@ -37,9 +37,11 @@ export class SqliteAnalyticsRepository implements AnalyticsRepository {
       ...(row.entity_id === null ? {} : { entityId: String(row.entity_id) }),
       dimensions: JSON.parse(String(row.dimensions_json)) as Partial<Record<DimensionId, string>>,
     }));
+    const latest = this.db.prepare('SELECT max(event_date) AS date FROM analytics_facts WHERE tenant_id = ?').get(context.tenantId)?.date;
+    const sourceAsOf = this.options.sourceAsOf ?? (typeof latest === 'string' ? `${latest}T00:00:00.000Z` : undefined);
     return executeFacts(facts, query, context, {
       sourceId: 'sqlite', executedAt: (this.options.clock?.() ?? new Date()).toISOString(),
-      ...(this.options.sourceAsOf ? { sourceAsOf: this.options.sourceAsOf } : {}),
+      ...(sourceAsOf ? { sourceAsOf } : {}),
     });
   }
 }

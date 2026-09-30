@@ -63,6 +63,22 @@ test('seed is deterministic and contains only canonical source measures', () => 
   assert.deepEqual(first, generateSeedFacts());
   assert.ok(first.length > 100_000);
   assert.ok(first.every(f => factMeasureIds.includes(f.measureId)));
-  const cairo = first.filter(f => f.measureId === 'revenue' && f.dimensions.branch === 'cairo');
-  assert.ok(cairo.at(-1)!.value > cairo[0]!.value);
+  assert.equal(first[0]?.tenantId, 'demo-iq');
+  assert.equal(new Set(first.filter(f => f.measureId === 'revenue').map(f => f.dimensions.branch)).size, 6);
+});
+test('SQLite source-as-of is computed for each tenant independently', async () => {
+  const db = new DatabaseSync(':memory:');
+  createSqliteSchema(db);
+  insertFacts(db, [
+    { tenantId: 'demo-iq', measureId: 'revenue', date: '2026-08-15', value: 10, dimensions: { branch: 'baghdad' } },
+    { tenantId: 'demo-eg', measureId: 'revenue', date: '2026-09-20', value: 20, dimensions: { branch: 'cairo' } },
+  ]);
+  const repo = new SqliteAnalyticsRepository(db);
+  const iq = await repo.execute({ metric: 'revenue' }, { tenantId: 'demo-iq', locale: 'ar' });
+  const eg = await repo.execute({ metric: 'revenue' }, { tenantId: 'demo-eg', locale: 'ar' });
+  assert.equal(iq.metadata.sourceAsOf, '2026-08-15T00:00:00.000Z');
+  assert.equal(eg.metadata.sourceAsOf, '2026-09-20T00:00:00.000Z');
+  assert.equal(iq.rows[0]?.value, 10);
+  assert.equal(eg.rows[0]?.value, 20);
+  db.close();
 });
