@@ -27,6 +27,7 @@ test('ratio and duration metrics aggregate components before division', () => {
     fact('net_revenue', '2026-01-15', 80), fact('net_revenue', '2026-02-15', 200),
     fact('opportunity_count', '2026-01-15', 4), fact('opportunity_count', '2026-02-15', 6),
     fact('won_opportunity_count', '2026-01-15', 2), fact('won_opportunity_count', '2026-02-15', 1),
+    fact('closed_opportunity_count', '2026-01-15', 3), fact('closed_opportunity_count', '2026-02-15', 5),
     fact('operating_hours', '2026-01-15', 100), fact('operating_hours', '2026-02-15', 200),
     fact('failure_count', '2026-01-15', 2), fact('failure_count', '2026-02-15', 1),
     fact('repair_hours', '2026-01-15', 10), fact('repair_hours', '2026-02-15', 20),
@@ -35,7 +36,7 @@ test('ratio and duration metrics aggregate components before division', () => {
   const dateRange = { from: '2026-01-01', to: '2026-02-28' };
   assert.equal(run(facts, { metric: 'average_order_value', dateRange }).rows[0]?.value, 60);
   assert.equal(run(facts, { metric: 'gross_margin', dateRange }).rows[0]?.value, 80 / 280 * 100);
-  assert.equal(run(facts, { metric: 'win_rate', dateRange }).rows[0]?.value, 30);
+  assert.equal(run(facts, { metric: 'win_rate', dateRange }).rows[0]?.value, 37.5);
   assert.equal(run(facts, { metric: 'mtbf', dateRange }).rows[0]?.value, 100);
   assert.equal(run(facts, { metric: 'mttr', dateRange }).rows[0]?.value, 7.5);
   assert.equal(run([fact('revenue', '2026-01-15', 100)], { metric: 'average_order_value', dateRange }).rows[0]?.value, null);

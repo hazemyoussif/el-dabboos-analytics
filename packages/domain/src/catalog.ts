@@ -26,7 +26,7 @@ const semantics: Record<MetricId, MetricSemantics> = {
   opportunity_count: { kind: 'additive', measure: 'opportunity_count' },
   pipeline_value: { kind: 'additive', measure: 'pipeline_value' },
   weighted_pipeline: { kind: 'additive', measure: 'weighted_pipeline' },
-  win_rate: { kind: 'ratio', numerator: 'won_opportunity_count', denominator: 'opportunity_count', scale: 100 },
+  win_rate: { kind: 'ratio', numerator: 'won_opportunity_count', denominator: 'closed_opportunity_count', scale: 100 },
   invoiced_amount: { kind: 'additive', measure: 'invoiced_amount' },
   collected_amount: { kind: 'additive', measure: 'collected_amount' },
   outstanding_amount: { kind: 'snapshot', measure: 'outstanding_amount' },
@@ -78,7 +78,7 @@ export const semanticCatalog: Readonly<Record<MetricId, SemanticMetric>> = Objec
 
 const factIds = new Set<FactMeasureId>([
   ...Object.values(semantics).flatMap(s => s.kind === 'additive' || s.kind === 'snapshot' ? [s.measure] : []),
-  'won_opportunity_count', 'operating_hours', 'repair_hours', 'completed_repair_count',
+  'won_opportunity_count', 'closed_opportunity_count', 'operating_hours', 'repair_hours', 'completed_repair_count',
 ]);
 export const factMeasureIds: readonly FactMeasureId[] = [...factIds];
 export function isMetricId(id: string): id is MetricId { return Object.hasOwn(semanticCatalog, id); }

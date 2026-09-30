@@ -7,7 +7,7 @@ export type MetricId =
   | 'stock_on_hand' | 'inventory_value' | 'low_stock_count'
   | 'maintenance_requests' | 'failure_count' | 'mtbf' | 'mttr' | 'maintenance_cost';
 export type DerivedMetricId = 'average_order_value' | 'gross_margin' | 'sales_growth' | 'win_rate' | 'mtbf' | 'mttr';
-export type InternalMeasureId = 'won_opportunity_count' | 'operating_hours' | 'repair_hours' | 'completed_repair_count';
+export type InternalMeasureId = 'won_opportunity_count' | 'closed_opportunity_count' | 'operating_hours' | 'repair_hours' | 'completed_repair_count';
 export type FactMeasureId = Exclude<MetricId, DerivedMetricId> | InternalMeasureId;
 export type DimensionId = 'date' | 'month' | 'quarter' | 'year' | 'customer' | 'branch'
   | 'region' | 'salesperson' | 'product' | 'product_category' | 'warehouse'

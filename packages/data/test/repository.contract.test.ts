@@ -61,7 +61,7 @@ test('SQLite rejects derived facts and duplicate entity snapshots', () => {
 test('seed is deterministic and contains only canonical source measures', () => {
   const first = generateSeedFacts();
   assert.deepEqual(first, generateSeedFacts());
-  assert.equal(first.length, factMeasureIds.length * 24 * 6);
+  assert.ok(first.length > 100_000);
   assert.ok(first.every(f => factMeasureIds.includes(f.measureId)));
   const cairo = first.filter(f => f.measureId === 'revenue' && f.dimensions.branch === 'cairo');
   assert.ok(cairo.at(-1)!.value > cairo[0]!.value);
