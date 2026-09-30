@@ -17,16 +17,28 @@ export const copy = {
     studio: 'استوديو التحليلات', product: 'الدبوس', metricCatalog: 'دليل المؤشرات', available: 'متاح', planned: 'قيد التخطيط', tagline: 'اسأل عن أعمالك. وشاهد الإجابة.',
     workspace: 'مساحة العمل', ready: 'جاهز للاستكشاف', library: 'قوالب لوحات المعلومات', market: 'السوق', promptTitle: 'صف لوحة المعلومات التي تحتاجها',
     promptHint: 'اكتب بالعربية أو الإنجليزية. يدعم النموذج التجريبي سيناريو المبيعات التنفيذية.',
-    promptPlaceholder: 'اعمل لي لوحة لمتابعة المبيعات السنة دي فيها الإيرادات وهامش الربح وعدد الطلبات وأعلى العملاء والمديونيات',
+    promptPlaceholder: 'أنشئ لوحة للمبيعات تعرض الإيرادات وهامش الربح وأعلى العملاء والمديونيات',
     generate: 'إنشاء لوحة', editTitle: 'عدّل هذه اللوحة', editPlaceholder: 'مثال: أضف متوسط متحرك لثلاثة أشهر', apply: 'تطبيق التعديل',
     loading: 'جارٍ تجهيز لوحة المعلومات…', empty: 'لا توجد بيانات لهذا الاختيار', failed: 'تعذّر تحميل هذه البطاقة',
     source: 'المصدر', fresh: 'البيانات حتى', period: 'الفترة', widgets: 'بطاقات', partial: 'بعض البطاقات تحتاج إلى مراجعة',
     results: 'النتائج', value: 'القيمة', change: 'التغير', rank: 'الترتيب', manual: 'لوحة من القوالب', generated: 'أنشئت بمخطط تجريبي',
     select: 'اختر لوحة', noDashboard: 'اختر قالب لوحة أو صف لوحة جديدة للبدء.',
-    examples: ['استبدل عدد الطلبات بمتوسط قيمة الطلب', 'اعرض القاهرة والإسكندرية فقط', 'غيّر أعلى العملاء إلى إجمالي الربح', 'أضف متوسط متحرك لثلاثة أشهر', 'شيل المديونيات'],
+    examples: ['استبدل عدد الطلبات بمتوسط قيمة الطلب', 'اعرض فرعين فقط', 'غيّر أعلى العملاء إلى إجمالي الربح', 'أضف متوسط متحرك لثلاثة أشهر', 'أزل المديونيات'],
     dimensions: { date: 'التاريخ', month: 'الشهر', quarter: 'الربع', year: 'السنة', customer: 'العميل', branch: 'الفرع', region: 'المنطقة', salesperson: 'مندوب المبيعات', product: 'المنتج', product_category: 'الفئة', warehouse: 'المخزن', equipment: 'المعدة', equipment_category: 'فئة المعدات', technician: 'الفني' },
   },
 } as const;
+/** Dialect appears only in conversational guidance; application labels stay in Modern Standard Arabic. */
+export function conversationalCopy(locale: Locale, profile: TenantProfile): { placeholder: string; examples: readonly string[] } {
+  if (locale === 'en') return { placeholder: copy.en.promptPlaceholder, examples: [] };
+  if (profile.arabicDialect === 'iq') return {
+    placeholder: 'أريد dashboard للمبيعات السنة هاي ويّاه أعلى الزبائن والمديونيات',
+    examples: ['أريد dashboard للمبيعات السنة هاي ويّاه أعلى الزبائن والمديونيات', 'شكد المبيعات هذا الشهر وشنو أكثر فرع بايع؟'],
+  };
+  return {
+    placeholder: 'عايز dashboard للمبيعات السنة دي ومعاه أعلى العملاء والمديونيات',
+    examples: ['عايز dashboard للمبيعات السنة دي ومعاه أعلى العملاء والمديونيات', 'كام المبيعات الشهر ده وأنهي فرع باع أكتر؟'],
+  };
+}
 export const localeTag = (locale: Locale, profile: TenantProfile): string => `${locale}-${profile.countryCode}`;
 export function formatValue(value: number | null, type: MetricType, locale: Locale, profile: TenantProfile, unit?: string): string {
   if (value === null) return '—';

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { tenantProfiles } from '@el-dabbous/domain';
-import { formatDate, formatKey, formatValue, localeTag } from '../src/i18n.ts';
+import { conversationalCopy, copy, formatDate, formatKey, formatValue, localeTag } from '../src/i18n.ts';
 const iq = tenantProfiles['demo-iq'];
 const eg = tenantProfiles['demo-eg'];
 test('Iraqi and Egyptian profiles control currency and locale formatting', () => {
@@ -20,4 +20,17 @@ test('branch labels and dates follow the governed market profile', () => {
   assert.equal(formatKey('cairo', 'branch', 'en', eg), 'Cairo');
   assert.match(formatKey('2026-01', 'month', 'ar', iq), /[٠-٩]/u);
   assert.match(formatDate('2026-09-30', 'ar', eg), /[٠-٩]/u);
+});
+test('conversational guidance follows the selected market without changing MSA labels', () => {
+  const iraq = JSON.stringify(conversationalCopy('ar', iq));
+  const egypt = JSON.stringify(conversationalCopy('ar', eg));
+  assert.match(iraq, /السنة هاي/u);
+  assert.match(iraq, /شكد المبيعات/u);
+  assert.doesNotMatch(iraq, /السنة دي|عايز|الشهر ده/u);
+  assert.match(egypt, /السنة دي/u);
+  assert.match(egypt, /عايز/u);
+  assert.doesNotMatch(egypt, /السنة هاي|شكد|ويّاه/u);
+  assert.equal(conversationalCopy('en', iq).placeholder, conversationalCopy('en', eg).placeholder);
+  assert.equal(copy.ar.market, 'السوق');
+  assert.equal(copy.ar.promptTitle, 'صف لوحة المعلومات التي تحتاجها');
 });
