@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { AnalysisSpec, DashboardPatch, DashboardSeries, DashboardSpec, DashboardWidget, DimensionId, Locale, MetricId, ProductMetric, SemanticMetric, TenantProfile, WidgetType } from '@el-dabbous/domain';
 import type { DashboardExecutionResult } from '@el-dabbous/application';
-import { DashboardRenderer } from '../Renderer.tsx';
+import { WidgetCard } from '../Renderer.tsx';
+import { DashboardGrid } from './DashboardGrid.tsx';
 import { copy } from '../i18n.ts';
 import { analysisAllowed, canAddSeries, commonDimensions, selectableMetric, validWidgetDraft, withWidgetMetric } from './model.ts';
 import type { BuilderCommand, BuilderDocument, BuilderHistory } from './model.ts';
@@ -170,12 +171,14 @@ export function BuilderWorkspace({ history, execution, catalog, registry, profil
     <aside className="builder-palette"><h3>{t.widgets}</h3><p>{t.unsaved}</p><div className="builder-add-buttons">{types.map(type => <button key={type} onClick={() => { setAddingType(type); setSelectedId(null); }}>{t.newWidget}: {typeName[locale][type]}</button>)}</div>
       <h3>{t.metric}</h3>{Object.entries(domainNames[locale]).map(([domain, name]) => {
         const metrics = registry.filter(metric => metric.domain === domain);
+        if (!metrics.length) return null;
         return <details key={domain} open={domain === 'sales'}><summary>{name}</summary><div className="builder-metric-list">{metrics.map(metric => <div key={metric.id} className={metric.availability === 'planned' ? 'builder-planned' : ''}>{metric.labels[locale]} {metric.availability === 'planned' && <small>{t.planned}</small>}</div>)}</div></details>;
       })}</aside>
     <div className="builder-center"><div className="builder-canvas-head"><strong>{dashboardTitle}</strong><span>{t.preview} · {t.unsaved}</span><div><button disabled={!history.past.length} onClick={onUndo}>↶ {locale === 'ar' ? 'تراجع' : 'Undo'}</button><button disabled={!history.future.length} onClick={onRedo}>↷ {locale === 'ar' ? 'إعادة' : 'Redo'}</button></div></div>
       <p className="builder-hint">{t.drag}</p>{busy && <p className="builder-preview-loading">{copy[locale].loading}</p>}
-      {spec && execution && !busy && <DashboardRenderer execution={execution} dashboardOverride={spec} catalog={catalog} locale={locale} profile={profile} editable selectedId={selectedId}
-        onSelect={id => { setSelectedId(id); setAddingType(null); }} onLayoutCommit={layout => onCommand({ type: 'layout', layout })} />}
+      {spec && execution && !busy && <DashboardGrid spec={spec} locale={locale} editable selectedId={selectedId}
+        onSelect={id => { setSelectedId(id); setAddingType(null); }} onLayoutCommit={layout => onCommand({ type: 'layout', layout })}
+        renderWidget={widget => <WidgetCard widget={widget} entry={execution.widgetResults[widget.id]} catalog={catalog} locale={locale} profile={profile} />} />}
       {!spec && <div className="builder-empty">{t.selectWidget}</div>}
     </div>
     <aside className="builder-properties">{base && (selected || newWidget) ? <WidgetEditor key={selected?.id ?? `${newWidget?.id}-${addingType}`} initial={(selected ?? newWidget)!} adding={!!newWidget} base={base} registry={registry} catalog={catalog} locale={locale} onApply={applyWidget} onRemove={removeWidget} /> : <p>{t.selectWidget}</p>}
