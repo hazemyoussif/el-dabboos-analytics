@@ -67,10 +67,18 @@ const definitions: Definition[] = [
   ['mttr', 'Mean time to repair', 'متوسط زمن الإصلاح', 'duration', maintenance, ['MTTR'], ['متوسط وقت الإصلاح']],
   ['maintenance_cost', 'Maintenance cost', 'تكلفة الصيانة', 'currency', maintenance, ['repair cost'], ['تكاليف الصيانة']],
 ];
+const dialectSynonyms: Partial<Record<MetricId, { iq?: readonly string[]; eg?: readonly string[] }>> = {
+  revenue: { iq: ['المبيعات', 'البيع', 'شكد بايعين'], eg: ['المبيعات', 'البيع'] },
+  outstanding_amount: { iq: ['المبالغ على الزبائن', 'الديون', 'المبالغ الباقية'], eg: ['المديونيات', 'المبالغ على العملاء', 'الفلوس المستحقة'] },
+  order_count: { iq: ['عدد الطلبيات'], eg: ['عدد الأوردرات'] },
+  collected_amount: { iq: ['المبالغ المقبوضة'], eg: ['الفلوس المتحصلة'] },
+};
 export const semanticCatalog: Readonly<Record<MetricId, SemanticMetric>> = Object.fromEntries(
   definitions.map(([id, en, ar, type, supportedDimensions, enSynonyms, arSynonyms]) => [id, {
     id, labels: { en, ar }, descriptions: { en: `${en} across the selected period and filters.`, ar: `${ar} خلال الفترة والفلاتر المحددة.` },
-    synonyms: { en: enSynonyms, ar: arSynonyms }, type, semantics: semantics[id],
+    synonyms: { en: enSynonyms, ar: arSynonyms },
+    ...(dialectSynonyms[id] ? { dialectSynonyms: dialectSynonyms[id] } : {}),
+    type, semantics: semantics[id],
     dimensions: supportedDimensions,
     presentation: { decimals: type === 'number' ? 0 : 2, ...(type === 'duration' ? { unit: 'hours' } : type === 'percentage' ? { unit: '%' } : {}) },
   }]),

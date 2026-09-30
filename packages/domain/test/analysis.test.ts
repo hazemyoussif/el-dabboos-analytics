@@ -36,9 +36,9 @@ test('analysis rejects incompatible dimensions, missing date context, and unknow
   assert.throws(() => validateQuery({ metric: 'revenue', operation: { kind: 'top_n' } } as unknown as Parameters<typeof validateQuery>[0], context));
 });
 test('DashboardSpec schema and semantic rules reject invalid analysis', () => {
-  const spec = { schemaVersion: 1, id: 'sales', title: { en: 'Sales', ar: 'المبيعات' }, locale: 'en',
-    filters: { dateRange }, layout: { columns: 2 }, widgets: [{ id: 'trend', type: 'line', metric: 'revenue', dimension: 'month',
-      analysis: { comparison: 'year_over_year', movingAverage: { window: 3 } } }] };
+  const spec = { schemaVersion: 2, id: 'sales', title: { en: 'Sales', ar: 'المبيعات' }, locale: 'en',
+    filters: { dateRange }, layout: { columns: 2 }, widgets: [{ id: 'trend', type: 'line', dimension: 'month', series: [{ id: 'revenue', metric: 'revenue',
+      analysis: { comparison: 'year_over_year', movingAverage: { window: 3 } } }] }] };
   assert.doesNotThrow(() => validateDashboardSpec(spec));
   assert.throws(() => validateDashboardSpec({ ...spec, widgets: [{ ...spec.widgets[0], operation: { kind: 'ranking' } }] }));
   assert.throws(() => validateDashboardSpec({ ...spec, widgets: [{ ...spec.widgets[0], dimension: 'branch' }] }));

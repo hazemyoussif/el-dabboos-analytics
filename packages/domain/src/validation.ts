@@ -2,8 +2,8 @@ import type { AnalyticsContext, AnalyticsQuery, DashboardPatch, DashboardSpec, D
 import { isDimensionId, isMetricId, semanticCatalog, timeDimensions } from './catalog.ts';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
-import dashboardSchema from './dashboard-spec.schema.json' with { type: 'json' };
-import patchSchema from './dashboard-patch.schema.json' with { type: 'json' };
+import dashboardSchema from './dashboard-spec-v2.schema.json' with { type: 'json' };
+import patchSchema from './dashboard-patch-v2.schema.json' with { type: 'json' };
 
 type AjvConstructor = new (options: { allErrors: boolean }) => { compile: (schema: object) => (value: unknown) => boolean };
 const AjvClass = ((Ajv2020 as unknown as { default?: AjvConstructor }).default ?? Ajv2020) as AjvConstructor;
@@ -55,19 +55,34 @@ function validateMetricUse(metric: unknown, groupBy: unknown, analysis: unknown,
   if (semanticCatalog[metric].semantics.kind === 'snapshot' && Array.isArray(filters) && filters.some(f => timeDimensions.includes(f.dimension))) throw new Error('Snapshot time scope must use dateRange');
   validateAnalysis(analysis, metric, groupBy as DimensionId | undefined, dateRange);
 }
-export function validWidget(v: unknown, dateRange?: DateRange): v is DashboardWidget {
+export function validWidget(v: unknown, dateRange?: DateRange, filters?: unknown): v is DashboardWidget {
   if (!record(v) || !['kpi', 'line', 'bar', 'table'].includes(String(v.type)) || typeof v.id !== 'string' ||
-    !/^[a-z0-9][a-z0-9_-]*$/.test(v.id) || v.id.length > 80 || (v.type === 'line' && v.dimension === undefined)) return false;
-  try { validateMetricUse(v.metric, v.dimension, v.analysis, dateRange, undefined); return true; } catch { return false; }
+    !/^[a-z0-9][a-z0-9_-]*$/.test(v.id) || v.id.length > 80 || !Array.isArray(v.series) ||
+    v.series.length < 1 || v.series.length > 8 || (v.type === 'kpi' && v.series.length !== 1) ||
+    (v.type !== 'kpi' && v.dimension === undefined) ||
+    new Set(v.series.map(s => record(s) ? s.id : undefined)).size !== v.series.length) return false;
+  try {
+    for (const series of v.series) {
+      if (!record(series) || typeof series.id !== 'string' || !/^[a-z0-9][a-z0-9_-]*$/.test(series.id) || series.id.length > 80) return false;
+      validateMetricUse(series.metric, v.dimension, series.analysis, dateRange, filters);
+    }
+    if (v.type === 'line' || v.type === 'bar') {
+      const units = v.series.map(s => {
+        const metric = semanticCatalog[s.metric as MetricId];
+        return s.analysis?.percentageContribution ? 'percentage:%' : `${metric.type}:${metric.presentation.unit ?? ''}`;
+      });
+      if (new Set(units).size !== 1) return false;
+    }
+    return true;
+  } catch { return false; }
 }
 export function validateDashboardSpec(v: unknown): asserts v is DashboardSpec {
-  if (!checkDashboardSchema(v) || !record(v) || !record(v.filters) || !Array.isArray(v.widgets)) throw new Error('Invalid DashboardSpec v1');
+  if (!checkDashboardSchema(v) || !record(v) || !record(v.filters) || !Array.isArray(v.widgets)) throw new Error('Invalid DashboardSpec v2');
   const range = v.filters.dateRange;
   if (range !== undefined && !validDateRange(range)) throw new Error('Invalid dashboard date range');
   if (new Set(v.widgets.map(w => record(w) ? w.id : undefined)).size !== v.widgets.length) throw new Error('Duplicate widget ID');
   for (const widget of v.widgets) {
-    if (!validWidget(widget, range as DateRange | undefined)) throw new Error('Invalid dashboard widget');
-    validateMetricUse(widget.metric, widget.dimension, widget.analysis, range as DateRange | undefined, v.filters.dimensions);
+    if (!validWidget(widget, range as DateRange | undefined, v.filters.dimensions)) throw new Error('Invalid dashboard widget or incompatible series');
   }
 }
 export function validateQuery(query: AnalyticsQuery, context: AnalyticsContext): void {
@@ -79,5 +94,5 @@ export function validateQuery(query: AnalyticsQuery, context: AnalyticsContext):
 }
 
 export function validateDashboardPatch(v: unknown): asserts v is DashboardPatch {
-  if (!checkPatchSchema(v)) throw new Error('Invalid DashboardPatch v1');
+  if (!checkPatchSchema(v)) throw new Error('Invalid DashboardPatch v2');
 }
