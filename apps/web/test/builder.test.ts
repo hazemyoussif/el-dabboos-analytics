@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { productMetricCatalog, tenantProfiles } from '@el-dabbous/domain';
 import type { DashboardSpec, DashboardWidget } from '@el-dabbous/domain';
+import { fromGridItems, toGridItems } from '../src/builder/grid-map.ts';
 import { analysisAllowed, blankDashboardDraft, canAddSeries, commitBuilderCommand, commonDimensions, redoBuilder, selectableMetric, startBuilder, undoBuilder, validWidgetDraft, withWidgetMetric } from '../src/builder/model.ts';
 const profile = tenantProfiles['demo-iq'];
 const widget: DashboardWidget = { id: 'revenue', type: 'kpi', series: [{ id: 'revenue', metric: 'revenue' }] };
@@ -50,4 +51,9 @@ test('analysis helper follows bounded semantic rules including first-series top 
     { id: 'revenue', metric: 'revenue' }, { id: 'profit', metric: 'gross_profit', analysis: { topN: { direction: 'top', limit: 10 } } },
   ] };
   assert.equal(validWidgetDraft(bad, base), false);
+});
+test('web grid adapter round-trips canonical coordinates independent of locale', () => {
+  const portable = { columns: 12 as const, items: [{ widgetId: 'revenue', x: 5, y: 2, w: 3, h: 2 }] };
+  assert.deepEqual(fromGridItems(toGridItems(portable.items), portable), portable);
+  assert.deepEqual(toGridItems(portable.items), [{ i: 'revenue', x: 5, y: 2, w: 3, h: 2 }]);
 });
