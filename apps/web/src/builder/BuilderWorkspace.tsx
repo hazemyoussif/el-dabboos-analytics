@@ -174,7 +174,7 @@ export function BuilderWorkspace({ history, execution, catalog, registry, profil
       })}</aside>
     <div className="builder-center"><div className="builder-canvas-head"><strong>{dashboardTitle}</strong><span>{t.preview} · {t.unsaved}</span><div><button disabled={!history.past.length} onClick={onUndo}>↶ {locale === 'ar' ? 'تراجع' : 'Undo'}</button><button disabled={!history.future.length} onClick={onRedo}>↷ {locale === 'ar' ? 'إعادة' : 'Redo'}</button></div></div>
       <p className="builder-hint">{t.drag}</p>{busy && <p className="builder-preview-loading">{copy[locale].loading}</p>}
-      {spec && execution && <DashboardRenderer execution={execution} dashboardOverride={spec} catalog={catalog} locale={locale} profile={profile} editable selectedId={selectedId}
+      {spec && execution && !busy && <DashboardRenderer execution={execution} dashboardOverride={spec} catalog={catalog} locale={locale} profile={profile} editable selectedId={selectedId}
         onSelect={id => { setSelectedId(id); setAddingType(null); }} onLayoutCommit={layout => onCommand({ type: 'layout', layout })} />}
       {!spec && <div className="builder-empty">{t.selectWidget}</div>}
     </div>
