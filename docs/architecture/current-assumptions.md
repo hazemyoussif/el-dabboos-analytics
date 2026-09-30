@@ -13,3 +13,6 @@
 - The mock planner demonstrates bounded sales intent and five edits; it is not an LLM or a general dialect parser. Planning can be disabled while templates continue working.
 - Planned metrics in the product registry are recognized concepts only. They have no executable formula or approved source data and cannot enter a DashboardSpec.
 - Manual builder changes and undo/redo exist only in the current browser session. A new dashboard remains a non-executable draft until it contains a valid widget. Tenant switching reloads the active template and discards the prior market’s builder history.
+- Demo users and memberships are server-owned synthetic fixtures. `x-demo-user-id` is a local simulation, not authentication. The tenant header is validated against the selected user's membership.
+- Permissions and metric domains determine access. The Baghdad manager has an enforced branch filter; the sales analyst sees only sales/CRM metrics. Requested dashboard filters never replace policy filters.
+- The builder code and React-Grid-Layout load only when the editor opens. Normal dashboard viewing uses a lightweight portable grid renderer.

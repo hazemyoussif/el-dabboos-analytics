@@ -14,3 +14,12 @@ Answers are pending; no integration design is considered confirmed.
 10. **Localization:** Which Modern Standard Arabic terms are required in the UI, and which Iraqi/Egyptian colloquial phrases should planning recognize? What calendar, fiscal year, time zone, and number formatting apply in each market?
 11. **Currency policy:** Which transaction, company/base, and reporting currencies occur in each source? Where and when are rates applied, and who approves conversion before any aggregation?
 12. **Expected scale:** Tenants, users, fact volume, retention, query concurrency, and response-time targets?
+
+## User identity and authorization discovery
+
+13. Is Odoo the source of user identity? Are users shared between the two Odoo systems, or represented separately?
+14. Does El-Dabbous use an external identity provider or SSO? Can the existing Python backend identify the authenticated Odoo user?
+15. Which Odoo groups should map to analytics permissions? Should Odoo remain authorization source of truth, or should Analytics own additional roles?
+16. Are users scoped to companies or branches? Can one user access multiple customer companies or analytics tenants?
+17. How are inactive users and revoked memberships handled? What latency is required for revocation?
+18. Does existing PostgreSQL data contain company, tenant, and branch authorization attributes needed for enforcement?
