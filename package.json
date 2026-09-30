@@ -3,14 +3,18 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "apps/*"
   ],
   "scripts": {
-    "lint": "eslint packages",
-    "typecheck": "tsc --noEmit",
-    "test": "node --experimental-transform-types --disable-warning=ExperimentalWarning --test packages/*/test/*.test.ts",
+    "lint": "eslint packages apps",
+    "typecheck": "tsc --noEmit && pnpm --filter @el-dabbous/web exec tsc -p tsconfig.json",
+    "test": "node --experimental-transform-types --disable-warning=ExperimentalWarning --test packages/*/test/*.test.ts apps/*/test/*.test.ts",
     "check": "pnpm run lint && pnpm run typecheck && pnpm test",
-    "seed": "node --experimental-transform-types --disable-warning=ExperimentalWarning packages/data/src/seed-cli.ts"
+    "seed": "node --experimental-transform-types --disable-warning=ExperimentalWarning packages/data/src/seed-cli.ts",
+    "build": "pnpm --filter @el-dabbous/api build && pnpm --filter @el-dabbous/web build",
+    "dev:api": "pnpm --filter @el-dabbous/api dev",
+    "dev:web": "pnpm --filter @el-dabbous/web dev"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

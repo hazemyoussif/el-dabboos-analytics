@@ -5,8 +5,11 @@ import addFormats from 'ajv-formats';
 import dashboardSchema from './dashboard-spec.schema.json' with { type: 'json' };
 import patchSchema from './dashboard-patch.schema.json' with { type: 'json' };
 
-const ajv = new Ajv2020.default({ allErrors: true });
-addFormats.default(ajv);
+type AjvConstructor = new (options: { allErrors: boolean }) => { compile: (schema: object) => (value: unknown) => boolean };
+const AjvClass = ((Ajv2020 as unknown as { default?: AjvConstructor }).default ?? Ajv2020) as AjvConstructor;
+const addFormatsFn = ((addFormats as unknown as { default?: (instance: unknown) => void }).default ?? addFormats) as (instance: unknown) => void;
+const ajv = new AjvClass({ allErrors: true });
+addFormatsFn(ajv);
 const checkDashboardSchema = ajv.compile(dashboardSchema);
 const checkPatchSchema = ajv.compile(patchSchema);
 const record = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === 'object' && !Array.isArray(v);

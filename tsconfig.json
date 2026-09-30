@@ -10,8 +10,13 @@
     "esModuleInterop": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
-    "types": ["node"],
+    "types": [
+      "node"
+    ],
     "skipLibCheck": true
   },
-  "include": ["packages/**/*.ts"]
+  "include": [
+    "packages/**/*.ts",
+    "apps/api/**/*.ts"
+  ]
 }
