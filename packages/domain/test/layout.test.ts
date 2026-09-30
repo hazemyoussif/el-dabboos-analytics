@@ -12,7 +12,7 @@ test('legacy v2 layout remains valid and default placement is deterministic', ()
   const a = resolveDashboardLayout(spec);
   assert.deepEqual(a, defaultDashboardLayout(spec.widgets));
   assert.deepEqual(a.items?.map(item => [item.widgetId, item.x, item.y, item.w, item.h]), [
-    ['first', 0, 0, 3, 2], ['second', 3, 0, 3, 2],
+    ['first', 0, 0, 4, 2], ['second', 4, 0, 4, 2],
   ]);
   assert.equal(spec.layout.items, undefined);
 });
@@ -33,7 +33,7 @@ test('patch add and remove maintain the portable layout, and set_layout is valid
   const added = applyDashboardPatch(spec, { schemaVersion: 2, operations: [{ op: 'add', widget: kpi('third') }] });
   assert.equal(added.layout.columns, 12);
   assert.deepEqual(added.layout.items?.map(item => item.widgetId), ['first', 'second', 'third']);
-  assert.deepEqual(added.layout.items?.[2], { widgetId: 'third', x: 6, y: 0, w: 3, h: 2 });
+  assert.deepEqual(added.layout.items?.[2], { widgetId: 'third', x: 8, y: 0, w: 4, h: 2 });
   const removed = applyDashboardPatch(added, { schemaVersion: 2, operations: [{ op: 'remove', widgetId: 'second' }] });
   assert.deepEqual(removed.layout.items?.map(item => item.widgetId), ['first', 'third']);
   const moved = applyDashboardPatch(removed, { schemaVersion: 2, operations: [{ op: 'set_layout', layout: {

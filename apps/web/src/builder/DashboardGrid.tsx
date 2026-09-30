@@ -1,4 +1,4 @@
-import ReactGridLayout, { noCompactor, useContainerWidth } from 'react-grid-layout';
+import ReactGridLayout, { verticalCompactor, useContainerWidth } from 'react-grid-layout';
 import { resolveDashboardLayout } from '@el-dabbous/domain';
 import type { DashboardLayout, DashboardSpec, DashboardWidget, Locale } from '@el-dabbous/domain';
 import type { ReactNode } from 'react';
@@ -28,9 +28,9 @@ export function DashboardGrid({ spec, locale, editable = false, selectedId, onSe
     {renderWidget(widget)}
   </div>;
   return <div ref={containerRef} className={`dashboard-canvas ${editable ? 'canvas-editable' : ''}`}>
-    {mounted && width <= 800 ? <div className="canvas-stack">{ordered.map(content)}</div> : mounted && <ReactGridLayout
+    {mounted && width <= 560 ? <div className="canvas-stack">{ordered.map(content)}</div> : mounted && <ReactGridLayout
       width={width} layout={toGridItems(items)} gridConfig={{ cols: 12, rowHeight: 74, margin: [14, 14] }}
-      compactor={noCompactor} dragConfig={{ enabled: editable, handle: '.widget-drag-handle', cancel: 'button,input,select,textarea' }}
+      compactor={verticalCompactor} dragConfig={{ enabled: editable, handle: '.widget-drag-handle', cancel: 'button,input,select,textarea' }}
       resizeConfig={{ enabled: editable, handles: ['se'] }}
       onDragStop={layout => onLayoutCommit?.(fromGridItems(layout, portable))}
       onResizeStop={layout => onLayoutCommit?.(fromGridItems(layout, portable))}>

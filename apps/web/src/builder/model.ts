@@ -41,8 +41,8 @@ export function commitBuilderCommand(history: BuilderHistory, command: BuilderCo
     next = { kind: 'dashboard', spec };
   } else if (command.type === 'remove-last') {
     if (current.kind !== 'dashboard' || current.spec.widgets.length !== 1) throw new Error('Not the last widget');
-    const { widgets: _widgets, ...base } = current.spec;
-    next = { kind: 'empty', base: { ...base, layout: { columns: 12, items: [] } } };
+    const { schemaVersion, id, title, locale, filters } = current.spec;
+    next = { kind: 'empty', base: { schemaVersion, id, title, locale, filters, layout: { columns: 12, items: [] } } };
   } else {
     if (current.kind !== 'dashboard') throw new Error('Add a widget before editing the dashboard');
     const patch: DashboardPatch = command.type === 'layout' ? { schemaVersion: 2, operations: [{ op: 'set_layout', layout: command.layout }] } : command.patch;

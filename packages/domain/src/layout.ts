@@ -2,7 +2,7 @@ import type { DashboardGridItem, DashboardLayout, DashboardSpec, DashboardWidget
 
 export const GRID_COLUMNS = 12;
 const sizes: Record<DashboardWidget['type'], { w: number; h: number }> = {
-  kpi: { w: 3, h: 2 }, line: { w: 8, h: 4 }, bar: { w: 6, h: 4 }, table: { w: 12, h: 5 },
+  kpi: { w: 4, h: 2 }, line: { w: 8, h: 4 }, bar: { w: 6, h: 4 }, table: { w: 12, h: 5 },
 };
 const overlaps = (a: DashboardGridItem, b: DashboardGridItem): boolean =>
   a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;

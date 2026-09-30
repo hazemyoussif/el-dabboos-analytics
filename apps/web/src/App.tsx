@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { DashboardExecutionResult, DashboardTemplate } from '@el-dabbous/application';
-import type { DashboardSpec, Locale, ProductMetric, SemanticMetric, TenantProfile } from '@el-dabbous/domain';
+import type { DashboardSpec, DimensionId, Locale, ProductMetric, SemanticMetric, TenantProfile } from '@el-dabbous/domain';
 import { DashboardRenderer } from './Renderer.tsx';
+import { BuilderWorkspace } from './builder/BuilderWorkspace.tsx';
+import type { FilterOptions } from './builder/BuilderWorkspace.tsx';
+import { blankDashboardDraft, commitBuilderCommand, redoBuilder, startBuilder, undoBuilder, withLocale } from './builder/model.ts';
+import type { BuilderCommand, BuilderHistory, BuilderTransition } from './builder/model.ts';
 import { conversationalCopy, copy, formatDate, formatTimestamp } from './i18n.ts';
 
 type ApiError = { error?: { code: string; message: string } };
@@ -10,6 +14,14 @@ async function api<T>(path: string, tenantId: string, locale: Locale, method = '
   const data = await response.json() as T & ApiError;
   if (!response.ok) throw new Error(data.error?.message ?? `Request failed (${response.status})`);
   return data;
+}
+const builderFilterDimensions: DimensionId[] = ['branch', 'region', 'salesperson', 'product_category', 'warehouse'];
+async function fetchFilterOptions(profile: TenantProfile, locale: Locale): Promise<FilterOptions> {
+  const values = await Promise.all(builderFilterDimensions.map(async dimension => {
+    const response = await api<{ dimension: DimensionId; values: Array<{ id: string; label: string }> }>(`/api/dimensions/${dimension}/values`, profile.id, locale);
+    return [dimension, response.values] as const;
+  }));
+  return Object.fromEntries(values);
 }
 export default function App() {
   const [locale, setLocale] = useState<Locale>('ar');
@@ -25,7 +37,10 @@ export default function App() {
   const [instruction, setInstruction] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [mode, setMode] = useState<'template' | 'generated'>('template');
+  const [mode, setMode] = useState<'template' | 'generated' | 'manual'>('template');
+  const [builderHistory, setBuilderHistory] = useState<BuilderHistory | null>(null);
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({});
+  const [builderBusy, setBuilderBusy] = useState(false);
   const requestId = useRef(0);
   const t = copy[locale];
   const conversation = profile ? conversationalCopy(locale, profile) : { placeholder: t.promptPlaceholder, examples: [] };
@@ -33,6 +48,8 @@ export default function App() {
     ? `اعرض ${profile.branchLabels[profile.exampleBranchIds[0]]?.ar} و${profile.branchLabels[profile.exampleBranchIds[1]]?.ar} فقط`
     : `Show only ${profile.branchLabels[profile.exampleBranchIds[0]]?.en} and ${profile.branchLabels[profile.exampleBranchIds[1]]?.en}`) : t.examples[1];
   const editExamples = t.examples.map((example, index) => index === 1 ? branchExample : example);
+  const activeDashboard = builderHistory?.present.kind === 'dashboard' ? builderHistory.present.spec : dashboard;
+  const activeTitle = builderHistory?.present.kind === 'empty' ? builderHistory.present.base.title[locale] : activeDashboard?.title[locale] ?? t.noDashboard;
   useEffect(() => { document.documentElement.lang = locale; document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr'; }, [locale]);
   useEffect(() => {
     let live = true;
@@ -47,6 +64,7 @@ export default function App() {
         const selected = p.profiles.find(item => item.id === p.defaultTenantId);
         if (!selected) throw new Error('Default tenant profile is unavailable');
         setProfiles(p.profiles); setProfile(selected); setLocale(selected.defaultLocale);
+        void fetchFilterOptions(selected, selected.defaultLocale).then(values => { if (live) setFilterOptions(values); }).catch(() => { if (live) setFilterOptions({}); });
         setCatalog(Object.fromEntries(c.metrics.map(metric => [metric.id, metric]))); setMetricRegistry(c.registry); setTemplates(d.templates);
         const result = await api<{ dashboard: DashboardSpec; execution: DashboardExecutionResult }>(`/api/dashboard-templates/sales-performance/instantiate`, selected.id, selected.defaultLocale);
         if (live) { setDashboard(result.dashboard); setExecution(result.execution); }
@@ -64,20 +82,30 @@ export default function App() {
   }, [execution]);
   const openTemplate = async (templateId: string, selected: TenantProfile, selectedLocale: Locale) => {
     const id = ++requestId.current;
-    setError(null); setLoading(true);
+    setError(null); setBuilderHistory(null); setLoading(true);
     try {
       const result = await api<{ dashboard: DashboardSpec; execution: DashboardExecutionResult }>(`/api/dashboard-templates/${encodeURIComponent(templateId)}/instantiate`, selected.id, selectedLocale);
       if (id === requestId.current) { setDashboard(result.dashboard); setExecution(result.execution); setMode('template'); setActiveTemplateId(templateId); }
     } catch (e) { if (id === requestId.current) setError(e instanceof Error ? e.message : String(e)); }
     finally { if (id === requestId.current) setLoading(false); }
   };
-  const selectTenant = (selected: TenantProfile) => { setProfile(selected); setLocale(selected.defaultLocale); void openTemplate(activeTemplateId, selected, selected.defaultLocale); };
+  const selectTenant = (selected: TenantProfile) => {
+    setProfile(selected); setLocale(selected.defaultLocale); setBuilderHistory(null); setFilterOptions({});
+    void fetchFilterOptions(selected, selected.defaultLocale).then(setFilterOptions).catch(() => setFilterOptions({}));
+    void openTemplate(activeTemplateId, selected, selected.defaultLocale);
+  };
+  const selectLocale = (next: Locale) => {
+    setLocale(next);
+    setDashboard(current => current ? { ...current, locale: next } : current);
+    setBuilderHistory(current => current ? { past: current.past.map(document => withLocale(document, next)), present: withLocale(current.present, next), future: current.future.map(document => withLocale(document, next)) } : null);
+    if (profile) void fetchFilterOptions(profile, next).then(setFilterOptions).catch(() => setFilterOptions({}));
+  };
   const generate = async () => {
     if (!profile || !prompt.trim()) return;
     const id = ++requestId.current; setError(null); setLoading(true);
     try {
       const result = await api<{ dashboard: DashboardSpec; execution: DashboardExecutionResult }>('/api/dashboards/generate', profile.id, locale, 'POST', { prompt });
-      if (id === requestId.current) { setDashboard(result.dashboard); setExecution(result.execution); setMode('generated'); }
+      if (id === requestId.current) { setDashboard(result.dashboard); setExecution(result.execution); setMode('generated'); setBuilderHistory(null); }
     } catch (e) { if (id === requestId.current) setError(e instanceof Error ? e.message : String(e)); }
     finally { if (id === requestId.current) setLoading(false); }
   };
@@ -90,6 +118,32 @@ export default function App() {
     } catch (e) { if (id === requestId.current) setError(e instanceof Error ? e.message : String(e)); }
     finally { if (id === requestId.current) setLoading(false); }
   };
+  const executeBuilderTransition = (transition: BuilderTransition) => {
+    if (transition.history === builderHistory) return;
+    setBuilderHistory(transition.history);
+    const next = transition.history.present;
+    if (next.kind === 'empty') { ++requestId.current; setDashboard(null); setExecution(null); setBuilderBusy(false); return; }
+    setDashboard(next.spec);
+    if (!transition.execute || !profile) return;
+    const id = ++requestId.current;
+    setBuilderBusy(true); setError(null);
+    void api<DashboardExecutionResult>('/api/dashboards/execute', profile.id, locale, 'POST', { dashboard: next.spec })
+      .then(result => { if (id === requestId.current) setExecution(result); })
+      .catch(cause => { if (id === requestId.current) { setExecution(null); setError(cause instanceof Error ? cause.message : String(cause)); } })
+      .finally(() => { if (id === requestId.current) setBuilderBusy(false); });
+  };
+  const builderCommand = (command: BuilderCommand) => {
+    if (!builderHistory) return;
+    try { executeBuilderTransition(commitBuilderCommand(builderHistory, command)); }
+    catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); }
+  };
+  const startManual = () => {
+    if (!profile) return;
+    ++requestId.current; setError(null); setLoading(false); setMode('manual'); setDashboard(null); setExecution(null);
+    setBuilderHistory(startBuilder(blankDashboardDraft(profile, locale)));
+  };
+  const enterBuilder = () => { if (dashboard) { setBuilderHistory(startBuilder({ kind: 'dashboard', spec: dashboard })); setError(null); } };
+  const exitBuilder = () => { setBuilderHistory(null); setBuilderBusy(false); };
   return <div className="app-shell">
     <aside className="sidebar">
       <div className="brand"><div className="brand-mark">◈</div><div><strong>{t.product}</strong><span>{t.studio}</span></div></div>
@@ -98,18 +152,19 @@ export default function App() {
       <div className="sidebar-foot"><span className="status-dot" /> {locale === 'ar' ? 'بيانات تجريبية اصطناعية' : 'Synthetic demo data'}</div>
     </aside>
     <main className="main-content">
-      <header className="topbar"><div className="breadcrumb">{t.workspace} <span>/</span> {dashboard?.title[locale] ?? t.select}</div><div className="top-actions"><label className="tenant-control">{t.market}<select aria-label={t.market} value={profile?.id ?? 'demo-iq'} onChange={e => { const next = profiles.find(item => item.id === e.target.value); if (next) selectTenant(next); }}>{profiles.map(item => <option key={item.id} value={item.id}>{item.labels[locale]}</option>)}</select></label><div className="language-toggle" role="group" aria-label="Language"><button className={locale === 'en' ? 'selected' : ''} onClick={() => setLocale('en')}>EN</button><button className={locale === 'ar' ? 'selected' : ''} onClick={() => setLocale('ar')}>عربي</button></div></div></header>
+      <header className="topbar"><div className="breadcrumb">{t.workspace} <span>/</span> {activeTitle}</div><div className="top-actions"><label className="tenant-control">{t.market}<select aria-label={t.market} value={profile?.id ?? 'demo-iq'} onChange={e => { const next = profiles.find(item => item.id === e.target.value); if (next) selectTenant(next); }}>{profiles.map(item => <option key={item.id} value={item.id}>{item.labels[locale]}</option>)}</select></label><div className="language-toggle" role="group" aria-label="Language"><button className={locale === 'en' ? 'selected' : ''} onClick={() => selectLocale('en')}>EN</button><button className={locale === 'ar' ? 'selected' : ''} onClick={() => selectLocale('ar')}>عربي</button></div></div></header>
       <div className="page-content"><section className="prompt-panel"><div className="prompt-copy"><span className="eyebrow"><span className="sparkle">✦</span> {t.studio}</span><h1>{t.tagline}</h1><p>{t.promptHint}</p></div><div className="prompt-form"><label htmlFor="dashboard-prompt">{t.promptTitle}</label><textarea id="dashboard-prompt" value={prompt} onChange={e => setPrompt(e.target.value)} placeholder={conversation.placeholder} rows={3} /><div className="prompt-examples">{conversation.examples.map(example => <button key={example} type="button" onClick={() => setPrompt(example)}>{example}</button>)}</div><div className="prompt-actions"><span className="prompt-tip">✦ {locale === 'ar' ? 'اكتب طلبك بطريقتك' : 'Describe it in your own words'}</span><button className="primary-button" disabled={loading || !prompt.trim()} onClick={() => void generate()}>{t.generate} <span>↗</span></button></div></div></section>
       <details className="catalog-panel"><summary>{t.metricCatalog} · {metricRegistry.filter(item => item.availability === 'available').length} {t.available} · {metricRegistry.filter(item => item.availability === 'planned').length} {t.planned}</summary><div className="catalog-list">{metricRegistry.map(item => <div key={item.id} className="catalog-metric"><span>{item.labels[locale]}</span><span className={item.availability === 'available' ? 'metric-available' : 'metric-planned'}>{item.availability === 'available' ? t.available : t.planned}</span></div>)}</div></details>
       {error && <div className="global-error" role="alert"><span>!</span>{error}<button onClick={() => setError(null)} aria-label="Dismiss">×</button></div>}
-      <section className="dashboard-section"><div className="dashboard-title-row"><div><div className="eyebrow eyebrow-light">{mode === 'generated' ? t.generated : t.manual}</div><h2>{dashboard?.title[locale] ?? t.noDashboard}</h2></div>{dashboard && <span className="widget-count">{dashboard.widgets.length} {t.widgets}</span>}</div>
-      {dashboard && profile && <div className="meta-strip"><div><span>{t.period}</span><strong>{dashboard.filters.dateRange ? `${formatDate(dashboard.filters.dateRange.from, locale, profile)} — ${formatDate(dashboard.filters.dateRange.to, locale, profile)}` : '—'}</strong></div><div><span>{t.source}</span><strong>{metadata?.sourceId ?? '—'}</strong></div><div><span>{t.dataThrough}</span><strong>{metadata?.dataThrough ? formatDate(metadata.dataThrough, locale, profile) : '—'}</strong></div>{metadata?.sourceAsOf && <div><span>{t.sourceUpdated}</span><strong>{formatTimestamp(metadata.sourceAsOf, locale, profile)}</strong></div>}</div>}
+      <section className="dashboard-section"><div className="dashboard-title-row"><div><div className="eyebrow eyebrow-light">{mode === 'generated' ? t.generated : t.manual}</div><h2>{activeTitle}</h2></div><div className="dashboard-actions"><button onClick={startManual}>{locale === 'ar' ? 'لوحة جديدة' : 'New dashboard'}</button>{(activeDashboard || builderHistory) && <div className="builder-mode-switch"><button className={!builderHistory ? 'active' : ''} disabled={!builderHistory} onClick={exitBuilder}>{locale === 'ar' ? 'عرض' : 'View'}</button><button className={builderHistory ? 'active' : ''} disabled={!!builderHistory || !activeDashboard} onClick={enterBuilder}>{locale === 'ar' ? 'تحرير' : 'Edit'}</button></div>}{activeDashboard && <span className="widget-count">{activeDashboard.widgets.length} {t.widgets}</span>}</div></div>
+      {activeDashboard && profile && <div className="meta-strip"><div><span>{t.period}</span><strong>{activeDashboard.filters.dateRange ? `${formatDate(activeDashboard.filters.dateRange.from, locale, profile)} — ${formatDate(activeDashboard.filters.dateRange.to, locale, profile)}` : '—'}</strong></div><div><span>{t.source}</span><strong>{metadata?.sourceId ?? '—'}</strong></div><div><span>{t.dataThrough}</span><strong>{metadata?.dataThrough ? formatDate(metadata.dataThrough, locale, profile) : '—'}</strong></div>{metadata?.sourceAsOf && <div><span>{t.sourceUpdated}</span><strong>{formatTimestamp(metadata.sourceAsOf, locale, profile)}</strong></div>}</div>}
       {execution?.metadata.failedSeries ? <div className="partial-note">{t.partial}: {execution.metadata.failedSeries}</div> : null}
       {loading && <div className="loading-state" role="status"><span className="spinner" />{t.loading}</div>}
-      {!loading && execution && profile && <DashboardRenderer execution={execution} catalog={catalog} locale={locale} profile={profile} />}
-      {!loading && !execution && !error && <div className="empty-workspace">{t.noDashboard}</div>}
+      {!loading && builderHistory && profile && <BuilderWorkspace history={builderHistory} execution={execution} catalog={catalog} registry={metricRegistry} profile={profile} locale={locale} filterOptions={filterOptions} busy={builderBusy} onCommand={builderCommand} onUndo={() => executeBuilderTransition(undoBuilder(builderHistory))} onRedo={() => executeBuilderTransition(redoBuilder(builderHistory))} />}
+      {!loading && !builderHistory && execution && profile && <DashboardRenderer execution={execution} dashboardOverride={dashboard ?? undefined} catalog={catalog} locale={locale} profile={profile} />}
+      {!loading && !builderHistory && !execution && !error && <div className="empty-workspace">{t.noDashboard}</div>}
       </section>
-      {dashboard && <section className="edit-panel"><div><div className="eyebrow eyebrow-light">✦ {t.studio}</div><h3>{t.editTitle}</h3><div className="example-chips">{editExamples.map(example => <button key={example} onClick={() => setInstruction(example)}>{example}</button>)}</div></div><div className="edit-form"><input aria-label={t.editTitle} value={instruction} onChange={e => setInstruction(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') void edit(); }} placeholder={t.editPlaceholder} /><button className="primary-button" onClick={() => void edit()} disabled={loading || !instruction.trim()}>{t.apply} ↗</button></div></section>}
+      {dashboard && !builderHistory && <section className="edit-panel"><div><div className="eyebrow eyebrow-light">✦ {t.studio}</div><h3>{t.editTitle}</h3><div className="example-chips">{editExamples.map(example => <button key={example} onClick={() => setInstruction(example)}>{example}</button>)}</div></div><div className="edit-form"><input aria-label={t.editTitle} value={instruction} onChange={e => setInstruction(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') void edit(); }} placeholder={t.editPlaceholder} /><button className="primary-button" onClick={() => void edit()} disabled={loading || !instruction.trim()}>{t.apply} ↗</button></div></section>}
       <footer className="footer">© {new Date().getFullYear()} El-Dabbous · {locale === 'ar' ? 'منصة تحليلات تجريبية' : 'Analytics prototype'}</footer></div>
     </main>
   </div>;
