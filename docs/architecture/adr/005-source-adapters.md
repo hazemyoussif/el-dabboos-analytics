@@ -1,11 +1,11 @@
-# ADR-005: Source adapters
+# ADR-005: Source adapters and canonical measures
 
-Status: Accepted
+Status: Accepted (amended September 2026)
 
-Context: Odoo-to-Odoo, PostgreSQL, API, and synchronization details are unresolved.
+Context: Odoo-to-Odoo, PostgreSQL, API, and synchronization details are unresolved. The prototype initially stored derived metrics as independent facts.
 
-Decision: Each adapter normalizes source data behind AnalyticsRepository. SQLite uses a tenant-scoped normalized fact table initially.
+Decision: Each adapter normalizes operational data to canonical source measures. SQLite stores tenant ID, measure ID, event date, value, dimensions, and optional stable entity ID. Derived metric IDs cannot be inserted. Repository calls select only required measures for a tenant and use the shared deterministic engine. Snapshot source rows require an entity ID; the latest row per entity as of the requested period is selected.
 
-Alternatives: Bind product code to the current Odoo schema.
+Alternatives: Bind product code to Odoo columns; store precomputed ratios as source facts; sum snapshots over time.
 
-Consequences: Operational source mapping is separate work; synthetic facts do not establish production metric definitions.
+Consequences: Source mappings and snapshot identity rules need source-specific implementation and review. The small seed is useful for contract tests but does not establish production metric definitions or scale.

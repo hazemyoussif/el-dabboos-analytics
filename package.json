@@ -9,7 +9,7 @@
     "lint": "eslint packages",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-transform-types --disable-warning=ExperimentalWarning --test packages/*/test/*.test.ts",
-    "check": "npm run lint && npm run typecheck && npm test",
+    "check": "pnpm run lint && pnpm run typecheck && pnpm test",
     "seed": "node --experimental-transform-types --disable-warning=ExperimentalWarning packages/data/src/seed-cli.ts"
   },
   "devDependencies": {
@@ -18,5 +18,6 @@
     "eslint": "^10.11.0",
     "typescript": "^5.9.0",
     "typescript-eslint": "^8.71.0"
-  }
+  },
+  "packageManager": "pnpm@12.6.0"
 }

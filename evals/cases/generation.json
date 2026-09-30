@@ -4,52 +4,101 @@
     "category": "english_generation",
     "locale": "en",
     "prompt": "Create a sales dashboard for the last six months showing revenue, gross margin, outstanding receivables and top ten customers.",
-    "expectedMetrics": ["revenue", "gross_margin", "outstanding_amount"],
-    "expectedDimensions": ["customer"],
-    "expectedOperations": ["top_n"],
-    "notes": "Relative date range must be resolved from evaluation reference date."
+    "expectedMetrics": [
+      "revenue",
+      "gross_margin",
+      "outstanding_amount"
+    ],
+    "expectedDimensions": [
+      "customer"
+    ],
+    "notes": "Relative date range must be resolved from evaluation reference date.",
+    "expectedAnalysis": {
+      "topN": {
+        "direction": "top",
+        "limit": 10
+      }
+    }
   },
   {
     "id": "arabic-sales",
     "category": "arabic_generation",
     "locale": "ar",
     "prompt": "اعمل لوحة للمبيعات لآخر ٦ شهور فيها الإيرادات وهامش الربح والمبالغ المستحقة وأعلى ١٠ عملاء",
-    "expectedMetrics": ["revenue", "gross_margin", "outstanding_amount"],
-    "expectedDimensions": ["customer"],
-    "expectedOperations": ["top_n"]
+    "expectedMetrics": [
+      "revenue",
+      "gross_margin",
+      "outstanding_amount"
+    ],
+    "expectedDimensions": [
+      "customer"
+    ],
+    "expectedAnalysis": {
+      "topN": {
+        "direction": "top",
+        "limit": 10
+      }
+    }
   },
   {
     "id": "egyptian-arabic",
     "category": "egyptian_arabic",
     "locale": "ar",
     "prompt": "وريني التحصيلات والمديونيات بتاعة فرع القاهرة",
-    "expectedMetrics": ["collected_amount", "outstanding_amount"],
-    "expectedFilters": [{ "dimension": "branch", "values": ["cairo"] }]
+    "expectedMetrics": [
+      "collected_amount",
+      "outstanding_amount"
+    ],
+    "expectedFilters": [
+      {
+        "dimension": "branch",
+        "values": [
+          "cairo"
+        ]
+      }
+    ]
   },
   {
     "id": "mixed-language",
     "category": "mixed_arabic_english",
     "locale": "ar",
     "prompt": "عايز revenue by branch مع YoY comparison",
-    "expectedMetrics": ["revenue"],
-    "expectedDimensions": ["branch"],
-    "expectedOperations": ["year_over_year"]
+    "expectedMetrics": [
+      "revenue"
+    ],
+    "expectedDimensions": [
+      "branch"
+    ],
+    "expectedAnalysis": {
+      "comparison": "year_over_year"
+    }
   },
   {
     "id": "advanced-moving-average",
     "category": "advanced_analytics",
     "locale": "en",
     "prompt": "Show the three-month moving average of monthly revenue.",
-    "expectedMetrics": ["revenue"],
-    "expectedDimensions": ["month"],
-    "expectedOperations": ["moving_average"]
+    "expectedMetrics": [
+      "revenue"
+    ],
+    "expectedDimensions": [
+      "month"
+    ],
+    "expectedAnalysis": {
+      "movingAverage": {
+        "window": 3
+      }
+    }
   },
   {
     "id": "ambiguous-profit",
     "category": "ambiguous_requests",
     "locale": "en",
     "prompt": "Show profit.",
-    "acceptableMetrics": ["gross_profit", "gross_margin"],
+    "acceptableMetrics": [
+      "gross_profit",
+      "gross_margin"
+    ],
     "requiresClarification": true
   },
   {
@@ -66,6 +115,8 @@
     "locale": "en",
     "prompt": "Add overdue receivables as a KPI.",
     "expectedPatchOperation": "add",
-    "expectedMetrics": ["overdue_amount"]
+    "expectedMetrics": [
+      "overdue_amount"
+    ]
   }
 ]

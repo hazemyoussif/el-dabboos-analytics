@@ -1,26 +1,32 @@
 # El-Dabbous AI Analytics
 
-Foundation for a bilingual, tenant-scoped analytics product. The deterministic domain and repository layers run without an LLM or React. A dashboard planner and renderer can be added against the published contracts.
+Foundation for a bilingual, tenant-scoped analytics product. The deterministic domain and repository layers run without an LLM, API, or React application.
 
 ## Requirements and commands
 
-Node.js 24 and npm 11. `node:sqlite` is used for the local adapter.
+Node.js 24 and pnpm 12.6.0. `node:sqlite` is used for the local adapter. pnpm is the only supported package manager; CI installs from the frozen pnpm lockfile.
 
 ```bash
-npm install
-npm run lint
-npm run typecheck
-npm test
-npm run check
-npm run seed -- demo.db demo
+pnpm install --frozen-lockfile
+pnpm run lint
+pnpm run typecheck
+pnpm test
+pnpm run check
+pnpm run seed demo.db demo
 ```
 
-`packages/domain` owns canonical IDs, the semantic catalog, query/result interfaces, and DashboardSpec v1. `packages/data` owns the canonical fact model, deterministic calculations, SQLite schema/adapter, seed generator, and mock adapter. Both repositories pass the same contract suite.
+`packages/domain` owns canonical metric IDs, explicit aggregation recipes, the semantic catalog, bounded analysis contracts, and DashboardSpec and DashboardPatch v1 schemas. `packages/data` owns canonical source measures, deterministic calculations, SQLite schema/adapter, seed generator, and mock adapter. Both repositories pass the same contract suite.
+
+## Metric and analysis rules
+
+Additive measures are summed by default and may explicitly request count, average, min, or max. Ratio and duration metrics divide aggregated source measures, so they cannot be aggregated as independent metric facts. Sales growth derives from a revenue comparison and returns a percentage value; query revenue with comparison to inspect baseline amounts. Stock and other balances select the latest observation per entity on or before the period end; a missing denominator or unavailable snapshot returns `null`.
+
+Analysis is a bounded combination of comparison, moving average, running total, contribution, ranking, and top/bottom N. Comparisons require a date range. Moving average and running total require an ordered time dimension. A grouped monthly or quarterly comparison aligns each bucket to its matching prior calendar bucket. Calendar shifts clamp leap days and preserve full month ends.
+
+Every repository result includes source ID, execution time, optional source freshness time, metric type/unit, and aggregation semantics. The LLM port requests JSON Schema constrained structured output, which remains untrusted until validated.
 
 ## Current scope
 
-The first pass intentionally has no API, LLM integration, or React application. SQLite currently stores normalized metric facts, not the future source system's operational schema. The deterministic seed spans October 2024 through September 2026, six branches, and 24 metrics. It is a representative fixture, not the full target scale or validated business accounting. See [current assumptions](docs/architecture/current-assumptions.md) and [integration questions](docs/integration/questions-for-malik.md).
+Use a fresh database path when seeding; databases from the earlier fact schema are not migrated. SQLite stores normalized source measures, not the future source system's operational schema. The small deterministic seed spans October 2024 through September 2026 and six branches. It is a fixture, not the full target scale or validated business accounting. See [current assumptions](docs/architecture/current-assumptions.md) and [integration questions](docs/integration/questions-for-malik.md).
 
-## Architecture
-
-DashboardSpec is a strict, versioned, language-independent contract. Validation rejects unknown fields and metric/dimension pairs outside the catalog. Every repository call requires a tenant context. SQL is confined to the SQLite adapter; consumers request canonical analytics queries. See [architecture overview](docs/architecture/overview.md), [diagrams](docs/architecture/diagrams.md), and [ADRs](docs/architecture/adr/).
+SQL is confined to the SQLite adapter; no repository API accepts arbitrary SQL or omits tenant context. See [architecture overview](docs/architecture/overview.md), [diagrams](docs/architecture/diagrams.md), and [ADRs](docs/architecture/adr/).

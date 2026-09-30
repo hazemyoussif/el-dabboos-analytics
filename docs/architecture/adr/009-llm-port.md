@@ -1,11 +1,11 @@
-# ADR-009: LLM provider abstraction
+# ADR-009: Structured-output LLM provider abstraction
 
-Status: Accepted
+Status: Accepted (amended September 2026)
 
-Context: Local llama.cpp/Bonsai and Muse Spark need comparable evaluation.
+Context: Local llama.cpp/Bonsai and Muse Spark may be evaluated later. A free-text completion port did not express JSON Schema constrained generation or preserve the validation boundary.
 
-Decision: DashboardPlanner depends on an LLMProvider port, never a vendor SDK. Provider adapters share evaluation cases.
+Decision: LLMProvider accepts messages and a named, strict JSON Schema response format. It returns an unknown structured value plus provider ID, latency, and attempts. DashboardPlanner validates that value against DashboardSpec or DashboardPatch schema and semantic rules before use. The provider interface contains no vendor SDK types.
 
-Alternatives: Couple planning to the first local model.
+Alternatives: Free-text completion followed by ad hoc parsing; provider-specific planner contracts.
 
-Consequences: Provider-specific telemetry is optional; correctness rules remain provider-neutral.
+Consequences: Adapters must support or emulate the structured-output contract when implemented. No provider adapter is included in this pass; correctness evaluations remain provider-neutral.

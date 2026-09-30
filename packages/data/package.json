@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "dependencies": { "@el-dabbous/domain": "0.1.0" },
-  "exports": { ".": "./src/index.ts" }
+  "dependencies": {
+    "@el-dabbous/domain": "workspace:*"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  }
 }
