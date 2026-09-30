@@ -1,4 +1,5 @@
 import type { AnalyticsContext, AnalyticsQuery, DashboardPatch, DashboardSpec, DashboardWidget, DateRange, DimensionId, MetricId } from './contracts.ts';
+import { validateDashboardLayout } from './layout.ts';
 import { isDimensionId, isMetricId, semanticCatalog, timeDimensions } from './catalog.ts';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
@@ -82,6 +83,7 @@ export function validateDashboardSpec(v: unknown): asserts v is DashboardSpec {
   const range = v.filters.dateRange;
   if (range !== undefined && !validDateRange(range)) throw new Error('Invalid dashboard date range');
   if (new Set(v.widgets.map(w => record(w) ? w.id : undefined)).size !== v.widgets.length) throw new Error('Duplicate widget ID');
+  validateDashboardLayout(v.layout as DashboardSpec['layout'], v.widgets as DashboardWidget[]);
   for (const widget of v.widgets) {
     if (!validWidget(widget, range as DateRange | undefined, v.filters.dimensions)) throw new Error('Invalid dashboard widget or incompatible series');
   }

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { DatabaseSync } from 'node:sqlite';
-import type { AnalyticsRepository } from '@el-dabbous/domain';
+import type { AnalyticsRepository, DimensionValueRepository } from '@el-dabbous/domain';
 import { factMeasureIds } from '@el-dabbous/domain';
 import { MockAnalyticsRepository } from '../src/mock.ts';
 import { SqliteAnalyticsRepository, createSqliteSchema, insertFacts } from '../src/sqlite.ts';
@@ -24,7 +24,7 @@ const facts: AnalyticsFact[] = [
 ];
 const context = { tenantId: 'a', locale: 'en' } as const;
 const options = { clock: () => new Date('2026-09-30T12:00:00.000Z'), sourceAsOf: '2026-09-30T08:00:00.000Z' };
-function contract(name: string, create: () => AnalyticsRepository) {
+function contract(name: string, create: () => AnalyticsRepository & DimensionValueRepository) {
   test(`${name}: tenant isolation, source metadata, ratios and snapshots`, async () => {
     const repo = create();
     const dateRange = { from: '2026-01-01', to: '2026-02-28' };
@@ -45,6 +45,9 @@ function contract(name: string, create: () => AnalyticsRepository) {
     assert.equal((await repo.execute({ metric: 'revenue', dateRange, groupBy: 'branch', filters: [{ dimension: 'customer', values: ['two'] }] }, context)).rows[0]?.value, 50);
     assert.equal((await repo.execute({ metric: 'revenue', dateRange, groupBy: 'month', analysis: { runningTotal: true } }, context)).rows[1]?.value, 350);
     assert.equal((await repo.execute({ metric: 'revenue', dateRange, analysis: { comparison: 'year_over_year' } }, context)).rows[0]?.comparisonValue, 125);
+    assert.deepEqual(await repo.listDimensionValues('branch', context), ['cairo', 'giza']);
+    assert.deepEqual(await repo.listDimensionValues('branch', { tenantId: 'b', locale: 'en' }), ['cairo']);
+    await assert.rejects(repo.listDimensionValues('branch', { tenantId: '', locale: 'en' }));
     await assert.rejects(repo.execute({ metric: 'revenue' }, { tenantId: '', locale: 'en' }));
   });
 }

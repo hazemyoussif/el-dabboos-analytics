@@ -12,3 +12,4 @@
 - DashboardSpec v1 was the initial single-metric prototype schema. V2 is the active multi-series schema and patch contract. No persisted production specs require migration.
 - The mock planner demonstrates bounded sales intent and five edits; it is not an LLM or a general dialect parser. Planning can be disabled while templates continue working.
 - Planned metrics in the product registry are recognized concepts only. They have no executable formula or approved source data and cannot enter a DashboardSpec.
+- Manual builder changes and undo/redo exist only in the current browser session. A new dashboard remains a non-executable draft until it contains a valid widget. Tenant switching reloads the active template and discards the prior market’s builder history.

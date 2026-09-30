@@ -1,0 +1,100 @@
+import { applyDashboardPatch, resolveDashboardLayout, semanticCatalog, validateAnalysis, validateDashboardSpec } from '@el-dabbous/domain';
+import type { AnalysisSpec, DashboardLayout, DashboardPatch, DashboardSpec, DashboardWidget, DimensionId, Locale, MetricId, ProductMetric, SemanticMetric, TenantProfile } from '@el-dabbous/domain';
+import { resolveDatePreset } from '@el-dabbous/application';
+
+export interface EmptyBuilderDraft {
+  kind: 'empty';
+  base: Omit<DashboardSpec, 'widgets'>;
+}
+export type BuilderDocument = { kind: 'dashboard'; spec: DashboardSpec } | EmptyBuilderDraft;
+export interface BuilderHistory { past: BuilderDocument[]; present: BuilderDocument; future: BuilderDocument[] }
+export type BuilderCommand =
+  | { type: 'patch'; patch: DashboardPatch }
+  | { type: 'layout'; layout: DashboardLayout }
+  | { type: 'add-first'; widget: DashboardWidget }
+  | { type: 'remove-last' };
+export interface BuilderTransition { history: BuilderHistory; execute: boolean }
+const MAX_HISTORY = 40;
+
+export function blankDashboardDraft(profile: TenantProfile, locale: Locale, now = new Date()): EmptyBuilderDraft {
+  return { kind: 'empty', base: { schemaVersion: 2, id: 'manual-dashboard', title: { en: 'New dashboard', ar: 'لوحة جديدة' },
+    locale, filters: { dateRange: resolveDatePreset('current_year', profile, now) }, layout: { columns: 12, items: [] } } };
+}
+export function startBuilder(document: BuilderDocument): BuilderHistory {
+  return { past: [], present: structuredClone(document), future: [] };
+}
+export function withLocale(document: BuilderDocument, locale: Locale): BuilderDocument {
+  if (document.kind === 'empty') return { kind: 'empty', base: { ...document.base, locale } };
+  return { kind: 'dashboard', spec: { ...document.spec, locale } };
+}
+function semanticKey(document: BuilderDocument): string {
+  return document.kind === 'empty' ? 'empty' : JSON.stringify({ filters: document.spec.filters, widgets: document.spec.widgets });
+}
+export function commitBuilderCommand(history: BuilderHistory, command: BuilderCommand): BuilderTransition {
+  const current = history.present;
+  let next: BuilderDocument;
+  if (command.type === 'add-first') {
+    if (current.kind !== 'empty') throw new Error('First widget requires an empty dashboard');
+    const spec: DashboardSpec = { ...structuredClone(current.base), widgets: [command.widget] };
+    spec.layout = { columns: 12, items: resolveDashboardLayout({ ...spec, layout: { columns: 12 } }).items };
+    validateDashboardSpec(spec);
+    next = { kind: 'dashboard', spec };
+  } else if (command.type === 'remove-last') {
+    if (current.kind !== 'dashboard' || current.spec.widgets.length !== 1) throw new Error('Not the last widget');
+    const { schemaVersion, id, title, locale, filters } = current.spec;
+    next = { kind: 'empty', base: { schemaVersion, id, title, locale, filters, layout: { columns: 12, items: [] } } };
+  } else {
+    if (current.kind !== 'dashboard') throw new Error('Add a widget before editing the dashboard');
+    const patch: DashboardPatch = command.type === 'layout' ? { schemaVersion: 2, operations: [{ op: 'set_layout', layout: command.layout }] } : command.patch;
+    next = { kind: 'dashboard', spec: applyDashboardPatch(current.spec, patch) };
+  }
+  if (JSON.stringify(current) === JSON.stringify(next)) return { history, execute: false };
+  return { history: { past: [...history.past, structuredClone(current)].slice(-MAX_HISTORY), present: next, future: [] },
+    execute: semanticKey(current) !== semanticKey(next) };
+}
+export function undoBuilder(history: BuilderHistory): BuilderTransition {
+  if (!history.past.length) return { history, execute: false };
+  const previous = history.past.at(-1)!;
+  return { history: { past: history.past.slice(0, -1), present: previous, future: [history.present, ...history.future] },
+    execute: semanticKey(history.present) !== semanticKey(previous) };
+}
+export function redoBuilder(history: BuilderHistory): BuilderTransition {
+  if (!history.future.length) return { history, execute: false };
+  const next = history.future[0]!;
+  return { history: { past: [...history.past, history.present].slice(-MAX_HISTORY), present: next, future: history.future.slice(1) },
+    execute: semanticKey(history.present) !== semanticKey(next) };
+}
+export function selectableMetric(metric: ProductMetric): metric is Extract<ProductMetric, { availability: 'available' }> {
+  return metric.availability === 'available';
+}
+export function commonDimensions(metrics: readonly MetricId[], catalog: Record<string, SemanticMetric> = semanticCatalog): DimensionId[] {
+  if (!metrics.length) return [];
+  return catalog[metrics[0]!]!.dimensions.filter(dimension => metrics.every(metric => catalog[metric]?.dimensions.includes(dimension)));
+}
+export function canAddSeries(widget: DashboardWidget, metricId: MetricId, catalog: Record<string, SemanticMetric> = semanticCatalog): { allowed: boolean; reason?: string } {
+  if (widget.type === 'kpi') return { allowed: false, reason: 'KPI widgets have one metric' };
+  if (widget.series.length >= 8) return { allowed: false, reason: 'Eight series maximum' };
+  if (!catalog[metricId]) return { allowed: false, reason: 'Metric is unavailable' };
+  if (widget.type === 'line' || widget.type === 'bar') {
+    const first = widget.series[0]!;
+    const firstMetric = catalog[first.metric]!;
+    const nextMetric = catalog[metricId]!;
+    const firstUnit = first.analysis?.percentageContribution ? 'percentage:%' : `${firstMetric.type}:${firstMetric.presentation.unit ?? ''}`;
+    const nextUnit = `${nextMetric.type}:${nextMetric.presentation.unit ?? ''}`;
+    if (firstUnit !== nextUnit) return { allowed: false, reason: 'Single-axis charts require matching metric type and unit' };
+  }
+  if (widget.dimension && !commonDimensions([...widget.series.map(s => s.metric), metricId], catalog).includes(widget.dimension))
+    return { allowed: false, reason: 'Metrics need a shared grouping dimension' };
+  return { allowed: true };
+}
+export function withWidgetMetric(widget: DashboardWidget, seriesId: string, metric: MetricId): DashboardWidget {
+  const series = widget.series.map(entry => entry.id === seriesId ? { id: entry.id, metric } : entry);
+  const dimensions = commonDimensions(series.map(entry => entry.metric));
+  return { ...widget, series, ...(widget.dimension && dimensions.includes(widget.dimension) ? { dimension: widget.dimension } : { dimension: undefined }) };
+}
+export function analysisAllowed(metric: MetricId, dimension: DimensionId | undefined, dateRange: DashboardSpec['filters']['dateRange'], analysis: AnalysisSpec): boolean {
+  try { validateAnalysis(analysis, metric, dimension, dateRange); return true; } catch { return false; }
+}
+export function validWidgetDraft(widget: DashboardWidget, base: Omit<DashboardSpec, 'widgets'>): boolean {
+  try { validateDashboardSpec({ ...base, layout: { columns: 12 }, widgets: [widget] }); return true; } catch { return false; }
+}

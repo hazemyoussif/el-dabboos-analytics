@@ -1,7 +1,9 @@
 import type { DashboardExecutionResult, WidgetExecution } from '@el-dabbous/application';
-import type { DashboardWidget, Locale, SemanticMetric, TenantProfile } from '@el-dabbous/domain';
+import type { DashboardSpec, DashboardWidget, Locale, SemanticMetric, TenantProfile } from '@el-dabbous/domain';
 import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { copy, formatKey, formatValue, localeTag } from './i18n.ts';
+import { DashboardGrid } from './builder/DashboardGrid.tsx';
+import type { DashboardLayout } from '@el-dabbous/domain';
 
 interface Props { execution: DashboardExecutionResult; catalog: Record<string, SemanticMetric>; locale: Locale; profile: TenantProfile }
 const colors = ['#0aa992', '#3274bd', '#e8943a', '#9a6cd3', '#e06377', '#6c8b3c', '#7a91a8', '#c168a6'];
@@ -68,6 +70,9 @@ export function WidgetCard({ widget, entry, catalog, locale, profile }: { widget
   else content = <div className="table-wrap"><table><thead><tr><th>{widget.dimension ? t.dimensions[widget.dimension] : t.results}</th>{widget.series.map((series, index) => <th key={series.id}>{labelFor(index)}</th>)}</tr></thead><tbody>{entry.alignedRows.map((row, index) => <tr key={`${row.key}-${index}`}><td>{formatKey(row.key, widget.dimension, locale, profile)}</td>{widget.series.map(series => <td key={series.id}>{fmt(series.id, row.series[series.id]?.value ?? null)}</td>)}</tr>)}</tbody></table></div>;
   return <article className={`widget widget-${widget.type}`}><div className="widget-heading"><div><h3>{title}</h3><p>{subtitle}</p></div><span className="widget-icon">{widget.type === 'kpi' ? '↗' : widget.type === 'line' ? '⌁' : widget.type === 'bar' ? '▥' : '≡'}</span></div>{entry.status === 'partial' && <p className="series-warning">{t.partial}: {failures.join(' · ')}</p>}{content}</article>;
 }
-export function DashboardRenderer({ execution, catalog, locale, profile }: Props) {
-  return <div className="dashboard-grid">{execution.dashboard.widgets.map(widget => <WidgetCard key={widget.id} widget={widget} entry={execution.widgetResults[widget.id]} catalog={catalog} locale={locale} profile={profile} />)}</div>;
+export function DashboardRenderer({ execution, catalog, locale, profile, editable = false, selectedId, onSelect, onLayoutCommit, dashboardOverride }: Props & {
+  dashboardOverride?: DashboardSpec; editable?: boolean; selectedId?: string | null; onSelect?: (id: string) => void; onLayoutCommit?: (layout: DashboardLayout) => void;
+}) {
+  return <DashboardGrid spec={dashboardOverride ?? execution.dashboard} locale={locale} editable={editable} selectedId={selectedId} onSelect={onSelect} onLayoutCommit={onLayoutCommit}
+    renderWidget={widget => <WidgetCard widget={widget} entry={execution.widgetResults[widget.id]} catalog={catalog} locale={locale} profile={profile} />} />;
 }

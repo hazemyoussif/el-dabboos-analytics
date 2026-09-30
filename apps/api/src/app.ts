@@ -2,13 +2,13 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { DashboardExecutor, MockDashboardPlanner, UnsupportedDemoIntentError, dashboardTemplates, getDashboardTemplate, instantiateDashboardTemplate } from '@el-dabbous/application';
 import { applyDashboardPatch, getTenantProfile, productMetricCatalog, semanticCatalog, tenantProfiles, validateDashboardSpec, validateQuery } from '@el-dabbous/domain';
-import type { AnalyticsContext, AnalyticsQuery, AnalyticsRepository, DashboardPlanner, DashboardSpec, Locale, TenantProfile } from '@el-dabbous/domain';
+import type { AnalyticsContext, AnalyticsQuery, AnalyticsRepository, DimensionId, DimensionValueRepository, DashboardPlanner, DashboardSpec, Locale, TenantProfile } from '@el-dabbous/domain';
 
 export class ApiError extends Error {
   constructor(readonly statusCode: number, readonly code: string, message: string) { super(message); }
 }
 const object = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
-export interface ApiDependencies { repository: AnalyticsRepository; planner?: DashboardPlanner | null; clock?: () => Date }
+export interface ApiDependencies { repository: AnalyticsRepository & DimensionValueRepository; planner?: DashboardPlanner | null; clock?: () => Date }
 export async function buildApi(deps: ApiDependencies) {
   const app = Fastify({ logger: false });
   await app.register(cors, { origin: ['http://localhost:5173', 'http://127.0.0.1:5173'] });
@@ -37,6 +37,15 @@ export async function buildApi(deps: ApiDependencies) {
   app.get('/api/tenant-profile', async request => session(request.headers).profile);
   app.get('/api/semantic-catalog', async () => ({ metrics: Object.values(semanticCatalog), registry: productMetricCatalog }));
   app.get('/api/dashboard-templates', async () => ({ templates: dashboardTemplates }));
+  app.get<{ Params: { dimension: string } }>('/api/dimensions/:dimension/values', async request => {
+    const { context, profile } = session(request.headers);
+    const dimension = request.params.dimension;
+    if (!['branch', 'region', 'salesperson', 'product_category', 'warehouse'].includes(dimension))
+      throw new ApiError(400, 'UNSUPPORTED_DIMENSION', 'Dimension values are unavailable.');
+    const ids = await deps.repository.listDimensionValues(dimension as DimensionId, context);
+    return { dimension, values: ids.map(id => ({ id, label: dimension === 'branch' ? profile.branchLabels[id]?.[context.locale] ?? id : id.replaceAll('_', ' ') })) };
+  });
+
   app.get<{ Params: { id: string } }>('/api/dashboard-templates/:id/instantiate', async request => {
     const { context, profile } = session(request.headers);
     const template = getDashboardTemplate(request.params.id);

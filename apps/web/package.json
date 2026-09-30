@@ -4,11 +4,12 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "@el-dabbous/application": "workspace:*",
     "@el-dabbous/domain": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "recharts": "^3.0.0",
-    "@el-dabbous/application": "workspace:*"
+    "react-grid-layout": "^2.2.4",
+    "recharts": "^3.0.0"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",

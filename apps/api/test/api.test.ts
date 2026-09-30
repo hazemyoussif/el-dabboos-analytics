@@ -31,6 +31,14 @@ test('analytics requires a registered tenant and isolates Iraq from Egypt', asyn
   assert.equal(egypt.json().rows[0].value, 250);
   assert.equal((await app.inject({ method: 'GET', url: '/api/tenant-profile', headers: iq })).json().reportingCurrency, 'IQD');
 });
+test('dimension value discovery is tenant scoped and market labeled', async () => {
+  const iraq = (await app.inject({ method: 'GET', url: '/api/dimensions/branch/values', headers: iq })).json().values;
+  const egypt = (await app.inject({ method: 'GET', url: '/api/dimensions/branch/values', headers: eg })).json().values;
+  assert.deepEqual(iraq, [{ id: 'baghdad', label: 'بغداد' }]);
+  assert.deepEqual(egypt, [{ id: 'cairo', label: 'Cairo' }]);
+  assert.equal((await app.inject({ method: 'GET', url: '/api/dimensions/branch/values' })).statusCode, 401);
+  assert.equal((await app.inject({ method: 'GET', url: '/api/dimensions/customer/values', headers: iq })).statusCode, 400);
+});
 test('query endpoint rejects SQL, planned metrics and malformed JSON', async () => {
   assert.equal((await app.inject({ method: 'POST', url: '/api/analytics/query', headers: iq, payload: { metric: 'revenue', sql: 'SELECT *' } })).statusCode, 400);
   assert.equal((await app.inject({ method: 'POST', url: '/api/analytics/query', headers: iq, payload: { metric: 'days_sales_outstanding' } })).statusCode, 400);
@@ -47,6 +55,11 @@ test('same Sales Performance template executes under both markets without duplic
   assert.deepEqual(iraq.dashboard.widgets, egypt.dashboard.widgets);
   assert.equal(iraq.dashboard.schemaVersion, 2);
   assert.equal(iraq.execution.widgetResults.revenue.seriesResults.revenue.result.rows[0].value, 100);
+  assert.equal(egypt.execution.widgetResults.revenue.seriesResults.revenue.result.rows[0].value, 250);
+  const iraqFiltered = { ...iraq.dashboard, filters: { ...iraq.dashboard.filters, dimensions: [{ dimension: 'branch', values: ['baghdad'] }] } };
+  const scoped = (await app.inject({ method: 'POST', url: '/api/dashboards/execute', headers: iq, payload: { dashboard: iraqFiltered } })).json();
+  assert.equal(scoped.widgetResults.revenue.seriesResults.revenue.result.rows[0].value, 100);
+  assert.equal(egypt.dashboard.filters.dimensions, undefined);
   assert.equal(egypt.execution.widgetResults.revenue.seriesResults.revenue.result.rows[0].value, 250);
   assert.equal((await app.inject({ method: 'GET', url: '/api/dashboard-templates/unknown/instantiate', headers: iq })).statusCode, 404);
 });
