@@ -20,8 +20,8 @@ export function WidgetCard({ widget, entry, catalog, locale, profile }: { widget
   const data = entry.alignedRows.map(row => {
     const item: Record<string, string | number | null> = { label: formatKey(row.key, widget.dimension, locale, profile) };
     for (const series of widget.series) {
-      item[valueKey(series.id)] = row.values[series.id] ?? null;
-      if (Object.hasOwn(row.comparisonValues, series.id)) item[comparisonKey(series.id)] = row.comparisonValues[series.id] ?? null;
+      item[valueKey(series.id)] = row.series[series.id]?.value ?? null;
+      if (row.series[series.id]?.comparisonValue !== undefined) item[comparisonKey(series.id)] = row.series[series.id]?.comparisonValue ?? null;
     }
     return item;
   });
@@ -30,7 +30,7 @@ export function WidgetCard({ widget, entry, catalog, locale, profile }: { widget
     const metric = catalog[series.metric];
     return formatValue(value, metric?.type ?? 'number', locale, profile, metric?.presentation.unit);
   };
-  const hasData = entry.alignedRows.some(row => Object.values(row.values).some(value => value !== null));
+  const hasData = entry.alignedRows.some(row => Object.values(row.series).some(value => value !== null && value.value !== null));
   const labelFor = (index: number) => labels[index] ?? widget.series[index]!.id;
   const formatter = (value: unknown, name: unknown) => {
     const index = labels.findIndex(label => label === name);
@@ -53,7 +53,7 @@ export function WidgetCard({ widget, entry, catalog, locale, profile }: { widget
     <Tooltip formatter={formatter} contentStyle={{ borderRadius: 12, border: '1px solid #e6ebf0' }} />
     <Legend />
     {widget.series.flatMap((series, index) => [
-      ...(entry.alignedRows.some(row => Object.hasOwn(row.comparisonValues, series.id)) ? [<Line key={`comparison-${series.id}`} dataKey={comparisonKey(series.id)} name={`${labelFor(index)} · ${locale === 'ar' ? 'الفترة السابقة' : 'Previous'}`} stroke={colors[index % colors.length]} strokeOpacity={0.42} strokeDasharray="5 4" strokeWidth={2} dot={false} connectNulls={false} />] : []),
+      ...(entry.alignedRows.some(row => row.series[series.id]?.comparisonValue !== undefined) ? [<Line key={`comparison-${series.id}`} dataKey={comparisonKey(series.id)} name={`${labelFor(index)} · ${locale === 'ar' ? 'الفترة السابقة' : 'Previous'}`} stroke={colors[index % colors.length]} strokeOpacity={0.42} strokeDasharray="5 4" strokeWidth={2} dot={false} connectNulls={false} />] : []),
       <Line key={series.id} dataKey={valueKey(series.id)} name={labelFor(index)} stroke={colors[index % colors.length]} strokeWidth={3} dot={false} activeDot={{ r: 5 }} connectNulls={false} />,
     ])}
   </LineChart></ResponsiveContainer></div>;
@@ -65,7 +65,7 @@ export function WidgetCard({ widget, entry, catalog, locale, profile }: { widget
     <Legend />
     {widget.series.map((series, index) => <Bar key={series.id} dataKey={valueKey(series.id)} name={labelFor(index)} fill={colors[index % colors.length]} radius={[0, 5, 5, 0]} maxBarSize={24} />)}
   </BarChart></ResponsiveContainer></div>;
-  else content = <div className="table-wrap"><table><thead><tr><th>{widget.dimension ? t.dimensions[widget.dimension] : t.results}</th>{widget.series.map((series, index) => <th key={series.id}>{labelFor(index)}</th>)}</tr></thead><tbody>{entry.alignedRows.map((row, index) => <tr key={`${row.key}-${index}`}><td>{formatKey(row.key, widget.dimension, locale, profile)}</td>{widget.series.map(series => <td key={series.id}>{fmt(series.id, row.values[series.id] ?? null)}</td>)}</tr>)}</tbody></table></div>;
+  else content = <div className="table-wrap"><table><thead><tr><th>{widget.dimension ? t.dimensions[widget.dimension] : t.results}</th>{widget.series.map((series, index) => <th key={series.id}>{labelFor(index)}</th>)}</tr></thead><tbody>{entry.alignedRows.map((row, index) => <tr key={`${row.key}-${index}`}><td>{formatKey(row.key, widget.dimension, locale, profile)}</td>{widget.series.map(series => <td key={series.id}>{fmt(series.id, row.series[series.id]?.value ?? null)}</td>)}</tr>)}</tbody></table></div>;
   return <article className={`widget widget-${widget.type}`}><div className="widget-heading"><div><h3>{title}</h3><p>{subtitle}</p></div><span className="widget-icon">{widget.type === 'kpi' ? '↗' : widget.type === 'line' ? '⌁' : widget.type === 'bar' ? '▥' : '≡'}</span></div>{entry.status === 'partial' && <p className="series-warning">{t.partial}: {failures.join(' · ')}</p>}{content}</article>;
 }
 export function DashboardRenderer({ execution, catalog, locale, profile }: Props) {

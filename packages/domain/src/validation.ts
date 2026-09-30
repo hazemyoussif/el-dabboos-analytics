@@ -62,8 +62,9 @@ export function validWidget(v: unknown, dateRange?: DateRange, filters?: unknown
     (v.type !== 'kpi' && v.dimension === undefined) ||
     new Set(v.series.map(s => record(s) ? s.id : undefined)).size !== v.series.length) return false;
   try {
-    for (const series of v.series) {
+    for (const [index, series] of v.series.entries()) {
       if (!record(series) || typeof series.id !== 'string' || !/^[a-z0-9][a-z0-9_-]*$/.test(series.id) || series.id.length > 80) return false;
+      if (index > 0 && record(series.analysis) && series.analysis.topN !== undefined) return false;
       validateMetricUse(series.metric, v.dimension, series.analysis, dateRange, filters);
     }
     if (v.type === 'line' || v.type === 'bar') {

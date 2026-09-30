@@ -89,6 +89,7 @@ export interface AnalyticsRepository {
   execute(query: AnalyticsQuery, context: AnalyticsContext): Promise<AnalyticsResult>;
 }
 export type WidgetType = 'kpi' | 'line' | 'bar' | 'table';
+/** In a multi-series widget, only the first series may use topN; its keys select the displayed rows. */
 export interface DashboardSeries { id: string; metric: MetricId; analysis?: AnalysisSpec }
 export interface DashboardWidget {
   id: string;

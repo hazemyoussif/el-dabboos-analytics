@@ -18,6 +18,13 @@ test('DashboardSpec v2 accepts compatible series and rejects v1, unknown fields,
   assert.throws(() => validateDashboardSpec({ ...spec, widgets: [spec.widgets[0], spec.widgets[0]] }));
   assert.throws(() => validateDashboardSpec({ ...spec, widgets: [{ ...spec.widgets[0], series: [{ id: 'same', metric: 'revenue' }, { id: 'same', metric: 'gross_profit' }] }] }));
 });
+test('multi-series top N selection belongs only to the first series', () => {
+  const first = { id: 'revenue', metric: 'revenue', analysis: { topN: { direction: 'top', limit: 3 } } };
+  const second = { id: 'profit', metric: 'gross_profit' };
+  assert.doesNotThrow(() => validateDashboardSpec({ ...spec, widgets: [{ ...spec.widgets[0], dimension: 'branch', series: [first, second] }] }));
+  assert.throws(() => validateDashboardSpec({ ...spec, widgets: [{ ...spec.widgets[0], dimension: 'branch', series: [second, first] }] }));
+  assert.throws(() => validateDashboardSpec({ ...spec, widgets: [{ ...spec.widgets[0], dimension: 'branch', series: [{ ...first, id: 'first' }, first] }] }));
+});
 test('single-axis charts reject mixed units, while tables allow independently formatted metrics', () => {
   const mixed = { ...spec.widgets[0], series: [{ id: 'revenue', metric: 'revenue' }, { id: 'margin', metric: 'gross_margin' }] };
   assert.throws(() => validateDashboardSpec({ ...spec, widgets: [mixed] }));

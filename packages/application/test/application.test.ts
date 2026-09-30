@@ -56,7 +56,7 @@ test('multi-series grouped results align by key without inventing zero', async (
   const spec = instantiateDashboardTemplate(getDashboardTemplate('sales-performance')!, iq, fixed(), 'en');
   spec.widgets = [spec.widgets.find(w => w.id === 'revenue-profit')!];
   const execution = await new DashboardExecutor(repository, fixed).execute(spec, context);
-  assert.deepEqual(execution.widgetResults['revenue-profit']?.alignedRows.map(row => [row.key, row.values.revenue, row.values['gross-profit']]), [
+  assert.deepEqual(execution.widgetResults['revenue-profit']?.alignedRows.map(row => [row.key, row.series.revenue?.value ?? null, row.series['gross-profit']?.value ?? null]), [
     ['2026-01', 10, null], ['2026-02', 20, 5], ['2026-03', null, 8],
   ]);
 });
@@ -72,7 +72,7 @@ test('one failed series is isolated and other series still render', async () => 
   assert.equal(execution.metadata.failed, 0);
   assert.equal(execution.widgetResults['revenue-profit']?.status, 'partial');
   assert.equal(execution.widgetResults['revenue-profit']?.seriesResults['gross-profit']?.status, 'error');
-  assert.equal(execution.widgetResults['revenue-profit']?.alignedRows[0]?.values.revenue, 10);
+  assert.equal(execution.widgetResults['revenue-profit']?.alignedRows[0]?.series.revenue?.value, 10);
 });
 test('multi-metric table aligns selected customers and preserves each metric value', async () => {
   const repository: AnalyticsRepository = { async execute(query) { return result(query, query.metric === 'revenue' ?
@@ -81,9 +81,38 @@ test('multi-metric table aligns selected customers and preserves each metric val
   const spec = instantiateDashboardTemplate(getDashboardTemplate('customer-analytics')!, iq, fixed(), 'en');
   spec.widgets = [spec.widgets.find(w => w.id === 'customer-performance')!];
   const rows = (await new DashboardExecutor(repository, fixed).execute(spec, context)).widgetResults['customer-performance']?.alignedRows;
-  assert.deepEqual(rows?.map(row => [row.key, row.values.revenue, row.values['gross-profit'], row.values.outstanding]), [
+  assert.deepEqual(rows?.map(row => [row.key, row.series.revenue?.value ?? null, row.series['gross-profit']?.value ?? null, row.series.outstanding?.value ?? null]), [
     ['customer_001', 100, null, null], ['customer_002', 80, 30, 40],
   ]);
+});
+test('alignment retains ranking and comparison metadata for every series', async () => {
+  const repository: AnalyticsRepository = { async execute(query) { return result(query, query.metric === 'revenue' ?
+    [{ key: 'customer_002', value: 120, rank: 1, comparisonValue: 100, absoluteChange: 20, percentageChange: 20 },
+      { key: 'customer_001', value: 80, rank: 2, comparisonValue: null, absoluteChange: null, percentageChange: null }] :
+    [{ key: 'customer_001', value: 30, rank: 7, comparisonValue: 20, absoluteChange: 10, percentageChange: 50 }]); } };
+  const spec = instantiateDashboardTemplate(getDashboardTemplate('customer-analytics')!, iq, fixed(), 'en');
+  spec.widgets = [spec.widgets.find(w => w.id === 'customer-performance')!];
+  const rows = (await new DashboardExecutor(repository, fixed).execute(spec, context)).widgetResults['customer-performance']?.alignedRows;
+  assert.deepEqual(rows?.map(row => row.key), ['customer_002', 'customer_001']);
+  assert.deepEqual(rows?.[0]?.series.revenue, { value: 120, rank: 1, comparisonValue: 100, absoluteChange: 20, percentageChange: 20 });
+  assert.equal(rows?.[0]?.series['gross-profit'], null);
+  assert.deepEqual(rows?.[1]?.series.revenue, { value: 80, rank: 2, comparisonValue: null, absoluteChange: null, percentageChange: null });
+  assert.deepEqual(rows?.[1]?.series['gross-profit'], { value: 30, rank: 7, comparisonValue: 20, absoluteChange: 10, percentageChange: 50 });
+});
+test('failed top N anchor makes widget error and never aligns an unrestricted union', async () => {
+  const repository: AnalyticsRepository = { async execute(query) {
+    if (query.metric === 'revenue') throw new Error('selection unavailable');
+    return result(query, [{ key: 'customer_001', value: 20 }, { key: 'customer_999', value: 100 }]);
+  } };
+  const spec = instantiateDashboardTemplate(getDashboardTemplate('customer-analytics')!, iq, fixed(), 'en');
+  spec.widgets = [spec.widgets.find(w => w.id === 'customer-performance')!];
+  const execution = await new DashboardExecutor(repository, fixed).execute(spec, context);
+  const widget = execution.widgetResults['customer-performance'];
+  assert.equal(widget?.status, 'error');
+  assert.deepEqual(widget?.alignedRows, []);
+  assert.equal(widget?.seriesResults.revenue?.status, 'error');
+  assert.equal(widget?.seriesResults['gross-profit']?.status, 'success');
+  assert.equal(execution.metadata.failed, 1);
 });
 test('mock planner generates Iraqi, Egyptian, MSA and English v2 specs and edits', async () => {
   const planner = new MockDashboardPlanner(fixed);
