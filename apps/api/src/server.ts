@@ -18,7 +18,7 @@ if (provider === 'sqlite') {
 } else {
   throw new Error(`ANALYTICS_PROVIDER=${provider} is reserved but not implemented. Use sqlite or mock.`);
 }
-const app = await buildApi({ repository });
+const app = await buildApi({ analyticsRepository: repository, dimensionValues: repository });
 const port = Number(process.env.PORT ?? 3001);
 try {
   const address = await app.listen({ port, host: '127.0.0.1' });

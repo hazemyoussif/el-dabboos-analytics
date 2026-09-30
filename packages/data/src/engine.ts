@@ -11,8 +11,8 @@ function dimension(f: AnalyticsFact, id: DimensionId): string | undefined {
 function inRange(f: AnalyticsFact, range: DateRange | undefined): boolean {
   return !range || (f.date >= range.from && f.date <= range.to);
 }
-function filtered(f: AnalyticsFact, query: AnalyticsQuery): boolean {
-  return !query.filters || query.filters.every(filter => filter.values.includes(dimension(f, filter.dimension) ?? ''));
+function filtered(f: AnalyticsFact, query: AnalyticsQuery, context: AnalyticsContext): boolean {
+  return [...(query.filters ?? []), ...(context.enforcedFilters ?? [])].every(filter => filter.values.includes(dimension(f, filter.dimension) ?? ''));
 }
 function aggregate(values: number[], kind: AdditiveAggregation): number {
   if (!values.length) return 0;
@@ -35,10 +35,10 @@ function latestSnapshots(facts: readonly AnalyticsFact[], measureId: FactMeasure
   }
   return [...latest.values()];
 }
-function evaluate(facts: readonly AnalyticsFact[], metricId: MetricId, query: AnalyticsQuery, range: DateRange | undefined, key: string | null): number | null {
+function evaluate(facts: readonly AnalyticsFact[], metricId: MetricId, query: AnalyticsQuery, range: DateRange | undefined, key: string | null, context: AnalyticsContext): number | null {
   const semantics = semanticCatalog[metricId].semantics;
   const groupBy = query.groupBy;
-  const matches = (fact: AnalyticsFact): boolean => filtered(fact, query) && inRange(fact, range) &&
+  const matches = (fact: AnalyticsFact): boolean => filtered(fact, query, context) && inRange(fact, range) &&
     (key === null || !groupBy || dimension(fact, groupBy) === key);
   const measure = (id: FactMeasureId, aggregation: AdditiveAggregation = 'sum'): number =>
     aggregate(facts.filter(f => f.measureId === id && matches(f)).map(f => f.value), aggregation);
@@ -48,24 +48,24 @@ function evaluate(facts: readonly AnalyticsFact[], metricId: MetricId, query: An
     return denominator === 0 ? null : measure(semantics.numerator) / denominator * semantics.scale;
   }
   if (semantics.kind === 'snapshot') {
-    const snapshots = latestSnapshots(facts, semantics.measure, range?.to).filter(f => filtered(f, query) &&
+    const snapshots = latestSnapshots(facts, semantics.measure, range?.to).filter(f => filtered(f, query, context) &&
       (key === null || !groupBy || isTime(groupBy) || dimension(f, groupBy) === key));
     return snapshots.length ? snapshots.reduce((sum, f) => sum + f.value, 0) : null;
   }
   throw new Error('Comparison-derived metrics require comparison evaluation');
 }
-function currentKeys(facts: readonly AnalyticsFact[], query: AnalyticsQuery): Array<string | null> {
+function currentKeys(facts: readonly AnalyticsFact[], query: AnalyticsQuery, context: AnalyticsContext): Array<string | null> {
   if (!query.groupBy) return [null];
   const groupBy = query.groupBy;
   const semantics = semanticCatalog[query.metric].semantics;
   const source = semantics.kind === 'snapshot'
     ? latestSnapshots(facts, semantics.measure, query.dateRange?.to)
     : facts.filter(f => inRange(f, query.dateRange));
-  const keys = new Set(source.filter(f => filtered(f, query) && (semantics.kind === 'snapshot' || inRange(f, query.dateRange)))
+  const keys = new Set(source.filter(f => filtered(f, query, context) && (semantics.kind === 'snapshot' || inRange(f, query.dateRange)))
     .map(f => dimension(f, groupBy)).filter((k): k is string => k !== undefined));
   if (semantics.kind === 'snapshot' && isTime(groupBy)) {
     if (query.dateRange) return periodKeys(query.dateRange, groupBy);
-    return [...new Set(facts.filter(f => f.measureId === semantics.measure && filtered(f, query))
+    return [...new Set(facts.filter(f => f.measureId === semantics.measure && filtered(f, query, context))
       .map(f => dimension(f, groupBy)).filter((k): k is string => k !== undefined))].sort();
   }
   return [...keys].sort();
@@ -105,15 +105,15 @@ export function executeFacts(facts: readonly AnalyticsFact[], query: AnalyticsQu
   const metric = semanticCatalog[query.metric];
   const measures = new Set(requiredMeasures(query.metric));
   const scoped = facts.filter(f => f.tenantId === context.tenantId && measures.has(f.measureId));
-  const dataThrough = scoped.reduce<string | undefined>((latest, fact) => !latest || fact.date > latest ? fact.date : latest, undefined);
+  const dataThrough = scoped.filter(f => (context.enforcedFilters ?? []).every(filter => filter.values.includes(dimension(f, filter.dimension) ?? ''))).reduce<string | undefined>((latest, fact) => !latest || fact.date > latest ? fact.date : latest, undefined);
   const comparison = query.analysis?.comparison ?? (metric.semantics.kind === 'comparison_derived' ? metric.semantics.defaultComparison : undefined);
-  let rows: AnalyticsRow[] = currentKeys(scoped, query).map(key => {
+  let rows: AnalyticsRow[] = currentKeys(scoped, query, context).map(key => {
     const currentRange = rangeForKey(query, key);
     const base = metric.semantics.kind === 'comparison_derived' ? metric.semantics.base : query.metric;
-    const value = evaluate(scoped, base, query, currentRange, key);
+    const value = evaluate(scoped, base, query, currentRange, key, context);
     if (!comparison) return { key, value };
     const previous = comparisonRange(query, key, comparison);
-    const prior = evaluate(scoped, base, query, previous.range, previous.key);
+    const prior = evaluate(scoped, base, query, previous.range, previous.key, context);
     const changes = compare(value, prior);
     if (metric.semantics.kind === 'comparison_derived') return { key, value: changes.percentageChange ?? null };
     return { key, value, ...changes };

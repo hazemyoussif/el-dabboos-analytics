@@ -1,3 +1,4 @@
+import type { Permission } from './security.ts';
 export type Locale = 'en' | 'ar';
 export type MetricId =
   | 'revenue' | 'net_revenue' | 'order_count' | 'units_sold' | 'average_order_value'
@@ -43,7 +44,8 @@ export interface TenantProfile {
   branchLabels: Readonly<Record<string, LocalizedText>>;
   exampleBranchIds: readonly [string, string];
 }
-export interface AnalyticsContext { tenantId: string; locale: Locale }
+/** The repository receives resolved constraints, never a user or role. */
+export interface AnalyticsContext { tenantId: string; locale: Locale; enforcedFilters?: readonly AnalyticsFilter[] }
 export interface DateRange { from: string; to: string }
 export interface AnalyticsFilter { dimension: DimensionId; values: string[] }
 export type ComparisonPeriod = 'previous_period' | 'month_over_month' | 'year_over_year';
@@ -129,10 +131,11 @@ export type DashboardPatch = {
     | { op: 'set_layout'; layout: DashboardLayout }
   >;
 };
-export interface DashboardGenerationRequest { prompt: string; locale: Locale; context: AnalyticsContext; tenantProfile: TenantProfile }
+export interface PlannerCapabilities { metricIds: readonly MetricId[]; templateIds: readonly string[]; actions: readonly Permission[] }
+export interface DashboardGenerationRequest { prompt: string; locale: Locale; context: AnalyticsContext; tenantProfile: TenantProfile; capabilities?: PlannerCapabilities }
 export interface DashboardPlanner {
   generate(request: DashboardGenerationRequest): Promise<DashboardSpec>;
-  edit(current: DashboardSpec, instruction: string, tenantProfile: TenantProfile): Promise<DashboardPatch>;
+  edit(current: DashboardSpec, instruction: string, tenantProfile: TenantProfile, capabilities?: PlannerCapabilities): Promise<DashboardPatch>;
 }
 export interface StructuredOutputRequest {
   messages: readonly { role: 'system' | 'user'; content: string }[];
