@@ -1,5 +1,5 @@
 import { validateDashboardSpec } from '@el-dabbous/domain';
-import type { DashboardGenerationRequest, DashboardPatch, DashboardPlanner, DashboardSpec, TenantProfile } from '@el-dabbous/domain';
+import type { DashboardGenerationRequest, DashboardPatch, DashboardPlanner, DashboardSpec, TenantProfile, PlannerCapabilities } from '@el-dabbous/domain';
 import { getDashboardTemplate, instantiateDashboardTemplate } from './templates.ts';
 
 export class UnsupportedDemoIntentError extends Error { readonly code = 'UNSUPPORTED_DEMO_INTENT'; }
@@ -10,14 +10,16 @@ export class MockDashboardPlanner implements DashboardPlanner {
     if (request.context.tenantId !== request.tenantProfile.id || !['en', 'ar'].includes(request.locale)) throw new Error('Invalid planner context');
     const prompt = request.prompt.trim().toLowerCase();
     if (!prompt || !salesIntent.test(prompt)) throw new UnsupportedDemoIntentError('This demo planner supports sales dashboard requests.');
+    if (request.capabilities && !request.capabilities.templateIds.includes('sales-performance')) throw new UnsupportedDemoIntentError('The sales demo template is unavailable to this user.');
     const template = getDashboardTemplate('sales-performance')!;
     const dashboard = instantiateDashboardTemplate(template, request.tenantProfile, this.clock(), request.locale);
     if (/(this month|هذا الشهر|الشهر ده)/iu.test(prompt) && dashboard.filters.dateRange)
       dashboard.filters.dateRange.from = `${dashboard.filters.dateRange.to.slice(0, 7)}-01`;
     return dashboard;
   }
-  async edit(current: DashboardSpec, instruction: string, profile: TenantProfile): Promise<DashboardPatch> {
+  async edit(current: DashboardSpec, instruction: string, profile: TenantProfile, _capabilities?: PlannerCapabilities): Promise<DashboardPatch> {
     validateDashboardSpec(current);
+    if (_capabilities && !_capabilities.actions.includes('ai:edit')) throw new UnsupportedDemoIntentError('Editing is unavailable to this user.');
     const prompt = instruction.trim().toLowerCase();
     const replace = (widgetId: string, next: (widget: DashboardSpec['widgets'][number]) => DashboardSpec['widgets'][number]): DashboardPatch => {
       const previous = current.widgets.find(w => w.id === widgetId);

@@ -28,7 +28,9 @@ export class SqliteAnalyticsRepository implements AnalyticsRepository {
   constructor(private readonly db: DatabaseSync, private readonly options: RepositoryMetadataOptions = {}) {}
   async listDimensionValues(dimension: DimensionId, context: AnalyticsContext): Promise<string[]> {
     if (!context.tenantId.trim() || !['branch', 'region', 'salesperson', 'product_category', 'warehouse'].includes(dimension)) throw new Error('Unsupported dimension');
-    const rows = this.db.prepare('SELECT DISTINCT json_extract(dimensions_json, ?) AS value FROM analytics_facts WHERE tenant_id = ? AND json_extract(dimensions_json, ?) IS NOT NULL ORDER BY value').all(`$.${dimension}`, context.tenantId, `$.${dimension}`);
+    const clauses = (context.enforcedFilters ?? []).map(filter => { if (!['branch', 'region', 'salesperson', 'product_category', 'warehouse'].includes(filter.dimension)) throw new Error('Unsupported policy dimension'); return `json_extract(dimensions_json, '$.${filter.dimension}') IN (${filter.values.map(() => '?').join(', ') || 'NULL'})`; });
+    const sql = `SELECT DISTINCT json_extract(dimensions_json, ?) AS value FROM analytics_facts WHERE tenant_id = ? AND json_extract(dimensions_json, ?) IS NOT NULL ${clauses.map(clause => `AND ${clause}`).join(' ')} ORDER BY value`;
+    const rows = this.db.prepare(sql).all(`$.${dimension}`, context.tenantId, `$.${dimension}`, ...(context.enforcedFilters ?? []).flatMap(filter => filter.values));
     return rows.map(row => String(row.value));
   }
   async execute(query: AnalyticsQuery, context: AnalyticsContext): Promise<AnalyticsResult> {

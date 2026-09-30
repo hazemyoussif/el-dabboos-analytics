@@ -19,8 +19,8 @@ C4Context
 C4Container
   Person(customer, "Customer")
   System_Boundary(platform, "Analytics platform") {
-    Container(ui, "Web renderer", "React / Vite / Recharts", "Tenant selector, template library, bilingual multi-series UI")
-    Container(api, "Analytics API", "Fastify", "Controlled tenant resolution and orchestration")
+    Container(ui, "Web renderer", "React / Vite / Recharts", "Demo principal and tenant selectors, template library, bilingual UI")
+    Container(api, "Analytics API", "Fastify", "Demo membership resolution, permission checks, orchestration")
     Container(application, "Application", "TypeScript", "Template catalog, mock planner, per-series executor")
     Container(domain, "Domain", "TypeScript", "Profiles, metric registry, v2 contracts and validation")
     Container(data, "Repository adapters", "TypeScript", "Tenant-scoped canonical query execution")
@@ -28,7 +28,7 @@ C4Container
   ContainerDb(sqlite, "SQLite", "SQLite", "Synthetic Iraq and Egypt facts")
   Rel(customer, ui, "Uses")
   Rel(ui, api, "Template, planning and execution requests")
-  Rel(api, domain, "Resolves governed tenant")
+  Rel(api, domain, "Resolves membership and governed tenant")
   Rel(api, application, "Instantiates and executes")
   Rel(application, data, "Queries through repository port")
   Rel(data, sqlite, "Reads tenant-bound facts")
@@ -48,7 +48,7 @@ sequenceDiagram
   participant Executor
   participant Repository
   User->>Web: Select market and template, or enter prompt
-  Web->>API: Tenant ID + locale + action
+  Web->>API: Demo user + selected tenant + locale + action
   API->>Profiles: Resolve controlled profile
   alt Template selection
     API->>Template: Instantiate market-neutral template at local date
@@ -58,7 +58,7 @@ sequenceDiagram
   API->>Validator: Validate DashboardSpec v2 and available metrics
   API->>Executor: Execute spec with tenant context
   loop Each widget series
-    Executor->>Repository: Canonical AnalyticsQuery + tenant
+    Executor->>Repository: Canonical AnalyticsQuery + tenant + enforced filters
     Repository-->>Executor: AnalyticsResult or error
   end
   Executor-->>API: Aligned rows + per-series states
@@ -99,4 +99,23 @@ flowchart LR
   A --> K[Key alignment with nulls]
   K --> W[Localized renderer]
   U -. no SQL or currency authority .-> D
+```
+
+## Authorization boundary
+
+```mermaid
+sequenceDiagram
+  actor User
+  participant API
+  participant Identity
+  participant Policy
+  participant Executor
+  participant Repository
+  User->>API: Demo user + tenant + request
+  API->>Identity: Validate membership and resolve roles
+  Identity-->>API: RequestContext with permissions and constraints
+  API->>Policy: Authorize action and every metric
+  API->>Executor: DashboardSpec + small analytics context
+  Executor->>Repository: Query + tenant + enforced filters
+  Repository-->>API: Tenant and policy scoped results
 ```

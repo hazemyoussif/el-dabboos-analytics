@@ -8,7 +8,7 @@ export class MockAnalyticsRepository implements AnalyticsRepository {
   constructor(private readonly facts: readonly AnalyticsFact[], private readonly options: RepositoryMetadataOptions = {}) {}
   async listDimensionValues(dimension: DimensionId, context: AnalyticsContext): Promise<string[]> {
     if (!context.tenantId.trim()) throw new Error('Tenant context is required');
-    return [...new Set(this.facts.filter(fact => fact.tenantId === context.tenantId).map(fact => fact.dimensions[dimension]).filter((value): value is string => !!value))].sort();
+    return [...new Set(this.facts.filter(fact => fact.tenantId === context.tenantId && (context.enforcedFilters ?? []).every(filter => filter.values.includes(fact.dimensions[filter.dimension] ?? ''))).map(fact => fact.dimensions[dimension]).filter((value): value is string => !!value))].sort();
   }
   async execute(query: AnalyticsQuery, context: AnalyticsContext): Promise<AnalyticsResult> {
     return executeFacts(this.facts, query, context, {

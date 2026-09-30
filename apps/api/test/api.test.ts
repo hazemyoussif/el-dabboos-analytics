@@ -7,22 +7,23 @@ const facts = [
   { tenantId: 'demo-iq', measureId: 'revenue', date: '2026-01-15', value: 100, dimensions: { branch: 'baghdad' } },
   { tenantId: 'demo-eg', measureId: 'revenue', date: '2026-01-15', value: 250, dimensions: { branch: 'cairo' } },
 ] as const;
-const app = await buildApi({ repository: new MockAnalyticsRepository([...facts]), clock: () => new Date('2026-09-30T12:00:00.000Z') });
-const iq = { 'x-tenant-id': 'demo-iq', 'x-locale': 'ar' };
-const eg = { 'x-tenant-id': 'demo-eg', 'x-locale': 'en' };
+const repository = new MockAnalyticsRepository([...facts]);
+const app = await buildApi({ analyticsRepository: repository, dimensionValues: repository, clock: () => new Date('2026-09-30T12:00:00.000Z') });
+const iq = { 'x-demo-user-id': 'demo-iq-admin', 'x-tenant-id': 'demo-iq', 'x-locale': 'ar' };
+const eg = { 'x-demo-user-id': 'demo-eg-analyst', 'x-tenant-id': 'demo-eg', 'x-locale': 'en' };
 test('health, controlled profiles and metric availability are discoverable', async () => {
   assert.equal((await app.inject({ method: 'GET', url: '/health' })).statusCode, 200);
-  const profiles = (await app.inject({ method: 'GET', url: '/api/tenant-profiles' })).json();
+  const profiles = (await app.inject({ method: 'GET', url: '/api/tenant-profiles', headers: iq })).json();
   assert.equal(profiles.defaultTenantId, 'demo-iq');
-  assert.equal(profiles.profiles.length, 2);
+  assert.equal(profiles.profiles.length, 1);
   assert.equal((await app.inject({ method: 'GET', url: '/api/tenant-profile', headers: iq })).json().reportingCurrency, 'IQD');
-  const catalog = (await app.inject({ method: 'GET', url: '/api/semantic-catalog' })).json();
+  const catalog = (await app.inject({ method: 'GET', url: '/api/semantic-catalog', headers: iq })).json();
   assert.ok(catalog.registry.some((item: { id: string; availability: string }) => item.id === 'days_sales_outstanding' && item.availability === 'planned'));
 });
 test('analytics requires a registered tenant and isolates Iraq from Egypt', async () => {
   const payload = { metric: 'revenue' };
   assert.equal((await app.inject({ method: 'POST', url: '/api/analytics/query', payload })).statusCode, 401);
-  assert.equal((await app.inject({ method: 'POST', url: '/api/analytics/query', headers: { 'x-tenant-id': 'other' }, payload })).statusCode, 403);
+  assert.equal((await app.inject({ method: 'POST', url: '/api/analytics/query', headers: { 'x-demo-user-id': 'demo-iq-admin', 'x-tenant-id': 'other' }, payload })).statusCode, 403);
   const iraq = await app.inject({ method: 'POST', url: '/api/analytics/query', headers: { ...iq, 'x-currency': 'EGP', 'x-country': 'EG' }, payload });
   const egypt = await app.inject({ method: 'POST', url: '/api/analytics/query', headers: eg, payload });
   assert.equal(iraq.json().rows[0].value, 100);
@@ -47,7 +48,7 @@ test('query endpoint rejects SQL, planned metrics and malformed JSON', async () 
   assert.equal(malformed.json().error.code, 'VALIDATION_ERROR');
 });
 test('same Sales Performance template executes under both markets without duplication', async () => {
-  const templates = (await app.inject({ method: 'GET', url: '/api/dashboard-templates' })).json().templates;
+  const templates = (await app.inject({ method: 'GET', url: '/api/dashboard-templates', headers: iq })).json().templates;
   assert.equal(templates.length, 10);
   const iraq = (await app.inject({ method: 'GET', url: '/api/dashboard-templates/sales-performance/instantiate', headers: iq })).json();
   const egypt = (await app.inject({ method: 'GET', url: '/api/dashboard-templates/sales-performance/instantiate', headers: eg })).json();
@@ -81,11 +82,67 @@ test('v2 manual execution, Iraqi generation and edit complete the workflow', asy
 test.after(async () => { await app.close(); });
 
 test('manual template execution remains available when the planner is disabled', async () => {
-  const manualOnly = await buildApi({ repository: new MockAnalyticsRepository([...facts]), planner: null, clock: () => new Date('2026-09-30T12:00:00.000Z') });
+  const manualRepository = new MockAnalyticsRepository([...facts]);
+  const manualOnly = await buildApi({ analyticsRepository: manualRepository, dimensionValues: manualRepository, planner: null, clock: () => new Date('2026-09-30T12:00:00.000Z') });
   try {
-    assert.equal((await manualOnly.inject({ method: 'GET', url: '/api/dashboard-templates/sales-performance/instantiate', headers: iq })).statusCode, 200);
+    const template = await manualOnly.inject({ method: 'GET', url: '/api/dashboard-templates/sales-performance/instantiate', headers: iq });
+    assert.equal(template.statusCode, 200);
+    assert.equal((await manualOnly.inject({ method: 'POST', url: '/api/dashboards/execute', headers: iq, payload: { dashboard: template.json().dashboard } })).statusCode, 200);
     const planning = await manualOnly.inject({ method: 'POST', url: '/api/dashboards/generate', headers: iq, payload: { prompt: 'مبيعات' } });
     assert.equal(planning.statusCode, 503);
     assert.equal(planning.json().error.code, 'PLANNER_UNAVAILABLE');
   } finally { await manualOnly.close(); }
+});
+
+test('demo identity and tenant headers require a valid server-owned membership', async () => {
+  const query = { metric: 'revenue' };
+  assert.equal((await app.inject({ method: 'POST', url: '/api/analytics/query', headers: { 'x-tenant-id': 'demo-iq' }, payload: query })).statusCode, 401);
+  assert.equal((await app.inject({ method: 'POST', url: '/api/analytics/query', headers: { 'x-demo-user-id': 'unknown', 'x-tenant-id': 'demo-iq' }, payload: query })).statusCode, 401);
+  assert.equal((await app.inject({ method: 'POST', url: '/api/analytics/query', headers: { ...iq, 'x-tenant-id': 'demo-eg' }, payload: query })).statusCode, 403);
+  const regional = { 'x-demo-user-id': 'demo-regional-analyst', 'x-tenant-id': 'demo-iq', 'x-locale': 'en' };
+  assert.equal((await app.inject({ method: 'GET', url: '/api/tenant-profiles', headers: regional })).json().profiles.length, 2);
+  assert.equal((await app.inject({ method: 'POST', url: '/api/analytics/query', headers: { ...regional, 'x-tenant-id': 'demo-eg' }, payload: query })).json().rows[0].value, 250);
+});
+test('restricted catalog, template and handcrafted dashboard are denied server-side', async () => {
+  const sales = { 'x-demo-user-id': 'demo-iq-sales-analyst', 'x-tenant-id': 'demo-iq', 'x-locale': 'en' };
+  const catalog = (await app.inject({ method: 'GET', url: '/api/semantic-catalog', headers: sales })).json();
+  assert.ok(catalog.metrics.some((metric: { id: string }) => metric.id === 'revenue'));
+  assert.ok(!catalog.metrics.some((metric: { id: string }) => metric.id === 'outstanding_amount'));
+  const templates = (await app.inject({ method: 'GET', url: '/api/dashboard-templates', headers: sales })).json().templates;
+  assert.equal(templates.find((template: { id: string }) => template.id === 'sales-performance').availability, 'restricted');
+  assert.equal(templates.find((template: { id: string }) => template.id === 'sales-team').availability, 'available');
+  assert.equal((await app.inject({ method: 'GET', url: '/api/dashboard-templates/sales-performance/instantiate', headers: sales })).statusCode, 403);
+  assert.equal((await app.inject({ method: 'POST', url: '/api/analytics/query', headers: sales, payload: { metric: 'outstanding_amount' } })).statusCode, 403);
+  const spec = (await app.inject({ method: 'GET', url: '/api/dashboard-templates/sales-performance/instantiate', headers: iq })).json().dashboard;
+  assert.equal((await app.inject({ method: 'POST', url: '/api/dashboards/execute', headers: sales, payload: { dashboard: spec } })).statusCode, 403);
+  assert.equal((await app.inject({ method: 'POST', url: '/api/dashboards/generate', headers: sales, payload: { prompt: 'sales dashboard' } })).statusCode, 422);
+  assert.equal((await app.inject({ method: 'GET', url: '/api/dashboard-templates/sales-team/instantiate', headers: sales })).statusCode, 200);
+});
+test('Baghdad manager cannot broaden policy with a dashboard or discover other branches', async () => {
+  const manager = { 'x-demo-user-id': 'demo-iq-baghdad-manager', 'x-tenant-id': 'demo-iq', 'x-locale': 'en' };
+  const branch = (await app.inject({ method: 'GET', url: '/api/dimensions/branch/values', headers: manager })).json().values;
+  assert.deepEqual(branch, [{ id: 'baghdad', label: 'Baghdad' }]);
+  const query = await app.inject({ method: 'POST', url: '/api/analytics/query', headers: manager, payload: { metric: 'revenue', filters: [{ dimension: 'branch', values: ['basra'] }] } });
+  assert.equal(query.json().rows[0].value, 0);
+  const template = (await app.inject({ method: 'GET', url: '/api/dashboard-templates/sales-performance/instantiate', headers: manager })).json();
+  assert.equal(template.dashboard.filters.dimensions, undefined);
+  assert.equal(template.execution.widgetResults.revenue.seriesResults.revenue.result.rows[0].value, 100);
+  assert.equal((await app.inject({ method: 'POST', url: '/api/dashboards/generate', headers: manager, payload: { prompt: 'sales' } })).statusCode, 403);
+});
+
+test('planner output is authorized after generation and audit omits raw prompts', async () => {
+  const { InMemoryAuditSink } = await import('@el-dabbous/application');
+  const sink = new InMemoryAuditSink();
+  const unrestricted = (await app.inject({ method: 'GET', url: '/api/dashboard-templates/sales-performance/instantiate', headers: iq })).json().dashboard;
+  const maliciousPlanner = { async generate() { return unrestricted; }, async edit() { return { schemaVersion: 2 as const, operations: [] }; } };
+  const scopedRepository = new MockAnalyticsRepository([...facts]);
+  const guarded = await buildApi({ analyticsRepository: scopedRepository, dimensionValues: scopedRepository, planner: maliciousPlanner, auditSink: sink });
+  try {
+    const sales = { 'x-demo-user-id': 'demo-iq-sales-analyst', 'x-tenant-id': 'demo-iq', 'x-locale': 'en' };
+    const response = await guarded.inject({ method: 'POST', url: '/api/dashboards/generate', headers: sales, payload: { prompt: 'private customer values' } });
+    assert.equal(response.statusCode, 403);
+    assert.equal(response.json().error.code, 'METRIC_FORBIDDEN');
+    assert.equal(sink.events[0]?.result, 'denied');
+    assert.equal(JSON.stringify(sink.events).includes('private customer values'), false);
+  } finally { await guarded.close(); }
 });
