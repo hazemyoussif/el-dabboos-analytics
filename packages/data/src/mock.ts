@@ -1,4 +1,4 @@
-import type { AnalyticsContext, AnalyticsQuery, AnalyticsRepository, AnalyticsResult } from '@el-dabbous/domain';
+import type { AnalyticsContext, AnalyticsQuery, AnalyticsRepository, AnalyticsResult, DimensionId } from '@el-dabbous/domain';
 import { executeFacts } from './engine.ts';
 import type { AnalyticsFact } from './facts.ts';
 
@@ -6,6 +6,10 @@ import type { AnalyticsFact } from './facts.ts';
 export interface RepositoryMetadataOptions { clock?: () => Date; sourceAsOf?: string }
 export class MockAnalyticsRepository implements AnalyticsRepository {
   constructor(private readonly facts: readonly AnalyticsFact[], private readonly options: RepositoryMetadataOptions = {}) {}
+  async listDimensionValues(dimension: DimensionId, context: AnalyticsContext): Promise<string[]> {
+    if (!context.tenantId.trim()) throw new Error('Tenant context is required');
+    return [...new Set(this.facts.filter(fact => fact.tenantId === context.tenantId).map(fact => fact.dimensions[dimension]).filter((value): value is string => !!value))].sort();
+  }
   async execute(query: AnalyticsQuery, context: AnalyticsContext): Promise<AnalyticsResult> {
     return executeFacts(this.facts, query, context, {
       sourceId: 'mock', executedAt: (this.options.clock?.() ?? new Date()).toISOString(),

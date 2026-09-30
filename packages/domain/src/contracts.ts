@@ -88,6 +88,9 @@ export interface AnalyticsResult {
     semantics: MetricSemantics['kind'];
   };
 }
+export interface DimensionValueRepository {
+  listDimensionValues(dimension: DimensionId, context: AnalyticsContext): Promise<string[]>;
+}
 export interface AnalyticsRepository {
   execute(query: AnalyticsQuery, context: AnalyticsContext): Promise<AnalyticsResult>;
 }

@@ -26,6 +26,11 @@ export function insertFacts(db: DatabaseSync, facts: readonly AnalyticsFact[]): 
 }
 export class SqliteAnalyticsRepository implements AnalyticsRepository {
   constructor(private readonly db: DatabaseSync, private readonly options: RepositoryMetadataOptions = {}) {}
+  async listDimensionValues(dimension: DimensionId, context: AnalyticsContext): Promise<string[]> {
+    if (!context.tenantId.trim() || !['branch', 'region', 'salesperson', 'product_category', 'warehouse'].includes(dimension)) throw new Error('Unsupported dimension');
+    const rows = this.db.prepare('SELECT DISTINCT json_extract(dimensions_json, ?) AS value FROM analytics_facts WHERE tenant_id = ? AND json_extract(dimensions_json, ?) IS NOT NULL ORDER BY value').all(`$.${dimension}`, context.tenantId, `$.${dimension}`);
+    return rows.map(row => String(row.value));
+  }
   async execute(query: AnalyticsQuery, context: AnalyticsContext): Promise<AnalyticsResult> {
     validateQuery(query, context);
     const measures = requiredMeasures(query.metric);

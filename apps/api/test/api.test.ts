@@ -31,6 +31,14 @@ test('analytics requires a registered tenant and isolates Iraq from Egypt', asyn
   assert.equal(egypt.json().rows[0].value, 250);
   assert.equal((await app.inject({ method: 'GET', url: '/api/tenant-profile', headers: iq })).json().reportingCurrency, 'IQD');
 });
+test('dimension value discovery is tenant scoped and market labeled', async () => {
+  const iraq = (await app.inject({ method: 'GET', url: '/api/dimensions/branch/values', headers: iq })).json().values;
+  const egypt = (await app.inject({ method: 'GET', url: '/api/dimensions/branch/values', headers: eg })).json().values;
+  assert.deepEqual(iraq, [{ id: 'baghdad', label: 'بغداد' }]);
+  assert.deepEqual(egypt, [{ id: 'cairo', label: 'Cairo' }]);
+  assert.equal((await app.inject({ method: 'GET', url: '/api/dimensions/branch/values' })).statusCode, 401);
+  assert.equal((await app.inject({ method: 'GET', url: '/api/dimensions/customer/values', headers: iq })).statusCode, 400);
+});
 test('query endpoint rejects SQL, planned metrics and malformed JSON', async () => {
   assert.equal((await app.inject({ method: 'POST', url: '/api/analytics/query', headers: iq, payload: { metric: 'revenue', sql: 'SELECT *' } })).statusCode, 400);
   assert.equal((await app.inject({ method: 'POST', url: '/api/analytics/query', headers: iq, payload: { metric: 'days_sales_outstanding' } })).statusCode, 400);

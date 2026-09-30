@@ -1,11 +1,11 @@
 import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
 import { MockAnalyticsRepository, SqliteAnalyticsRepository, createSqliteSchema, generateSeedFacts } from '@el-dabbous/data';
-import type { AnalyticsRepository } from '@el-dabbous/domain';
+import type { AnalyticsRepository, DimensionValueRepository } from '@el-dabbous/domain';
 import { buildApi } from './app.ts';
 
 const provider = process.env.ANALYTICS_PROVIDER ?? 'sqlite';
-let repository: AnalyticsRepository;
+let repository: AnalyticsRepository & DimensionValueRepository;
 let close = () => {};
 if (provider === 'sqlite') {
   const defaultDatabasePath = fileURLToPath(new URL('../../../demo.db', import.meta.url));
