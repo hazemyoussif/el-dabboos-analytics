@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://el-dabbous.example/schemas/dashboard-spec/v1",
+  "title": "DashboardSpec v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "id", "title", "locale", "filters", "layout", "widgets"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "id": { "$ref": "#/$defs/id" },
+    "title": { "$ref": "#/$defs/text" },
+    "locale": { "enum": ["en", "ar"] },
+    "filters": { "$ref": "#/$defs/filters" },
+    "layout": { "type": "object", "additionalProperties": false, "required": ["columns"], "properties": { "columns": { "enum": [1, 2, 3, 4] } } },
+    "widgets": { "type": "array", "minItems": 1, "maxItems": 30, "items": { "$ref": "#/$defs/widget" } }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*$", "maxLength": 80 },
+    "text": { "type": "object", "additionalProperties": false, "required": ["en", "ar"], "properties": { "en": { "type": "string", "minLength": 1 }, "ar": { "type": "string", "minLength": 1 } } },
+    "dateRange": { "type": "object", "additionalProperties": false, "required": ["from", "to"], "properties": { "from": { "type": "string", "format": "date" }, "to": { "type": "string", "format": "date" } } },
+    "filter": { "type": "object", "additionalProperties": false, "required": ["dimension", "values"], "properties": { "dimension": { "type": "string" }, "values": { "type": "array", "minItems": 1, "items": { "type": "string" } } } },
+    "filters": { "type": "object", "additionalProperties": false, "properties": { "dateRange": { "$ref": "#/$defs/dateRange" }, "dimensions": { "type": "array", "items": { "$ref": "#/$defs/filter" } } } },
+    "operation": { "type": "object", "additionalProperties": false, "required": ["kind"], "properties": { "kind": { "enum": ["top_n", "bottom_n", "previous_period", "month_over_month", "year_over_year", "absolute_change", "percentage_change", "running_total", "percentage_contribution", "moving_average", "ranking"] }, "n": { "type": "integer", "minimum": 1, "maximum": 100 }, "window": { "type": "integer", "minimum": 2, "maximum": 24 } } },
+    "widget": { "type": "object", "additionalProperties": false, "required": ["id", "type", "metric"], "properties": { "id": { "$ref": "#/$defs/id" }, "type": { "enum": ["kpi", "line", "bar", "table"] }, "title": { "$ref": "#/$defs/text" }, "metric": { "type": "string" }, "dimension": { "type": "string" }, "operation": { "$ref": "#/$defs/operation" } } }
+  }
+}
