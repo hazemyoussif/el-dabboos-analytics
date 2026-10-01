@@ -7,6 +7,7 @@ import type { StructuredPlannerDiagnostic } from '@el-dabbous/application';
 import type { DashboardPlanner } from '@el-dabbous/domain';
 import { OpenAICompatibleLLMProvider } from './providers/openai-compatible.ts';
 import { formatStructuredDiagnostic, structuredDiagnosticsEnabled } from './structured-diagnostics.ts';
+import { startupSummary } from './startup-config.ts';
 import { buildApi } from './app.ts';
 
 const provider = process.env.ANALYTICS_PROVIDER ?? 'sqlite';
@@ -48,7 +49,8 @@ const app = await buildApi({ analyticsRepository: repository, dimensionValues: r
 const port = Number(process.env.PORT ?? 3001);
 try {
   const address = await app.listen({ port, host: '127.0.0.1' });
-  process.stdout.write(`El-Dabbous API listening at ${address} (${provider})\n`);
+  process.stdout.write(`${startupSummary({ analyticsProvider: provider, dashboardPath: process.env.DASHBOARD_DB_PATH ?? defaultDashboardPath, plannerMode, modelId: process.env.LLM_MODEL_ID, baseUrl: process.env.LLM_BASE_URL, diagnostics: structuredDiagnosticsEnabled(process.env.LLM_DEBUG_STRUCTURED_OUTPUT), port }, process.env.LLM_API_KEY)}\n`);
+  process.stdout.write(`El-Dabbous API listening at ${address}\n`);
 } catch (error) {
   close(); dashboardDb.close();
   throw error;
