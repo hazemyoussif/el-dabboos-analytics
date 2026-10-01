@@ -30,7 +30,7 @@ export function useDashboardBuilder(workspace: WorkspaceController) {
     catch (cause) { workspace.setError(cause instanceof Error ? cause.message : String(cause)); }
   };
   const startManual = () => {
-    if (!workspace.profile || !workspace.confirmAbandon()) return;
+    if (!workspace.profile) return;
     workspace.startManual(); workspace.setLoading(false);
     setHistory(startBuilder(blankDashboardDraft(workspace.profile, workspace.locale)));
   };
@@ -43,3 +43,5 @@ export function useDashboardBuilder(workspace: WorkspaceController) {
   const redo = () => { if (history) executeTransition(redoBuilder(history)); };
   return { history, busy, reset, executeTransition, command, startManual, enter, exit, undo, redo };
 }
+
+export type ReturnTypeBuilder = ReturnType<typeof useDashboardBuilder>;
