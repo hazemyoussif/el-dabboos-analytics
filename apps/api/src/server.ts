@@ -1,6 +1,6 @@
 import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
-import { MockAnalyticsRepository, SqliteAnalyticsRepository, SqliteDashboardRepository, createSqliteSchema, createDashboardPersistenceSchema, generateSeedFacts } from '@el-dabbous/data';
+import { SqliteDashboardLibraryRepository, createDashboardLibrarySchema, MockAnalyticsRepository, SqliteAnalyticsRepository, SqliteDashboardRepository, createSqliteSchema, createDashboardPersistenceSchema, generateSeedFacts } from '@el-dabbous/data';
 import type { AnalyticsRepository, DimensionValueRepository } from '@el-dabbous/domain';
 import { StructuredDashboardPlanner } from '@el-dabbous/application';
 import type { StructuredPlannerDiagnostic } from '@el-dabbous/application';
@@ -27,6 +27,7 @@ if (provider === 'sqlite') {
 const defaultDashboardPath = fileURLToPath(new URL('../../../dashboards.db', import.meta.url));
 const dashboardDb = new DatabaseSync(process.env.DASHBOARD_DB_PATH ?? defaultDashboardPath);
 createDashboardPersistenceSchema(dashboardDb);
+createDashboardLibrarySchema(dashboardDb);
 const plannerMode = process.env.DASHBOARD_PLANNER ?? 'mock';
 let planner: DashboardPlanner | null | undefined;
 if (plannerMode === 'structured') {
@@ -45,7 +46,7 @@ if (plannerMode === 'structured') {
 } else if (plannerMode === 'disabled') planner = null;
 else if (plannerMode !== 'mock') throw new Error('DASHBOARD_PLANNER must be mock, structured, or disabled.');
 const app = await buildApi({ analyticsRepository: repository, dimensionValues: repository,
-  dashboardRepository: new SqliteDashboardRepository(dashboardDb), ...(planner !== undefined ? { planner } : {}) });
+  dashboardRepository: new SqliteDashboardRepository(dashboardDb), libraryRepository: new SqliteDashboardLibraryRepository(dashboardDb), ...(planner !== undefined ? { planner } : {}) });
 const port = Number(process.env.PORT ?? 3001);
 try {
   const address = await app.listen({ port, host: '127.0.0.1' });

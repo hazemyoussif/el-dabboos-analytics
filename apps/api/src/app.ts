@@ -1,3 +1,4 @@
+import { registerDashboardLibraryRoutes } from './routes/dashboard-library.ts';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { createRouteContext } from './context.ts';
@@ -24,5 +25,6 @@ export async function buildApi(deps: ApiDependencies) {
   registerAnalyticsRoutes(app, services);
   registerDashboardRoutes(app, services);
   registerSavedDashboardRoutes(app, services);
+  registerDashboardLibraryRoutes(app, services);
   return app;
 }

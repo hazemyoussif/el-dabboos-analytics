@@ -7,3 +7,5 @@ export * from './structured-planner.ts';
 export * from './provider-schema.ts';
 export * from './structured-diagnostics.ts';
 export * from './saved-dashboards.ts';
+
+export * from './dashboard-library.ts';
