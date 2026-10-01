@@ -9,3 +9,5 @@ export * from './structured-diagnostics.ts';
 export * from './saved-dashboards.ts';
 
 export * from './dashboard-library.ts';
+
+export * from './query-execution.ts';
