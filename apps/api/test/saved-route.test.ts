@@ -3,8 +3,8 @@ import { DatabaseSync } from 'node:sqlite';
 import test from 'node:test';
 import { MockAnalyticsRepository, SqliteDashboardRepository, createDashboardPersistenceSchema } from '@el-dabbous/data';
 import type { DashboardSpec, TenantProfile } from '@el-dabbous/domain';
-import { buildApi } from '../../api/src/app.ts';
-import { resolveSavedRoute } from '../src/saved-route.ts';
+import { buildApi } from '../src/app.ts';
+import { resolveSavedRoute } from '../../web/src/saved-route.ts';
 
 const spec: DashboardSpec = { schemaVersion: 2, id: 'portable', title: { en: 'Sales', ar: 'المبيعات' }, locale: 'en',
   filters: {}, layout: { columns: 1 }, widgets: [{ id: 'revenue', type: 'kpi', series: [{ id: 'revenue', metric: 'revenue' }] }] };
