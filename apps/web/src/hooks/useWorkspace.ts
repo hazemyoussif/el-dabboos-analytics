@@ -1,13 +1,24 @@
 import { useEffect, useRef, useState } from 'react';
 import type { DashboardExecutionResult } from '@el-dabbous/application';
-import type { DashboardSpec, Locale, ProductMetric, SemanticMetric, TenantProfile } from '@el-dabbous/domain';
-import { getCapabilities, getDemoUsers, getFilterOptions, getSemanticCatalog, getTemplates, getTenantProfiles, instantiateTemplate } from '../api/client.ts';
+import type { DashboardRecord, DashboardSpec, Locale, ProductMetric, SemanticMetric, TenantProfile } from '@el-dabbous/domain';
+import { createSavedDashboard, executeDashboard, getCapabilities, getDemoUsers, getFilterOptions, getSavedDashboard, getSemanticCatalog,
+  getTemplates, getTenantProfiles, instantiateTemplate, listSavedDashboards, updateSavedDashboard } from '../api/client.ts';
 import type { AccessibleTemplate, ApiSession, DemoUser } from '../api/client.ts';
 import type { FilterOptions } from '../builder/BuilderWorkspace.tsx';
+import { discardSavedChanges, documentIsDirty, editDocument, generatedDocument, newManualDocument, openTemplateDocument, persistDocument, savedDocument } from '../dashboard-lifecycle.ts';
+import type { DashboardDocument } from '../dashboard-lifecycle.ts';
+import { preferredLocale, preferredTenant, storeLocale, storeTenant } from '../ui-preferences.ts';
+import type { PreferenceStore } from '../ui-preferences.ts';
 
-export type WorkspaceMode = 'template' | 'generated' | 'manual';
+const preferences = (): PreferenceStore | null => { try { return typeof window === 'undefined' ? null : window.localStorage; } catch { return null; } };
+const routeRecordId = (): string | null => typeof window === 'undefined' ? null : window.location.pathname.match(/^\/dashboards\/([^/]+)$/)?.[1] ?? null;
+const navigate = (recordId: string | null) => {
+  if (typeof window === 'undefined') return;
+  const path = recordId ? `/dashboards/${encodeURIComponent(recordId)}` : '/';
+  if (window.location.pathname !== path) window.history.pushState({}, '', path);
+};
 export function useWorkspace() {
-  const [locale, setLocale] = useState<Locale>('ar');
+  const [locale, setLocale] = useState<Locale>(preferredLocale(preferences()) ?? 'ar');
   const [userId, setUserId] = useState('demo-iq-admin');
   const [demoUsers, setDemoUsers] = useState<DemoUser[]>([]);
   const [permissions, setPermissions] = useState<string[]>([]);
@@ -16,64 +27,140 @@ export function useWorkspace() {
   const [catalog, setCatalog] = useState<Record<string, SemanticMetric>>({});
   const [metricRegistry, setMetricRegistry] = useState<ProductMetric[]>([]);
   const [templates, setTemplates] = useState<AccessibleTemplate[]>([]);
+  const [savedDashboards, setSavedDashboards] = useState<DashboardRecord[]>([]);
   const [activeTemplateId, setActiveTemplateId] = useState('sales-performance');
-  const [dashboard, setDashboard] = useState<DashboardSpec | null>(null);
+  const [document, setDocument] = useState<DashboardDocument | null>(null);
   const [execution, setExecution] = useState<DashboardExecutionResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [mode, setMode] = useState<WorkspaceMode>('template');
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({});
   const requestId = useRef(0);
   const beginRequest = () => ++requestId.current;
   const isCurrent = (id: number) => id === requestId.current;
   const session = (selectedProfile: TenantProfile = profile!, selectedLocale: Locale = locale, selectedUserId = userId): ApiSession =>
     ({ userId: selectedUserId, tenantId: selectedProfile.id, locale: selectedLocale });
-  const loadWorkspace = async (nextUserId: string, nextTenantId?: string) => {
+  const dashboard = document?.spec ?? null;
+  const mode = document?.kind === 'template' ? 'template' : document?.kind === 'saved' ? 'saved' : document?.origin ?? 'template';
+  const dirty = documentIsDirty(document);
+  const confirmAbandon = () => !dirty || typeof window === 'undefined' || window.confirm(locale === 'ar'
+    ? 'لديك تغييرات غير محفوظة. هل تريد تجاهلها؟' : 'You have unsaved changes. Discard them?');
+  const loadWorkspace = async (nextUserId: string, nextTenantId?: string, restoreRoute = true) => {
     const id = beginRequest();
-    setUserId(nextUserId); setLoading(true); setError(null); setDashboard(null); setExecution(null);
+    setUserId(nextUserId); setLoading(true); setError(null); setDocument(null); setExecution(null); setSavedDashboards([]);
     setFilterOptions({});
     try {
       const users = await getDemoUsers(nextUserId);
       const membership = await getTenantProfiles(nextUserId);
-      const selected = membership.profiles.find(item => item.id === nextTenantId) ?? membership.profiles.find(item => item.id === membership.defaultTenantId);
+      const selected = nextTenantId ? membership.profiles.find(item => item.id === nextTenantId)
+        ?? preferredTenant(preferences(), membership.profiles, membership.defaultTenantId)
+        : preferredTenant(preferences(), membership.profiles, membership.defaultTenantId);
       if (!selected) throw new Error('No demo tenant membership is available');
-      const nextLocale = selected.defaultLocale;
+      const nextLocale = preferredLocale(preferences()) ?? selected.defaultLocale;
       const selectedSession = session(selected, nextLocale, nextUserId);
-      const [catalogResponse, templatesResponse, options, capabilities] = await Promise.all([
-        getSemanticCatalog(selectedSession), getTemplates(selectedSession), getFilterOptions(selectedSession), getCapabilities(selectedSession),
+      const [catalogResponse, templatesResponse, options, capabilities, saved] = await Promise.all([
+        getSemanticCatalog(selectedSession), getTemplates(selectedSession), getFilterOptions(selectedSession),
+        getCapabilities(selectedSession), listSavedDashboards(selectedSession),
       ]);
       const first = templatesResponse.templates.find(template => template.id === activeTemplateId && template.availability === 'available')
         ?? templatesResponse.templates.find(template => template.availability === 'available');
-      const result = first ? await instantiateTemplate(selectedSession, first.id) : null;
+      let opened: DashboardDocument | null = null;
+      let openedExecution: DashboardExecutionResult | null = null;
+      const requestedRecordId = restoreRoute ? routeRecordId() : null;
+      if (requestedRecordId) {
+        try {
+          const record = await getSavedDashboard(selectedSession, requestedRecordId);
+          opened = savedDocument(record);
+          openedExecution = await executeDashboard(selectedSession, record.spec);
+        } catch { navigate(null); }
+      }
+      if (!opened && first) {
+        const result = await instantiateTemplate(selectedSession, first.id);
+        opened = openTemplateDocument(first.id, result.dashboard);
+        openedExecution = result.execution;
+      }
       if (!isCurrent(id)) return;
-      setDemoUsers(users.users); setProfiles(membership.profiles); setProfile(selected); setLocale(nextLocale);
+      setDemoUsers(users.users); setProfiles(membership.profiles); setProfile(selected); setLocale(nextLocale); storeTenant(preferences(), selected.id);
       setCatalog(Object.fromEntries(catalogResponse.metrics.map(metric => [metric.id, metric])));
-      setMetricRegistry(catalogResponse.registry); setTemplates(templatesResponse.templates); setFilterOptions(options); setPermissions(capabilities.permissions);
-      setActiveTemplateId(first?.id ?? ''); setDashboard(result?.dashboard ?? null); setExecution(result?.execution ?? null); setMode('template');
+      setMetricRegistry(catalogResponse.registry); setTemplates(templatesResponse.templates); setFilterOptions(options);
+      setPermissions(capabilities.permissions); setSavedDashboards(saved.dashboards);
+      setActiveTemplateId(first?.id ?? ''); setDocument(opened); setExecution(openedExecution);
+      if (!restoreRoute) navigate(null);
     } catch (cause) { if (isCurrent(id)) setError(cause instanceof Error ? cause.message : String(cause)); }
     finally { if (isCurrent(id)) setLoading(false); }
   };
   useEffect(() => { void loadWorkspace('demo-iq-admin'); }, []);
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ''; };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [dirty]);
+  useEffect(() => {
+    const onPopState = () => {
+      if (!confirmAbandon()) { navigate(document?.kind === 'saved' ? document.record.id : null); return; }
+      const recordId = routeRecordId();
+      if (recordId) void openSaved(recordId, false);
+      else void loadWorkspace(userId, profile?.id, false);
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  });
   const openTemplate = async (templateId: string, selected: TenantProfile, selectedLocale: Locale) => {
-    const id = beginRequest();
-    setError(null); setLoading(true);
+    const id = beginRequest(); setError(null); setLoading(true);
     try {
       const result = await instantiateTemplate(session(selected, selectedLocale), templateId);
-      if (isCurrent(id)) { setDashboard(result.dashboard); setExecution(result.execution); setMode('template'); setActiveTemplateId(templateId); }
+      if (isCurrent(id)) { setDocument(openTemplateDocument(templateId, result.dashboard)); setExecution(result.execution); setActiveTemplateId(templateId); navigate(null); }
+    } catch (cause) { if (isCurrent(id)) setError(cause instanceof Error ? cause.message : String(cause)); }
+    finally { if (isCurrent(id)) setLoading(false); }
+  };
+  const openSaved = async (recordId: string, changePath = true) => {
+    if (!profile) return;
+    const id = beginRequest(); setError(null); setLoading(true);
+    try {
+      const record = await getSavedDashboard(session(), recordId);
+      const result = await executeDashboard(session(), record.spec);
+      if (isCurrent(id)) { setDocument(savedDocument(record)); setExecution(result); if (changePath) navigate(record.id); }
     } catch (cause) { if (isCurrent(id)) setError(cause instanceof Error ? cause.message : String(cause)); }
     finally { if (isCurrent(id)) setLoading(false); }
   };
   const selectLocale = (next: Locale) => {
-    setLocale(next);
-    setDashboard(current => current ? { ...current, locale: next } : current);
+    setLocale(next); storeLocale(preferences(), next);
     if (profile) {
       const id = requestId.current;
       void getFilterOptions(session(profile, next)).then(options => { if (isCurrent(id)) setFilterOptions(options); })
         .catch(() => { if (isCurrent(id)) setFilterOptions({}); });
     }
   };
-  return { locale, userId, demoUsers, permissions, profiles, profile, catalog, metricRegistry, templates, activeTemplateId,
-    dashboard, execution, loading, error, mode, filterOptions, setDashboard, setExecution, setLoading, setError, setMode,
-    beginRequest, isCurrent, session, loadWorkspace, openTemplate, selectLocale };
+  const applyWorkingSpec = (spec: DashboardSpec | null) => setDocument(current => current ? editDocument(current, spec) : spec ? generatedDocument(spec) : newManualDocument());
+  const startManual = () => { beginRequest(); setError(null); setDocument(newManualDocument()); setExecution(null); navigate(null); };
+  const openGenerated = (spec: DashboardSpec, result: DashboardExecutionResult) => {
+    setDocument(generatedDocument(spec)); setExecution(result); navigate(null);
+  };
+  const save = async (asNew = false) => {
+    if (!document?.spec || !profile) return;
+    const id = beginRequest(); setError(null); setLoading(true);
+    try {
+      const saved = await persistDocument(document, asNew, {
+        create: spec => createSavedDashboard(session(), spec),
+        update: (recordId, spec, version) => updateSavedDashboard(session(), recordId, spec, version),
+      });
+      const list = await listSavedDashboards(session());
+      if (isCurrent(id) && saved.kind === 'saved') { setDocument(saved); setSavedDashboards(list.dashboards); navigate(saved.record.id); }
+    } catch (cause) { if (isCurrent(id)) setError(cause instanceof Error ? cause.message : String(cause)); }
+    finally { if (isCurrent(id)) setLoading(false); }
+  };
+  const discard = async () => {
+    if (!document || !profile) return;
+    if (document.kind !== 'saved') { await loadWorkspace(userId, profile.id, false); return; }
+    const restored = discardSavedChanges(document)!;
+    const id = beginRequest(); setDocument(restored); setError(null); setLoading(true);
+    try { const result = await executeDashboard(session(), restored.spec!); if (isCurrent(id)) setExecution(result); }
+    catch (cause) { if (isCurrent(id)) setError(cause instanceof Error ? cause.message : String(cause)); }
+    finally { if (isCurrent(id)) setLoading(false); }
+  };
+  return { locale, userId, demoUsers, permissions, profiles, profile, catalog, metricRegistry, templates, savedDashboards,
+    activeTemplateId, document, dashboard, execution, loading, error, mode, dirty, filterOptions, setExecution, setLoading, setError,
+    beginRequest, isCurrent, session, loadWorkspace, openTemplate, openSaved, selectLocale, applyWorkingSpec, startManual,
+    openGenerated, save, discard, confirmAbandon };
 }
 export type WorkspaceController = ReturnType<typeof useWorkspace>;
