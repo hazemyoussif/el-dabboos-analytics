@@ -41,3 +41,10 @@ Stacking is intentionally absent. Matching units do not establish disjoint compo
 - Sankey requires relationship/flow data.
 
 These require governed product contracts rather than renderer-only workarounds. Dual Y axes, arbitrary styling and stacked areas/bars are also outside this pass.
+
+
+## Canonical widget type reference
+
+<!-- widget-types: kpi,line,area,bar,pie,treemap,combo,table -->
+
+Current WidgetType vocabulary: `kpi`, `line`, `area`, `bar`, `pie`, `treemap`, `combo`, `table`. Donut and horizontal bar are variants, not new domain types. Recharts remains behind web rendering. See [system design](system-design.md) and [add visualization](../developer/change-guides/add-visualization.md).

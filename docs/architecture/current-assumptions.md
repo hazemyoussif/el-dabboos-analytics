@@ -1,18 +1,17 @@
-# Current assumptions
+# Current assumptions and limits
 
-- `demo-iq` and `demo-eg` are controlled synthetic tenants; Iraq is the default demonstration market. The selector is not production identity or authorization.
-- The Iraqi and Egyptian branch names denote synthetic demonstration geography, not actual El-Dabbous branches or customers.
-- TenantProfile on the server governs country, reporting currency, default locale, Arabic dialect metadata, time zone, and display geography. Normal Arabic UI labels use Modern Standard Arabic. Iraqi/Egyptian colloquial terms appear in conversational examples and placeholders, synonyms, demo planning, and evaluations.
-- All synthetic canonical monetary facts within one tenant are assumed to share that tenant's reporting currency: IQD for Iraq, EGP for Egypt. The prototype does no FX conversion. Transaction, company/base, and reporting currency must be distinguished in a future operational adapter; mixed currencies must not be summed without an approved conversion policy.
-- The seed spans two years and uses six branches, twelve salespeople, 420 Iraqi or 360 Egyptian customers, 160 products, and 150 assets. It models seasonality, branch growth/decline, overdue balances, stock pressure, and failures, but is not audited accounting.
-- Gross margin is gross profit/net revenue, AOV is revenue/order count, and win rate is won/closed opportunities. Malik must confirm the production closed-state definition. MTBF is operating hours/failures; MTTR is repair hours/completed repairs. These formulas remain provisional.
-- Receivables and inventory are entity-level snapshots, not additive across dates. Date ranges define snapshot time scope; event-month filters are rejected for snapshots.
-- Query dates are inclusive ISO dates. Comparisons use UTC calendar arithmetic and complete prior buckets. Template presets resolve against the tenant's time zone. Fiscal calendars remain unresolved.
-- `dataThrough` reflects the latest relevant tenant business/event date for each metric and is independent of the query period. The SQLite and mock adapters omit `sourceAsOf` unless a real synchronization/extraction timestamp is explicitly configured.
-- DashboardSpec v1 was the initial single-metric prototype schema. V2 is the active multi-series schema and patch contract. No older persisted production specs require migration. Newly saved records hold validated v2 specs.
-- The mock planner remains the default and demonstrates bounded sales intent and five edits; it is not an LLM or a general dialect parser. The structured planner can use a configured OpenAI-compatible model endpoint. Planning can be disabled while templates continue working.
-- Planned metrics in the product registry are recognized concepts only. They have no executable formula or approved source data and cannot enter a DashboardSpec.
-- Manual builder changes and undo/redo exist in the current browser session until Save. Saved DashboardRecords persist in a separate SQLite file and reopen by record URL. A new dashboard remains a non-executable draft until it contains a valid widget. Tenant switching reloads an accessible dashboard/template and discards the prior market’s builder history. UI locale and last tenant are local preferences; authorization remains server-owned.
-- Demo users and memberships are server-owned synthetic fixtures. `x-demo-user-id` is a local simulation, not authentication. The tenant header is validated against the selected user's membership.
-- Permissions and metric domains determine access. The Baghdad manager has an enforced branch filter; the sales analyst sees only sales/CRM metrics. Requested dashboard filters never replace policy filters.
-- The builder code and React-Grid-Layout load only when the editor opens. Normal dashboard viewing uses a lightweight portable grid renderer.
+## Implemented / synthetic
+
+- Two validated demo tenant profiles, IQ/IQD and EG/EGP; synthetic dates October 2024–September 2026. No actual company geography/customer identity.
+- Header-based demo identity directory with membership, permissions, domains and enforced branch policy. Production authentication, token verification and revocation are future work.
+- Canonical v2 schemas and semantics, market-neutral templates, eight widget types, bounded analyses and manual/AI working drafts.
+- Explicit saved-record lifecycle with owner checks and optimistic versions; personal flat folders/favorites separate from record content.
+- UI locale/theme preferences survive refresh without spec changes; browser working draft does not survive refresh until saved.
+- Default execution concurrency 8 with request-local deduplication. No shared cache, query cancellation or source pool.
+- SQLite DatabaseSync and in-memory deterministic engine; source-scale pushdown and multi-process production capacity are unproven.
+- dataThrough is business coverage; sourceAsOf is only explicit known extraction time. No FX conversion or source currency column in current canonical demo facts.
+- Idempotent schema initialization, no version tracking/migration runner; in-memory audit, no persistent tracing stack.
+
+## Unresolved / proposed
+
+Business states/formulas, tenant/company mapping, transaction/base/reporting currency rules, IdP and policy ownership, real source shape, deletes/backfills, watermark, expected scale, privacy, latency, backups and migrations need confirmation. Do not infer real Odoo tables, ingestion freshness, permission mappings or tolerances from synthetic examples. [Malik questions](../integration/questions-for-malik.md), [production readiness](../integration/production-readiness.md).

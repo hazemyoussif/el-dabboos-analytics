@@ -22,7 +22,7 @@ pnpm run dev:web
 
 Open <http://127.0.0.1:5173/>. The API listens at <http://127.0.0.1:3001/>. The seed command adds both `demo-iq` and `demo-eg` to a fresh local SQLite file; it refuses to overwrite existing facts for either tenant. If you retain an older v1 `demo.db`, the command can add the two new tenants to it. To use another path, pass it to `pnpm run seed <path>` and set `SQLITE_DB_PATH=<path>` for the API. API dev/start automatically load optional root `.env` then `.env.local`; shell variables take precedence. Tests do not load these files. Relative database paths are resolved from `apps/api` by workspace scripts; use absolute paths for a fixed database location. The built API starts with `pnpm run build` followed by `pnpm --filter @el-dabbous/api start`. `ANALYTICS_PROVIDER=mock` uses in-memory synthetic facts for both tenants.
 
-The app opens the `Sales Performance` template under Iraq. Use the market selector to switch to Egypt, the language buttons for English/Arabic, and the sidebar for ten ready-made templates. The same template ID and widget definition are reused across markets. No AI service is required by default. The mock planner recognizes a bounded sales request such as `أريد dashboard للمبيعات ويّاه أعلى الزبائن والمديونيات` or `Create a sales dashboard`, then supports a few edits such as adding a three-month moving average or removing receivables. Unsupported intents return a structured error.
+The app opens the `Sales Performance` template under Iraq. Use the market selector to switch to Egypt, the language buttons for English/Arabic, and Templates navigation for the ready-made template library. The same template ID and widget definition are reused across markets. No AI service is required by default. The mock planner recognizes a bounded sales request such as `أريد dashboard للمبيعات ويّاه أعلى الزبائن والمديونيات` or `Create a sales dashboard`, then supports a few edits such as adding a three-month moving average or removing receivables. Unsupported intents return a structured error.
 
 For generation and editing through a configured model endpoint, see the [OpenAI-compatible provider setup](docs/architecture/openai-compatible-provider.md). The API keeps the mock planner as its default.
 
@@ -65,3 +65,13 @@ screens stack widgets and disable direct grid manipulation.
 
 See [the grid adapter decision](docs/architecture/adr/020-dashboard-customization.md)
 and [all API environment settings](docs/architecture/openai-compatible-provider.md#native-api-environment-loading-node-24).
+
+## Documentation
+
+- [Product stories and acceptance](docs/product/user-stories.md)
+- [System design](docs/architecture/system-design.md) and [ADRs](docs/architecture/adr/)
+- [Developer handbook](docs/developer/handbook.md)
+- [Debugging](docs/developer/debugging-guide.md) and [configuration](docs/developer/configuration.md)
+- [Manual QA](docs/qa/manual-test-plan.md)
+- [Agent guide](AGENTS.md)
+- [Integration readiness](docs/integration/production-readiness.md) and [Malik questions](docs/integration/questions-for-malik.md)
