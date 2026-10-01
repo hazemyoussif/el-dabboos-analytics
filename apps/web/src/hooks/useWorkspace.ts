@@ -1,16 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import type { DashboardExecutionResult } from '@el-dabbous/application';
 import type { DashboardRecord, DashboardSpec, Locale, ProductMetric, SemanticMetric, TenantProfile } from '@el-dabbous/domain';
-import { createSavedDashboard, executeDashboard, getCapabilities, getDemoUsers, getFilterOptions, getSavedDashboard, getSemanticCatalog,
+import { ApiClientError, createSavedDashboard, executeDashboard, getCapabilities, getDemoUsers, getFilterOptions, getSavedDashboard, getSemanticCatalog,
   getTemplates, getTenantProfiles, instantiateTemplate, listSavedDashboards, updateSavedDashboard } from '../api/client.ts';
 import type { AccessibleTemplate, ApiSession, DemoUser } from '../api/client.ts';
 import type { FilterOptions } from '../builder/BuilderWorkspace.tsx';
 import { discardSavedChanges, documentIsDirty, editDocument, generatedDocument, newManualDocument, openTemplateDocument, persistDocument, savedDocument } from '../dashboard-lifecycle.ts';
 import type { DashboardDocument } from '../dashboard-lifecycle.ts';
-import { preferredLocale, preferredTenant, storeLocale, storeTenant } from '../ui-preferences.ts';
+import { preferredDemoUser, preferredLocale, preferredTenant, storeDemoUser, storeLocale, storeTenant } from '../ui-preferences.ts';
+import { resolveSavedRoute } from '../saved-route.ts';
 import type { PreferenceStore } from '../ui-preferences.ts';
 
 const preferences = (): PreferenceStore | null => { try { return typeof window === 'undefined' ? null : window.localStorage; } catch { return null; } };
+const demoSessionPreference = (): PreferenceStore | null => { try { return typeof window === 'undefined' ? null : window.sessionStorage; } catch { return null; } };
+const defaultDemoUserId = 'demo-iq-admin';
 const routeRecordId = (): string | null => typeof window === 'undefined' ? null : window.location.pathname.match(/^\/dashboards\/([^/]+)$/)?.[1] ?? null;
 const navigate = (recordId: string | null) => {
   if (typeof window === 'undefined') return;
@@ -50,12 +53,19 @@ export function useWorkspace() {
     setFilterOptions({});
     try {
       const users = await getDemoUsers(nextUserId);
+      if (!users.users.some(user => user.id === nextUserId)) throw new Error('Unknown demo identity');
       const membership = await getTenantProfiles(nextUserId);
-      const selected = nextTenantId ? membership.profiles.find(item => item.id === nextTenantId)
+      const preferred = nextTenantId ? membership.profiles.find(item => item.id === nextTenantId)
         ?? preferredTenant(preferences(), membership.profiles, membership.defaultTenantId)
         : preferredTenant(preferences(), membership.profiles, membership.defaultTenantId);
-      if (!selected) throw new Error('No demo tenant membership is available');
-      const nextLocale = preferredLocale(preferences()) ?? selected.defaultLocale;
+      if (!preferred) throw new Error('No demo tenant membership is available');
+      const nextLocale = preferredLocale(preferences()) ?? preferred.defaultLocale;
+      const requestedRecordId = restoreRoute ? routeRecordId() : null;
+      const resolved = requestedRecordId ? await resolveSavedRoute(requestedRecordId, preferred, membership.profiles,
+        (tenant, recordId) => getSavedDashboard(session(tenant, nextLocale, nextUserId), recordId),
+        error => error instanceof ApiClientError && (error.status === 404 || error.status === 403)) : null;
+      const selected = resolved?.tenant ?? preferred;
+      if (requestedRecordId && !resolved && isCurrent(id)) navigate(null);
       const selectedSession = session(selected, nextLocale, nextUserId);
       const [catalogResponse, templatesResponse, options, capabilities, saved] = await Promise.all([
         getSemanticCatalog(selectedSession), getTemplates(selectedSession), getFilterOptions(selectedSession),
@@ -63,32 +73,29 @@ export function useWorkspace() {
       ]);
       const first = templatesResponse.templates.find(template => template.id === activeTemplateId && template.availability === 'available')
         ?? templatesResponse.templates.find(template => template.availability === 'available');
-      let opened: DashboardDocument | null = null;
+      let opened: DashboardDocument | null = resolved ? savedDocument(resolved.record) : null;
       let openedExecution: DashboardExecutionResult | null = null;
-      const requestedRecordId = restoreRoute ? routeRecordId() : null;
-      if (requestedRecordId) {
-        try {
-          const record = await getSavedDashboard(selectedSession, requestedRecordId);
-          opened = savedDocument(record);
-          openedExecution = await executeDashboard(selectedSession, record.spec);
-        } catch { navigate(null); }
-      }
+      if (resolved) openedExecution = await executeDashboard(selectedSession, resolved.record.spec);
       if (!opened && first) {
         const result = await instantiateTemplate(selectedSession, first.id);
         opened = openTemplateDocument(first.id, result.dashboard);
         openedExecution = result.execution;
       }
       if (!isCurrent(id)) return;
-      setDemoUsers(users.users); setProfiles(membership.profiles); setProfile(selected); setLocale(nextLocale); storeTenant(preferences(), selected.id);
+      setDemoUsers(users.users); setProfiles(membership.profiles); setProfile(selected); setLocale(nextLocale); storeTenant(preferences(), selected.id); storeDemoUser(demoSessionPreference(), nextUserId);
       setCatalog(Object.fromEntries(catalogResponse.metrics.map(metric => [metric.id, metric])));
       setMetricRegistry(catalogResponse.registry); setTemplates(templatesResponse.templates); setFilterOptions(options);
       setPermissions(capabilities.permissions); setSavedDashboards(saved.dashboards);
       setActiveTemplateId(first?.id ?? ''); setDocument(opened); setExecution(openedExecution);
       if (!restoreRoute) navigate(null);
-    } catch (cause) { if (isCurrent(id)) setError(cause instanceof Error ? cause.message : String(cause)); }
-    finally { if (isCurrent(id)) setLoading(false); }
+    } catch (cause) {
+      if (isCurrent(id)) {
+        if (nextUserId !== defaultDemoUserId && cause instanceof ApiClientError && cause.status === 401) void loadWorkspace(defaultDemoUserId);
+        else setError(cause instanceof Error ? cause.message : String(cause));
+      }
+    } finally { if (isCurrent(id)) setLoading(false); }
   };
-  useEffect(() => { void loadWorkspace('demo-iq-admin'); }, []);
+  useEffect(() => { void loadWorkspace(preferredDemoUser(demoSessionPreference()) ?? defaultDemoUserId); }, []);
   useEffect(() => {
     if (!dirty) return;
     const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ''; };
@@ -99,7 +106,7 @@ export function useWorkspace() {
     const onPopState = () => {
       if (!confirmAbandon()) { navigate(document?.kind === 'saved' ? document.record.id : null); return; }
       const recordId = routeRecordId();
-      if (recordId) void openSaved(recordId, false);
+      if (recordId) void loadWorkspace(userId, profile?.id, true);
       else void loadWorkspace(userId, profile?.id, false);
     };
     window.addEventListener('popstate', onPopState);
@@ -137,7 +144,7 @@ export function useWorkspace() {
     setDocument(generatedDocument(spec)); setExecution(result); navigate(null);
   };
   const save = async (asNew = false) => {
-    if (!document?.spec || !profile) return;
+    if (!document?.spec || !profile) return false;
     const id = beginRequest(); setError(null); setLoading(true);
     try {
       const saved = await persistDocument(document, asNew, {
@@ -145,9 +152,10 @@ export function useWorkspace() {
         update: (recordId, spec, version) => updateSavedDashboard(session(), recordId, spec, version),
       });
       const list = await listSavedDashboards(session());
-      if (isCurrent(id) && saved.kind === 'saved') { setDocument(saved); setSavedDashboards(list.dashboards); navigate(saved.record.id); }
+      if (isCurrent(id) && saved.kind === 'saved') { setDocument(saved); setSavedDashboards(list.dashboards); navigate(saved.record.id); return true; }
     } catch (cause) { if (isCurrent(id)) setError(cause instanceof Error ? cause.message : String(cause)); }
     finally { if (isCurrent(id)) setLoading(false); }
+    return false;
   };
   const discard = async () => {
     if (!document || !profile) return;

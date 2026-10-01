@@ -3,7 +3,7 @@ import test from 'node:test';
 import { tenantProfiles } from '@el-dabbous/domain';
 import type { DashboardRecord, DashboardSpec } from '@el-dabbous/domain';
 import { discardSavedChanges, documentIsDirty, editDocument, generatedDocument, newManualDocument, openTemplateDocument, persistDocument, savedDocument } from '../src/dashboard-lifecycle.ts';
-import { preferredLocale, preferredTenant, storeLocale, storeTenant } from '../src/ui-preferences.ts';
+import { preferredDemoUser, preferredLocale, preferredTenant, storeDemoUser, storeLocale, storeTenant } from '../src/ui-preferences.ts';
 
 const spec: DashboardSpec = { schemaVersion: 2, id: 'portable', title: { en: 'Sales', ar: 'المبيعات' }, locale: 'en',
   filters: {}, layout: { columns: 1 }, widgets: [{ id: 'revenue', type: 'kpi', series: [{ id: 'revenue', metric: 'revenue' }] }] };
@@ -88,4 +88,13 @@ test('Save As creates a separate record; AI edits remain in the working copy unt
   assert.equal(savedAs.kind, 'saved');
   if (savedAs.kind === 'saved') { assert.equal(savedAs.record.id, 'new-1'); assert.equal(savedAs.record.spec.title.en, 'AI update'); }
   assert.equal(record.spec.title.en, 'Sales');
+});
+
+test('demo identity selection survives refresh only as a revalidated session preference', () => {
+  const values = new Map<string, string>();
+  const session = { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => { values.set(key, value); } };
+  storeDemoUser(session, 'demo-regional-analyst');
+  assert.equal(preferredDemoUser(session), 'demo-regional-analyst');
+  values.set('el-dabbous.demo-user', 'untrusted user');
+  assert.equal(preferredDemoUser(session), null);
 });
