@@ -37,8 +37,9 @@ test('drag payload supports both variants; unavailable, planned, oversized and m
 test('metric creation offers valid defaults: KPI, month line, branch bar/table, including duration metrics', () => {
   for (const metric of ['revenue', 'gross_profit', 'order_count', 'outstanding_amount', 'mttr'] as MetricId[]) {
     const options = metricVisualizationOptions(metric, catalog, empty.base);
-    assert.deepEqual(options.map(option => option.type), ['kpi', 'line', 'bar', 'table']);
-    assert.equal(options[1]!.dimension, 'month'); assert.equal(options[2]!.dimension, 'branch');
+    assert.ok(['kpi', 'line', 'area', 'bar', 'table'].every(type => options.some(option => option.type === type)));
+    assert.equal(options.some(option => option.type === 'pie'), metric !== 'mttr');
+    assert.equal(options[1]!.dimension, 'month'); assert.equal(options.find(option => option.type === 'bar')!.dimension, 'branch');
     for (const { type } of options) {
       const widget = createWidgetFromMetric(empty, metric, type, catalog, registry);
       validateDashboardSpec({ ...empty.base, widgets: [widget], layout: { columns: 12 } });

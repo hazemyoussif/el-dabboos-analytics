@@ -1,3 +1,4 @@
+import { widgetTypes } from '@el-dabbous/domain';
 import type { MetricId, ProductMetric, WidgetType } from '@el-dabbous/domain';
 import { metricAvailable } from './metric-drop.ts';
 import type { MetricCatalog } from './metric-drop.ts';
@@ -9,7 +10,7 @@ export function parseBuilderDragItem(raw: string, catalog: MetricCatalog, regist
   try {
     const value: unknown = JSON.parse(raw.startsWith(prefix) ? raw.slice(prefix.length) : raw);
     if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).length !== 2) return null;
-    if ('kind' in value && value.kind === 'widget' && 'widgetType' in value && typeof value.widgetType === 'string' && ['kpi', 'line', 'bar', 'table'].includes(String(value.widgetType)))
+    if ('kind' in value && value.kind === 'widget' && 'widgetType' in value && typeof value.widgetType === 'string' && widgetTypes.includes(value.widgetType as WidgetType))
       return { kind: 'widget', widgetType: value.widgetType as WidgetType };
     if ('kind' in value && value.kind === 'metric' && 'metricId' in value && typeof value.metricId === 'string' && metricAvailable(value.metricId, catalog, registry))
       return { kind: 'metric', metricId: value.metricId };

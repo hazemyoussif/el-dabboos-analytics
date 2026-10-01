@@ -8,3 +8,5 @@ export * from './layout.ts';
 export * from './security.ts';
 export * from './schemas.ts';
 export * from './dashboard-repository.ts';
+
+export * from './visualization.ts';

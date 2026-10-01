@@ -39,3 +39,9 @@ Coordinates are preserved for existing-widget metric edits. New widgets receive
 snapped placement and deterministic collision handling. A saved dashboard becomes
 Modified and an unsaved dashboard remains Unsaved until explicit Save. Switching
 to Edit with AI uses this latest working spec.
+
+### Governed chart selection
+
+Metric creation offers KPI, temporal Line/Area, categorical Bar/Pie/Donut/Treemap and Table only where valid. Select a dimension in the same chooser to narrow the choices. The editor groups valid choices into Summary, Trend, Comparison, Composition and Detail. Compatible two-to-four series can become Combo, with bounded bar/line marks; no dual axis or stacking. Gross margin by branch cannot become Pie/Donut/Treemap. Vertical/horizontal Bar and Pie/Donut are presentation variants.
+
+Visualization changes retain layout, metrics, filters and analysis. They mark the working document Modified but reuse its results until a semantic query change. Save and reload retain presentation, and AI receives the latest draft with the same governed vocabulary. Negative composition results show a warning; all chart values remain available in the accessible data table. High-cardinality charts suggest explicit TopN, Bar or Table without truncating results.

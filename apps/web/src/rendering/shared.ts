@@ -15,7 +15,7 @@ export interface RenderSeriesProps {
 }
 export function tooltipFormatter(props: RenderSeriesProps) {
   return (value: unknown, name: unknown) => {
-    const index = props.labels.findIndex(label => label === name);
+    const index = props.labels.findIndex(label => typeof name === 'string' && (label === name || name.startsWith(`${label} ·`)));
     const seriesId = props.widget.series[index]?.id ?? props.widget.series[0]!.id;
     return typeof value === 'number' ? props.formatSeries(seriesId, value) : '—';
   };

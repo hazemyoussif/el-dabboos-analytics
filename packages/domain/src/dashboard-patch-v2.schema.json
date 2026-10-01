@@ -215,7 +215,11 @@
           "enum": [
             "kpi",
             "line",
+            "area",
             "bar",
+            "pie",
+            "treemap",
+            "combo",
             "table"
           ]
         },
@@ -232,6 +236,9 @@
           "items": {
             "$ref": "#/$defs/series"
           }
+        },
+        "presentation": {
+          "$ref": "#/$defs/presentation"
         }
       }
     },
@@ -308,6 +315,18 @@
         },
         "analysis": {
           "$ref": "#/$defs/analysis"
+        },
+        "presentation": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mark": {
+              "enum": [
+                "bar",
+                "line"
+              ]
+            }
+          }
         }
       }
     },
@@ -379,6 +398,44 @@
           "items": {
             "$ref": "#/$defs/gridItem"
           }
+        }
+      }
+    },
+    "presentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "orientation": {
+          "enum": [
+            "vertical",
+            "horizontal"
+          ]
+        },
+        "pieVariant": {
+          "enum": [
+            "pie",
+            "donut"
+          ]
+        },
+        "legend": {
+          "enum": [
+            "auto",
+            "show",
+            "hide"
+          ]
+        },
+        "dataLabels": {
+          "enum": [
+            "auto",
+            "show",
+            "hide"
+          ]
+        },
+        "curve": {
+          "enum": [
+            "straight",
+            "smooth"
+          ]
         }
       }
     }

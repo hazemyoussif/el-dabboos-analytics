@@ -11,10 +11,10 @@ export function LineContent(props: RenderSeriesProps & { entry: WidgetExecution;
     <XAxis dataKey="label" tick={{ fill: '#7b8999', fontSize: 11 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
     <YAxis orientation={locale === 'ar' ? 'right' : 'left'} tick={{ fill: '#7b8999', fontSize: 11 }} tickLine={false} axisLine={false} width={56} tickFormatter={n => new Intl.NumberFormat(localeTag(locale, profile), { notation: 'compact' }).format(Number(n))} />
     <Tooltip formatter={tooltipFormatter(props)} contentStyle={{ borderRadius: 12, border: '1px solid #e6ebf0' }} />
-    <Legend />
+    {widget.presentation?.legend !== 'hide' && <Legend />}
     {widget.series.flatMap((series, index) => [
       ...(entry.alignedRows.some(row => row.series[series.id]?.comparisonValue !== undefined) ? [<Line key={`comparison-${series.id}`} dataKey={comparisonKey(series.id)} name={`${seriesLabel(props, index)} · ${locale === 'ar' ? 'الفترة السابقة' : 'Previous'}`} stroke={colors[index % colors.length]} strokeOpacity={0.42} strokeDasharray="5 4" strokeWidth={2} dot={false} connectNulls={false} />] : []),
-      <Line key={series.id} dataKey={valueKey(series.id)} name={seriesLabel(props, index)} stroke={colors[index % colors.length]} strokeWidth={3} dot={false} activeDot={{ r: 5 }} connectNulls={false} />,
+      <Line type={widget.presentation?.curve === 'smooth' ? 'monotone' : 'linear'} key={series.id} dataKey={valueKey(series.id)} name={seriesLabel(props, index)} stroke={colors[index % colors.length]} strokeWidth={3} dot={false} activeDot={{ r: 5 }} connectNulls={false} />,
     ])}
   </LineChart></ResponsiveContainer></div>;
 }

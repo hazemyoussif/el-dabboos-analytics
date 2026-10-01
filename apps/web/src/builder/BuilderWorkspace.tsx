@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { resolveDashboardLayout } from '@el-dabbous/domain';
+import { resolveDashboardLayout, widgetTypes } from '@el-dabbous/domain';
 import type { AnalysisSpec, DashboardPatch, DashboardSeries, DashboardSpec, DashboardWidget, DimensionId, Locale, MetricId, ProductMetric, SemanticMetric, TenantProfile, WidgetType } from '@el-dabbous/domain';
 import type { DashboardExecutionResult } from '@el-dabbous/application';
 import { WidgetCard } from '../Renderer.tsx';
 import { DashboardGrid } from './DashboardGrid.tsx';
 import { WidgetLayoutInspector } from './WidgetLayoutInspector.tsx';
 import { arrangeLayout, duplicateWidget, insertWidget, nextWidgetId, resetLayout, updateWidgetLayout, widgetSizes } from './layout-tools.ts';
+import { recommendedVisualization, visualizationCandidate, visualizationOptions, visualizationNames, visualizationLabel } from './visualizations.ts';
 import { MetricChooser } from './MetricChooser.ts';
 import { readBuilderDragItem, writeBuilderDragItem } from './drag-item.ts';
 import type { BuilderDragItem } from './drag-item.ts';
@@ -30,7 +31,7 @@ interface Props {
   onRedo: () => void;
 }
 const filterDimensions: DimensionId[] = ['branch', 'region', 'salesperson', 'product_category', 'warehouse'];
-const types: WidgetType[] = ['kpi', 'line', 'bar', 'table'];
+const types: readonly WidgetType[] = widgetTypes;
 const domainNames = {
   en: { sales: 'Sales', crm: 'CRM', finance: 'Finance', inventory: 'Inventory', maintenance: 'Maintenance', customers: 'Customers', purchasing: 'Purchasing' },
   ar: { sales: 'المبيعات', crm: 'فرص المبيعات', finance: 'المالية', inventory: 'المخزون', maintenance: 'الصيانة', customers: 'العملاء', purchasing: 'المشتريات' },
@@ -51,13 +52,12 @@ const labels = {
     preview: 'معاينة مباشرة', drag: 'اسحب المقبض للنقل وغيّر الحجم من الحواف. عند تركيز المقبض: الأسهم للنقل وShift مع الأسهم لتغيير الحجم.', chooseDimension: 'اختر بعدًا', validation: 'أكمل إعداد بطاقة صالحة قبل التطبيق.',
   },
 };
-const typeName: Record<Locale, Record<WidgetType, string>> = {
-  en: { kpi: 'KPI', line: 'Line', bar: 'Bar', table: 'Table' },
-  ar: { kpi: 'مؤشر', line: 'خطي', bar: 'شريطي', table: 'جدول' },
+const typeName = visualizationNames;
+const makeWidget = (id: string, type: WidgetType, metric: MetricId = 'revenue', usedSeriesIds: readonly string[] = []): DashboardWidget => {
+  const series: DashboardSeries[] = [{ id: nextSeriesId(metric, usedSeriesIds), metric }];
+  if (type === 'combo') series.push({ id: nextSeriesId(metric, [...usedSeriesIds, series[0]!.id]), metric });
+  return { id, type, series, ...(type === 'bar' ? { presentation: { orientation: 'vertical' } as const } : {}), ...(type === 'kpi' ? {} : { dimension: ['pie', 'treemap', 'bar', 'table'].includes(type) ? 'branch' : 'month' }) };
 };
-const makeWidget = (id: string, type: WidgetType, metric: MetricId = 'revenue', usedSeriesIds: readonly string[] = []): DashboardWidget => ({
-  id, type, series: [{ id: nextSeriesId(metric, usedSeriesIds), metric }], ...(type === 'kpi' ? {} : { dimension: 'month' }),
-});
 const patch = (operation: DashboardPatch['operations'][number]): BuilderCommand => ({ type: 'patch', patch: { schemaVersion: 2, operations: [operation] } });
 
 function WidgetEditor({ initial, adding, base, registry, catalog, locale, onApply, onRemove }: {
@@ -76,14 +76,24 @@ function WidgetEditor({ initial, adding, base, registry, catalog, locale, onAppl
   const changeAnalysis = (series: DashboardSeries, change: Partial<AnalysisSpec>, remove?: keyof AnalysisSpec) => {
     const analysis = { ...series.analysis, ...change };
     if (remove) delete analysis[remove];
-    if (!analysisAllowed(series.metric, draft.dimension, base.filters.dateRange, analysis)) return;
+    if (!analysisAllowed(series.metric, draft.dimension, base.filters.dateRange, analysis) || !validWidgetDraft({ ...draft, series: draft.series.map(item => item.id === series.id ? { ...item, analysis } : item) }, base)) return;
     updateSeries(series.id, old => ({ ...old, ...(Object.keys(analysis).length ? { analysis } : { analysis: undefined }) }));
   };
   const valid = validWidgetDraft(draft, base);
-  const typeChanged = (type: WidgetType) => {
-    setDraft(current => ({ ...current, type, series: type === 'kpi' ? current.series.slice(0, 1) : current.series,
-      dimension: type === 'kpi' ? undefined : current.dimension ?? commonDimensions(current.series.map(series => series.metric), catalog)[0] }));
+  const choices = visualizationOptions(draft, base);
+  const recommendation = recommendedVisualization(draft, base, catalog);
+  const choiceId = draft.type === 'pie' && draft.presentation?.pieVariant === 'donut' ? 'donut' : draft.type === 'bar' && draft.presentation?.orientation !== 'vertical' ? 'horizontal' : draft.type;
+  const typeChanged = (id: string) => {
+    const option = choices.find(option => option.id === id);
+    if (option) setDraft(current => visualizationCandidate(current, option));
   };
+  const dimensionChanged = (dimension?: DimensionId) => {
+    const candidate = { ...draft, dimension };
+    const options = visualizationOptions(candidate, base);
+    const option = options.find(option => option.id === choiceId) ?? options.find(option => option.id === (dimension ? ['month', 'date', 'quarter', 'year'].includes(dimension) ? 'line' : 'bar' : 'kpi')) ?? options[0];
+    if (option) setDraft(visualizationCandidate(candidate, option));
+  };
+  const setPresentation = (key: 'legend' | 'curve' | 'dataLabels', value: string) => setDraft(current => ({ ...current, presentation: { ...current.presentation, [key]: value } }));
   const addSeries = () => {
     const check = canAddSeries(draft, newMetric, catalog);
     if (!check.allowed) { setMessage(check.reason ?? 'Incompatible metric'); return; }
@@ -98,13 +108,17 @@ function WidgetEditor({ initial, adding, base, registry, catalog, locale, onAppl
   };
   return <div className="builder-editor">
     <h3>{adding ? t.newWidget : t.properties}</h3>
-    <label>{t.type}<select value={draft.type} onChange={event => typeChanged(event.target.value as WidgetType)}>{types.map(type => <option key={type} value={type}>{typeName[locale][type]}</option>)}</select></label>
-    {draft.type !== 'kpi' && <label>{t.dimension}<select value={draft.dimension ?? ''} onChange={event => setDraft(current => ({ ...current, dimension: event.target.value as DimensionId || undefined }))}>
-      <option value="">{t.chooseDimension}</option>{dimensions.map(dimension => <option key={dimension} value={dimension}>{copy[locale].dimensions[dimension]}</option>)}</select></label>}
+    <label>{t.type}<select value={choiceId} onChange={event => typeChanged(event.target.value)}>{(['summary', 'trend', 'comparison', 'composition', 'detail'] as const).map(group => <optgroup key={group} label={visualizationNames[locale][group]}>{choices.filter(option => option.group === group).map(option => <option key={option.id} value={option.id}>{visualizationLabel(option, locale)}</option>)}</optgroup>)}</select></label>
+    {recommendation && <p className="builder-hint">{locale === 'ar' ? 'العرض المقترح: ' : 'Suggested visualization: '}{visualizationLabel(recommendation, locale)}</p>}
+    <label>{t.dimension}<select value={draft.dimension ?? ''} onChange={event => dimensionChanged(event.target.value as DimensionId || undefined)}>
+      <option value="">{t.none}</option>{dimensions.map(dimension => <option key={dimension} value={dimension}>{copy[locale].dimensions[dimension]}</option>)}</select></label>
+    {!['kpi', 'table'].includes(draft.type) && <label>{locale === 'ar' ? 'مفتاح الرسم' : 'Legend'}<select value={draft.presentation?.legend ?? 'auto'} onChange={event => setPresentation('legend', event.target.value)}>{(['auto', 'show', 'hide'] as const).map(value => <option key={value} value={value}>{locale === 'ar' ? { auto: 'تلقائي', show: 'إظهار', hide: 'إخفاء' }[value] : value}</option>)}</select></label>}
+    {['line', 'area', 'combo'].includes(draft.type) && <label>{locale === 'ar' ? 'مسار الخط' : 'Curve'}<select value={draft.presentation?.curve ?? 'straight'} onChange={event => setPresentation('curve', event.target.value)}><option value="straight">{locale === 'ar' ? 'مستقيم' : 'Straight'}</option><option value="smooth">{locale === 'ar' ? 'ناعم' : 'Smooth'}</option></select></label>}
+    {['pie', 'treemap'].includes(draft.type) && <label>{locale === 'ar' ? 'تسميات البيانات' : 'Data labels'}<select value={draft.presentation?.dataLabels ?? 'auto'} onChange={event => setPresentation('dataLabels', event.target.value)}>{(['auto', 'show', 'hide'] as const).map(value => <option key={value} value={value}>{locale === 'ar' ? { auto: 'تلقائي', show: 'إظهار', hide: 'إخفاء' }[value] : value}</option>)}</select></label>}
     <div className="builder-series-heading">{t.metric}</div>
     {draft.series.map((series, index) => {
       const analysis = series.analysis ?? {};
-      const allowed = (next: AnalysisSpec) => analysisAllowed(series.metric, draft.dimension, base.filters.dateRange, next);
+      const allowed = (next: AnalysisSpec) => analysisAllowed(series.metric, draft.dimension, base.filters.dateRange, next) && validWidgetDraft({ ...draft, series: draft.series.map(item => item.id === series.id ? { ...item, analysis: next } : item) }, base);
       return <div className="builder-series" key={series.id}>
         <div className="builder-series-title"><strong>{index === 0 ? t.primary : `${t.metric} ${index + 1}`}</strong><span>
           <button type="button" disabled={index === 0 || (index === 1 && !!draft.series[0]?.analysis?.topN)} onClick={() => moveSeries(index, -1)} aria-label={t.moveUp}>↑</button>
@@ -112,8 +126,9 @@ function WidgetEditor({ initial, adding, base, registry, catalog, locale, onAppl
           <button type="button" disabled={draft.series.length === 1} onClick={() => setDraft(current => ({ ...current, series: current.series.filter(item => item.id !== series.id) }))} aria-label={t.removeSeries}>×</button>
         </span></div>
         <select aria-label={`${t.metric} ${index + 1}`} value={series.metric} onChange={event => setDraft(current => withWidgetMetric(current, series.id, event.target.value as MetricId))}>
-          {available.map(metric => <option key={metric.id} value={metric.id} disabled={metric.id !== series.metric && (draft.type === 'line' || draft.type === 'bar') && draft.series.length > 1 && !canAddSeries({ ...draft, series: draft.series.filter(item => item.id !== series.id) }, metric.id, catalog).allowed}>{metric.labels[locale]}</option>)}
+          {available.map(metric => <option key={metric.id} value={metric.id} disabled={metric.id !== series.metric && (['line', 'area', 'bar', 'combo'].includes(draft.type)) && draft.series.length > 1 && !canAddSeries({ ...draft, series: draft.series.filter(item => item.id !== series.id) }, metric.id, catalog).allowed}>{metric.labels[locale]}</option>)}
         </select>
+        {draft.type === 'combo' && <label>{locale === 'ar' ? 'علامة السلسلة' : 'Series mark'}<select value={series.presentation?.mark ?? (index === 0 ? 'bar' : 'line')} onChange={event => updateSeries(series.id, old => ({ ...old, presentation: { mark: event.target.value as 'bar' | 'line' } }))}><option value="bar">{locale === 'ar' ? 'أعمدة' : 'Bar'}</option><option value="line">{locale === 'ar' ? 'خطي' : 'Line'}</option></select></label>}
         <div className="builder-analysis">
           <label>{t.comparison}<select value={analysis.comparison ?? ''} onChange={event => changeAnalysis(series, { comparison: event.target.value as AnalysisSpec['comparison'] }, event.target.value ? undefined : 'comparison')}>
             <option value="">{t.none}</option>{(['previous_period', 'month_over_month', 'year_over_year'] as const).map(value => <option key={value} value={value} disabled={!allowed({ ...analysis, comparison: value })}>{locale === 'ar' ? ({ previous_period: 'الفترة السابقة', month_over_month: 'مقارنة بالشهر السابق', year_over_year: 'مقارنة بالسنة السابقة' }[value]) : value.replaceAll('_', ' ')}</option>)}</select></label>
@@ -128,7 +143,7 @@ function WidgetEditor({ initial, adding, base, registry, catalog, locale, onAppl
         </div>
       </div>;
     })}
-    {draft.type !== 'kpi' && draft.series.length < 8 && <div className="builder-add-series"><select aria-label={t.addSeries} value={newMetric} onChange={event => { setNewMetric(event.target.value as MetricId); setMessage(''); }}>
+    {!['kpi', 'pie', 'treemap'].includes(draft.type) && draft.series.length < (draft.type === 'combo' ? 4 : 8) && <div className="builder-add-series"><select aria-label={t.addSeries} value={newMetric} onChange={event => { setNewMetric(event.target.value as MetricId); setMessage(''); }}>
       {available.map(metric => <option key={metric.id} value={metric.id}>{metric.labels[locale]}</option>)}</select><button type="button" onClick={addSeries}>{t.addSeries}</button></div>}
     {message && <p className="builder-hint" role="alert">{message}</p>}
     {!valid && <p className="builder-hint">{t.validation}</p>}
@@ -143,7 +158,7 @@ export function BuilderWorkspace({ history, execution, catalog, registry, profil
   const base = spec ? { schemaVersion: spec.schemaVersion, id: spec.id, title: spec.title, locale: spec.locale, filters: spec.filters, layout: spec.layout } : document.kind === 'empty' ? document.base : null;
   const [selectedId, setSelectedId] = useState<string | null>(spec?.widgets[0]?.id ?? null);
   const [dragItem, setDragItem] = useState<BuilderDragItem | null>(null);
-  const [metricChoice, setMetricChoice] = useState<{ metric: MetricId; position: { x: number; y: number }; widgetId?: string } | null>(null);
+  const [metricChoice, setMetricChoice] = useState<{ metric: MetricId; position: { x: number; y: number }; widgetId?: string; dimension?: DimensionId } | null>(null);
   const finishDrag = () => setDragItem(null);
   useEffect(() => {
     const escape = (event: KeyboardEvent) => { if (event.key === 'Escape') { setDragItem(null); setMetricChoice(null); } };
@@ -204,10 +219,11 @@ export function BuilderWorkspace({ history, execution, catalog, registry, profil
   const chooser = metricChoice && base && <div className="metric-chooser-anchor" style={{ top: metricChoice.position.y * 88 + 14,
     left: `clamp(0px, ${metricChoice.position.x / 12 * 100}%, max(0px, 100% - 290px))` }}>
     <MetricChooser locale={locale} label={catalog[metricChoice.metric]?.labels[locale] ?? metricChoice.metric}
-      options={metricVisualizationOptions(metricChoice.metric, catalog, base)} actions={choiceWidget ? actionsFor(choiceWidget, metricChoice.metric) : []}
+      options={metricVisualizationOptions(metricChoice.metric, catalog, base, metricChoice.dimension)} actions={choiceWidget ? actionsFor(choiceWidget, metricChoice.metric) : []}
+      dimensions={catalog[metricChoice.metric]?.dimensions} dimension={metricChoice.dimension} onDimension={dimension => setMetricChoice({ ...metricChoice, dimension })}
       kpi={choiceWidget?.type === 'kpi'} busy={busy} onClose={() => setMetricChoice(null)}
       onAction={action => choiceWidget && performMetricAction(choiceWidget.id, metricChoice.metric, action)}
-      onCreate={type => { if (!busy) guarded(() => { const next = createMetricCommand(document, metricChoice.metric, type, metricChoice.position, catalog, registry);
+      onCreate={type => { if (!busy) guarded(() => { const next = createMetricCommand(document, metricChoice.metric, type, metricChoice.position, catalog, registry, metricChoice.dimension);
         onCommand(next.command); setSelectedId(next.widget.id); setAddingType(null); setMetricChoice(null); finishDrag(); }); }} />
   </div>;
   return <div className="builder-workspace">

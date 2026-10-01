@@ -3,11 +3,15 @@ import type { DashboardGridItem, DashboardLayout, DashboardSpec, DashboardWidget
 import type { BuilderCommand } from './model.ts';
 
 export const widgetSizes: Record<WidgetType, { w: number; h: number }> = {
-  kpi: { w: 4, h: 2 }, line: { w: 8, h: 4 }, bar: { w: 6, h: 4 }, table: { w: 12, h: 5 },
+  kpi: { w: 4, h: 2 }, line: { w: 8, h: 4 }, area: { w: 8, h: 4 }, pie: { w: 5, h: 4 }, treemap: { w: 6, h: 5 }, combo: { w: 8, h: 4 }, bar: { w: 6, h: 4 }, table: { w: 12, h: 5 },
 };
 export const sizePresets: Record<WidgetType, Array<{ id: string; w: number; h: number }>> = {
   kpi: [{ id: 'small', w: 3, h: 2 }, { id: 'medium', w: 4, h: 2 }, { id: 'large', w: 6, h: 3 }],
   line: [{ id: 'half', w: 6, h: 4 }, { id: 'twoThirds', w: 8, h: 4 }, { id: 'full', w: 12, h: 4 }],
+  area: [{ id: 'half', w: 6, h: 4 }, { id: 'twoThirds', w: 8, h: 4 }, { id: 'full', w: 12, h: 4 }],
+  combo: [{ id: 'half', w: 6, h: 4 }, { id: 'twoThirds', w: 8, h: 4 }, { id: 'full', w: 12, h: 4 }],
+  pie: [{ id: 'small', w: 5, h: 4 }, { id: 'large', w: 6, h: 5 }],
+  treemap: [{ id: 'half', w: 6, h: 5 }, { id: 'full', w: 12, h: 5 }],
   bar: [{ id: 'half', w: 6, h: 4 }, { id: 'twoThirds', w: 8, h: 4 }, { id: 'full', w: 12, h: 4 }],
   table: [{ id: 'half', w: 6, h: 5 }, { id: 'full', w: 12, h: 5 }],
 };

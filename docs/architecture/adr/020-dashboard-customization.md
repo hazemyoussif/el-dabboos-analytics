@@ -87,3 +87,9 @@ checks. Click-to-use opens the same creation/action chooser; the normal metric
 select controls remain available. Desktop HTML5 DnD is the fast path; stacked/mobile
 presentation uses the click/keyboard fallback. No domain/library/browser boundary
 changes or additional DnD dependency are introduced.
+
+## Governed visualization expansion
+
+The v2 contract accepts Area, Pie, Treemap and Combo plus bounded widget presentation and Combo series marks. Both canonical schemas retain backward compatibility; provider projection and authorization are unchanged. Domain visualization suitability is centralized; web options and recommendations reuse canonical validation. Renderer dispatch maps governed types to focused Recharts components. Presentation-only changes reuse existing analytics results and participate in explicit Save and history.
+
+See [visualization capabilities](../visualization-capabilities.md) for rules, defaults, compatibility, warnings and deferred chart contracts. Generic stacking is prohibited because matching metric units do not imply disjoint business components.
