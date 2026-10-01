@@ -3,6 +3,7 @@ import test from 'node:test';
 import { applyDashboardPatch, dashboardPatchSchema, dashboardSpecSchema, tenantProfiles } from '@el-dabbous/domain';
 import type { DashboardSpec, LLMProvider, PlannerCapabilities, StructuredOutputRequest } from '@el-dabbous/domain';
 import { StructuredDashboardPlanner } from '../src/structured-planner.ts';
+import { projectProviderSchema } from '../src/provider-schema.ts';
 
 const profile = tenantProfiles['demo-iq'];
 const capabilities: PlannerCapabilities = { metricIds: ['revenue'], templateIds: ['sales-team', 'sales-performance'], actions: ['ai:generate', 'ai:edit'] };
@@ -24,7 +25,7 @@ test('generation sends only authorized metrics and compatible template metadata 
   assert.deepEqual(await planner.generate(request), spec);
   const sent = provider.requests[0]!;
   assert.equal(sent.responseFormat.name, 'dashboard_spec_v2');
-  assert.deepEqual(sent.responseFormat.jsonSchema, dashboardSpecSchema);
+  assert.deepEqual(sent.responseFormat.jsonSchema, projectProviderSchema(dashboardSpecSchema));
   const system = sent.messages[0]!.content;
   assert.ok(system.includes('"id":"revenue"'));
   assert.ok(!system.includes('outstanding_amount'));
@@ -56,10 +57,24 @@ test('patch editing uses patch schema and validates the resulting dashboard auth
   const planner = new StructuredDashboardPlanner(provider);
   assert.deepEqual(await planner.edit(spec, 'Rename', profile, capabilities), patch);
   assert.equal(applyDashboardPatch(spec, patch).title.en, 'Updated');
-  assert.deepEqual(provider.requests[0]!.responseFormat.jsonSchema, dashboardPatchSchema);
+  assert.deepEqual(provider.requests[0]!.responseFormat.jsonSchema, projectProviderSchema(dashboardPatchSchema));
   assert.ok(provider.requests[0]!.messages[1]!.content.includes('Current DashboardSpec v2'));
   const forbiddenPatch = { schemaVersion: 2 as const, operations: [{ op: 'replace' as const, widgetId: 'revenue', widget: { id: 'revenue', type: 'kpi', series: [{ id: 'revenue', metric: 'outstanding_amount' }] } }] };
   const badProvider = new SequenceProvider([forbiddenPatch]);
   const guarded = new StructuredDashboardPlanner(badProvider, { maxRepairAttempts: 0 });
   await assert.rejects(guarded.edit(spec, 'Show finance', profile, capabilities), { code: 'METRIC_FORBIDDEN' });
+});
+test('planner rejects projected-schema output that violates canonical string and boolean constraints', async () => {
+  const invalidId = structuredClone(spec);
+  invalidId.id = 'Invalid ID';
+  const generationProvider = new SequenceProvider([invalidId]);
+  const planner = new StructuredDashboardPlanner(generationProvider, { maxRepairAttempts: 0 });
+  await assert.rejects(planner.generate(request), { code: 'INVALID_STRUCTURED_OUTPUT' });
+  assert.deepEqual(generationProvider.requests[0]!.responseFormat.jsonSchema, projectProviderSchema(dashboardSpecSchema));
+
+  const invalidPatch = { schemaVersion: 2, operations: [{ op: 'set_title', title: { en: '', ar: 'عنوان' } }] };
+  const editProvider = new SequenceProvider([invalidPatch]);
+  const editPlanner = new StructuredDashboardPlanner(editProvider, { maxRepairAttempts: 0 });
+  await assert.rejects(editPlanner.edit(spec, 'Rename', profile, capabilities), { code: 'INVALID_STRUCTURED_OUTPUT' });
+  assert.deepEqual(editProvider.requests[0]!.responseFormat.jsonSchema, projectProviderSchema(dashboardPatchSchema));
 });

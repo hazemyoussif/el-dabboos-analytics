@@ -1,6 +1,6 @@
-# OpenAI-compatible providerOpenAI-compatible provider
+# OpenAI-compatible provider
 
-The API defaults to `MockDashboardPlanner`. To use a local model, run an OpenAI-compatible server that supports strict JSON Schema responses on `/v1/chat/completions`, then select the structured planner. The adapter sends the existing DashboardSpec v2 or DashboardPatch v2 schema as `response_format.type=json_schema`. The application validates the returned object against that schema, semantic rules, and authorized planner capabilities before using it. A malformed object can receive one repair request by default. The provider never executes analytics, SQL, or UI code.
+The API defaults to `MockDashboardPlanner`. To use a local model, run an OpenAI-compatible server that supports strict JSON Schema responses on `/v1/chat/completions`, then select the structured planner. The adapter sends a portable projection of the existing DashboardSpec v2 or DashboardPatch v2 schema as `response_format.type=json_schema`. The application validates the returned object against the unchanged canonical schema, semantic rules, and authorized planner capabilities before using it. A malformed object can receive one repair request by default. The provider never executes analytics, SQL, or UI code.
 
 ## Configuration
 

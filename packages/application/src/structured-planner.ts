@@ -2,6 +2,7 @@ import { applyDashboardPatch, dashboardPatchSchema, dashboardSpecSchema, isMetri
 import type { DashboardGenerationRequest, DashboardPatch, DashboardPlanner, DashboardSpec, LLMProvider, Locale, PlannerCapabilities, StructuredOutputRequest, TenantProfile } from '@el-dabbous/domain';
 import { dashboardTemplates } from './templates.ts';
 import { AuthorizationError } from './security.ts';
+import { projectProviderSchema } from './provider-schema.ts';
 
 export class StructuredPlanningError extends Error {
   readonly code = 'INVALID_STRUCTURED_OUTPUT';
@@ -76,7 +77,7 @@ export class StructuredDashboardPlanner implements DashboardPlanner {
       { role: 'system', content: `Produce only a DashboardSpec v2 JSON object. Use only authorized metrics and templates. Keep calculations in the deterministic analytics engine. Do not generate SQL, React, chart-library options, arbitrary expressions, or policy filters. Context: ${JSON.stringify(context)}` },
       { role: 'user', content: request.prompt },
     ];
-    return this.validated({ messages, locale: request.locale, responseFormat: { name: 'dashboard_spec_v2', jsonSchema: dashboardSpecSchema, strict: true } }, output => {
+    return this.validated({ messages, locale: request.locale, responseFormat: { name: 'dashboard_spec_v2', jsonSchema: projectProviderSchema(dashboardSpecSchema), strict: true } }, output => {
       validateDashboardSpec(output);
       assertAllowed(output, capabilities);
       return output;
@@ -91,7 +92,7 @@ export class StructuredDashboardPlanner implements DashboardPlanner {
       { role: 'system', content: `Produce only a DashboardPatch v2 JSON object for the current dashboard. Use only authorized metrics and bounded patch operations. Do not generate SQL, React, chart-library options, arbitrary expressions, or policy filters. Context: ${JSON.stringify(context)}` },
       { role: 'user', content: `Current DashboardSpec v2: ${JSON.stringify(current)}\nEdit instruction: ${instruction}` },
     ];
-    return this.validated({ messages, locale: current.locale as Locale, responseFormat: { name: 'dashboard_patch_v2', jsonSchema: dashboardPatchSchema, strict: true } }, output => {
+    return this.validated({ messages, locale: current.locale as Locale, responseFormat: { name: 'dashboard_patch_v2', jsonSchema: projectProviderSchema(dashboardPatchSchema), strict: true } }, output => {
       validateDashboardPatch(output);
       const next = applyDashboardPatch(current, output);
       assertAllowed(next, capabilities);
