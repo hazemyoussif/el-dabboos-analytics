@@ -1,20 +1,20 @@
 import type { WidgetExecution } from '@el-dabbous/application';
-import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { localeTag } from '../i18n.ts';
-import { colors, comparisonKey, seriesLabel, tooltipFormatter, valueKey } from './shared.ts';
+import { comparisonKey, seriesLabel, valueKey } from './shared.ts';
 import type { ChartRow, RenderSeriesProps } from './shared.ts';
-
+import { axisStyle, ChartFrame, EnterpriseTooltip } from './ChartChrome.tsx';
+import { chartMargins, seriesColor } from './chart-theme.ts';
 export function LineContent(props: RenderSeriesProps & { entry: WidgetExecution; data: ChartRow[] }) {
-  const { widget, entry, data, locale, profile } = props;
-  return <div className="chart-wrap"><ResponsiveContainer width="100%" height="100%"><LineChart data={data} margin={{ top: 10, right: 12, bottom: 4, left: 0 }}>
-    <CartesianGrid stroke="#e8edf2" strokeDasharray="3 4" vertical={false} />
-    <XAxis dataKey="label" tick={{ fill: '#7b8999', fontSize: 11 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-    <YAxis orientation={locale === 'ar' ? 'right' : 'left'} tick={{ fill: '#7b8999', fontSize: 11 }} tickLine={false} axisLine={false} width={56} tickFormatter={n => new Intl.NumberFormat(localeTag(locale, profile), { notation: 'compact' }).format(Number(n))} />
-    <Tooltip formatter={tooltipFormatter(props)} contentStyle={{ borderRadius: 12, border: '1px solid #e6ebf0' }} />
-    {widget.presentation?.legend !== 'hide' && <Legend />}
+  const { widget, entry, data, locale, profile, theme } = props;
+  return <ChartFrame props={props} entry={entry}><ResponsiveContainer width="100%" height="100%"><LineChart data={data} margin={chartMargins}>
+    <CartesianGrid stroke={theme.grid} strokeDasharray="3 4" vertical={false} />
+    <XAxis {...axisStyle(theme)} dataKey="label" interval="preserveStartEnd" minTickGap={24} />
+    <YAxis {...axisStyle(theme)} orientation={locale === 'ar' ? 'right' : 'left'} width={56} tickFormatter={n => new Intl.NumberFormat(localeTag(locale, profile), { notation: 'compact' }).format(Number(n))} />
+    <Tooltip content={<EnterpriseTooltip props={props} entry={entry} />} cursor={{ stroke: theme.border, strokeDasharray: '3 4' }} />
     {widget.series.flatMap((series, index) => [
-      ...(entry.alignedRows.some(row => row.series[series.id]?.comparisonValue !== undefined) ? [<Line key={`comparison-${series.id}`} dataKey={comparisonKey(series.id)} name={`${seriesLabel(props, index)} · ${locale === 'ar' ? 'الفترة السابقة' : 'Previous'}`} stroke={colors[index % colors.length]} strokeOpacity={0.42} strokeDasharray="5 4" strokeWidth={2} dot={false} connectNulls={false} />] : []),
-      <Line type={widget.presentation?.curve === 'smooth' ? 'monotone' : 'linear'} key={series.id} dataKey={valueKey(series.id)} name={seriesLabel(props, index)} stroke={colors[index % colors.length]} strokeWidth={3} dot={false} activeDot={{ r: 5 }} connectNulls={false} />,
+      ...(entry.alignedRows.some(row => row.series[series.id]?.comparisonValue !== undefined) ? [<Line key={`comparison-${series.id}`} dataKey={comparisonKey(series.id)} stroke={seriesColor(theme,index)} strokeOpacity={0.6} strokeDasharray="5 4" strokeWidth={1.5} dot={false} connectNulls={false} isAnimationActive={false} />] : []),
+      <Line type={widget.presentation?.curve === 'smooth' ? 'monotone' : 'linear'} key={series.id} dataKey={valueKey(series.id)} name={seriesLabel(props, index)} stroke={seriesColor(theme,index)} strokeWidth={2.5} dot={false} activeDot={{ r: 4, stroke: theme.tooltip, strokeWidth: 2 }} connectNulls={false} isAnimationActive={false} />,
     ])}
-  </LineChart></ResponsiveContainer></div>;
+  </LineChart></ResponsiveContainer></ChartFrame>;
 }
