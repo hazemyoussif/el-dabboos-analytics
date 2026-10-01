@@ -55,3 +55,35 @@ adapter with careful reconciliation to our controlled draft/history. Migration
 adds no required capability for this pass; do not add the dependency. Keep the
 portable model and grid mapping replaceable so a future adapter can reuse the
 same validation, persistence and application behavior.
+
+## Metric palette extension
+
+Available, authorized registry entries support native metric dragging and clickable
+keyboard-accessible buttons. Web-only BuilderDragItem distinguishes widget-type
+and metric payloads under `application/x-el-dabbous-builder`; a prefixed text
+fallback is accepted. Parsing is size bounded, rejects unknown/extra identifiers,
+and rechecks both the available registry and authorized semantic catalog at drop.
+Planned entries remain nondraggable. Browser payloads never contain patches or SQL.
+
+Free canvas metric drops use the RGL snapped KPI-sized placeholder and open a
+compact chooser near that position. Each offered type has a canonically valid
+widget: Line prefers month/date/quarter/year, Bar/Table prefer supported category
+dimensions. The chosen width clamps X to the twelve-column boundary and existing
+deterministic collision handling places neighbors. Empty drafts use add-first.
+
+Existing-widget overlays show explicit Replace metric (KPI), Add series or Replace
+primary actions. Both current shared-dimension/unit compatibility and final widget
+validation are required. Replacing primary retains its ID and compatible analysis;
+only incompatible analysis operations are removed. Adding/replacing series never
+changes layout. Widget drop handlers consume even rejected metric drops, preventing
+an additional canvas command. RGL drag-over rejects widget targets and clears its
+external placeholder there. Native copy effects and valid/rejected target styling
+are transient; drop, dragend, Escape, preview busy state and errors clear drag state.
+
+Pure web helpers produce bounded BuilderCommands with collision-free metric-derived
+series IDs. Every successful semantic drop participates in normal history and
+preview execution, while persistence remains explicit Save with existing version
+checks. Click-to-use opens the same creation/action chooser; the normal metric
+select controls remain available. Desktop HTML5 DnD is the fast path; stacked/mobile
+presentation uses the click/keyboard fallback. No domain/library/browser boundary
+changes or additional DnD dependency are introduced.

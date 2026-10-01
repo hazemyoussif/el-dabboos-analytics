@@ -1,10 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
+import { resolveDashboardLayout } from '@el-dabbous/domain';
 import type { AnalysisSpec, DashboardPatch, DashboardSeries, DashboardSpec, DashboardWidget, DimensionId, Locale, MetricId, ProductMetric, SemanticMetric, TenantProfile, WidgetType } from '@el-dabbous/domain';
 import type { DashboardExecutionResult } from '@el-dabbous/application';
 import { WidgetCard } from '../Renderer.tsx';
 import { DashboardGrid } from './DashboardGrid.tsx';
 import { WidgetLayoutInspector } from './WidgetLayoutInspector.tsx';
 import { arrangeLayout, duplicateWidget, insertWidget, nextWidgetId, resetLayout, updateWidgetLayout, widgetSizes } from './layout-tools.ts';
+import { MetricChooser } from './MetricChooser.ts';
+import { readBuilderDragItem, writeBuilderDragItem } from './drag-item.ts';
+import type { BuilderDragItem } from './drag-item.ts';
+import { applyMetricDrop, createMetricCommand, metricAvailable, metricDropActions, metricDropCopy, metricVisualizationOptions, nextSeriesId } from './metric-drop.ts';
+import type { MetricDropAction } from './metric-drop.ts';
 import { copy } from '../i18n.ts';
 import { analysisAllowed, canAddSeries, commonDimensions, selectableMetric, validWidgetDraft, withWidgetMetric } from './model.ts';
 import type { BuilderCommand, BuilderDocument, BuilderHistory } from './model.ts';
@@ -49,8 +55,8 @@ const typeName: Record<Locale, Record<WidgetType, string>> = {
   en: { kpi: 'KPI', line: 'Line', bar: 'Bar', table: 'Table' },
   ar: { kpi: 'مؤشر', line: 'خطي', bar: 'شريطي', table: 'جدول' },
 };
-const makeWidget = (id: string, type: WidgetType, metric: MetricId = 'revenue'): DashboardWidget => ({
-  id, type, series: [{ id: 'series-1', metric }], ...(type === 'kpi' ? {} : { dimension: 'month' }),
+const makeWidget = (id: string, type: WidgetType, metric: MetricId = 'revenue', usedSeriesIds: readonly string[] = []): DashboardWidget => ({
+  id, type, series: [{ id: nextSeriesId(metric, usedSeriesIds), metric }], ...(type === 'kpi' ? {} : { dimension: 'month' }),
 });
 const patch = (operation: DashboardPatch['operations'][number]): BuilderCommand => ({ type: 'patch', patch: { schemaVersion: 2, operations: [operation] } });
 
@@ -81,9 +87,8 @@ function WidgetEditor({ initial, adding, base, registry, catalog, locale, onAppl
   const addSeries = () => {
     const check = canAddSeries(draft, newMetric, catalog);
     if (!check.allowed) { setMessage(check.reason ?? 'Incompatible metric'); return; }
-    let number = 1;
-    while (draft.series.some(series => series.id === `series-${number}`)) number++;
-    setDraft(current => ({ ...current, series: [...current.series, { id: `series-${number}`, metric: newMetric }] })); setMessage('');
+    const id = nextSeriesId(newMetric, draft.series.map(series => series.id));
+    setDraft(current => ({ ...current, series: [...current.series, { id, metric: newMetric }] })); setMessage('');
   };
   const moveSeries = (index: number, direction: -1 | 1) => {
     const next = index + direction;
@@ -137,7 +142,14 @@ export function BuilderWorkspace({ history, execution, catalog, registry, profil
   const spec = document.kind === 'dashboard' ? document.spec : null;
   const base = spec ? { schemaVersion: spec.schemaVersion, id: spec.id, title: spec.title, locale: spec.locale, filters: spec.filters, layout: spec.layout } : document.kind === 'empty' ? document.base : null;
   const [selectedId, setSelectedId] = useState<string | null>(spec?.widgets[0]?.id ?? null);
-  const [paletteType, setPaletteType] = useState<WidgetType | null>(null);
+  const [dragItem, setDragItem] = useState<BuilderDragItem | null>(null);
+  const [metricChoice, setMetricChoice] = useState<{ metric: MetricId; position: { x: number; y: number }; widgetId?: string } | null>(null);
+  const finishDrag = () => setDragItem(null);
+  useEffect(() => {
+    const escape = (event: KeyboardEvent) => { if (event.key === 'Escape') { setDragItem(null); setMetricChoice(null); } };
+    window.addEventListener('keydown', escape); return () => window.removeEventListener('keydown', escape);
+  }, []);
+  useEffect(() => { if (busy) setDragItem(null); }, [busy]);
   const [layoutError, setLayoutError] = useState('');
   const [addingType, setAddingType] = useState<WidgetType | null>(null);
   const [dateFrom, setDateFrom] = useState(base?.filters.dateRange?.from ?? '');
@@ -145,7 +157,7 @@ export function BuilderWorkspace({ history, execution, catalog, registry, profil
   useEffect(() => { setDateFrom(base?.filters.dateRange?.from ?? ''); setDateTo(base?.filters.dateRange?.to ?? ''); }, [base?.filters.dateRange?.from, base?.filters.dateRange?.to]);
   const selected = spec?.widgets.find(widget => widget.id === selectedId);
   const dashboardTitle = document.kind === 'dashboard' ? document.spec.title[locale] : document.base.title[locale];
-  const newWidget = useMemo(() => addingType ? makeWidget(nextWidgetId(spec?.widgets ?? []), addingType) : null, [addingType, spec?.widgets.length]);
+  const newWidget = useMemo(() => addingType ? makeWidget(nextWidgetId(spec?.widgets ?? []), addingType, 'revenue', spec?.widgets.flatMap(widget => widget.series.map(series => series.id)) ?? []) : null, [addingType, spec?.widgets]);
   const requestedFilters = base?.filters.dimensions ?? [];
   const setRequestedFilter = (dimension: DimensionId, value: string) => {
     if (!base || !spec) return;
@@ -167,30 +179,65 @@ export function BuilderWorkspace({ history, execution, catalog, registry, profil
     setSelectedId(spec.widgets.find(widget => widget.id !== id)?.id ?? null);
   };
   const guarded = (action: () => void) => {
-    try { action(); setLayoutError(''); } catch { setLayoutError(locale === 'ar' ? 'تعذر تطبيق التغيير ضمن حدود الشبكة.' : 'Change could not fit within grid limits.'); }
+    try { action(); setLayoutError(''); } catch { setDragItem(null); setMetricChoice(null); setLayoutError(locale === 'ar' ? 'تعذر تطبيق التغيير ضمن حدود الشبكة.' : 'Change could not fit within grid limits.'); }
   };
   const dropWidget = (type: WidgetType, position: { x: number; y: number }) => guarded(() => {
     const metric = registry.filter(selectableMetric).find(metric => metric.id === 'revenue') ?? registry.filter(selectableMetric)[0];
     if (!metric) return;
-    const widget = makeWidget(nextWidgetId(spec?.widgets ?? []), type, metric.id);
+    const widget = makeWidget(nextWidgetId(spec?.widgets ?? []), type, metric.id, spec?.widgets.flatMap(widget => widget.series.map(series => series.id)) ?? []);
     if (!validWidgetDraft(widget, base!)) throw new Error('Invalid widget');
     onCommand(spec ? insertWidget(spec, widget, position) : { type: 'add-first', widget,
       layout: { columns: 12, items: [{ widgetId: widget.id, ...widgetSizes[type], ...position }] } });
-    setSelectedId(widget.id); setAddingType(null); setPaletteType(null);
+    setSelectedId(widget.id); setAddingType(null); setDragItem(null);
   });
+  const readDrag = (data: Pick<DataTransfer, 'getData'> | null) => readBuilderDragItem(data, catalog, registry);
+  const actionsFor = (widget: DashboardWidget, metric: MetricId) => base ? metricDropActions(widget, metric, catalog, registry, base) : [];
+  const performMetricAction = (id: string, metric: MetricId, action: MetricDropAction) => {
+    if (busy || !spec) return;
+    guarded(() => { onCommand(applyMetricDrop(spec, id, metric, action, catalog, registry)); setSelectedId(id); setAddingType(null); setMetricChoice(null); finishDrag(); });
+  };
+  const chooseMetric = (metric: MetricId, position: { x: number; y: number }, widgetId?: string) => {
+    if (busy || !metricAvailable(metric, catalog, registry)) { finishDrag(); return; }
+    setMetricChoice({ metric, position, ...(widgetId ? { widgetId } : {}) }); setAddingType(null);
+  };
+  const choiceWidget = spec?.widgets.find(widget => widget.id === metricChoice?.widgetId);
+  const chooser = metricChoice && base && <div className="metric-chooser-anchor" style={{ top: metricChoice.position.y * 88 + 14,
+    left: `clamp(0px, ${metricChoice.position.x / 12 * 100}%, max(0px, 100% - 290px))` }}>
+    <MetricChooser locale={locale} label={catalog[metricChoice.metric]?.labels[locale] ?? metricChoice.metric}
+      options={metricVisualizationOptions(metricChoice.metric, catalog, base)} actions={choiceWidget ? actionsFor(choiceWidget, metricChoice.metric) : []}
+      kpi={choiceWidget?.type === 'kpi'} busy={busy} onClose={() => setMetricChoice(null)}
+      onAction={action => choiceWidget && performMetricAction(choiceWidget.id, metricChoice.metric, action)}
+      onCreate={type => { if (!busy) guarded(() => { const next = createMetricCommand(document, metricChoice.metric, type, metricChoice.position, catalog, registry);
+        onCommand(next.command); setSelectedId(next.widget.id); setAddingType(null); setMetricChoice(null); finishDrag(); }); }} />
+  </div>;
   return <div className="builder-workspace">
-    <aside className="builder-palette"><h3>{t.widgets}</h3><p>{t.unsaved}</p><div className="builder-add-buttons">{types.map(type => <button key={type} draggable={!busy} onDragStart={event => { event.dataTransfer.setData('text/plain', type); event.dataTransfer.effectAllowed = 'copy'; setPaletteType(type); }} onDragEnd={() => setPaletteType(null)} onClick={() => { setAddingType(type); setSelectedId(null); }}>{t.newWidget}: {typeName[locale][type]}</button>)}</div>
+    <aside className="builder-palette"><h3>{t.widgets}</h3><p>{t.unsaved}</p><div className="builder-add-buttons">{types.map(type => <button key={type} draggable={!busy} onDragStart={event => { const item: BuilderDragItem = { kind: 'widget', widgetType: type }; writeBuilderDragItem(event.dataTransfer, item); setMetricChoice(null); setDragItem(item); }} onDragEnd={finishDrag} onClick={() => { setAddingType(type); setSelectedId(null); }}>{t.newWidget}: {typeName[locale][type]}</button>)}</div>
       <h3>{t.metric}</h3>{Object.entries(domainNames[locale]).map(([domain, name]) => {
         const metrics = registry.filter(metric => metric.domain === domain);
         if (!metrics.length) return null;
-        return <details key={domain} open={domain === 'sales'}><summary>{name}</summary><div className="builder-metric-list">{metrics.map(metric => <div key={metric.id} className={metric.availability === 'planned' ? 'builder-planned' : ''}>{metric.labels[locale]} {metric.availability === 'planned' && <small>{t.planned}</small>}</div>)}</div></details>;
+        return <details key={domain} open={domain === 'sales'}><summary>{name}</summary><div className="builder-metric-list">{metrics.map(metric => {
+          const id = metric.id;
+          if (!metricAvailable(id, catalog, registry)) return <div key={id} className="builder-planned">{metric.labels[locale]} <small>{t.planned}</small></div>;
+          return <button key={id} className={`metric-palette-item ${dragItem?.kind === 'metric' && dragItem.metricId === id ? 'metric-dragging' : ''}`}
+            disabled={busy} draggable={!busy} onDragStart={event => { const item: BuilderDragItem = { kind: 'metric', metricId: id };
+              writeBuilderDragItem(event.dataTransfer, item); setMetricChoice(null); setDragItem(item); }} onDragEnd={finishDrag}
+            onClick={() => chooseMetric(id, { x: 0, y: 0 }, selected?.id)}>{metric.labels[locale]}</button>;
+        })}</div></details>;
       })}</aside>
     <div className="builder-center"><div className="builder-canvas-head"><strong>{dashboardTitle}</strong><span>{t.preview} · {t.unsaved}</span><div><button disabled={!history.past.length} onClick={onUndo}>↶ {locale === 'ar' ? 'تراجع' : 'Undo'}</button><button disabled={!history.future.length} onClick={onRedo}>↷ {locale === 'ar' ? 'إعادة' : 'Redo'}</button><button disabled={!spec} onClick={() => spec && guarded(() => onCommand({ type: 'layout', layout: arrangeLayout(spec) }))}>{locale === 'ar' ? 'ترتيب تلقائي' : 'Auto arrange'}</button><button disabled={!spec} onClick={() => spec && guarded(() => onCommand({ type: 'layout', layout: resetLayout(spec) }))}>{locale === 'ar' ? 'إعادة ضبط التخطيط' : 'Reset layout'}</button></div></div>
       <p className="builder-hint">{t.drag}</p>{busy && <p className="builder-preview-loading">{copy[locale].loading}</p>}
       {layoutError && <p role="status" className="builder-hint">{layoutError}</p>}
-      {base && <DashboardGrid spec={spec ?? { ...base, widgets: [] }} locale={locale} editable={!busy} selectedId={selectedId} paletteType={paletteType}
+      {base && <DashboardGrid spec={spec ?? { ...base, widgets: [] }} locale={locale} editable={!busy} selectedId={selectedId} dragItem={dragItem} readDrag={readDrag} onDragFinish={finishDrag} metricActions={actionsFor} chooser={chooser}
         onSelect={id => { setSelectedId(id); setAddingType(null); }} onLayoutCommit={layout => onCommand({ type: 'layout', layout })}
-        onDropWidget={dropWidget} onAction={(id, action) => guarded(() => {
+        onPaletteDrop={(item, position) => { if (busy) return; if (item.kind === 'widget') dropWidget(item.widgetType, position); else chooseMetric(item.metricId, position); }}
+        onMetricWidgetDrop={(id, metric, action) => {
+          if (busy || !spec) return;
+          const widget = spec.widgets.find(widget => widget.id === id)!;
+          const actions = actionsFor(widget, metric);
+          if (!actions.length) { finishDrag(); setLayoutError(metricDropCopy[locale].invalid); return; }
+          if (action || widget.type === 'kpi') performMetricAction(id, metric, action ?? 'replace-primary');
+          else { const item = resolveDashboardLayout(spec).items!.find(item => item.widgetId === id)!; chooseMetric(metric, { x: item.x, y: item.y }, id); }
+        }} onAction={(id, action) => guarded(() => {
           if (!spec) return;
           if (action === 'delete') removeWidget(id);
           else if (action === 'duplicate') { const copy = duplicateWidget(spec, id); onCommand(copy.command); setSelectedId(copy.widget.id); setAddingType(null); }
