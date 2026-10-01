@@ -1,3 +1,4 @@
+import { ArrowUp, ArrowDown, X, Undo2, Redo2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { resolveDashboardLayout, widgetTypes } from '@el-dabbous/domain';
 import type { AnalysisSpec, DashboardPatch, DashboardSeries, DashboardSpec, DashboardWidget, DimensionId, Locale, MetricId, ProductMetric, SemanticMetric, TenantProfile, WidgetType } from '@el-dabbous/domain';
@@ -121,9 +122,9 @@ function WidgetEditor({ initial, adding, base, registry, catalog, locale, onAppl
       const allowed = (next: AnalysisSpec) => analysisAllowed(series.metric, draft.dimension, base.filters.dateRange, next) && validWidgetDraft({ ...draft, series: draft.series.map(item => item.id === series.id ? { ...item, analysis: next } : item) }, base);
       return <div className="builder-series" key={series.id}>
         <div className="builder-series-title"><strong>{index === 0 ? t.primary : `${t.metric} ${index + 1}`}</strong><span>
-          <button type="button" disabled={index === 0 || (index === 1 && !!draft.series[0]?.analysis?.topN)} onClick={() => moveSeries(index, -1)} aria-label={t.moveUp}>↑</button>
-          <button type="button" disabled={index === draft.series.length - 1 || (index === 0 && !!draft.series[0]?.analysis?.topN)} onClick={() => moveSeries(index, 1)} aria-label={t.moveDown}>↓</button>
-          <button type="button" disabled={draft.series.length === 1} onClick={() => setDraft(current => ({ ...current, series: current.series.filter(item => item.id !== series.id) }))} aria-label={t.removeSeries}>×</button>
+          <button type="button" disabled={index === 0 || (index === 1 && !!draft.series[0]?.analysis?.topN)} onClick={() => moveSeries(index, -1)} aria-label={t.moveUp}><ArrowUp aria-hidden="true" /></button>
+          <button type="button" disabled={index === draft.series.length - 1 || (index === 0 && !!draft.series[0]?.analysis?.topN)} onClick={() => moveSeries(index, 1)} aria-label={t.moveDown}><ArrowDown aria-hidden="true" /></button>
+          <button type="button" disabled={draft.series.length === 1} onClick={() => setDraft(current => ({ ...current, series: current.series.filter(item => item.id !== series.id) }))} aria-label={t.removeSeries}><X aria-hidden="true" /></button>
         </span></div>
         <select aria-label={`${t.metric} ${index + 1}`} value={series.metric} onChange={event => setDraft(current => withWidgetMetric(current, series.id, event.target.value as MetricId))}>
           {available.map(metric => <option key={metric.id} value={metric.id} disabled={metric.id !== series.metric && (['line', 'area', 'bar', 'combo'].includes(draft.type)) && draft.series.length > 1 && !canAddSeries({ ...draft, series: draft.series.filter(item => item.id !== series.id) }, metric.id, catalog).allowed}>{metric.labels[locale]}</option>)}
@@ -240,7 +241,7 @@ export function BuilderWorkspace({ history, execution, catalog, registry, profil
             onClick={() => chooseMetric(id, { x: 0, y: 0 }, selected?.id)}>{metric.labels[locale]}</button>;
         })}</div></details>;
       })}</aside>
-    <div className="builder-center"><div className="builder-canvas-head"><strong>{dashboardTitle}</strong><span>{t.preview} · {t.unsaved}</span><div><button disabled={!history.past.length} onClick={onUndo}>↶ {locale === 'ar' ? 'تراجع' : 'Undo'}</button><button disabled={!history.future.length} onClick={onRedo}>↷ {locale === 'ar' ? 'إعادة' : 'Redo'}</button><button disabled={!spec} onClick={() => spec && guarded(() => onCommand({ type: 'layout', layout: arrangeLayout(spec) }))}>{locale === 'ar' ? 'ترتيب تلقائي' : 'Auto arrange'}</button><button disabled={!spec} onClick={() => spec && guarded(() => onCommand({ type: 'layout', layout: resetLayout(spec) }))}>{locale === 'ar' ? 'إعادة ضبط التخطيط' : 'Reset layout'}</button></div></div>
+    <div className="builder-center"><div className="builder-canvas-head"><strong>{dashboardTitle}</strong><span>{t.preview} · {t.unsaved}</span><div><button disabled={!history.past.length} onClick={onUndo}><Undo2 aria-hidden="true" />{locale === 'ar' ? 'تراجع' : 'Undo'}</button><button disabled={!history.future.length} onClick={onRedo}><Redo2 aria-hidden="true" />{locale === 'ar' ? 'إعادة' : 'Redo'}</button><button disabled={!spec} onClick={() => spec && guarded(() => onCommand({ type: 'layout', layout: arrangeLayout(spec) }))}>{locale === 'ar' ? 'ترتيب تلقائي' : 'Auto arrange'}</button><button disabled={!spec} onClick={() => spec && guarded(() => onCommand({ type: 'layout', layout: resetLayout(spec) }))}>{locale === 'ar' ? 'إعادة ضبط التخطيط' : 'Reset layout'}</button></div></div>
       <p className="builder-hint">{t.drag}</p>{busy && <p className="builder-preview-loading">{copy[locale].loading}</p>}
       {layoutError && <p role="status" className="builder-hint">{layoutError}</p>}
       {base && <DashboardGrid spec={spec ?? { ...base, widgets: [] }} locale={locale} editable={!busy} selectedId={selectedId} dragItem={dragItem} readDrag={readDrag} onDragFinish={finishDrag} metricActions={actionsFor} chooser={chooser}

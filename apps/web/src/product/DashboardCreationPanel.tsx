@@ -1,3 +1,4 @@
+import { Sparkles, Plus, LayoutTemplate, ArrowUpRight } from 'lucide-react';
 import { TemplateBrowser } from '../library/TemplateBrowser.tsx';
 import type { Locale, TenantProfile } from '@el-dabbous/domain';
 import type { AccessibleTemplate } from '../api/client.ts';
@@ -19,15 +20,15 @@ export function DashboardCreationPanel(props: Props) {
   return <section className="creation-panel" aria-label={t.newDashboard}>
     <div className="creation-heading"><div><span className="eyebrow eyebrow-light">{t.workspace}</span><h2>{t.newDashboard}</h2></div><button type="button" onClick={onClose}>{t.cancel}</button></div>
     {panel === 'new' && <div className="creation-choices">
-      <button type="button" onClick={onChooseAi} disabled={!canGenerate}><strong>✦ {t.createWithAi}</strong><span>{t.createWithAiHint}</span></button>
-      <button type="button" onClick={onBlank}><strong>＋ {t.blankDashboard}</strong><span>{t.blankDashboardHint}</span></button>
-      <button type="button" onClick={onChooseTemplate}><strong>▥ {t.startFromTemplate}</strong><span>{t.startFromTemplateHint}</span></button>
+      <button type="button" onClick={onChooseAi} disabled={!canGenerate}><Sparkles aria-hidden="true" /><strong>{t.createWithAi}</strong><span>{t.createWithAiHint}</span></button>
+      <button type="button" onClick={onBlank}><Plus aria-hidden="true" /><strong>{t.blankDashboard}</strong><span>{t.blankDashboardHint}</span></button>
+      <button type="button" onClick={onChooseTemplate}><LayoutTemplate aria-hidden="true" /><strong>{t.startFromTemplate}</strong><span>{t.startFromTemplateHint}</span></button>
     </div>}
     {panel === 'choose-template' && <TemplateBrowser templates={templates} locale={locale} onOpen={onTemplate} />}
     {panel === 'create-ai' && <div className="creation-ai"><label htmlFor="dashboard-prompt">{t.promptTitle}</label>
       <textarea id="dashboard-prompt" value={prompt} onChange={event => onPrompt(event.target.value)} placeholder={conversation.placeholder} rows={4} />
       <div className="prompt-examples">{conversation.examples.map(example => <button key={example} type="button" onClick={() => onPrompt(example)}>{example}</button>)}</div>
-      <button type="button" className="primary-button" disabled={loading || !prompt.trim() || !canGenerate} onClick={onGenerate}>{t.generate} ↗</button>
+      <button type="button" className="primary-button" disabled={loading || !prompt.trim() || !canGenerate} onClick={onGenerate}>{t.generate}<ArrowUpRight aria-hidden="true" /></button>
     </div>}
   </section>;
 }

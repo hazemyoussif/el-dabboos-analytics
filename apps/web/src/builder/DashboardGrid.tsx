@@ -1,3 +1,4 @@
+import { GripVertical, MoreHorizontal } from 'lucide-react';
 import ReactGridLayout, { noCompactor, useContainerWidth } from 'react-grid-layout';
 import { resolveDashboardLayout, validateDashboardLayout } from '@el-dabbous/domain';
 import type { DashboardLayout, DashboardSpec, DashboardWidget, Locale, MetricId } from '@el-dabbous/domain';
@@ -79,9 +80,9 @@ export function DashboardGrid({ spec, locale, editable = false, selectedId, drag
           const layout = keyboardLayout(spec, widget.id, event.key, event.shiftKey);
           if (layout) commit(layout);
           else setMessage(ar ? 'وصلت إلى حد الشبكة أو بطاقة أخرى.' : 'Grid boundary, minimum size, or another widget reached.');
-        }}>⠿</span>}
+        }}><GripVertical aria-hidden="true" /></span>}
       <div className="widget-actions"><button type="button" onClick={() => onSelect?.(widget.id)}>{ar ? 'تحرير' : 'Edit'}</button>
-        {editGrid && onAction && <details><summary aria-label={ar ? 'إجراءات البطاقة' : 'Widget actions'}>•••</summary><div>
+        {editGrid && onAction && <details><summary aria-label={ar ? 'إجراءات البطاقة' : 'Widget actions'}><MoreHorizontal aria-hidden="true" /></summary><div>
           <button onClick={() => onAction(widget.id, 'duplicate')}>{ar ? 'تكرار' : 'Duplicate'}</button>
           <button onClick={() => onAction(widget.id, 'reset')}>{ar ? 'الحجم الافتراضي' : 'Reset size'}</button>
           <button onClick={() => onAction(widget.id, 'delete')}>{ar ? 'حذف' : 'Delete'}</button>
