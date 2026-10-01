@@ -72,6 +72,87 @@ export const dashboardTemplates: readonly DashboardTemplate[] = [
     widget('product-table', 'table', [series('units', 'units_sold'), series('revenue', 'revenue'), series('gross-profit', 'gross_profit')], 'product'),
     one('monthly-units', 'line', 'units_sold', 'month'),
   ] },
+  { id: 'sales-trends-growth', name: text('Sales Trends & Growth', 'اتجاهات ونمو المبيعات'), description: text('Sales Trends & Growth using governed metrics.', 'اتجاهات ونمو المبيعات باستخدام المؤشرات المعتمدة.'), domain: 'sales', tags: ['sales', 'sales-trends-growth'], datePreset: 'current_year', layout: { columns: 3 }, widgets: [
+    one('revenue', 'kpi', 'revenue'),
+    one('sales-growth', 'kpi', 'sales_growth'),
+    one('order-count', 'kpi', 'order_count'),
+    one('average-order-value', 'kpi', 'average_order_value'),
+    widget('trend', 'area', [series('revenue', 'revenue')], 'month'),
+    widget('profit-trend', 'combo', [series('revenue', 'revenue'), series('gross-profit', 'gross_profit')], 'month'),
+    widget('growth', 'line', [series('sales-growth', 'sales_growth')], 'month'),
+    widget('monthly-detail', 'table', [series('revenue', 'revenue'), series('gross-profit', 'gross_profit'), series('order-count', 'order_count'), series('sales-growth', 'sales_growth')], 'month')
+  ] },
+  { id: 'profitability-overview', name: text('Profitability Overview', 'نظرة على الربحية'), description: text('Profitability Overview using governed metrics.', 'نظرة على الربحية باستخدام المؤشرات المعتمدة.'), domain: 'sales', tags: ['sales', 'profitability-overview'], datePreset: 'current_year', layout: { columns: 3 }, widgets: [
+    one('net-revenue', 'kpi', 'net_revenue'),
+    one('gross-profit', 'kpi', 'gross_profit'),
+    one('gross-margin', 'kpi', 'gross_margin'),
+    one('average-order-value', 'kpi', 'average_order_value'),
+    widget('net-trend', 'area', [series('net-revenue', 'net_revenue')], 'month'),
+    widget('profit-trend', 'line', [series('gross-profit', 'gross_profit')], 'month'),
+    widget('margin-trend', 'line', [series('gross-margin', 'gross_margin')], 'month'),
+    widget('branch-detail', 'table', [series('net-revenue', 'net_revenue'), series('gross-profit', 'gross_profit'), series('gross-margin', 'gross_margin')], 'branch'),
+    widget('category-detail', 'table', [series('revenue', 'revenue'), series('gross-profit', 'gross_profit'), series('gross-margin', 'gross_margin')], 'product_category')
+  ] },
+  { id: 'regional-performance', name: text('Regional Performance', 'أداء المناطق'), description: text('Regional Performance using governed metrics.', 'أداء المناطق باستخدام المؤشرات المعتمدة.'), domain: 'sales', tags: ['sales', 'regional-performance'], datePreset: 'current_year', layout: { columns: 3 }, widgets: [
+    one('revenue', 'kpi', 'revenue'),
+    one('gross-profit', 'kpi', 'gross_profit'),
+    one('order-count', 'kpi', 'order_count'),
+    one('average-order-value', 'kpi', 'average_order_value'),
+    { ...widget('regional-revenue', 'bar', [series('revenue', 'revenue')], 'region'), presentation: { orientation: 'horizontal' } },
+    widget('regional-contribution', 'treemap', [series('revenue', 'revenue')], 'region'),
+    widget('regional-detail', 'table', [series('revenue', 'revenue'), series('gross-profit', 'gross_profit'), series('order-count', 'order_count'), series('average-order-value', 'average_order_value')], 'region')
+  ] },
+  { id: 'customer-receivables', name: text('Customer Receivables', 'مستحقات العملاء'), description: text('Customer Receivables using governed metrics.', 'مستحقات العملاء باستخدام المؤشرات المعتمدة.'), domain: 'finance', tags: ['finance', 'customer-receivables'], datePreset: 'current_year', layout: { columns: 3 }, widgets: [
+    one('invoiced-amount', 'kpi', 'invoiced_amount'),
+    one('collected-amount', 'kpi', 'collected_amount'),
+    one('outstanding-amount', 'kpi', 'outstanding_amount'),
+    one('overdue-amount', 'kpi', 'overdue_amount'),
+    widget('collections', 'combo', [series('invoiced-amount', 'invoiced_amount'), series('collected-amount', 'collected_amount')], 'month'),
+    { ...widget('top-outstanding', 'bar', [series('outstanding-amount', 'outstanding_amount' , { topN: { direction: 'top', limit: 10 } })], 'customer'), presentation: { orientation: 'horizontal' } },
+    widget('overdue-detail', 'table', [series('overdue-amount', 'overdue_amount'), series('outstanding-amount', 'outstanding_amount')], 'customer'),
+    widget('outstanding-share', 'treemap', [series('outstanding-amount', 'outstanding_amount' , { topN: { direction: 'top', limit: 10 } })], 'customer')
+  ] },
+  { id: 'product-category-performance', name: text('Product Category Performance', 'أداء فئات المنتجات'), description: text('Product Category Performance using governed metrics.', 'أداء فئات المنتجات باستخدام المؤشرات المعتمدة.'), domain: 'sales', tags: ['sales', 'product-category-performance'], datePreset: 'current_year', layout: { columns: 3 }, widgets: [
+    one('revenue', 'kpi', 'revenue'),
+    one('units-sold', 'kpi', 'units_sold'),
+    one('gross-profit', 'kpi', 'gross_profit'),
+    one('gross-margin', 'kpi', 'gross_margin'),
+    { ...widget('category-revenue', 'bar', [series('revenue', 'revenue')], 'product_category'), presentation: { orientation: 'horizontal' } },
+    widget('category-contribution', 'treemap', [series('revenue', 'revenue')], 'product_category'),
+    { ...widget('category-units', 'bar', [series('units-sold', 'units_sold')], 'product_category'), presentation: { orientation: 'horizontal' } },
+    widget('category-detail', 'table', [series('revenue', 'revenue'), series('units-sold', 'units_sold'), series('gross-profit', 'gross_profit'), series('gross-margin', 'gross_margin')], 'product_category')
+  ] },
+  { id: 'warehouse-inventory', name: text('Warehouse Inventory', 'مخزون المستودعات'), description: text('Warehouse Inventory using governed metrics.', 'مخزون المستودعات باستخدام المؤشرات المعتمدة.'), domain: 'inventory', tags: ['inventory', 'warehouse-inventory'], datePreset: 'current_year', layout: { columns: 3 }, widgets: [
+    one('stock-on-hand', 'kpi', 'stock_on_hand'),
+    one('inventory-value', 'kpi', 'inventory_value'),
+    one('low-stock-count', 'kpi', 'low_stock_count'),
+    { ...widget('warehouse-stock', 'bar', [series('stock-on-hand', 'stock_on_hand')], 'warehouse'), presentation: { orientation: 'horizontal' } },
+    widget('warehouse-value', 'treemap', [series('inventory-value', 'inventory_value')], 'warehouse'),
+    widget('low-stock-products', 'table', [series('stock-on-hand', 'stock_on_hand'), series('low-stock-count', 'low_stock_count'), series('inventory-value', 'inventory_value')], 'product')
+  ] },
+  { id: 'maintenance-reliability', name: text('Maintenance Reliability', 'اعتمادية الصيانة'), description: text('Maintenance Reliability using governed metrics.', 'اعتمادية الصيانة باستخدام المؤشرات المعتمدة.'), domain: 'maintenance', tags: ['maintenance', 'maintenance-reliability'], datePreset: 'current_year', layout: { columns: 3 }, widgets: [
+    one('maintenance-requests', 'kpi', 'maintenance_requests'),
+    one('failure-count', 'kpi', 'failure_count'),
+    one('mtbf', 'kpi', 'mtbf'),
+    one('mttr', 'kpi', 'mttr'),
+    one('maintenance-cost', 'kpi', 'maintenance_cost'),
+    widget('request-failures', 'combo', [series('maintenance-requests', 'maintenance_requests'), series('failure-count', 'failure_count')], 'month'),
+    widget('repair-trend', 'line', [series('mtbf', 'mtbf'), series('mttr', 'mttr')], 'month'),
+    { ...widget('equipment-failures', 'bar', [series('failure-count', 'failure_count' , { topN: { direction: 'top', limit: 10 } })], 'equipment'), presentation: { orientation: 'horizontal' } },
+    widget('maintenance-detail', 'table', [series('failure-count', 'failure_count'), series('mtbf', 'mtbf'), series('mttr', 'mttr'), series('maintenance-cost', 'maintenance_cost')], 'equipment')
+  ] },
+  { id: 'technician-performance', name: text('Technician Performance', 'أداء الفنيين'), description: text('Technician Performance using governed metrics.', 'أداء الفنيين باستخدام المؤشرات المعتمدة.'), domain: 'maintenance', tags: ['maintenance', 'technician-performance'], datePreset: 'current_year', layout: { columns: 3 }, widgets: [
+    { ...widget('technician-requests', 'bar', [series('maintenance-requests', 'maintenance_requests'), series('failure-count', 'failure_count')], 'technician'), presentation: { orientation: 'horizontal' } },
+    { ...widget('technician-repair', 'bar', [series('mttr', 'mttr')], 'technician'), presentation: { orientation: 'horizontal' } },
+    { ...widget('technician-cost', 'bar', [series('maintenance-cost', 'maintenance_cost')], 'technician'), presentation: { orientation: 'horizontal' } },
+    widget('technician-detail', 'table', [series('maintenance-requests', 'maintenance_requests'), series('failure-count', 'failure_count'), series('mttr', 'mttr'), series('maintenance-cost', 'maintenance_cost')], 'technician')
+  ] },
+  { id: 'equipment-performance', name: text('Equipment Performance', 'أداء المعدات'), description: text('Equipment Performance using governed metrics.', 'أداء المعدات باستخدام المؤشرات المعتمدة.'), domain: 'maintenance', tags: ['maintenance', 'equipment-performance'], datePreset: 'current_year', layout: { columns: 3 }, widgets: [
+    { ...widget('equipment-failures', 'bar', [series('failure-count', 'failure_count' , { topN: { direction: 'top', limit: 10 } })], 'equipment'), presentation: { orientation: 'horizontal' } },
+    widget('equipment-cost', 'treemap', [series('maintenance-cost', 'maintenance_cost' , { topN: { direction: 'top', limit: 10 } })], 'equipment'),
+    widget('equipment-detail', 'table', [series('failure-count', 'failure_count'), series('mtbf', 'mtbf'), series('mttr', 'mttr'), series('maintenance-cost', 'maintenance_cost')], 'equipment'),
+    widget('category-reliability', 'table', [series('failure-count', 'failure_count'), series('mtbf', 'mtbf'), series('mttr', 'mttr'), series('maintenance-cost', 'maintenance_cost')], 'equipment_category')
+  ] },
 ];
 export function getDashboardTemplate(id: string): DashboardTemplate | undefined { return dashboardTemplates.find(template => template.id === id); }
 function localDate(now: Date, zone: TenantProfile['timeZone']): { year: number; month: number; day: number } {
