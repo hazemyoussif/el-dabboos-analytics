@@ -1,6 +1,6 @@
 # Data flow
 
-`tenant header → controlled TenantProfile → market-neutral template, manual builder, or mock planner → DashboardSpec v2 validation → DashboardExecutor → tenant-scoped AnalyticsQuery per series → repository adapter → deterministic engine → AnalyticsResult per series → aligned widget rows → localized React renderer`.
+`tenant header → controlled TenantProfile → market-neutral template, manual builder, mock planner, or structured planner → DashboardSpec v2 validation → DashboardExecutor → tenant-scoped AnalyticsQuery per series → repository adapter → deterministic engine → AnalyticsResult per series → aligned widget rows → localized React renderer`.
 
 The template path does not call the planner. The planner path produces the same v2 contract and passes the same validation. An edit produces DashboardPatch v2; the patch is applied atomically and the resulting dashboard is re-executed. Unknown planned metrics, SQL, incompatible chart units, and invalid analysis combinations are rejected before repository execution.
 
