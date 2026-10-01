@@ -14,6 +14,8 @@ export interface ApiDependencies {
   authorizationPolicy?: AuthorizationPolicy;
   auditSink?: AuditSink;
   clock?: () => Date;
+  executionConcurrency?: number;
+  readiness?: { persistence: () => Promise<boolean>; analytics?: () => Promise<boolean> };
 }
 export interface RouteContext {
   deps: ApiDependencies;
@@ -39,7 +41,7 @@ export function createRouteContext(deps: ApiDependencies): RouteContext {
   const directory = deps.demoDirectory ?? demoIdentity;
   const policy = deps.authorizationPolicy ?? new DefaultAuthorizationPolicy();
   const audit = deps.auditSink ?? new InMemoryAuditSink();
-  const executor = new DashboardExecutor(deps.analyticsRepository, clock);
+  const executor = new DashboardExecutor(deps.analyticsRepository, clock, deps.executionConcurrency === undefined ? {} : { maxConcurrency: deps.executionConcurrency });
   const analytics = new AuthorizedAnalyticsService(deps.analyticsRepository, policy);
   const savedDashboards = deps.dashboardRepository ? new SavedDashboardService(deps.dashboardRepository, policy, clock) : null;
   const library = deps.libraryRepository && savedDashboards ? new DashboardLibraryService(deps.libraryRepository, savedDashboards, clock) : null;

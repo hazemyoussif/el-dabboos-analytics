@@ -1,3 +1,4 @@
+import { registerHealthRoutes } from './routes/health.ts';
 import { registerDashboardLibraryRoutes } from './routes/dashboard-library.ts';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
@@ -18,7 +19,7 @@ export async function buildApi(deps: ApiDependencies) {
   await app.register(cors, { origin: ['http://localhost:5173', 'http://127.0.0.1:5173'] });
   const services = createRouteContext(deps);
   registerErrorHandler(app);
-  app.get('/health', async () => ({ status: 'ok' }));
+  registerHealthRoutes(app, deps);
   registerIdentityRoutes(app, services);
   registerMetadataRoutes(app, services);
   registerTemplateRoutes(app, services);
