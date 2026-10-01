@@ -1,6 +1,6 @@
 # OpenAI-compatible provider
 
-The API defaults to `MockDashboardPlanner`. To use a local model, run an OpenAI-compatible server that supports strict JSON Schema responses on `/v1/chat/completions`, then select the structured planner. The adapter sends a portable projection of the existing DashboardSpec v2 or DashboardPatch v2 schema as `response_format.type=json_schema`. The application validates the returned object against the unchanged canonical schema, semantic rules, and authorized planner capabilities before using it. A malformed object can receive one repair request by default. The provider never executes analytics, SQL, or UI code.
+The API defaults to `MockDashboardPlanner`. To use a configured model endpoint, run an OpenAI-compatible server that supports strict JSON Schema responses on `/v1/chat/completions`, then select the structured planner. The adapter sends a portable projection of the existing DashboardSpec v2 or DashboardPatch v2 schema as `response_format.type=json_schema`. The application validates the returned object against the unchanged canonical schema, semantic rules, and authorized planner capabilities before using it. A malformed object can receive one repair request by default. The provider never executes analytics, SQL, or UI code.
 
 ## Configuration
 
@@ -15,7 +15,7 @@ The API defaults to `MockDashboardPlanner`. To use a local model, run an OpenAI-
 
 `ANALYTICS_PROVIDER` (`sqlite` by default, or `mock`) selects the deterministic analytics source independently of the planner. `SQLITE_DB_PATH` selects the SQLite file. `DASHBOARD_PLANNER=disabled` keeps templates and manual dashboards available while disabling generation and editing through the planner.
 
-## Example: local Bonsai 2
+## Example: self-hosted Bonsai 2 via llama.cpp
 
 Obtain a compatible Bonsai 2 GGUF file and a `llama-server` build separately. In one terminal, replace the model path with the actual local file:
 
