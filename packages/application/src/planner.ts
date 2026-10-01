@@ -3,6 +3,7 @@ import type { DashboardGenerationRequest, DashboardPatch, DashboardPlanner, Dash
 import { getDashboardTemplate, instantiateDashboardTemplate } from './templates.ts';
 
 export class UnsupportedDemoIntentError extends Error { readonly code = 'UNSUPPORTED_DEMO_INTENT'; }
+const demoEditLimitation = 'The demo planner supports only predefined dashboard edit examples. Configure a structured model provider for general AI editing.';
 const salesIntent = /(sales|revenue|مبيعات|المبيعات|الإيرادات|ايرادات|بايع|بيع)/iu;
 export class MockDashboardPlanner implements DashboardPlanner {
   constructor(private readonly clock: () => Date = () => new Date()) {}
@@ -23,7 +24,7 @@ export class MockDashboardPlanner implements DashboardPlanner {
     const prompt = instruction.trim().toLowerCase();
     const replace = (widgetId: string, next: (widget: DashboardSpec['widgets'][number]) => DashboardSpec['widgets'][number]): DashboardPatch => {
       const previous = current.widgets.find(w => w.id === widgetId);
-      if (!previous) throw new UnsupportedDemoIntentError(`Widget ${widgetId} is unavailable.`);
+      if (!previous) throw new UnsupportedDemoIntentError(demoEditLimitation);
       return { schemaVersion: 2, operations: [{ op: 'replace', widgetId, widget: next(previous) }] };
     };
     if (/(average order value|متوسط قيمة الطلب)/iu.test(prompt) && /(order count|orders|الطلبات|الطلبيات)/iu.test(prompt))
@@ -40,8 +41,10 @@ export class MockDashboardPlanner implements DashboardPlanner {
       return replace('top-customers', previous => ({ ...previous, series: [{ id: 'gross-profit', metric: 'gross_profit', analysis: { topN: { direction: 'top', limit: 10 } } }] }));
     if (/(moving average|متوسط متحرك)/iu.test(prompt))
       return replace('revenue-profit', previous => ({ ...previous, series: previous.series.map(series => series.id === 'revenue' ? { ...series, analysis: { ...series.analysis, movingAverage: { window: 3 } } } : series) }));
-    if (/(remove|delete|احذف|شيل)/iu.test(prompt) && /(outstanding|receivables|المديونيات|المستحقة|الديون)/iu.test(prompt))
+    if (/(remove|delete|احذف|شيل)/iu.test(prompt) && /(outstanding|receivables|المديونيات|المستحقة|الديون)/iu.test(prompt)) {
+      if (!current.widgets.some(widget => widget.id === 'outstanding')) throw new UnsupportedDemoIntentError(demoEditLimitation);
       return { schemaVersion: 2, operations: [{ op: 'remove', widgetId: 'outstanding' }] };
-    throw new UnsupportedDemoIntentError('This edit is outside the supported demo intents.');
+    }
+    throw new UnsupportedDemoIntentError(demoEditLimitation);
   }
 }

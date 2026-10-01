@@ -3,7 +3,7 @@ import type { Locale, TenantProfile } from '@el-dabbous/domain';
 import type { WorkspaceController } from './useWorkspace.ts';
 import type { ReturnTypeBuilder } from './useDashboardBuilder.ts';
 import type { ReturnTypePlanner } from './useDashboardPlanner.ts';
-import { dashboardActions, dashboardStatus, mayEnterCreation } from '../product-flow.ts';
+import { dashboardActions, dashboardStatus, mayEnterCreation, switchDashboardEditor } from '../product-flow.ts';
 import type { ProductPanel } from '../product-flow.ts';
 
 export function useDashboardProductFlow(workspace: WorkspaceController, builder: ReturnTypeBuilder, planner: ReturnTypePlanner) {
@@ -33,8 +33,8 @@ export function useDashboardProductFlow(workspace: WorkspaceController, builder:
     if (!workspace.confirmAbandon()) return;
     builder.reset(); planner.reset(); close(); void workspace.openSaved(recordId);
   };
-  const editManual = () => { builder.enter(); close(); };
-  const editAi = () => { builder.exit(); setPanel('edit-ai'); };
+  const editManual = () => switchDashboardEditor('manual', builder, setPanel);
+  const editAi = () => switchDashboardEditor('ai', builder, setPanel);
   const applyAiEdit = async () => { if (await planner.edit()) close(); };
   const view = () => { builder.exit(); close(); };
   const save = async (asNew = false) => { if (await workspace.save(asNew)) { builder.exit(); close(); } };

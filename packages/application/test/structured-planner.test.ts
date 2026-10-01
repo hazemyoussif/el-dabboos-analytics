@@ -115,3 +115,32 @@ test('diagnostics identify semantic widget failures and patch schema failures', 
   assert.equal(events[1]!.stage, 'schema');
   assert.ok(events[1]!.details.some(issue => issue.keyword === 'minLength'));
 });
+
+test('structured editing of manual widget IDs preserves custom layout for replace, remove, add and filters', async () => {
+  const custom: DashboardSpec = { ...structuredClone(spec), id: 'manual-dashboard', layout: { columns: 12, items: [
+    { widgetId: 'widget-1', x: 3, y: 2, w: 5, h: 3 }, { widgetId: 'widget-2', x: 0, y: 7, w: 8, h: 5 },
+  ] }, widgets: [ { id: 'widget-1', type: 'kpi', series: [{ id: 'series-1', metric: 'revenue' }] },
+    { id: 'widget-2', type: 'table', dimension: 'customer', series: [{ id: 'series-1', metric: 'revenue' }] } ] };
+  const patches: import('@el-dabbous/domain').DashboardPatch[] = [
+    { schemaVersion: 2, operations: [{ op: 'replace', widgetId: 'widget-1', widget: { id: 'widget-1-renamed', type: 'kpi', series: [{ id: 'series-1', metric: 'gross_profit' }] } }] },
+    { schemaVersion: 2, operations: [{ op: 'remove', widgetId: 'widget-2' }] },
+    { schemaVersion: 2, operations: [{ op: 'add', widget: { id: 'widget-3', type: 'kpi', series: [{ id: 'series-1', metric: 'revenue' }] } }] },
+    { schemaVersion: 2, operations: [{ op: 'set_filters', filters: { dateRange: { from: '2026-01-01', to: '2026-02-28' } } }] },
+  ];
+  const provider = new SequenceProvider(patches);
+  const planner = new StructuredDashboardPlanner(provider, { maxRepairAttempts: 0 });
+  const allowed = { ...capabilities, metricIds: ['revenue', 'gross_profit'] as const };
+  let current = custom;
+  for (let index = 0; index < patches.length; index++) {
+    const prior = structuredClone(current.layout.items!);
+    const patch = await planner.edit(current, ['Change KPI', 'Remove table', 'Add revenue', 'Change date filters'][index]!, profile, allowed);
+    current = applyDashboardPatch(current, patch);
+    if (index === 0) assert.deepEqual(current.layout.items, [{ ...prior[0], widgetId: 'widget-1-renamed' }, prior[1]]);
+    else if (index === 1) assert.deepEqual(current.layout.items, [prior[0]]);
+    else if (index === 2) {
+      assert.deepEqual(current.layout.items![0], prior[0]);
+      assert.deepEqual(current.layout.items![1], { widgetId: 'widget-3', x: 0, y: 0, w: 4, h: 2 });
+    } else assert.deepEqual(current.layout.items, prior);
+  }
+  assert.ok(provider.requests[0]!.messages[1]!.content.includes('"x":3,"y":2,"w":5,"h":3'));
+});

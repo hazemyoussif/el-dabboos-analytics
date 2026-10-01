@@ -100,7 +100,7 @@ export class StructuredDashboardPlanner implements DashboardPlanner {
     assertAllowed(current, capabilities);
     const context = authorizedContext(capabilities, tenantProfile, this.clock);
     const messages: StructuredOutputRequest['messages'] = [
-      { role: 'system', content: `Produce only a DashboardPatch v2 JSON object for the current dashboard. Use only authorized metrics and bounded patch operations. Do not generate SQL, React, chart-library options, arbitrary expressions, or policy filters. Context: ${JSON.stringify(context)}` },
+      { role: 'system', content: `Produce only a DashboardPatch v2 JSON object for the current dashboard. Use only authorized metrics and bounded patch operations. Preserve existing layout unless a layout change is explicitly requested. add/remove/replace operations manage layout automatically; do not reconstruct layout for semantic edits. Do not generate SQL, React, chart-library options, arbitrary expressions, or policy filters. Context: ${JSON.stringify(context)}` },
       { role: 'user', content: `Current DashboardSpec v2: ${JSON.stringify(current)}\nEdit instruction: ${instruction}` },
     ];
     return this.validated({ messages, locale: current.locale as Locale, responseFormat: { name: 'dashboard_patch_v2', jsonSchema: projectProviderSchema(dashboardPatchSchema), strict: true } }, 'edit', output => {

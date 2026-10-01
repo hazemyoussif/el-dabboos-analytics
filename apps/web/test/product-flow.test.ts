@@ -1,8 +1,15 @@
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { DashboardSection } from '../src/product/DashboardSection.ts';
+import { applyDashboardPatch } from '@el-dabbous/domain';
+import { commitBuilderCommand, startBuilder } from '../src/builder/model.ts';
+import { documentIsDirty } from '../src/dashboard-lifecycle.ts';
+import type { ProductPanel } from '../src/product-flow.ts';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import type { DashboardRecord, DashboardSpec } from '@el-dabbous/domain';
 import { editDocument, generatedDocument, newManualDocument, openTemplateDocument, savedDocument } from '../src/dashboard-lifecycle.ts';
-import { dashboardActions, dashboardStatus, mayEnterCreation, showAiCreation, showAiEditor, showCreationPanel } from '../src/product-flow.ts';
+import { dashboardActions, dashboardStatus, switchDashboardEditor, mayEnterCreation, showAiCreation, showAiEditor, showCreationPanel } from '../src/product-flow.ts';
 
 const spec: DashboardSpec = { schemaVersion: 2, id: 'portable', title: { en: 'Sales', ar: 'المبيعات' }, locale: 'en',
   filters: {}, layout: { columns: 1 }, widgets: [{ id: 'revenue', type: 'kpi', series: [{ id: 'revenue', metric: 'revenue' }] }] };
@@ -45,4 +52,53 @@ test('saved AI-created record is Saved, and switching creation modes requires co
   assert.equal(confirmed, 1);
   assert.equal(mayEnterCreation(false, () => { confirmed++; return false; }), true);
   assert.equal(confirmed, 1);
+});
+
+test('valid custom working drafts expose AI editing in manual mode while permissions and empty drafts remain guarded', () => {
+  const custom = { ...spec, layout: { columns: 12 as const, items: [{ widgetId: 'widget-1', x: 2, y: 3, w: 5, h: 3 }] },
+    widgets: [{ ...spec.widgets[0]!, id: 'widget-1' }] };
+  const draft = editDocument(newManualDocument(), custom);
+  assert.equal(dashboardActions(draft, false, true, true).editAi, true);
+  assert.equal(dashboardActions(draft, true, true, true).editAi, true);
+  assert.equal(dashboardActions(draft, true, true, false).editAi, false);
+  assert.equal(dashboardActions(newManualDocument(), true, true, true).editAi, false);
+  assert.equal(dashboardActions(openTemplateDocument('template', custom), false, true, true).editAi, false);
+});
+
+test('manual to AI and back retain the latest draft without persistence, including custom layout', () => {
+  const custom: DashboardSpec = { ...spec, layout: { columns: 12, items: [{ widgetId: 'widget-1', x: 2, y: 3, w: 5, h: 3 }] },
+    widgets: [{ ...spec.widgets[0]!, id: 'widget-1' }] };
+  let document = editDocument(newManualDocument(), custom);
+  let history: ReturnType<typeof startBuilder> | null = startBuilder({ kind: 'dashboard', spec: custom });
+  const layout = structuredClone(custom.layout); layout.items![0]!.x = 4;
+  const transition = commitBuilderCommand(history, { type: 'layout', layout });
+  history = transition.history;
+  if (history.present.kind !== 'dashboard') throw new Error('Expected dashboard');
+  document = editDocument(document, history.present.spec);
+  const manualSpec = structuredClone(document.spec);
+  let panel: ProductPanel = 'none';
+  const builder = { enter: () => { history = startBuilder({ kind: 'dashboard', spec: document.spec! }); }, exit: () => { history = null; } };
+  switchDashboardEditor('ai', builder, value => { panel = value; });
+  assert.equal(panel, 'edit-ai'); assert.equal(history, null);
+  assert.deepEqual(document.spec, manualSpec); assert.equal(documentIsDirty(document), true);
+  const edited = applyDashboardPatch(document.spec!, { schemaVersion: 2, operations: [{ op: 'replace', widgetId: 'widget-1', widget: {
+    ...custom.widgets[0]!, series: [{ id: 'series-1', metric: 'gross_profit' }],
+  } }] });
+  document = editDocument(document, edited);
+  switchDashboardEditor('manual', builder, value => { panel = value; });
+  assert.equal(panel, 'none');
+  assert.deepEqual(history!.present, { kind: 'dashboard', spec: edited });
+  assert.deepEqual(document.spec!.layout, layout); assert.equal(documentIsDirty(document), true);
+  assert.equal(document.kind, 'draft'); // No DashboardRecord was created by either transition.
+});
+test('rendered AI editor precedes metadata and a tall canvas, immediately following header actions', () => {
+  const html = renderToStaticMarkup(createElement(DashboardSection, {
+    header: createElement('header', null, 'Dashboard actions'),
+    aiEditor: createElement('input', { 'aria-label': 'AI edit instruction' }),
+    metadata: createElement('div', null, 'Dashboard metadata'),
+    canvas: createElement('div', { style: { height: 4000 } }, 'Dashboard canvas'),
+  }));
+  assert.ok(html.indexOf('Dashboard actions') < html.indexOf('AI edit instruction'));
+  assert.ok(html.indexOf('AI edit instruction') < html.indexOf('Dashboard metadata'));
+  assert.ok(html.indexOf('Dashboard metadata') < html.indexOf('Dashboard canvas'));
 });
