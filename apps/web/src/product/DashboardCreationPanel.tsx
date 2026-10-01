@@ -1,3 +1,4 @@
+import { TemplateBrowser } from '../library/TemplateBrowser.tsx';
 import type { Locale, TenantProfile } from '@el-dabbous/domain';
 import type { AccessibleTemplate } from '../api/client.ts';
 import { showCreationPanel } from '../product-flow.ts';
@@ -22,8 +23,7 @@ export function DashboardCreationPanel(props: Props) {
       <button type="button" onClick={onBlank}><strong>＋ {t.blankDashboard}</strong><span>{t.blankDashboardHint}</span></button>
       <button type="button" onClick={onChooseTemplate}><strong>▥ {t.startFromTemplate}</strong><span>{t.startFromTemplateHint}</span></button>
     </div>}
-    {panel === 'choose-template' && <div className="creation-templates">{templates.filter(item => item.availability === 'available').map(item =>
-      <button type="button" key={item.id} onClick={() => onTemplate(item.id)}>▥ {item.name[locale]}</button>)}</div>}
+    {panel === 'choose-template' && <TemplateBrowser templates={templates} locale={locale} onOpen={onTemplate} />}
     {panel === 'create-ai' && <div className="creation-ai"><label htmlFor="dashboard-prompt">{t.promptTitle}</label>
       <textarea id="dashboard-prompt" value={prompt} onChange={event => onPrompt(event.target.value)} placeholder={conversation.placeholder} rows={4} />
       <div className="prompt-examples">{conversation.examples.map(example => <button key={example} type="button" onClick={() => onPrompt(example)}>{example}</button>)}</div>

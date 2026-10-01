@@ -1,3 +1,7 @@
+import { DashboardLibrary } from './library/DashboardLibrary.tsx';
+import { TemplateBrowser } from './library/TemplateBrowser.tsx';
+import { DashboardNameDialog } from './library/DashboardNameDialog.tsx';
+import { useDashboardLibrary } from './hooks/useDashboardLibrary.ts';
 import { lazy, Suspense, useEffect, useMemo } from 'react';
 import type { Locale } from '@el-dabbous/domain';
 import { DashboardRenderer } from './Renderer.tsx';
@@ -15,6 +19,7 @@ import { showCreationPanel, showAiEditor } from './product-flow.ts';
 const BuilderWorkspace = lazy(() => import('./builder/BuilderWorkspace.tsx').then(module => ({ default: module.BuilderWorkspace })));
 export default function App() {
   const workspace = useWorkspace();
+  const library = useDashboardLibrary(workspace);
   const builder = useDashboardBuilder(workspace);
   const planner = useDashboardPlanner(workspace, builder.reset);
   const flow = useDashboardProductFlow(workspace, builder, planner);
@@ -40,11 +45,8 @@ export default function App() {
     <aside className="sidebar">
       <div className="brand"><div className="brand-mark">◈</div><div><strong>{t.product}</strong><span>{t.studio}</span></div></div>
       <div className="sidebar-section"><div className="section-caption">{t.workspace}</div><div className="workspace-pill"><span className="status-dot" />{t.ready}</div></div>
-      <div className="sidebar-section"><div className="section-caption">{t.savedDashboards}</div><nav className="demo-list">{savedDashboards.map(record =>
-        <button key={record.id} className={`demo-item ${dashboardDocument?.kind === 'saved' && dashboardDocument.record.id === record.id ? 'active' : ''}`} onClick={() => flow.openSaved(record.id)}><span className="demo-glyph">▣</span><span>{record.spec.title[locale]}</span></button>)}
-        {!savedDashboards.length && <span className="library-empty">{t.noSavedDashboards}</span>}</nav></div>
-      <div className="sidebar-section"><div className="section-caption">{t.library}</div><nav className="demo-list">{templates.map(template =>
-        <button key={template.id} disabled={template.availability === 'restricted'} title={template.reason} className={`demo-item ${dashboardDocument?.kind === 'template' && dashboardDocument.templateId === template.id ? 'active' : ''}`} onClick={() => profile && flow.openTemplate(template.id, profile, locale)}><span className="demo-glyph">▥</span><span>{template.name[locale]}</span><small>{t.templateBadge}</small></button>)}</nav></div>
+      <div className="sidebar-section"><DashboardLibrary key={`${userId}-${profile?.id}`} records={savedDashboards} userId={userId} locale={locale} controller={library} activeId={dashboardDocument?.kind === 'saved' ? dashboardDocument.record.id : undefined} onOpen={flow.openSaved} /></div>
+      <div className="sidebar-section"><div className="section-caption">{t.library}</div><TemplateBrowser templates={templates} locale={locale} activeId={dashboardDocument?.kind === 'template' ? dashboardDocument.templateId : undefined} onOpen={id => profile && flow.openTemplate(id, profile, locale)} /></div>
       <div className="sidebar-foot"><span className="status-dot" /> {locale === 'ar' ? 'بيانات تجريبية اصطناعية' : 'Synthetic demo data'}</div>
     </aside>
     <main className="main-content">
@@ -63,7 +65,7 @@ export default function App() {
           <DashboardActions locale={locale} status={flow.status} actions={flow.actions} editing={!!builderHistory} loading={loading}
             canCreate={permissions.includes('dashboard:create')} canEdit={permissions.includes('dashboard:edit')}
             onNew={flow.launchNew} onUseTemplate={flow.useTemplate} onEdit={flow.editManual} onEditAi={flow.editAi} onView={flow.view}
-            onSave={() => void flow.save()} onSaveAs={() => void flow.save(true)} onDiscard={flow.discard} /></div>}
+            onRename={activeDashboard ? flow.rename : undefined} onSave={() => void flow.save()} onSaveAs={() => void flow.save(true)} onDiscard={flow.discard} /></div>}
           aiEditor={showAiEditor(flow.panel) && dashboard && profile && <DashboardAiEditor locale={locale} profile={profile} instruction={planner.instruction} onInstruction={planner.setInstruction} loading={loading} onApply={() => void flow.applyAiEdit()} onClose={flow.close} />}
           metadata={<>
           {activeDashboard && profile && <div className="meta-strip"><div><span>{t.period}</span><strong>{activeDashboard.filters.dateRange ? `${formatDate(activeDashboard.filters.dateRange.from, locale, profile)} — ${formatDate(activeDashboard.filters.dateRange.to, locale, profile)}` : '—'}</strong></div><div><span>{t.source}</span><strong>{metadata?.sourceId ?? '—'}</strong></div><div><span>{t.dataThrough}</span><strong>{metadata?.dataThrough ? formatDate(metadata.dataThrough, locale, profile) : '—'}</strong></div>{metadata?.sourceAsOf && <div><span>{t.sourceUpdated}</span><strong>{formatTimestamp(metadata.sourceAsOf, locale, profile)}</strong></div>}</div>}
@@ -75,6 +77,7 @@ export default function App() {
           {!loading && !builderHistory && !execution && !error && <div className="empty-workspace">{t.noDashboard}</div>}
         </>} />}
 
+        {flow.nameDialog && <DashboardNameDialog key={`${flow.nameDialog.operation}-${locale}`} spec={flow.nameDialog.spec} locale={locale} busy={loading} onConfirm={spec => void flow.confirmName(spec)} onClose={() => flow.setNameDialog(null)} />}
         <footer className="footer">© {new Date().getFullYear()} El-Dabbous · {locale === 'ar' ? 'منصة تحليلات تجريبية' : 'Analytics prototype'}</footer>
       </div>
     </main>
