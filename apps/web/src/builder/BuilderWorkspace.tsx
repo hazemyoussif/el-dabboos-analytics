@@ -28,14 +28,14 @@ const domainNames = {
   ar: { sales: 'المبيعات', crm: 'فرص المبيعات', finance: 'المالية', inventory: 'المخزون', maintenance: 'الصيانة', customers: 'العملاء', purchasing: 'المشتريات' },
 };
 const labels = {
-  en: { view: 'View', edit: 'Edit', unsaved: 'Unsaved · this browser session', widgets: 'Widgets', properties: 'Widget properties', filters: 'Dashboard filters',
+  en: { view: 'View', edit: 'Edit', unsaved: 'Press Save to keep your changes', widgets: 'Widgets', properties: 'Widget properties', filters: 'Dashboard filters',
     newWidget: 'Add widget', apply: 'Apply widget', addSeries: 'Add series', metric: 'Metric', primary: 'Primary / selection metric', dimension: 'Dimension', type: 'Visualization', remove: 'Remove widget',
     comparison: 'Comparison', moving: 'Moving average', running: 'Running total', contribution: 'Percentage contribution', ranking: 'Ranking', top: 'Top / bottom N',
     dateFrom: 'From', dateTo: 'To', applyDates: 'Apply dates', all: 'All', planned: 'Planned', none: 'None', selectWidget: 'Select a widget or add one',
     moveUp: 'Move series up', moveDown: 'Move series down', removeSeries: 'Remove series', topName: 'Top', bottomName: 'Bottom',
     preview: 'Live preview', drag: 'Drag the handle to reorder. Resize from the corner.', chooseDimension: 'Choose a dimension', validation: 'Complete a valid widget before applying.',
   },
-  ar: { view: 'عرض', edit: 'تحرير', unsaved: 'تغييرات غير محفوظة · لهذه الجلسة فقط', widgets: 'البطاقات', properties: 'خصائص البطاقة', filters: 'مرشحات اللوحة',
+  ar: { view: 'عرض', edit: 'تحرير', unsaved: 'اضغط حفظ للاحتفاظ بتغييراتك', widgets: 'البطاقات', properties: 'خصائص البطاقة', filters: 'مرشحات اللوحة',
     newWidget: 'إضافة بطاقة', apply: 'تطبيق البطاقة', addSeries: 'إضافة سلسلة', metric: 'المؤشر', primary: 'المؤشر الأساسي / اختيار النتائج', dimension: 'البعد', type: 'نوع العرض', remove: 'إزالة البطاقة',
     comparison: 'المقارنة', moving: 'المتوسط المتحرك', running: 'المجموع التراكمي', contribution: 'نسبة المساهمة', ranking: 'الترتيب', top: 'أعلى / أدنى عدد',
     dateFrom: 'من', dateTo: 'إلى', applyDates: 'تطبيق التواريخ', all: 'الكل', planned: 'قيد التخطيط', none: 'بلا', selectWidget: 'اختر بطاقة أو أضف واحدة',

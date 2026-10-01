@@ -1,11 +1,12 @@
-import { AuthorizedAnalyticsService, AuthorizationError, DefaultAuthorizationPolicy, DemoIdentityProvider, DashboardExecutor, InMemoryAuditSink, MockDashboardPlanner, analyticsContext, dashboardTemplates } from '@el-dabbous/application';
+import { AuthorizedAnalyticsService, AuthorizationError, DefaultAuthorizationPolicy, DemoIdentityProvider, DashboardExecutor, InMemoryAuditSink, MockDashboardPlanner, SavedDashboardService, analyticsContext, dashboardTemplates } from '@el-dabbous/application';
 import { getTenantProfile, validateDashboardSpec } from '@el-dabbous/domain';
-import type { AnalyticsRepository, AuditAction, AuditSink, AuthorizationPolicy, DashboardPlanner, DashboardSpec, DemoIdentityDirectory, DimensionValueRepository, IdentityProvider, Locale, Permission, RequestContext, TenantProfile } from '@el-dabbous/domain';
+import type { AnalyticsRepository, AuditAction, AuditSink, AuthorizationPolicy, DashboardPlanner, DashboardRepository, DashboardSpec, DemoIdentityDirectory, DimensionValueRepository, IdentityProvider, Locale, Permission, RequestContext, TenantProfile } from '@el-dabbous/domain';
 import { ApiError } from './errors.ts';
 
 export interface ApiDependencies {
   analyticsRepository: AnalyticsRepository;
   dimensionValues: DimensionValueRepository;
+  dashboardRepository?: DashboardRepository;
   planner?: DashboardPlanner | null;
   identityProvider?: IdentityProvider;
   demoDirectory?: DemoIdentityDirectory;
@@ -17,6 +18,7 @@ export interface RouteContext {
   deps: ApiDependencies;
   clock: () => Date;
   planner: DashboardPlanner | null;
+  savedDashboards: SavedDashboardService | null;
   executor: DashboardExecutor;
   analytics: AuthorizedAnalyticsService;
   directory: DemoIdentityDirectory;
@@ -37,6 +39,7 @@ export function createRouteContext(deps: ApiDependencies): RouteContext {
   const audit = deps.auditSink ?? new InMemoryAuditSink();
   const executor = new DashboardExecutor(deps.analyticsRepository, clock);
   const analytics = new AuthorizedAnalyticsService(deps.analyticsRepository, policy);
+  const savedDashboards = deps.dashboardRepository ? new SavedDashboardService(deps.dashboardRepository, policy, clock) : null;
   const userId = (headers: Record<string, unknown>) => {
     const value = headers['x-demo-user-id'];
     if (typeof value !== 'string' || !value) throw new ApiError(401, 'DEMO_USER_REQUIRED', 'A controlled demo user header is required.');
@@ -71,6 +74,6 @@ export function createRouteContext(deps: ApiDependencies): RouteContext {
       filters: {}, layout: template.layout, widgets: template.widgets }, context); return true; }
     catch (error) { if (error instanceof AuthorizationError) return false; throw error; }
   };
-  return { deps, clock, planner, executor, analytics, directory, userId, session, authorize, ensureDashboard, checked, templateAllowed };
+  return { deps, clock, planner, savedDashboards, executor, analytics, directory, userId, session, authorize, ensureDashboard, checked, templateAllowed };
 }
 export { analyticsContext };

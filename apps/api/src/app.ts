@@ -8,6 +8,7 @@ import { registerMetadataRoutes } from './routes/metadata.ts';
 import { registerTemplateRoutes } from './routes/templates.ts';
 import { registerAnalyticsRoutes } from './routes/analytics.ts';
 import { registerDashboardRoutes } from './routes/dashboards.ts';
+import { registerSavedDashboardRoutes } from './routes/saved-dashboards.ts';
 
 export { ApiError };
 export type { ApiDependencies };
@@ -22,5 +23,6 @@ export async function buildApi(deps: ApiDependencies) {
   registerTemplateRoutes(app, services);
   registerAnalyticsRoutes(app, services);
   registerDashboardRoutes(app, services);
+  registerSavedDashboardRoutes(app, services);
   return app;
 }

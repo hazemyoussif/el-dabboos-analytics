@@ -1,5 +1,5 @@
 import type { DashboardExecutionResult, DashboardTemplate } from '@el-dabbous/application';
-import type { DashboardSpec, DimensionId, Locale, ProductMetric, SemanticMetric, TenantProfile } from '@el-dabbous/domain';
+import type { DashboardRecord, DashboardSpec, DimensionId, Locale, ProductMetric, SemanticMetric, TenantProfile } from '@el-dabbous/domain';
 import type { FilterOptions } from '../builder/BuilderWorkspace.tsx';
 
 export type DemoUser = { id: string; displayName: string };
@@ -21,6 +21,10 @@ export const getCapabilities = (session: ApiSession) => request<{ permissions: s
 export const instantiateTemplate = (session: ApiSession, templateId: string) => request<{ dashboard: DashboardSpec; execution: DashboardExecutionResult }>(session, `/api/dashboard-templates/${encodeURIComponent(templateId)}/instantiate`, 'GET');
 export const generateDashboard = (session: ApiSession, prompt: string) => request<{ dashboard: DashboardSpec; execution: DashboardExecutionResult }>(session, '/api/dashboards/generate', 'POST', { prompt });
 export const editDashboard = (session: ApiSession, dashboard: DashboardSpec, instruction: string) => request<{ dashboard: DashboardSpec; execution: DashboardExecutionResult }>(session, '/api/dashboards/edit', 'POST', { dashboard, instruction });
+export const listSavedDashboards = (session: ApiSession) => request<{ dashboards: DashboardRecord[] }>(session, '/api/saved-dashboards', 'GET');
+export const getSavedDashboard = (session: ApiSession, id: string) => request<DashboardRecord>(session, `/api/saved-dashboards/${encodeURIComponent(id)}`, 'GET');
+export const createSavedDashboard = (session: ApiSession, dashboard: DashboardSpec) => request<DashboardRecord>(session, '/api/saved-dashboards', 'POST', { dashboard });
+export const updateSavedDashboard = (session: ApiSession, id: string, dashboard: DashboardSpec, expectedVersion: number) => request<DashboardRecord>(session, `/api/saved-dashboards/${encodeURIComponent(id)}`, 'PUT', { dashboard, expectedVersion });
 export const executeDashboard = (session: ApiSession, dashboard: DashboardSpec) => request<DashboardExecutionResult>(session, '/api/dashboards/execute', 'POST', { dashboard });
 const builderFilterDimensions: DimensionId[] = ['branch', 'region', 'salesperson', 'product_category', 'warehouse'];
 export async function getFilterOptions(session: ApiSession): Promise<FilterOptions> {
