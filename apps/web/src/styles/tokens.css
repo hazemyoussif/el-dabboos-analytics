@@ -1,0 +1,36 @@
+:root {
+  color-scheme: light;
+  --surface-canvas: #f3f6f8; --surface-primary: #ffffff; --surface-secondary: #edf2f5; --surface-elevated: #ffffff;
+  --surface-sidebar: #122536; --surface-sidebar-hover: #203b4a; --surface-sidebar-active: #204c4e;
+  --text-primary: #1d2d42; --text-secondary: #526579; --text-muted: #5e7185; --text-inverse: #ffffff;
+  --text-sidebar: #d7e1eb; --text-sidebar-muted: #a6bacb;
+  --border-subtle: #e3e9ee; --border-default: #ccd7e1; --border-strong: #98aabd; --border-sidebar: #345064;
+  --brand-primary: #087f72; --brand-primary-hover: #05665d; --brand-primary-soft: #e6f3ef;
+  --brand-sidebar: #70dcc6;
+  --success: #08755e; --success-soft: #e4f3ed; --warning: #956019; --warning-soft: #fff4df;
+  --danger: #b33d54; --danger-soft: #fff0f2; --info: #3568ab; --info-soft: #edf3fc;
+  --focus-ring: #397cc3; --backdrop: #12253699;
+  --shadow-sm: 0 2px 6px #172d4410; --shadow-md: 0 8px 24px #172d4418; --shadow-lg: 0 16px 48px #172d4433;
+  --radius-sm: 6px; --radius-md: 10px; --radius-lg: 14px;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+  --font-body: Inter,"Noto Sans Arabic",ui-sans-serif,system-ui,sans-serif;
+  --font-arabic: "Noto Sans Arabic",Inter,ui-sans-serif,system-ui,sans-serif;
+  --text-xs: 11px; --text-sm: 12px; --text-base: 14px; --text-lg: 18px; --text-title: 28px;
+  --sidebar-width: 280px; --sidebar-collapsed-width: 72px;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface-canvas: #142031; --surface-primary: #1b2a3c; --surface-secondary: #243449; --surface-elevated: #202e40;
+  --surface-sidebar: #111e2e; --surface-sidebar-hover: #22394b; --surface-sidebar-active: #234a4d;
+  --text-primary: #e7edf5; --text-secondary: #b2c1d2; --text-muted: #a0b0c4; --text-inverse: #102b29;
+  --text-sidebar: #d7e1eb; --text-sidebar-muted: #a6bacb;
+  --border-subtle: #314156; --border-default: #455770; --border-strong: #617892;
+  --brand-primary: #48c9b0; --brand-primary-hover: #79dac7; --brand-primary-soft: #203f40;
+  --success: #70d5b5; --success-soft: #203e38; --warning: #e3b366; --warning-soft: #443822;
+  --danger: #ed8ea9; --danger-soft: #452c3c; --info: #8fb4ec; --info-soft: #293d59;
+  --focus-ring: #8fb4ec; --backdrop: #0c172acc;
+  --shadow-sm: 0 2px 6px #08122120; --shadow-md: 0 8px 24px #08122140; --shadow-lg: 0 16px 48px #08122170;
+}
+@media(prefers-color-scheme: dark) {
+  :root:not([data-theme]) { color-scheme: dark; }
+}

@@ -6,6 +6,7 @@
   "dependencies": {
     "@el-dabbous/application": "workspace:*",
     "@el-dabbous/domain": "workspace:*",
+    "lucide-react": "^1.49.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-grid-layout": "^2.2.4",
