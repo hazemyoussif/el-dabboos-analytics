@@ -6,3 +6,4 @@ export * from './tenants.ts';
 export * from './metric-registry.ts';
 export * from './layout.ts';
 export * from './security.ts';
+export * from './schemas.ts';
