@@ -1,6 +1,6 @@
 import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
-import { MockAnalyticsRepository, SqliteAnalyticsRepository, createSqliteSchema, generateSeedFacts } from '@el-dabbous/data';
+import { MockAnalyticsRepository, SqliteAnalyticsRepository, SqliteDashboardRepository, createSqliteSchema, createDashboardPersistenceSchema, generateSeedFacts } from '@el-dabbous/data';
 import type { AnalyticsRepository, DimensionValueRepository } from '@el-dabbous/domain';
 import { StructuredDashboardPlanner } from '@el-dabbous/application';
 import type { StructuredPlannerDiagnostic } from '@el-dabbous/application';
@@ -23,6 +23,9 @@ if (provider === 'sqlite') {
 } else {
   throw new Error(`ANALYTICS_PROVIDER=${provider} is reserved but not implemented. Use sqlite or mock.`);
 }
+const defaultDashboardPath = fileURLToPath(new URL('../../../dashboards.db', import.meta.url));
+const dashboardDb = new DatabaseSync(process.env.DASHBOARD_DB_PATH ?? defaultDashboardPath);
+createDashboardPersistenceSchema(dashboardDb);
 const plannerMode = process.env.DASHBOARD_PLANNER ?? 'mock';
 let planner: DashboardPlanner | null | undefined;
 if (plannerMode === 'structured') {
@@ -40,14 +43,15 @@ if (plannerMode === 'structured') {
     ...(apiKey ? { apiKey } : {}), timeoutMs }), { maxRepairAttempts, ...(diagnostics ? { diagnostics } : {}) });
 } else if (plannerMode === 'disabled') planner = null;
 else if (plannerMode !== 'mock') throw new Error('DASHBOARD_PLANNER must be mock, structured, or disabled.');
-const app = await buildApi({ analyticsRepository: repository, dimensionValues: repository, ...(planner !== undefined ? { planner } : {}) });
+const app = await buildApi({ analyticsRepository: repository, dimensionValues: repository,
+  dashboardRepository: new SqliteDashboardRepository(dashboardDb), ...(planner !== undefined ? { planner } : {}) });
 const port = Number(process.env.PORT ?? 3001);
 try {
   const address = await app.listen({ port, host: '127.0.0.1' });
   process.stdout.write(`El-Dabbous API listening at ${address} (${provider})\n`);
 } catch (error) {
-  close();
+  close(); dashboardDb.close();
   throw error;
 }
-process.on('SIGTERM', () => { void app.close().then(close); });
-process.on('SIGINT', () => { void app.close().then(close); });
+process.on('SIGTERM', () => { void app.close().then(() => { close(); dashboardDb.close(); }); });
+process.on('SIGINT', () => { void app.close().then(() => { close(); dashboardDb.close(); }); });
