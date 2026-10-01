@@ -1,28 +1,33 @@
 import { lazy, Suspense, useEffect, useMemo } from 'react';
+import type { Locale } from '@el-dabbous/domain';
 import { DashboardRenderer } from './Renderer.tsx';
 import { useWorkspace } from './hooks/useWorkspace.ts';
 import { useDashboardBuilder } from './hooks/useDashboardBuilder.ts';
 import { useDashboardPlanner } from './hooks/useDashboardPlanner.ts';
-import { conversationalCopy, copy, formatDate, formatTimestamp } from './i18n.ts';
-import type { Locale, TenantProfile } from '@el-dabbous/domain';
+import { useDashboardProductFlow } from './hooks/useDashboardProductFlow.ts';
+import { DashboardCreationPanel } from './product/DashboardCreationPanel.tsx';
+import { DashboardActions } from './product/DashboardActions.tsx';
+import { DashboardAiEditor } from './product/DashboardAiEditor.tsx';
+import { copy, formatDate, formatTimestamp } from './i18n.ts';
+import { showCreationPanel, showAiEditor } from './product-flow.ts';
 
 const BuilderWorkspace = lazy(() => import('./builder/BuilderWorkspace.tsx').then(module => ({ default: module.BuilderWorkspace })));
 export default function App() {
   const workspace = useWorkspace();
   const builder = useDashboardBuilder(workspace);
   const planner = useDashboardPlanner(workspace, builder.reset);
+  const flow = useDashboardProductFlow(workspace, builder, planner);
   const { locale, userId, demoUsers, permissions, profiles, profile, catalog, metricRegistry, templates,
-    dashboard, document: dashboardDocument, savedDashboards, dirty, execution, loading, error, mode, filterOptions, setError } = workspace;
-  const { prompt, setPrompt, instruction, setInstruction } = planner;
-  const builderHistory = builder.history;
+    dashboard, document: dashboardDocument, savedDashboards, execution, loading, error, filterOptions, setError } = workspace;
   const t = copy[locale];
-  const conversation = profile ? conversationalCopy(locale, profile) : { placeholder: t.promptPlaceholder, examples: [] };
-  const branchExample = profile ? (locale === 'ar'
-    ? `اعرض ${profile.branchLabels[profile.exampleBranchIds[0]]?.ar} و${profile.branchLabels[profile.exampleBranchIds[1]]?.ar} فقط`
-    : `Show only ${profile.branchLabels[profile.exampleBranchIds[0]]?.en} and ${profile.branchLabels[profile.exampleBranchIds[1]]?.en}`) : t.examples[1];
-  const editExamples = t.examples.map((example, index) => index === 1 ? branchExample : example);
+  const builderHistory = builder.history;
   const activeDashboard = builderHistory?.present.kind === 'dashboard' ? builderHistory.present.spec : dashboard;
   const activeTitle = builderHistory?.present.kind === 'empty' ? builderHistory.present.base.title[locale] : activeDashboard?.title[locale] ?? t.noDashboard;
+  const isCreating = showCreationPanel(flow.panel);
+  const statusText = flow.status === 'template' ? t.templateBadge : flow.status === 'saved' ? t.savedDashboard
+    : flow.status === 'modified' ? t.modified : t.unsaved;
+  const breadcrumb = flow.status === 'template' ? t.library : flow.status === 'saved' || flow.status === 'modified' && dashboardDocument?.kind === 'saved'
+    ? t.savedDashboards : t.newDashboard;
   useEffect(() => { document.documentElement.lang = locale; document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr'; }, [locale]);
   const metadata = useMemo(() => {
     if (!execution) return null;
@@ -30,36 +35,44 @@ export default function App() {
       if (series.status === 'success') return series.result.metadata;
     return null;
   }, [execution]);
-  const switchIdentity = (nextUserId: string) => { if (!workspace.confirmAbandon()) return; builder.reset(); planner.reset(); void workspace.loadWorkspace(nextUserId, undefined, false); };
-  const selectTenant = (selected: TenantProfile) => { if (!workspace.confirmAbandon()) return; builder.reset(); planner.reset(); void workspace.loadWorkspace(userId, selected.id, false); };
-  const selectLocale = (next: Locale) => workspace.selectLocale(next);
-  const openTemplate = (templateId: string, selected: TenantProfile, selectedLocale: Locale) => {
-    if (!workspace.confirmAbandon()) return; builder.reset(); void workspace.openTemplate(templateId, selected, selectedLocale);
-  };
-  const openSaved = (recordId: string) => { if (!workspace.confirmAbandon()) return; builder.reset(); void workspace.openSaved(recordId); };
-  const discard = () => { builder.reset(); void workspace.discard(); };
   return <div className="app-shell">
     <aside className="sidebar">
       <div className="brand"><div className="brand-mark">◈</div><div><strong>{t.product}</strong><span>{t.studio}</span></div></div>
       <div className="sidebar-section"><div className="section-caption">{t.workspace}</div><div className="workspace-pill"><span className="status-dot" />{t.ready}</div></div>
-      <div className="sidebar-section"><div className="section-caption">{t.savedDashboards}</div><nav className="demo-list">{savedDashboards.map(record => <button key={record.id} className={`demo-item ${dashboardDocument?.kind === 'saved' && dashboardDocument.record.id === record.id ? 'active' : ''}`} onClick={() => openSaved(record.id)}><span className="demo-glyph">▣</span><span>{record.spec.title[locale]}</span></button>)}{!savedDashboards.length && <span className="library-empty">{t.noSavedDashboards}</span>}</nav></div><div className="sidebar-section"><div className="section-caption">{t.library}</div><nav className="demo-list">{templates.map(template => <button key={template.id} disabled={template.availability === 'restricted'} title={template.reason} className={`demo-item ${dashboardDocument?.kind === 'template' && dashboardDocument.templateId === template.id ? 'active' : ''}`} onClick={() => profile && void openTemplate(template.id, profile, locale)}><span className="demo-glyph">▥</span><span>{template.name[locale]}</span><small>{t.templateBadge}</small></button>)}</nav></div>
+      <div className="sidebar-section"><div className="section-caption">{t.savedDashboards}</div><nav className="demo-list">{savedDashboards.map(record =>
+        <button key={record.id} className={`demo-item ${dashboardDocument?.kind === 'saved' && dashboardDocument.record.id === record.id ? 'active' : ''}`} onClick={() => flow.openSaved(record.id)}><span className="demo-glyph">▣</span><span>{record.spec.title[locale]}</span></button>)}
+        {!savedDashboards.length && <span className="library-empty">{t.noSavedDashboards}</span>}</nav></div>
+      <div className="sidebar-section"><div className="section-caption">{t.library}</div><nav className="demo-list">{templates.map(template =>
+        <button key={template.id} disabled={template.availability === 'restricted'} title={template.reason} className={`demo-item ${dashboardDocument?.kind === 'template' && dashboardDocument.templateId === template.id ? 'active' : ''}`} onClick={() => profile && flow.openTemplate(template.id, profile, locale)}><span className="demo-glyph">▥</span><span>{template.name[locale]}</span><small>{t.templateBadge}</small></button>)}</nav></div>
       <div className="sidebar-foot"><span className="status-dot" /> {locale === 'ar' ? 'بيانات تجريبية اصطناعية' : 'Synthetic demo data'}</div>
     </aside>
     <main className="main-content">
-      <header className="topbar"><div className="breadcrumb">{t.workspace} <span>/</span> {activeTitle}</div><div className="top-actions"><label className="tenant-control demo-identity">{locale === 'ar' ? 'هوية تجريبية' : 'Demo identity'}<select aria-label="Demo identity" value={userId} onChange={e => switchIdentity(e.target.value)}>{demoUsers.map(user => <option key={user.id} value={user.id}>{user.displayName}</option>)}</select></label><label className="tenant-control">{t.market}<select aria-label={t.market} value={profile?.id ?? 'demo-iq'} onChange={e => { const next = profiles.find(item => item.id === e.target.value); if (next) selectTenant(next); }}>{profiles.map(item => <option key={item.id} value={item.id}>{item.labels[locale]}</option>)}</select></label><div className="language-toggle" role="group" aria-label="Language"><button className={locale === 'en' ? 'selected' : ''} onClick={() => selectLocale('en')}>EN</button><button className={locale === 'ar' ? 'selected' : ''} onClick={() => selectLocale('ar')}>عربي</button></div></div></header>
-      <div className="page-content"><section className="prompt-panel"><div className="prompt-copy"><span className="eyebrow"><span className="sparkle">✦</span> {t.studio}</span><h1>{t.tagline}</h1><p>{t.promptHint}</p></div><div className="prompt-form"><label htmlFor="dashboard-prompt">{t.promptTitle}</label><textarea id="dashboard-prompt" value={prompt} onChange={e => setPrompt(e.target.value)} placeholder={conversation.placeholder} rows={3} /><div className="prompt-examples">{conversation.examples.map(example => <button key={example} type="button" onClick={() => setPrompt(example)}>{example}</button>)}</div><div className="prompt-actions"><span className="prompt-tip">✦ {locale === 'ar' ? 'اكتب طلبك بطريقتك' : 'Describe it in your own words'}</span><button className="primary-button" disabled={loading || !prompt.trim() || !permissions.includes('ai:generate')} onClick={() => void planner.generate()}>{t.generate} <span>↗</span></button></div></div></section>
-      <details className="catalog-panel"><summary>{t.metricCatalog} · {metricRegistry.filter(item => item.availability === 'available').length} {t.available} · {metricRegistry.filter(item => item.availability === 'planned').length} {t.planned}</summary><div className="catalog-list">{metricRegistry.map(item => <div key={item.id} className="catalog-metric"><span>{item.labels[locale]}</span><span className={item.availability === 'available' ? 'metric-available' : 'metric-planned'}>{item.availability === 'available' ? t.available : t.planned}</span></div>)}</div></details>
-      {error && <div className="global-error" role="alert"><span>!</span>{error}<button onClick={() => setError(null)} aria-label="Dismiss">×</button></div>}
-      <section className="dashboard-section"><div className="dashboard-title-row"><div><div className="eyebrow eyebrow-light">{mode === 'ai' ? t.generated : dashboardDocument?.kind === 'saved' ? t.savedDashboard : t.manual}</div><h2>{activeTitle}</h2><span className={`save-status ${dirty ? 'dirty' : ''}`}>{dashboardDocument?.kind === 'template' ? t.templateBadge : dashboardDocument?.kind === 'saved' ? dirty ? t.modified : t.savedDashboard : t.unsaved}</span></div><div className="dashboard-actions"><button onClick={builder.startManual}>{t.newDashboard}</button>{activeDashboard && <button onClick={() => void workspace.save()} disabled={loading || (!dirty && dashboardDocument?.kind === 'saved') || !permissions.includes(dashboardDocument?.kind === 'saved' ? 'dashboard:edit' : 'dashboard:create')}>{t.save}</button>}{activeDashboard && <button onClick={() => void workspace.save(true)} disabled={loading || !permissions.includes('dashboard:create')}>{t.saveAs}</button>}{dirty && <button onClick={discard}>{t.discard}</button>}{(activeDashboard || builderHistory) && <div className="builder-mode-switch"><button className={!builderHistory ? 'active' : ''} disabled={!builderHistory} onClick={builder.exit}>{locale === 'ar' ? 'عرض' : 'View'}</button><button className={builderHistory ? 'active' : ''} disabled={!!builderHistory || !activeDashboard} onClick={builder.enter}>{locale === 'ar' ? 'تحرير' : 'Edit'}</button></div>}{activeDashboard && <span className="widget-count">{activeDashboard.widgets.length} {t.widgets}</span>}</div></div>
-      {activeDashboard && profile && <div className="meta-strip"><div><span>{t.period}</span><strong>{activeDashboard.filters.dateRange ? `${formatDate(activeDashboard.filters.dateRange.from, locale, profile)} — ${formatDate(activeDashboard.filters.dateRange.to, locale, profile)}` : '—'}</strong></div><div><span>{t.source}</span><strong>{metadata?.sourceId ?? '—'}</strong></div><div><span>{t.dataThrough}</span><strong>{metadata?.dataThrough ? formatDate(metadata.dataThrough, locale, profile) : '—'}</strong></div>{metadata?.sourceAsOf && <div><span>{t.sourceUpdated}</span><strong>{formatTimestamp(metadata.sourceAsOf, locale, profile)}</strong></div>}</div>}
-      {execution?.metadata.failedSeries ? <div className="partial-note">{t.partial}: {execution.metadata.failedSeries}</div> : null}
-      {loading && <div className="loading-state" role="status"><span className="spinner" />{t.loading}</div>}
-      {!loading && builderHistory && profile && <Suspense fallback={<div className="loading-state">{t.loading}</div>}><BuilderWorkspace history={builderHistory} execution={execution} catalog={catalog} registry={metricRegistry} profile={profile} locale={locale} filterOptions={filterOptions} busy={builder.busy} onCommand={builder.command} onUndo={builder.undo} onRedo={builder.redo} /></Suspense>}
-      {!loading && !builderHistory && execution && profile && <DashboardRenderer execution={execution} dashboardOverride={dashboard ?? undefined} catalog={catalog} locale={locale} profile={profile} />}
-      {!loading && !builderHistory && !execution && !error && <div className="empty-workspace">{t.noDashboard}</div>}
-      </section>
-      {dashboard && !builderHistory && <section className="edit-panel"><div><div className="eyebrow eyebrow-light">✦ {t.studio}</div><h3>{t.editTitle}</h3><div className="example-chips">{editExamples.map(example => <button key={example} onClick={() => setInstruction(example)}>{example}</button>)}</div></div><div className="edit-form"><input aria-label={t.editTitle} value={instruction} onChange={e => setInstruction(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') void planner.edit(); }} placeholder={t.editPlaceholder} /><button className="primary-button" onClick={() => void planner.edit()} disabled={loading || !instruction.trim() || !permissions.includes('ai:edit')}>{t.apply} ↗</button></div></section>}
-      <footer className="footer">© {new Date().getFullYear()} El-Dabbous · {locale === 'ar' ? 'منصة تحليلات تجريبية' : 'Analytics prototype'}</footer></div>
+      <header className="topbar"><div className="breadcrumb">{t.workspace} <span>/</span> {isCreating ? t.newDashboard : <>{breadcrumb} <span>/</span> {activeTitle}</>}</div>
+        <div className="top-actions"><label className="tenant-control demo-identity">{locale === 'ar' ? 'هوية تجريبية' : 'Demo identity'}<select aria-label="Demo identity" value={userId} onChange={event => flow.switchIdentity(event.target.value)}>{demoUsers.map(user => <option key={user.id} value={user.id}>{user.displayName}</option>)}</select></label>
+          <label className="tenant-control">{t.market}<select aria-label={t.market} value={profile?.id ?? 'demo-iq'} onChange={event => { const next = profiles.find(item => item.id === event.target.value); if (next) flow.selectTenant(next); }}>{profiles.map(item => <option key={item.id} value={item.id}>{item.labels[locale]}</option>)}</select></label>
+          <div className="language-toggle" role="group" aria-label="Language"><button className={locale === 'en' ? 'selected' : ''} onClick={() => workspace.selectLocale('en' as Locale)}>EN</button><button className={locale === 'ar' ? 'selected' : ''} onClick={() => workspace.selectLocale('ar' as Locale)}>عربي</button></div></div></header>
+      <div className="page-content">
+        <DashboardCreationPanel panel={flow.panel} locale={locale} profile={profile} templates={templates} prompt={planner.prompt} onPrompt={planner.setPrompt}
+          loading={loading} canGenerate={permissions.includes('ai:generate')} onChooseAi={() => flow.enterCreation('create-ai')}
+          onBlank={flow.blank} onChooseTemplate={() => flow.enterCreation('choose-template')} onTemplate={id => profile && flow.openTemplate(id, profile, locale)}
+          onGenerate={() => void flow.createAi()} onClose={flow.close} />
+        {!isCreating && <details className="catalog-panel"><summary>{t.metricCatalog} · {metricRegistry.filter(item => item.availability === 'available').length} {t.available} · {metricRegistry.filter(item => item.availability === 'planned').length} {t.planned}</summary><div className="catalog-list">{metricRegistry.map(item => <div key={item.id} className="catalog-metric"><span>{item.labels[locale]}</span><span className={item.availability === 'available' ? 'metric-available' : 'metric-planned'}>{item.availability === 'available' ? t.available : t.planned}</span></div>)}</div></details>}
+        {error && <div className="global-error" role="alert"><span>!</span>{error}<button onClick={() => setError(null)} aria-label="Dismiss">×</button></div>}
+        {!isCreating && <section className="dashboard-section"><div className="dashboard-title-row"><div><div className="eyebrow eyebrow-light">{breadcrumb}</div><h2>{activeTitle}</h2>{flow.status && <span className={`save-status ${flow.status === 'modified' || flow.status === 'unsaved' ? 'dirty' : ''}`}>{statusText}</span>}</div>
+          <DashboardActions locale={locale} status={flow.status} actions={flow.actions} editing={!!builderHistory} loading={loading}
+            canCreate={permissions.includes('dashboard:create')} canEdit={permissions.includes('dashboard:edit')}
+            onNew={flow.launchNew} onUseTemplate={flow.useTemplate} onEdit={flow.editManual} onEditAi={flow.editAi} onView={flow.view}
+            onSave={() => void flow.save()} onSaveAs={() => void flow.save(true)} onDiscard={flow.discard} /></div>
+          {activeDashboard && profile && <div className="meta-strip"><div><span>{t.period}</span><strong>{activeDashboard.filters.dateRange ? `${formatDate(activeDashboard.filters.dateRange.from, locale, profile)} — ${formatDate(activeDashboard.filters.dateRange.to, locale, profile)}` : '—'}</strong></div><div><span>{t.source}</span><strong>{metadata?.sourceId ?? '—'}</strong></div><div><span>{t.dataThrough}</span><strong>{metadata?.dataThrough ? formatDate(metadata.dataThrough, locale, profile) : '—'}</strong></div>{metadata?.sourceAsOf && <div><span>{t.sourceUpdated}</span><strong>{formatTimestamp(metadata.sourceAsOf, locale, profile)}</strong></div>}</div>}
+          {execution?.metadata.failedSeries ? <div className="partial-note">{t.partial}: {execution.metadata.failedSeries}</div> : null}
+          {loading && <div className="loading-state" role="status"><span className="spinner" />{t.loading}</div>}
+          {!loading && builderHistory && profile && <Suspense fallback={<div className="loading-state">{t.loading}</div>}><BuilderWorkspace history={builderHistory} execution={execution} catalog={catalog} registry={metricRegistry} profile={profile} locale={locale} filterOptions={filterOptions} busy={builder.busy} onCommand={builder.command} onUndo={builder.undo} onRedo={builder.redo} /></Suspense>}
+          {!loading && !builderHistory && execution && profile && <DashboardRenderer execution={execution} dashboardOverride={dashboard ?? undefined} catalog={catalog} locale={locale} profile={profile} />}
+          {!loading && !builderHistory && !execution && !error && <div className="empty-workspace">{t.noDashboard}</div>}
+        </section>}
+        {!isCreating && showAiEditor(flow.panel) && dashboard && profile && <DashboardAiEditor locale={locale} profile={profile} instruction={planner.instruction} onInstruction={planner.setInstruction} loading={loading} onApply={() => void flow.applyAiEdit()} onClose={flow.close} />}
+        <footer className="footer">© {new Date().getFullYear()} El-Dabbous · {locale === 'ar' ? 'منصة تحليلات تجريبية' : 'Analytics prototype'}</footer>
+      </div>
     </main>
   </div>;
 }

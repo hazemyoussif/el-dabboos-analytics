@@ -6,10 +6,13 @@ export type DemoUser = { id: string; displayName: string };
 export type AccessibleTemplate = DashboardTemplate & { availability: 'available' | 'restricted'; reason?: string };
 export interface ApiSession { userId: string; tenantId: string; locale: Locale }
 type ApiError = { error?: { code: string; message: string } };
+export class ApiClientError extends Error {
+  constructor(readonly status: number, readonly code: string, message: string) { super(message); }
+}
 async function request<T>(session: ApiSession, path: string, method: string, body?: unknown): Promise<T> {
   const response = await fetch(path, { method, headers: { 'content-type': 'application/json', 'x-demo-user-id': session.userId, 'x-tenant-id': session.tenantId, 'x-locale': session.locale }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
   const data = await response.json() as T & ApiError;
-  if (!response.ok) throw new Error(data.error?.message ?? `Request failed (${response.status})`);
+  if (!response.ok) throw new ApiClientError(response.status, data.error?.code ?? 'REQUEST_FAILED', data.error?.message ?? `Request failed (${response.status})`);
   return data;
 }
 const demoSession = (userId: string): ApiSession => ({ userId, tenantId: 'demo-iq', locale: 'ar' });

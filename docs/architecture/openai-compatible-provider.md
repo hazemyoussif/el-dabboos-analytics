@@ -6,6 +6,7 @@ The API defaults to `MockDashboardPlanner`. To use a configured model endpoint, 
 
 | Variable | Meaning | Default |
 | --- | --- | --- |
+| `DASHBOARD_DB_PATH` | Separate SQLite file for saved dashboards, independent of the analytics source | `dashboards.db` |
 | `DASHBOARD_PLANNER` | `mock`, `structured`, or `disabled` | `mock` |
 | `LLM_BASE_URL` | OpenAI-compatible API root, including `/v1`; required for `structured` | none |
 | `LLM_MODEL_ID` | Model ID sent in the chat completion request; required for `structured` | none |
@@ -14,7 +15,7 @@ The API defaults to `MockDashboardPlanner`. To use a configured model endpoint, 
 | `LLM_REPAIR_ATTEMPTS` | Number of extra requests after invalid structured output; integer `0`–`2` | `1` |
 | `LLM_DEBUG_STRUCTURED_OUTPUT` | Write bounded, redacted validation diagnostics to the API terminal when exactly `true` | `false` |
 
-`ANALYTICS_PROVIDER` (`sqlite` by default, or `mock`) selects the deterministic analytics source independently of the planner. `SQLITE_DB_PATH` selects the SQLite file. `DASHBOARD_PLANNER=disabled` keeps templates and manual dashboards available while disabling generation and editing through the planner.
+`ANALYTICS_PROVIDER` (`sqlite` by default, or `mock`) selects the deterministic analytics source independently of the planner. `SQLITE_DB_PATH` selects the analytics SQLite file; `DASHBOARD_DB_PATH` selects the independent saved-dashboard SQLite file. `DASHBOARD_PLANNER=disabled` keeps templates and manual dashboards available while disabling generation and editing through the planner.
 
 ## Example: self-hosted Bonsai 2 via llama.cpp
 
