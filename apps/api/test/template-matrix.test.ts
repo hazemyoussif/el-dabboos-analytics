@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { semanticCatalog, tenantProfiles, validateDashboardSpec, widgetTypes } from '@el-dabbous/domain';
 import { generateSeedFacts, MockAnalyticsRepository } from '@el-dabbous/data';
-import { dashboardTemplates, DashboardExecutor, DemoIdentityProvider, DefaultAuthorizationPolicy, instantiateDashboardTemplate } from '../src/index.ts';
+import { dashboardTemplates, DashboardExecutor, DemoIdentityProvider, DefaultAuthorizationPolicy, instantiateDashboardTemplate } from '@el-dabbous/application';
 test('all 19 governed templates validate and execute in EN/AR for both demo markets with authorized metrics', async () => {
   assert.equal(dashboardTemplates.length,19);
   const repository = new MockAnalyticsRepository([...generateSeedFacts('demo-iq'),...generateSeedFacts('demo-eg')]);
