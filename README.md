@@ -22,7 +22,7 @@ Open <http://127.0.0.1:5173/>. The API listens at <http://127.0.0.1:3001/>. The 
 
 The app opens the `Sales Performance` template under Iraq. Use the market selector to switch to Egypt, the language buttons for English/Arabic, and the sidebar for ten ready-made templates. The same template ID and widget definition are reused across markets. No AI service is required by default. The mock planner recognizes a bounded sales request such as `أريد dashboard للمبيعات ويّاه أعلى الزبائن والمديونيات` or `Create a sales dashboard`, then supports a few edits such as adding a three-month moving average or removing receivables. Unsupported intents return a structured error.
 
-For local model-backed generation and editing, see the [llama.cpp planner setup](docs/architecture/openai-compatible-provider.md). The API keeps the mock planner as its default.
+For generation and editing through a configured model endpoint, see the [OpenAI-compatible provider setup](docs/architecture/openai-compatible-provider.md). The API keeps the mock planner as its default.
 
 ## Checks
 

@@ -12,6 +12,7 @@ The API defaults to `MockDashboardPlanner`. To use a configured model endpoint, 
 | `LLM_API_KEY` | Optional bearer token, if the server requires one | omitted |
 | `LLM_TIMEOUT_MS` | Positive integer request timeout in milliseconds | `120000` |
 | `LLM_REPAIR_ATTEMPTS` | Number of extra requests after invalid structured output; integer `0`–`2` | `1` |
+| `LLM_DEBUG_STRUCTURED_OUTPUT` | Write bounded, redacted validation diagnostics to the API terminal when exactly `true` | `false` |
 
 `ANALYTICS_PROVIDER` (`sqlite` by default, or `mock`) selects the deterministic analytics source independently of the planner. `SQLITE_DB_PATH` selects the SQLite file. `DASHBOARD_PLANNER=disabled` keeps templates and manual dashboards available while disabling generation and editing through the planner.
 
@@ -37,4 +38,6 @@ pnpm run dev:api
 
 Start the web app with `pnpm run dev:web`. The server's [OpenAI-compatible chat endpoint and JSON Schema response format](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md) are the intended protocol. For a server that requires authentication, set `LLM_API_KEY` in the API process environment. Do not append `/chat/completions` to `LLM_BASE_URL`.
 
-The repository and CI do not include a Bonsai 2 model or a live llama.cpp server. Fake HTTP tests verify the request and response protocol, bounded repair, authorization checks, and timeout behavior. Actual model adherence to the schemas, output quality, and latency depend on the selected model and server build and need a separate local evaluation.
+The repository and CI do not include a model endpoint. Fake HTTP tests verify the request and response protocol, bounded repair, authorization checks, and timeout behavior. Actual model adherence to the schemas, output quality, and latency depend on the selected model and server build and need evaluation against the selected endpoint.
+
+Copy [.env.example](../../.env.example) to an ignored `.env.local` file if your development runner loads it, or export the variables in the API process environment. Never commit credentials. The debug switch does not alter browser responses and should remain off outside development.
