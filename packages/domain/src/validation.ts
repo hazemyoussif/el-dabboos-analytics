@@ -1,4 +1,6 @@
 import type { AnalyticsContext, AnalyticsQuery, DashboardPatch, DashboardSpec, DashboardWidget, DateRange, DimensionId, MetricId } from './contracts.ts';
+import { visualizationIssues } from './visualization.ts';
+import { widgetTypes } from './contracts.ts';
 import { validateDashboardLayout } from './layout.ts';
 import { isDimensionId, isMetricId, semanticCatalog, timeDimensions } from './catalog.ts';
 import Ajv2020 from 'ajv/dist/2020.js';
@@ -68,7 +70,7 @@ function validateMetricUse(metric: unknown, groupBy: unknown, analysis: unknown,
   validateAnalysis(analysis, metric, groupBy as DimensionId | undefined, dateRange);
 }
 export function validWidget(v: unknown, dateRange?: DateRange, filters?: unknown): v is DashboardWidget {
-  if (!record(v) || !['kpi', 'line', 'bar', 'table'].includes(String(v.type)) || typeof v.id !== 'string' ||
+  if (!record(v) || !widgetTypes.includes(v.type as DashboardWidget['type']) || typeof v.id !== 'string' ||
     !/^[a-z0-9][a-z0-9_-]*$/.test(v.id) || v.id.length > 80 || !Array.isArray(v.series) ||
     v.series.length < 1 || v.series.length > 8 || (v.type === 'kpi' && v.series.length !== 1) ||
     (v.type !== 'kpi' && v.dimension === undefined) ||
@@ -79,13 +81,7 @@ export function validWidget(v: unknown, dateRange?: DateRange, filters?: unknown
       if (index > 0 && record(series.analysis) && series.analysis.topN !== undefined) return false;
       validateMetricUse(series.metric, v.dimension, series.analysis, dateRange, filters);
     }
-    if (v.type === 'line' || v.type === 'bar') {
-      const units = v.series.map(s => {
-        const metric = semanticCatalog[s.metric as MetricId];
-        return s.analysis?.percentageContribution ? 'percentage:%' : `${metric.type}:${metric.presentation.unit ?? ''}`;
-      });
-      if (new Set(units).size !== 1) return false;
-    }
+    if (visualizationIssues(v as unknown as DashboardWidget).length) return false;
     return true;
   } catch { return false; }
 }

@@ -17,7 +17,7 @@ export function dashboardActions(document: DashboardDocument | null, editing: bo
   return {
     useTemplate: status === 'template',
     editManual: !!document?.spec && status !== 'template' && !editing,
-    editAi: !!document?.spec && status !== 'template' && !editing && canEditAi,
+    editAi: !!document?.spec && status !== 'template' && canEditAi,
     save: !!document?.spec && (status === 'unsaved' || status === 'modified'),
     saveAs: !!document?.spec && (status === 'saved' || status === 'modified'),
     discard: status === 'unsaved' || status === 'modified',
@@ -25,3 +25,9 @@ export function dashboardActions(document: DashboardDocument | null, editing: bo
   };
 }
 export function mayEnterCreation(dirty: boolean, confirm: () => boolean): boolean { return !dirty || confirm(); }
+
+/** Mode changes never replace the synchronized working document or invoke Save. */
+export function switchDashboardEditor(mode: 'manual' | 'ai', builder: { enter: () => void; exit: () => void }, setPanel: (panel: ProductPanel) => void): void {
+  if (mode === 'manual') { builder.enter(); setPanel('none'); }
+  else { builder.exit(); setPanel('edit-ai'); }
+}

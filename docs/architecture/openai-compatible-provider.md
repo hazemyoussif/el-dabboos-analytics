@@ -42,3 +42,36 @@ Start the web app with `pnpm run dev:web`. The server's [OpenAI-compatible chat 
 The repository and CI do not include a model endpoint. Fake HTTP tests verify the request and response protocol, bounded repair, authorization checks, and timeout behavior. Actual model adherence to the schemas, output quality, and latency depend on the selected model and server build and need evaluation against the selected endpoint.
 
 Copy [.env.example](../../.env.example) to an ignored `.env.local` file if your development runner loads it, or export the variables in the API process environment. Never commit credentials. The debug switch does not alter browser responses and should remain off outside development.
+
+## Native API environment loading (Node 24)
+
+`pnpm dev:api` / `pnpm --filter @el-dabbous/api dev` and
+`pnpm --filter @el-dabbous/api start` load optional repository-root `.env`, then
+`.env.local`, using Node's `--env-file-if-exists`. Precedence is the real shell
+ environment, `.env.local`, `.env`, then application defaults. Workspace scripts
+run from `apps/api`; the explicit `../../` paths refer to the repository root.
+Tests intentionally do not use these flags or load developer env files.
+Copy `.env.example` to `.env` for a mock analytics/mock planner demo without
+endpoint credentials. Both local env files remain ignored by Git.
+
+| Setting | Default / meaning |
+| --- | --- |
+| `ANALYTICS_PROVIDER` | `sqlite`; `mock` uses deterministic demo facts |
+| `SQLITE_DB_PATH` | Repository-root `demo.db`; SQLite analytics database |
+| `DASHBOARD_DB_PATH` | Repository-root `dashboards.db`; separate saved-dashboard database |
+| `DASHBOARD_PLANNER` | `mock`; `structured` uses the configured endpoint, `disabled` disables planning |
+| `LLM_BASE_URL` | Required for structured mode; OpenAI-compatible base URL |
+| `LLM_MODEL_ID` | Required for structured mode; configured model identifier |
+| `LLM_API_KEY` | Optional provider credential; never included in the startup summary |
+| `LLM_TIMEOUT_MS` | `120000`; provider HTTP timeout |
+| `LLM_REPAIR_ATTEMPTS` | `1`; bounded repair attempts after initial output |
+| `LLM_DEBUG_STRUCTURED_OUTPUT` | `false`; opt-in development-only diagnostics |
+| `PORT` | `3001`; loopback API listening port |
+
+Relative database paths resolve from the API process working directory
+(`apps/api` for workspace scripts); use absolute paths to choose a fixed location.
+The startup summary uses an explicit allowlist, caps text fields, redacts the
+configured API key, and removes endpoint userinfo, query and fragment. It never
+serializes environment variables, HTTP headers, requests or prompts.
+
+Reference: [Node CLI env-file support](https://nodejs.org/docs/latest-v24.x/api/cli.html#--env-file-if-existsconfig).

@@ -115,3 +115,60 @@ test('diagnostics identify semantic widget failures and patch schema failures', 
   assert.equal(events[1]!.stage, 'schema');
   assert.ok(events[1]!.details.some(issue => issue.keyword === 'minLength'));
 });
+
+test('structured editing of manual widget IDs preserves custom layout for replace, remove, add and filters', async () => {
+  const custom: DashboardSpec = { ...structuredClone(spec), id: 'manual-dashboard', layout: { columns: 12, items: [
+    { widgetId: 'widget-1', x: 3, y: 2, w: 5, h: 3 }, { widgetId: 'widget-2', x: 0, y: 7, w: 8, h: 5 },
+  ] }, widgets: [ { id: 'widget-1', type: 'kpi', series: [{ id: 'series-1', metric: 'revenue' }] },
+    { id: 'widget-2', type: 'table', dimension: 'customer', series: [{ id: 'series-1', metric: 'revenue' }] } ] };
+  const patches: import('@el-dabbous/domain').DashboardPatch[] = [
+    { schemaVersion: 2, operations: [{ op: 'replace', widgetId: 'widget-1', widget: { id: 'widget-1-renamed', type: 'kpi', series: [{ id: 'series-1', metric: 'gross_profit' }] } }] },
+    { schemaVersion: 2, operations: [{ op: 'remove', widgetId: 'widget-2' }] },
+    { schemaVersion: 2, operations: [{ op: 'add', widget: { id: 'widget-3', type: 'kpi', series: [{ id: 'series-1', metric: 'revenue' }] } }] },
+    { schemaVersion: 2, operations: [{ op: 'set_filters', filters: { dateRange: { from: '2026-01-01', to: '2026-02-28' } } }] },
+  ];
+  const provider = new SequenceProvider(patches);
+  const planner = new StructuredDashboardPlanner(provider, { maxRepairAttempts: 0 });
+  const allowed = { ...capabilities, metricIds: ['revenue', 'gross_profit'] as const };
+  let current = custom;
+  for (let index = 0; index < patches.length; index++) {
+    const prior = structuredClone(current.layout.items!);
+    const patch = await planner.edit(current, ['Change KPI', 'Remove table', 'Add revenue', 'Change date filters'][index]!, profile, allowed);
+    current = applyDashboardPatch(current, patch);
+    if (index === 0) assert.deepEqual(current.layout.items, [{ ...prior[0], widgetId: 'widget-1-renamed' }, prior[1]]);
+    else if (index === 1) assert.deepEqual(current.layout.items, [prior[0]]);
+    else if (index === 2) {
+      assert.deepEqual(current.layout.items![0], prior[0]);
+      assert.deepEqual(current.layout.items![1], { widgetId: 'widget-3', x: 0, y: 0, w: 4, h: 2 });
+    } else assert.deepEqual(current.layout.items, prior);
+  }
+  assert.ok(provider.requests[0]!.messages[1]!.content.includes('"x":3,"y":2,"w":5,"h":3'));
+});
+test('structured generation accepts governed chart types and rejects misleading composition without weakening repair', async () => {
+  for (const type of ['area', 'pie', 'treemap', 'combo'] as const) {
+    const next = structuredClone(spec);
+    next.widgets = [{ id: 'chart', type, dimension: ['area', 'combo'].includes(type) ? 'month' : 'branch', series: [{ id: 'revenue', metric: 'revenue' }], ...(type === 'pie' ? { presentation: { pieVariant: 'donut' as const } } : {}) }];
+    if (type === 'combo') next.widgets[0]!.series.push({ id: 'revenue-2', metric: 'revenue', presentation: { mark: 'line' } });
+    const provider = new SequenceProvider([next]);
+    assert.deepEqual(await new StructuredDashboardPlanner(provider).generate(request), next);
+    assert.ok(provider.requests[0]!.messages[0]!.content.includes('visualizations'));
+    assert.ok(provider.requests[0]!.messages[0]!.content.includes('no ratio'));
+  }
+  const invalid = structuredClone(spec); invalid.widgets = [{ id: 'bad', type: 'pie', dimension: 'branch', series: [{ id: 'margin', metric: 'gross_margin' }] }];
+  await assert.rejects(new StructuredDashboardPlanner(new SequenceProvider([invalid]), { maxRepairAttempts: 0 }).generate({ ...request, capabilities: { ...capabilities, metricIds: ['revenue', 'gross_margin'] } }), { code: 'INVALID_STRUCTURED_OUTPUT' });
+});
+test('AI visualization patches preserve the latest layout and query intent; invalid conversions fail safely', async () => {
+  const current = structuredClone(spec); current.widgets = [{ id: 'chart', type: 'bar', dimension: 'branch', series: [{ id: 'revenue', metric: 'revenue' }] }];
+  current.layout = { columns: 12, items: [{ widgetId: 'chart', x: 3, y: 4, w: 6, h: 4 }] };
+  for (const presentation of [{ orientation: 'horizontal' as const }, { pieVariant: 'donut' as const }]) {
+    const widget = { ...current.widgets[0]!, type: ('pieVariant' in presentation ? 'pie' : 'bar') as 'pie' | 'bar', presentation };
+    const patch = { schemaVersion: 2, operations: [{ op: 'replace', widgetId: 'chart', widget }] };
+    const planner = new StructuredDashboardPlanner(new SequenceProvider([patch]));
+    const returned = await planner.edit(current, 'Change visualization', profile, capabilities);
+    const next = applyDashboardPatch(current, returned);
+    assert.deepEqual(next.layout, current.layout); assert.deepEqual(next.filters, current.filters); assert.deepEqual(next.widgets[0]!.series, current.widgets[0]!.series);
+  }
+  const margin = { ...current, widgets: [{ ...current.widgets[0]!, series: [{ id: 'margin', metric: 'gross_margin' as const }] }] };
+  const invalidPatch = { schemaVersion: 2, operations: [{ op: 'replace', widgetId: 'chart', widget: { ...margin.widgets[0], type: 'pie' } }] };
+  await assert.rejects(new StructuredDashboardPlanner(new SequenceProvider([invalidPatch]), { maxRepairAttempts: 0 }).edit(margin, 'Turn margin into a pie', profile, { ...capabilities, metricIds: ['gross_margin'] }), { code: 'INVALID_STRUCTURED_OUTPUT' });
+});

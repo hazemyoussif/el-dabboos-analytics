@@ -96,15 +96,24 @@ export interface DimensionValueRepository {
 export interface AnalyticsRepository {
   execute(query: AnalyticsQuery, context: AnalyticsContext): Promise<AnalyticsResult>;
 }
-export type WidgetType = 'kpi' | 'line' | 'bar' | 'table';
+export const widgetTypes = ['kpi', 'line', 'area', 'bar', 'pie', 'treemap', 'combo', 'table'] as const;
+export type WidgetType = typeof widgetTypes[number];
+export interface WidgetPresentation {
+  orientation?: 'vertical' | 'horizontal';
+  pieVariant?: 'pie' | 'donut';
+  legend?: 'auto' | 'show' | 'hide';
+  dataLabels?: 'auto' | 'show' | 'hide';
+  curve?: 'straight' | 'smooth';
+}
 export interface DashboardGridItem { widgetId: string; x: number; y: number; w: number; h: number; minW?: number; minH?: number }
 /** Explicit items use a canonical 12-column desktop grid; older v2 layouts may omit them. */
 export interface DashboardLayout { columns: 1 | 2 | 3 | 4 | 12; items?: DashboardGridItem[] }
 /** In a multi-series widget, only the first series may use topN; its keys select the displayed rows. */
-export interface DashboardSeries { id: string; metric: MetricId; analysis?: AnalysisSpec }
+export interface DashboardSeries { id: string; metric: MetricId; analysis?: AnalysisSpec; presentation?: { mark?: 'bar' | 'line' } }
 export interface DashboardWidget {
   id: string;
   type: WidgetType;
+  presentation?: WidgetPresentation;
   title?: LocalizedText;
   series: DashboardSeries[];
   dimension?: DimensionId;

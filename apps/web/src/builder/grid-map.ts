@@ -13,3 +13,10 @@ export function fromGridItems(items: Layout, previous: DashboardLayout): Dashboa
     ...(prior.get(i)?.minW === undefined ? {} : { minW: prior.get(i)!.minW }),
     ...(prior.get(i)?.minH === undefined ? {} : { minH: prior.get(i)!.minH }) })) };
 }
+
+/** Snap a centered external drop using the adapter's desktop grid metrics. */
+export function dropGridPosition(width: number, point: { x: number; y: number }, size: { w: number; h: number }) {
+  const stride = (width - 14) / 12;
+  return { x: Math.max(0, Math.min(12 - size.w, Math.round((point.x - (stride * size.w - 14) / 2 - 14) / stride))),
+    y: Math.max(0, Math.min(200, Math.round((point.y - (88 * size.h - 14) / 2 - 14) / 88))) };
+}

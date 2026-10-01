@@ -1,4 +1,4 @@
-import { applyDashboardPatch, dashboardPatchSchema, dashboardSpecSchema, dashboardPatchSchemaIssues, dashboardSpecSchemaIssues, isMetricId, semanticCatalog, validateDashboardPatch, validateDashboardSpec } from '@el-dabbous/domain';
+import { applyDashboardPatch, dashboardPatchSchema, dashboardSpecSchema, dashboardPatchSchemaIssues, dashboardSpecSchemaIssues, isMetricId, widgetTypes, semanticCatalog, validateDashboardPatch, validateDashboardSpec } from '@el-dabbous/domain';
 import type { DashboardGenerationRequest, DashboardPatch, DashboardPlanner, DashboardSpec, LLMProvider, Locale, PlannerCapabilities, StructuredOutputRequest, TenantProfile } from '@el-dabbous/domain';
 import { dashboardTemplates } from './templates.ts';
 import { AuthorizationError } from './security.ts';
@@ -45,7 +45,15 @@ function authorizedContext(capabilities: PlannerCapabilities, profile: TenantPro
     id: template.id, name: template.name, description: template.description, domain: template.domain,
     tags: template.tags, datePreset: template.datePreset,
   }));
-  return { market: marketContext(profile, clock), metrics, templates, actions: capabilities.actions };
+  return { market: marketContext(profile, clock), metrics, templates, actions: capabilities.actions,
+    visualizations: { types: widgetTypes, rules: [
+      'KPI: one series, no dimension. Line: shared dimension, matching type/unit. Area: ordered date/month/quarter/year, compatible series, no stacking.',
+      'Bar: grouped compatible series. orientation vertical or horizontal; choose horizontal for categorical TopN/ranking. No stacking.',
+      'Pie and Treemap: exactly one additive or appropriate snapshot series, non-time categorical grouping; no ratio, duration, comparison, moving average, running total or percentage contribution. Pie variant pie or donut.',
+      'Combo: two to four same-unit/type series with a common dimension and one axis; series presentation mark bar or line (default first bar, remaining line).',
+      'Table: shared grouping, mixed units allowed. Presentation is intent only: orientation (Bar), pieVariant (Pie), legend auto/show/hide (charts), dataLabels auto/show/hide (Pie/Treemap), curve straight/smooth (Line/Area/Combo).',
+      'Visualization edits preserve metrics, filters, analysis and layout unless explicitly requested. Reject semantically incompatible conversions. Never generate chart-library properties.'
+    ] } };
 }
 export class StructuredDashboardPlanner implements DashboardPlanner {
   private readonly maxRepairAttempts: number;
@@ -100,7 +108,7 @@ export class StructuredDashboardPlanner implements DashboardPlanner {
     assertAllowed(current, capabilities);
     const context = authorizedContext(capabilities, tenantProfile, this.clock);
     const messages: StructuredOutputRequest['messages'] = [
-      { role: 'system', content: `Produce only a DashboardPatch v2 JSON object for the current dashboard. Use only authorized metrics and bounded patch operations. Do not generate SQL, React, chart-library options, arbitrary expressions, or policy filters. Context: ${JSON.stringify(context)}` },
+      { role: 'system', content: `Produce only a DashboardPatch v2 JSON object for the current dashboard. Use only authorized metrics and bounded patch operations. Preserve existing layout unless a layout change is explicitly requested. add/remove/replace operations manage layout automatically; do not reconstruct layout for semantic edits. Do not generate SQL, React, chart-library options, arbitrary expressions, or policy filters. Context: ${JSON.stringify(context)}` },
       { role: 'user', content: `Current DashboardSpec v2: ${JSON.stringify(current)}\nEdit instruction: ${instruction}` },
     ];
     return this.validated({ messages, locale: current.locale as Locale, responseFormat: { name: 'dashboard_patch_v2', jsonSchema: projectProviderSchema(dashboardPatchSchema), strict: true } }, 'edit', output => {

@@ -1,4 +1,4 @@
-import { applyDashboardPatch, resolveDashboardLayout, semanticCatalog, validateAnalysis, validateDashboardSpec } from '@el-dabbous/domain';
+import { applyDashboardPatch, resolveDashboardLayout, semanticCatalog, validateAnalysis, validateDashboardSpec, visualizationIssues } from '@el-dabbous/domain';
 import type { AnalysisSpec, DashboardLayout, DashboardPatch, DashboardSpec, DashboardWidget, DimensionId, Locale, MetricId, ProductMetric, SemanticMetric, TenantProfile } from '@el-dabbous/domain';
 import { resolveDatePreset } from '@el-dabbous/application';
 
@@ -11,7 +11,7 @@ export interface BuilderHistory { past: BuilderDocument[]; present: BuilderDocum
 export type BuilderCommand =
   | { type: 'patch'; patch: DashboardPatch }
   | { type: 'layout'; layout: DashboardLayout }
-  | { type: 'add-first'; widget: DashboardWidget }
+  | { type: 'add-first'; widget: DashboardWidget; layout?: DashboardLayout }
   | { type: 'remove-last' };
 export interface BuilderTransition { history: BuilderHistory; execute: boolean }
 const MAX_HISTORY = 40;
@@ -28,7 +28,7 @@ export function withLocale(document: BuilderDocument, locale: Locale): BuilderDo
   return { kind: 'dashboard', spec: { ...document.spec, locale } };
 }
 function semanticKey(document: BuilderDocument): string {
-  return document.kind === 'empty' ? 'empty' : JSON.stringify({ filters: document.spec.filters, widgets: document.spec.widgets });
+  return document.kind === 'empty' ? 'empty' : JSON.stringify({ filters: document.spec.filters, widgets: document.spec.widgets.map(widget => ({ id: widget.id, dimension: widget.dimension, series: widget.series.map(series => ({ id: series.id, metric: series.metric, analysis: series.analysis })) })) });
 }
 export function commitBuilderCommand(history: BuilderHistory, command: BuilderCommand): BuilderTransition {
   const current = history.present;
@@ -36,7 +36,7 @@ export function commitBuilderCommand(history: BuilderHistory, command: BuilderCo
   if (command.type === 'add-first') {
     if (current.kind !== 'empty') throw new Error('First widget requires an empty dashboard');
     const spec: DashboardSpec = { ...structuredClone(current.base), widgets: [command.widget] };
-    spec.layout = { columns: 12, items: resolveDashboardLayout({ ...spec, layout: { columns: 12 } }).items };
+    spec.layout = command.layout ?? { columns: 12, items: resolveDashboardLayout({ ...spec, layout: { columns: 12 } }).items };
     validateDashboardSpec(spec);
     next = { kind: 'dashboard', spec };
   } else if (command.type === 'remove-last') {
@@ -72,17 +72,12 @@ export function commonDimensions(metrics: readonly MetricId[], catalog: Record<s
   return catalog[metrics[0]!]!.dimensions.filter(dimension => metrics.every(metric => catalog[metric]?.dimensions.includes(dimension)));
 }
 export function canAddSeries(widget: DashboardWidget, metricId: MetricId, catalog: Record<string, SemanticMetric> = semanticCatalog): { allowed: boolean; reason?: string } {
-  if (widget.type === 'kpi') return { allowed: false, reason: 'KPI widgets have one metric' };
-  if (widget.series.length >= 8) return { allowed: false, reason: 'Eight series maximum' };
+  if (['kpi', 'pie', 'treemap'].includes(widget.type)) return { allowed: false, reason: 'This visualization requires exactly one series' };
+  if (widget.series.length >= (widget.type === 'combo' ? 4 : 8)) return { allowed: false, reason: widget.type === 'combo' ? 'Four series maximum' : 'Eight series maximum' };
   if (!catalog[metricId]) return { allowed: false, reason: 'Metric is unavailable' };
-  if (widget.type === 'line' || widget.type === 'bar') {
-    const first = widget.series[0]!;
-    const firstMetric = catalog[first.metric]!;
-    const nextMetric = catalog[metricId]!;
-    const firstUnit = first.analysis?.percentageContribution ? 'percentage:%' : `${firstMetric.type}:${firstMetric.presentation.unit ?? ''}`;
-    const nextUnit = `${nextMetric.type}:${nextMetric.presentation.unit ?? ''}`;
-    if (firstUnit !== nextUnit) return { allowed: false, reason: 'Single-axis charts require matching metric type and unit' };
-  }
+  const candidate = { ...widget, series: [...widget.series, { id: 'new-series', metric: metricId }] };
+  const issue = visualizationIssues(candidate, catalog)[0];
+  if (issue) return { allowed: false, reason: issue };
   if (widget.dimension && !commonDimensions([...widget.series.map(s => s.metric), metricId], catalog).includes(widget.dimension))
     return { allowed: false, reason: 'Metrics need a shared grouping dimension' };
   return { allowed: true };

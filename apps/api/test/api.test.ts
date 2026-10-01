@@ -146,3 +146,16 @@ test('planner output is authorized after generation and audit omits raw prompts'
     assert.equal(JSON.stringify(sink.events).includes('private customer values'), false);
   } finally { await guarded.close(); }
 });
+
+test('mock custom-dashboard edits return controlled demo limitation instead of missing widget or invalid patch errors', async () => {
+  const dashboard = { schemaVersion: 2, id: 'manual-dashboard', title: { en: 'Custom', ar: 'مخصصة' }, locale: 'en', filters: {},
+    layout: { columns: 12, items: [{ widgetId: 'widget-1', x: 3, y: 2, w: 5, h: 3 }] },
+    widgets: [{ id: 'widget-1', type: 'kpi', series: [{ id: 'series-1', metric: 'revenue' }] }] };
+  for (const instruction of ['Change KPI to profit', 'Add moving average', 'Remove receivables']) {
+    const response = await app.inject({ method: 'POST', url: '/api/dashboards/edit', headers: iq, payload: { dashboard, instruction } });
+    assert.equal(response.statusCode, 422);
+    assert.equal(response.json().error.code, 'UNSUPPORTED_DEMO_INTENT');
+    assert.equal(response.json().error.message, 'The demo planner supports only predefined dashboard edit examples. Configure a structured model provider for general AI editing.');
+    assert.ok(!response.body.includes('widget-1'));
+  }
+});

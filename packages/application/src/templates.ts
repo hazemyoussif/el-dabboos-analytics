@@ -23,7 +23,7 @@ export const dashboardTemplates: readonly DashboardTemplate[] = [
   { id: 'executive-overview', name: text('Executive Overview', 'نظرة تنفيذية'), description: text('A concise view of sales, margin, collections and reliability.', 'ملخص للمبيعات والهامش والتحصيل والاعتمادية.'), domain: 'executive', tags: ['leadership', 'overview'], datePreset: 'current_year', layout: { columns: 3 }, widgets: [
     one('revenue', 'kpi', 'revenue'), one('gross-margin', 'kpi', 'gross_margin'), one('outstanding', 'kpi', 'outstanding_amount'),
     widget('revenue-profit', 'line', [series('revenue', 'revenue', { comparison: 'year_over_year' }), series('gross-profit', 'gross_profit')], 'month'),
-    one('revenue-by-branch', 'bar', 'revenue', 'branch'), one('failures', 'kpi', 'failure_count'),
+    { ...one('revenue-by-branch', 'bar', 'revenue', 'branch'), presentation: { orientation: 'horizontal' } }, one('failures', 'kpi', 'failure_count'),
   ] },
   { id: 'sales-performance', name: text('Sales Performance', 'أداء المبيعات'), description: text('Revenue, profit, orders and customer contribution.', 'الإيرادات والربح والطلبات ومساهمة العملاء.'), domain: 'sales', tags: ['revenue', 'profit', 'customers'], datePreset: 'current_year', layout: { columns: 3 }, widgets: [
     one('revenue', 'kpi', 'revenue'), one('gross-margin', 'kpi', 'gross_margin'), one('average-order-value', 'kpi', 'average_order_value'), one('order-count', 'kpi', 'order_count'),
@@ -42,11 +42,12 @@ export const dashboardTemplates: readonly DashboardTemplate[] = [
   ] },
   { id: 'finance-collections', name: text('Finance & Collections', 'المالية والتحصيل'), description: text('Invoices, collections and outstanding receivables.', 'الفواتير والتحصيل والذمم المستحقة.'), domain: 'finance', tags: ['receivables', 'collections'], datePreset: 'current_year', layout: { columns: 3 }, widgets: [
     one('invoiced', 'kpi', 'invoiced_amount'), one('collected', 'kpi', 'collected_amount'), one('outstanding', 'kpi', 'outstanding_amount'), one('overdue', 'kpi', 'overdue_amount'),
-    widget('invoice-collection', 'line', [series('invoiced', 'invoiced_amount'), series('collected', 'collected_amount')], 'month'),
+    widget('invoice-collection', 'combo', [series('invoiced', 'invoiced_amount'), series('collected', 'collected_amount')], 'month'),
     widget('overdue-customers', 'table', [series('overdue', 'overdue_amount', { topN: { direction: 'top', limit: 10 } }), series('outstanding', 'outstanding_amount')], 'customer'),
   ] },
   { id: 'customer-analytics', name: text('Customer Analytics', 'تحليلات العملاء'), description: text('Customer revenue, profit and balances in one view.', 'إيرادات العملاء وأرباحهم وأرصدتهم في عرض واحد.'), domain: 'customers', tags: ['customers', 'profit'], datePreset: 'last_12_months', layout: { columns: 3 }, widgets: [
     one('revenue', 'kpi', 'revenue'), one('gross-profit', 'kpi', 'gross_profit'), one('outstanding', 'kpi', 'outstanding_amount'),
+    one('customer-contribution', 'treemap', 'revenue', 'customer', { topN: { direction: 'top', limit: 10 } }),
     widget('customer-performance', 'table', [series('revenue', 'revenue', { topN: { direction: 'top', limit: 10 } }), series('gross-profit', 'gross_profit'), series('outstanding', 'outstanding_amount')], 'customer'),
   ] },
   { id: 'inventory', name: text('Inventory', 'المخزون'), description: text('On-hand quantities, value and pressure points.', 'الكميات المتاحة والقيمة ومواطن الضغط.'), domain: 'inventory', tags: ['stock', 'warehouses'], datePreset: 'last_6_months', layout: { columns: 3 }, widgets: [
@@ -67,6 +68,7 @@ export const dashboardTemplates: readonly DashboardTemplate[] = [
   ] },
   { id: 'product-performance', name: text('Product Performance', 'أداء المنتجات'), description: text('Product sales, units and margin contribution.', 'مبيعات المنتجات وكمياتها ومساهمتها في الربح.'), domain: 'sales', tags: ['products', 'margin'], datePreset: 'last_12_months', layout: { columns: 3 }, widgets: [
     widget('product-sales', 'bar', [series('revenue', 'revenue', { topN: { direction: 'top', limit: 10 } }), series('gross-profit', 'gross_profit')], 'product'),
+    one('product-contribution', 'treemap', 'revenue', 'product', { topN: { direction: 'top', limit: 10 } }),
     widget('product-table', 'table', [series('units', 'units_sold'), series('revenue', 'revenue'), series('gross-profit', 'gross_profit')], 'product'),
     one('monthly-units', 'line', 'units_sold', 'month'),
   ] },
