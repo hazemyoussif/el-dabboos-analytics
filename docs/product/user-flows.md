@@ -1,53 +1,21 @@
-# User flows
+# Current user flows
 
-1. A user selects tenant, locale, and date range and opens a saved DashboardSpec. Validation runs before any query. The renderer uses canonical results and localized labels.
-2. A user describes a dashboard. The planner returns only DashboardSpec; schema and semantic validation run before execution. Unsupported requests produce a clear error rather than guessed metrics.
-3. A user asks to edit a dashboard. The planner returns DashboardPatch, which is validated and applied to the current spec. The resulting spec is validated again.
-4. A user switches locale. Canonical IDs stay constant; labels, number/date presentation, layout direction, charts, and tables change with locale.
+## Enter workspace
 
-## Editing custom dashboards with AI
+API resolves the selected demo identity and tenant membership, returns profile and authorized metadata. Web restores supported UI locale/theme and last tenant preference, but server membership remains authoritative. Switching market after confirmed abandonment clears the prior editing history. UI language is separate from DashboardSpec.locale and does not dirty a dashboard.
 
-A valid unsaved or saved working dashboard with `ai:edit` permission exposes
-**Edit with AI**, including while the manual builder is active. Switching modes
-keeps the latest synchronized working DashboardSpec; neither switch invokes Save.
-The AI panel appears between title/actions and metadata, before the canvas.
-**Edit** returns to the manual builder using the AI-modified working spec.
+## Create and edit
 
-Structured editing accepts custom widget/series IDs and portable explicit layout.
-Semantic replace/remove/add patches retain, remove or deterministically place the
-corresponding layout item through the existing domain patch implementation.
-`set_layout` is the explicit operation for replacing layout. The provider is told
-not to reconstruct layout for semantic edits; canonical validation and
-server authorization remain authoritative.
+New dashboard → choose AI, blank or template. Opening a template is a preview; Use template creates an unsaved draft. Blank enters manual builder. AI generation returns validated spec + execution, not a saved record. Manual ↔ AI operates on the working spec. Semantic edits execute previews; layout-only edits and theme changes do not. All edits remain unsaved until explicit Save.
 
-The mock planner remains bounded to predefined edit examples. Unsupported custom
-edits return `UNSUPPORTED_DEMO_INTENT` with a safe message explaining that a
-structured provider is required for general AI editing. Unsupported edits leave
-the working spec intact and do not save it.
+## Save lifecycle
 
-## Metric palette to dashboard
+First Save → bilingual naming dialog → private record v1. Save updates an owned record using expectedVersion. Rename changes draft titles; Save persists them. Save As creates a new record. Discard restores loaded saved state or abandons a new draft. Conflicts preserve working edits and require a deliberate reload/reconciliation; no silent overwrite. Deep links resolve accessible record IDs, not untrusted embedded specs.
 
-Drag an available metric to free canvas space and choose KPI, Line, Bar or Table.
-The chooser offers only valid types and dimensions. Dropping onto a KPI replaces
-its metric. For other widgets, drop on an explicit Add series or Replace primary
-overlay action, or choose the action after dropping onto the widget body.
-Incompatible widgets show a rejection state and remain unchanged. Click a metric
-for the same accessible chooser; selected widgets offer compatible actions.
+## Library
 
-New series and metric changes preview analytics and enter Undo/Redo history.
-Coordinates are preserved for existing-widget metric edits. New widgets receive
-snapped placement and deterministic collision handling. A saved dashboard becomes
-Modified and an unsaved dashboard remains Unsaved until explicit Save. Switching
-to Edit with AI uses this latest working spec.
+All / Favorites / My dashboards / Shared are accessible-record views. Shared means tenant-shared and not owned by current identity. Client-side title search and deterministic sorting affect presentation. Flat personal folders and favorites update separate tenant/user preferences. Deleting a folder clears its associations, not dashboard records. Sharing management and record deletion are not implemented UI flows.
 
-### Governed chart selection
+## Governance and failure
 
-Metric creation offers KPI, temporal Line/Area, categorical Bar/Pie/Donut/Treemap and Table only where valid. Select a dimension in the same chooser to narrow the choices. The editor groups valid choices into Summary, Trend, Comparison, Composition and Detail. Compatible two-to-four series can become Combo, with bounded bar/line marks; no dual axis or stacking. Gross margin by branch cannot become Pie/Donut/Treemap. Vertical/horizontal Bar and Pie/Donut are presentation variants.
-
-Visualization changes retain layout, metrics, filters and analysis. They mark the working document Modified but reuse its results until a semantic query change. Save and reload retain presentation, and AI receives the latest draft with the same governed vocabulary. Negative composition results show a warning; all chart values remain available in the accessible data table. High-cardinality charts suggest explicit TopN, Bar or Table without truncating results.
-
-### Names and the personal dashboard library
-
-First Save opens the naming dialog for manual, AI and template drafts. The current title is the default; primary-language name is required and the other language is optional. A blank secondary value copies the entered name into both locales. Save As always requests a name and creates a different record, even when the name is duplicated. Rename changes the working title only; explicit Save versions it, and Discard restores the saved name. No naming action changes record URLs or spec IDs.
-
-The saved library has All dashboards, Favorites, My dashboards, Shared and flat personal folders. Search matches either language of dashboard titles inside the selected view. Recently updated is the default sort, with alphabetical and creation-date alternatives. Favorite and Move to folder persist immediately as personal metadata, without changing the dashboard content/version or another user's library. Create, Rename and Delete folder are scoped to the current tenant and user; deleting a folder returns its dashboards to All without deleting them. Templates remain a separate immutable browser with domain filters and bilingual name/tag search.
+Full schema + semantic validation precedes execution. Membership, permissions, available metrics and enforced filters constrain manual and AI paths. Partial series preserve usable values and nulls. A failed required top-N anchor cannot produce an unrestricted result union. Public AI errors are safe and generic. [Stories](user-stories.md), [criteria](acceptance-criteria.md) and [diagrams](../architecture/diagrams.md) provide traceable details.
