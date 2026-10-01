@@ -11,7 +11,7 @@ export interface BuilderHistory { past: BuilderDocument[]; present: BuilderDocum
 export type BuilderCommand =
   | { type: 'patch'; patch: DashboardPatch }
   | { type: 'layout'; layout: DashboardLayout }
-  | { type: 'add-first'; widget: DashboardWidget }
+  | { type: 'add-first'; widget: DashboardWidget; layout?: DashboardLayout }
   | { type: 'remove-last' };
 export interface BuilderTransition { history: BuilderHistory; execute: boolean }
 const MAX_HISTORY = 40;
@@ -36,7 +36,7 @@ export function commitBuilderCommand(history: BuilderHistory, command: BuilderCo
   if (command.type === 'add-first') {
     if (current.kind !== 'empty') throw new Error('First widget requires an empty dashboard');
     const spec: DashboardSpec = { ...structuredClone(current.base), widgets: [command.widget] };
-    spec.layout = { columns: 12, items: resolveDashboardLayout({ ...spec, layout: { columns: 12 } }).items };
+    spec.layout = command.layout ?? { columns: 12, items: resolveDashboardLayout({ ...spec, layout: { columns: 12 } }).items };
     validateDashboardSpec(spec);
     next = { kind: 'dashboard', spec };
   } else if (command.type === 'remove-last') {

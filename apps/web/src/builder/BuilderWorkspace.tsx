@@ -3,6 +3,8 @@ import type { AnalysisSpec, DashboardPatch, DashboardSeries, DashboardSpec, Dash
 import type { DashboardExecutionResult } from '@el-dabbous/application';
 import { WidgetCard } from '../Renderer.tsx';
 import { DashboardGrid } from './DashboardGrid.tsx';
+import { WidgetLayoutInspector } from './WidgetLayoutInspector.tsx';
+import { arrangeLayout, duplicateWidget, insertWidget, nextWidgetId, resetLayout, updateWidgetLayout, widgetSizes } from './layout-tools.ts';
 import { copy } from '../i18n.ts';
 import { analysisAllowed, canAddSeries, commonDimensions, selectableMetric, validWidgetDraft, withWidgetMetric } from './model.ts';
 import type { BuilderCommand, BuilderDocument, BuilderHistory } from './model.ts';
@@ -33,24 +35,19 @@ const labels = {
     comparison: 'Comparison', moving: 'Moving average', running: 'Running total', contribution: 'Percentage contribution', ranking: 'Ranking', top: 'Top / bottom N',
     dateFrom: 'From', dateTo: 'To', applyDates: 'Apply dates', all: 'All', planned: 'Planned', none: 'None', selectWidget: 'Select a widget or add one',
     moveUp: 'Move series up', moveDown: 'Move series down', removeSeries: 'Remove series', topName: 'Top', bottomName: 'Bottom',
-    preview: 'Live preview', drag: 'Drag the handle to reorder. Resize from the corner.', chooseDimension: 'Choose a dimension', validation: 'Complete a valid widget before applying.',
+    preview: 'Live preview', drag: 'Drag the handle to reorder. Resize from the edges or corners. Focus the handle: arrows move, Shift + arrows resize.', chooseDimension: 'Choose a dimension', validation: 'Complete a valid widget before applying.',
   },
   ar: { view: 'عرض', edit: 'تحرير', unsaved: 'اضغط حفظ للاحتفاظ بتغييراتك', widgets: 'البطاقات', properties: 'خصائص البطاقة', filters: 'مرشحات اللوحة',
     newWidget: 'إضافة بطاقة', apply: 'تطبيق البطاقة', addSeries: 'إضافة سلسلة', metric: 'المؤشر', primary: 'المؤشر الأساسي / اختيار النتائج', dimension: 'البعد', type: 'نوع العرض', remove: 'إزالة البطاقة',
     comparison: 'المقارنة', moving: 'المتوسط المتحرك', running: 'المجموع التراكمي', contribution: 'نسبة المساهمة', ranking: 'الترتيب', top: 'أعلى / أدنى عدد',
     dateFrom: 'من', dateTo: 'إلى', applyDates: 'تطبيق التواريخ', all: 'الكل', planned: 'قيد التخطيط', none: 'بلا', selectWidget: 'اختر بطاقة أو أضف واحدة',
     moveUp: 'رفع السلسلة', moveDown: 'خفض السلسلة', removeSeries: 'إزالة السلسلة', topName: 'الأعلى', bottomName: 'الأدنى',
-    preview: 'معاينة مباشرة', drag: 'اسحب المقبض لإعادة الترتيب، وغيّر الحجم من الزاوية.', chooseDimension: 'اختر بعدًا', validation: 'أكمل إعداد بطاقة صالحة قبل التطبيق.',
+    preview: 'معاينة مباشرة', drag: 'اسحب المقبض للنقل وغيّر الحجم من الحواف. عند تركيز المقبض: الأسهم للنقل وShift مع الأسهم لتغيير الحجم.', chooseDimension: 'اختر بعدًا', validation: 'أكمل إعداد بطاقة صالحة قبل التطبيق.',
   },
 };
 const typeName: Record<Locale, Record<WidgetType, string>> = {
   en: { kpi: 'KPI', line: 'Line', bar: 'Bar', table: 'Table' },
   ar: { kpi: 'مؤشر', line: 'خطي', bar: 'شريطي', table: 'جدول' },
-};
-const nextId = (widgets: readonly DashboardWidget[]) => {
-  let number = 1;
-  while (widgets.some(widget => widget.id === `widget-${number}`)) number++;
-  return `widget-${number}`;
 };
 const makeWidget = (id: string, type: WidgetType, metric: MetricId = 'revenue'): DashboardWidget => ({
   id, type, series: [{ id: 'series-1', metric }], ...(type === 'kpi' ? {} : { dimension: 'month' }),
@@ -140,13 +137,15 @@ export function BuilderWorkspace({ history, execution, catalog, registry, profil
   const spec = document.kind === 'dashboard' ? document.spec : null;
   const base = spec ? { schemaVersion: spec.schemaVersion, id: spec.id, title: spec.title, locale: spec.locale, filters: spec.filters, layout: spec.layout } : document.kind === 'empty' ? document.base : null;
   const [selectedId, setSelectedId] = useState<string | null>(spec?.widgets[0]?.id ?? null);
+  const [paletteType, setPaletteType] = useState<WidgetType | null>(null);
+  const [layoutError, setLayoutError] = useState('');
   const [addingType, setAddingType] = useState<WidgetType | null>(null);
   const [dateFrom, setDateFrom] = useState(base?.filters.dateRange?.from ?? '');
   const [dateTo, setDateTo] = useState(base?.filters.dateRange?.to ?? '');
   useEffect(() => { setDateFrom(base?.filters.dateRange?.from ?? ''); setDateTo(base?.filters.dateRange?.to ?? ''); }, [base?.filters.dateRange?.from, base?.filters.dateRange?.to]);
   const selected = spec?.widgets.find(widget => widget.id === selectedId);
   const dashboardTitle = document.kind === 'dashboard' ? document.spec.title[locale] : document.base.title[locale];
-  const newWidget = useMemo(() => addingType ? makeWidget(nextId(spec?.widgets ?? []), addingType) : null, [addingType, spec?.widgets.length]);
+  const newWidget = useMemo(() => addingType ? makeWidget(nextWidgetId(spec?.widgets ?? []), addingType) : null, [addingType, spec?.widgets.length]);
   const requestedFilters = base?.filters.dimensions ?? [];
   const setRequestedFilter = (dimension: DimensionId, value: string) => {
     if (!base || !spec) return;
@@ -162,26 +161,45 @@ export function BuilderWorkspace({ history, execution, catalog, registry, profil
     if (addingType) { onCommand(spec ? patch({ op: 'add', widget }) : { type: 'add-first', widget }); setAddingType(null); setSelectedId(widget.id); }
     else if (selected) onCommand(patch({ op: 'replace', widgetId: selected.id, widget }));
   };
-  const removeWidget = () => {
-    if (!selected || !spec) return;
-    onCommand(spec.widgets.length === 1 ? { type: 'remove-last' } : patch({ op: 'remove', widgetId: selected.id }));
-    setSelectedId(spec.widgets.find(widget => widget.id !== selected.id)?.id ?? null);
+  const removeWidget = (id = selected?.id) => {
+    if (!id || !spec) return;
+    onCommand(spec.widgets.length === 1 ? { type: 'remove-last' } : patch({ op: 'remove', widgetId: id }));
+    setSelectedId(spec.widgets.find(widget => widget.id !== id)?.id ?? null);
   };
+  const guarded = (action: () => void) => {
+    try { action(); setLayoutError(''); } catch { setLayoutError(locale === 'ar' ? 'تعذر تطبيق التغيير ضمن حدود الشبكة.' : 'Change could not fit within grid limits.'); }
+  };
+  const dropWidget = (type: WidgetType, position: { x: number; y: number }) => guarded(() => {
+    const metric = registry.filter(selectableMetric).find(metric => metric.id === 'revenue') ?? registry.filter(selectableMetric)[0];
+    if (!metric) return;
+    const widget = makeWidget(nextWidgetId(spec?.widgets ?? []), type, metric.id);
+    if (!validWidgetDraft(widget, base!)) throw new Error('Invalid widget');
+    onCommand(spec ? insertWidget(spec, widget, position) : { type: 'add-first', widget,
+      layout: { columns: 12, items: [{ widgetId: widget.id, ...widgetSizes[type], ...position }] } });
+    setSelectedId(widget.id); setAddingType(null); setPaletteType(null);
+  });
   return <div className="builder-workspace">
-    <aside className="builder-palette"><h3>{t.widgets}</h3><p>{t.unsaved}</p><div className="builder-add-buttons">{types.map(type => <button key={type} onClick={() => { setAddingType(type); setSelectedId(null); }}>{t.newWidget}: {typeName[locale][type]}</button>)}</div>
+    <aside className="builder-palette"><h3>{t.widgets}</h3><p>{t.unsaved}</p><div className="builder-add-buttons">{types.map(type => <button key={type} draggable={!busy} onDragStart={event => { event.dataTransfer.setData('text/plain', type); event.dataTransfer.effectAllowed = 'copy'; setPaletteType(type); }} onDragEnd={() => setPaletteType(null)} onClick={() => { setAddingType(type); setSelectedId(null); }}>{t.newWidget}: {typeName[locale][type]}</button>)}</div>
       <h3>{t.metric}</h3>{Object.entries(domainNames[locale]).map(([domain, name]) => {
         const metrics = registry.filter(metric => metric.domain === domain);
         if (!metrics.length) return null;
         return <details key={domain} open={domain === 'sales'}><summary>{name}</summary><div className="builder-metric-list">{metrics.map(metric => <div key={metric.id} className={metric.availability === 'planned' ? 'builder-planned' : ''}>{metric.labels[locale]} {metric.availability === 'planned' && <small>{t.planned}</small>}</div>)}</div></details>;
       })}</aside>
-    <div className="builder-center"><div className="builder-canvas-head"><strong>{dashboardTitle}</strong><span>{t.preview} · {t.unsaved}</span><div><button disabled={!history.past.length} onClick={onUndo}>↶ {locale === 'ar' ? 'تراجع' : 'Undo'}</button><button disabled={!history.future.length} onClick={onRedo}>↷ {locale === 'ar' ? 'إعادة' : 'Redo'}</button></div></div>
+    <div className="builder-center"><div className="builder-canvas-head"><strong>{dashboardTitle}</strong><span>{t.preview} · {t.unsaved}</span><div><button disabled={!history.past.length} onClick={onUndo}>↶ {locale === 'ar' ? 'تراجع' : 'Undo'}</button><button disabled={!history.future.length} onClick={onRedo}>↷ {locale === 'ar' ? 'إعادة' : 'Redo'}</button><button disabled={!spec} onClick={() => spec && guarded(() => onCommand({ type: 'layout', layout: arrangeLayout(spec) }))}>{locale === 'ar' ? 'ترتيب تلقائي' : 'Auto arrange'}</button><button disabled={!spec} onClick={() => spec && guarded(() => onCommand({ type: 'layout', layout: resetLayout(spec) }))}>{locale === 'ar' ? 'إعادة ضبط التخطيط' : 'Reset layout'}</button></div></div>
       <p className="builder-hint">{t.drag}</p>{busy && <p className="builder-preview-loading">{copy[locale].loading}</p>}
-      {spec && execution && !busy && <DashboardGrid spec={spec} locale={locale} editable selectedId={selectedId}
+      {layoutError && <p role="status" className="builder-hint">{layoutError}</p>}
+      {base && <DashboardGrid spec={spec ?? { ...base, widgets: [] }} locale={locale} editable={!busy} selectedId={selectedId} paletteType={paletteType}
         onSelect={id => { setSelectedId(id); setAddingType(null); }} onLayoutCommit={layout => onCommand({ type: 'layout', layout })}
-        renderWidget={widget => <WidgetCard widget={widget} entry={execution.widgetResults[widget.id]} catalog={catalog} locale={locale} profile={profile} />} />}
-      {!spec && <div className="builder-empty">{t.selectWidget}</div>}
+        onDropWidget={dropWidget} onAction={(id, action) => guarded(() => {
+          if (!spec) return;
+          if (action === 'delete') removeWidget(id);
+          else if (action === 'duplicate') { const copy = duplicateWidget(spec, id); onCommand(copy.command); setSelectedId(copy.widget.id); setAddingType(null); }
+          else onCommand({ type: 'layout', layout: updateWidgetLayout(spec, id, widgetSizes[spec.widgets.find(widget => widget.id === id)!.type], true) });
+        })}
+        renderWidget={widget => busy || !execution?.widgetResults[widget.id] ? <article className="widget"><p role="status">{copy[locale].loading}</p></article> : <WidgetCard widget={widget} entry={execution?.widgetResults[widget.id]} catalog={catalog} locale={locale} profile={profile} />} />}
+      {!spec && <p className="builder-hint">{t.selectWidget}</p>}
     </div>
-    <aside className="builder-properties">{base && (selected || newWidget) ? <WidgetEditor key={selected?.id ?? `${newWidget?.id}-${addingType}`} initial={(selected ?? newWidget)!} adding={!!newWidget} base={base} registry={registry} catalog={catalog} locale={locale} onApply={applyWidget} onRemove={removeWidget} /> : <p>{t.selectWidget}</p>}
+    <aside className="builder-properties">{spec && selected && <WidgetLayoutInspector key={`layout-${selected.id}`} spec={spec} id={selected.id} locale={locale} onChange={layout => onCommand({ type: 'layout', layout })} />}{base && (selected || newWidget) ? <WidgetEditor key={selected?.id ?? `${newWidget?.id}-${addingType}`} initial={(selected ?? newWidget)!} adding={!!newWidget} base={base} registry={registry} catalog={catalog} locale={locale} onApply={applyWidget} onRemove={() => removeWidget()} /> : <p>{t.selectWidget}</p>}
       <div className="builder-filters"><h3>{t.filters}</h3><div className="builder-dates"><label>{t.dateFrom}<input type="date" value={dateFrom} onChange={event => setDateFrom(event.target.value)} /></label><label>{t.dateTo}<input type="date" value={dateTo} onChange={event => setDateTo(event.target.value)} /></label><button disabled={!spec || !dateFrom || !dateTo || dateFrom > dateTo} onClick={applyDates}>{t.applyDates}</button></div>
       {filterDimensions.map(dimension => <label key={dimension}>{copy[locale].dimensions[dimension]}<select value={requestedFilters.find(filter => filter.dimension === dimension)?.values[0] ?? ''} disabled={!spec || !spec.widgets.every(widget => widget.series.every(series => catalog[series.metric]?.dimensions.includes(dimension)))} onChange={event => setRequestedFilter(dimension, event.target.value)}><option value="">{t.all}</option>{(filterOptions[dimension] ?? []).map(option => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label>)}
       </div></aside>
