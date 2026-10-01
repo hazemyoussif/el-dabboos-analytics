@@ -3,8 +3,10 @@ import { fileURLToPath } from 'node:url';
 import { MockAnalyticsRepository, SqliteAnalyticsRepository, createSqliteSchema, generateSeedFacts } from '@el-dabbous/data';
 import type { AnalyticsRepository, DimensionValueRepository } from '@el-dabbous/domain';
 import { StructuredDashboardPlanner } from '@el-dabbous/application';
+import type { StructuredPlannerDiagnostic } from '@el-dabbous/application';
 import type { DashboardPlanner } from '@el-dabbous/domain';
 import { OpenAICompatibleLLMProvider } from './providers/openai-compatible.ts';
+import { formatStructuredDiagnostic, structuredDiagnosticsEnabled } from './structured-diagnostics.ts';
 import { buildApi } from './app.ts';
 
 const provider = process.env.ANALYTICS_PROVIDER ?? 'sqlite';
@@ -29,8 +31,13 @@ if (plannerMode === 'structured') {
   if (!baseUrl || !modelId) throw new Error('LLM_BASE_URL and LLM_MODEL_ID are required for structured planning.');
   const timeoutMs = Number(process.env.LLM_TIMEOUT_MS ?? 120000);
   const maxRepairAttempts = Number(process.env.LLM_REPAIR_ATTEMPTS ?? 1);
+  const apiKey = process.env.LLM_API_KEY;
+  const diagnostics = structuredDiagnosticsEnabled(process.env.LLM_DEBUG_STRUCTURED_OUTPUT)
+    ? (event: StructuredPlannerDiagnostic) => {
+      process.stderr.write(`${formatStructuredDiagnostic(event, apiKey)}\n`);
+    } : undefined;
   planner = new StructuredDashboardPlanner(new OpenAICompatibleLLMProvider({ baseUrl, modelId,
-    ...(process.env.LLM_API_KEY ? { apiKey: process.env.LLM_API_KEY } : {}), timeoutMs }), { maxRepairAttempts });
+    ...(apiKey ? { apiKey } : {}), timeoutMs }), { maxRepairAttempts, ...(diagnostics ? { diagnostics } : {}) });
 } else if (plannerMode === 'disabled') planner = null;
 else if (plannerMode !== 'mock') throw new Error('DASHBOARD_PLANNER must be mock, structured, or disabled.');
 const app = await buildApi({ analyticsRepository: repository, dimensionValues: repository, ...(planner !== undefined ? { planner } : {}) });

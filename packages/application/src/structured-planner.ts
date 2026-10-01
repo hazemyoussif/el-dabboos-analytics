@@ -1,14 +1,16 @@
-import { applyDashboardPatch, dashboardPatchSchema, dashboardSpecSchema, isMetricId, semanticCatalog, validateDashboardPatch, validateDashboardSpec } from '@el-dabbous/domain';
+import { applyDashboardPatch, dashboardPatchSchema, dashboardSpecSchema, dashboardPatchSchemaIssues, dashboardSpecSchemaIssues, isMetricId, semanticCatalog, validateDashboardPatch, validateDashboardSpec } from '@el-dabbous/domain';
 import type { DashboardGenerationRequest, DashboardPatch, DashboardPlanner, DashboardSpec, LLMProvider, Locale, PlannerCapabilities, StructuredOutputRequest, TenantProfile } from '@el-dabbous/domain';
 import { dashboardTemplates } from './templates.ts';
 import { AuthorizationError } from './security.ts';
 import { projectProviderSchema } from './provider-schema.ts';
+import { structuredOutputPreview } from './structured-diagnostics.ts';
+import type { StructuredPlannerDiagnostic } from './structured-diagnostics.ts';
 
 export class StructuredPlanningError extends Error {
   readonly code = 'INVALID_STRUCTURED_OUTPUT';
   constructor(message: string) { super(message); }
 }
-export interface StructuredPlannerOptions { maxRepairAttempts?: number; clock?: () => Date }
+export interface StructuredPlannerOptions { maxRepairAttempts?: number; clock?: () => Date; diagnostics?: (event: StructuredPlannerDiagnostic) => void }
 const safeError = (error: unknown): string => {
   if (!(error instanceof Error)) return 'Output failed validation.';
   if (error.message.startsWith('Metric outside')) return error.message;
@@ -48,18 +50,27 @@ function authorizedContext(capabilities: PlannerCapabilities, profile: TenantPro
 export class StructuredDashboardPlanner implements DashboardPlanner {
   private readonly maxRepairAttempts: number;
   private readonly clock: () => Date;
-  constructor(private readonly provider: LLMProvider, options: StructuredPlannerOptions = {}) {
+  constructor(private readonly provider: LLMProvider, private readonly options: StructuredPlannerOptions = {}) {
     this.maxRepairAttempts = options.maxRepairAttempts ?? 1;
     if (!Number.isInteger(this.maxRepairAttempts) || this.maxRepairAttempts < 0 || this.maxRepairAttempts > 2)
       throw new Error('maxRepairAttempts must be between 0 and 2');
     this.clock = options.clock ?? (() => new Date());
   }
-  private async validated<T>(request: StructuredOutputRequest, validate: (output: unknown) => T): Promise<T> {
+  private async validated<T>(request: StructuredOutputRequest, operation: 'generation' | 'edit', validate: (output: unknown) => T): Promise<T> {
     const messages = [...request.messages];
     for (let attempt = 0; attempt <= this.maxRepairAttempts; attempt++) {
       const response = await this.provider.generateStructured({ ...request, messages: [...messages] });
       try { return validate(response.output); }
       catch (error) {
+        if (this.options.diagnostics) {
+          try {
+            const issues = operation === 'generation' ? dashboardSpecSchemaIssues(response.output) : dashboardPatchSchemaIssues(response.output);
+            const stage = issues.length ? 'schema' : error instanceof AuthorizationError ? 'authorization' : 'semantic';
+            this.options.diagnostics({ operation, attempt: attempt + 1, schemaName: request.responseFormat.name,
+              providerId: response.providerId, stage, details: issues.length ? issues : [{ instancePath: '', keyword: stage, message: safeError(error) }],
+              outputPreview: structuredOutputPreview(response.output) });
+          } catch { /* Diagnostics must never change planner behavior. */ }
+        }
         if (attempt === this.maxRepairAttempts) {
           if (error instanceof AuthorizationError) throw error;
           throw new StructuredPlanningError(`Provider output remained invalid after ${attempt + 1} attempt(s): ${safeError(error)}`);
@@ -77,7 +88,7 @@ export class StructuredDashboardPlanner implements DashboardPlanner {
       { role: 'system', content: `Produce only a DashboardSpec v2 JSON object. Use only authorized metrics and templates. Keep calculations in the deterministic analytics engine. Do not generate SQL, React, chart-library options, arbitrary expressions, or policy filters. Context: ${JSON.stringify(context)}` },
       { role: 'user', content: request.prompt },
     ];
-    return this.validated({ messages, locale: request.locale, responseFormat: { name: 'dashboard_spec_v2', jsonSchema: projectProviderSchema(dashboardSpecSchema), strict: true } }, output => {
+    return this.validated({ messages, locale: request.locale, responseFormat: { name: 'dashboard_spec_v2', jsonSchema: projectProviderSchema(dashboardSpecSchema), strict: true } }, 'generation', output => {
       validateDashboardSpec(output);
       assertAllowed(output, capabilities);
       return output;
@@ -92,7 +103,7 @@ export class StructuredDashboardPlanner implements DashboardPlanner {
       { role: 'system', content: `Produce only a DashboardPatch v2 JSON object for the current dashboard. Use only authorized metrics and bounded patch operations. Do not generate SQL, React, chart-library options, arbitrary expressions, or policy filters. Context: ${JSON.stringify(context)}` },
       { role: 'user', content: `Current DashboardSpec v2: ${JSON.stringify(current)}\nEdit instruction: ${instruction}` },
     ];
-    return this.validated({ messages, locale: current.locale as Locale, responseFormat: { name: 'dashboard_patch_v2', jsonSchema: projectProviderSchema(dashboardPatchSchema), strict: true } }, output => {
+    return this.validated({ messages, locale: current.locale as Locale, responseFormat: { name: 'dashboard_patch_v2', jsonSchema: projectProviderSchema(dashboardPatchSchema), strict: true } }, 'edit', output => {
       validateDashboardPatch(output);
       const next = applyDashboardPatch(current, output);
       assertAllowed(next, capabilities);

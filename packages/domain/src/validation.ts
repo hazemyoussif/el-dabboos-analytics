@@ -5,13 +5,25 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { dashboardSpecSchema, dashboardPatchSchema } from './schemas.ts';
 
-type AjvConstructor = new (options: { allErrors: boolean }) => { compile: (schema: object) => (value: unknown) => boolean };
+export interface DashboardSchemaIssue { instancePath: string; keyword: string; message: string }
+type AjvValidator = ((value: unknown) => boolean) & { errors?: readonly { instancePath?: string; keyword?: string; message?: string }[] | null };
+type AjvConstructor = new (options: { allErrors: boolean }) => { compile: (schema: object) => AjvValidator };
 const AjvClass = ((Ajv2020 as unknown as { default?: AjvConstructor }).default ?? Ajv2020) as AjvConstructor;
 const addFormatsFn = ((addFormats as unknown as { default?: (instance: unknown) => void }).default ?? addFormats) as (instance: unknown) => void;
 const ajv = new AjvClass({ allErrors: true });
 addFormatsFn(ajv);
 const checkDashboardSchema = ajv.compile(dashboardSpecSchema);
 const checkPatchSchema = ajv.compile(dashboardPatchSchema);
+function schemaIssues(check: AjvValidator, value: unknown): DashboardSchemaIssue[] {
+  if (check(value)) return [];
+  return [...(check.errors ?? [])].sort((left, right) => (right.instancePath?.length ?? 0) - (left.instancePath?.length ?? 0))
+    .slice(0, 8).map(issue => ({
+      instancePath: issue.instancePath ?? '', keyword: issue.keyword ?? '', message: issue.message ?? 'invalid value',
+    }));
+}
+/** Development diagnostics only; public validators retain their existing error behavior. */
+export const dashboardSpecSchemaIssues = (value: unknown): DashboardSchemaIssue[] => schemaIssues(checkDashboardSchema, value);
+export const dashboardPatchSchemaIssues = (value: unknown): DashboardSchemaIssue[] => schemaIssues(checkPatchSchema, value);
 const record = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === 'object' && !Array.isArray(v);
 const exactKeys = (v: Record<string, unknown>, allowed: readonly string[], required: readonly string[] = []): boolean =>
   Object.keys(v).every(k => allowed.includes(k)) && required.every(k => Object.hasOwn(v, k));

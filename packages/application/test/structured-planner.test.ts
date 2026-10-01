@@ -78,3 +78,40 @@ test('planner rejects projected-schema output that violates canonical string and
   await assert.rejects(editPlanner.edit(spec, 'Rename', profile, capabilities), { code: 'INVALID_STRUCTURED_OUTPUT' });
   assert.deepEqual(editProvider.requests[0]!.responseFormat.jsonSchema, projectProviderSchema(dashboardPatchSchema));
 });
+test('diagnostics report schema failures on each repair attempt without echoing prompt text', async () => {
+  const invalid = structuredClone(spec);
+  invalid.id = 'Invalid ID';
+  invalid.title.en = 'prompt-secret-phrase';
+  const events: import('../src/structured-diagnostics.ts').StructuredPlannerDiagnostic[] = [];
+  const provider = new SequenceProvider([invalid, invalid]);
+  const planner = new StructuredDashboardPlanner(provider, { maxRepairAttempts: 1, diagnostics: event => events.push(event) });
+  await assert.rejects(planner.generate({ ...request, prompt: 'prompt-secret-phrase' }), { code: 'INVALID_STRUCTURED_OUTPUT' });
+  assert.equal(events.length, 2);
+  assert.deepEqual(events.map(event => event.attempt), [1, 2]);
+  assert.equal(events[0]!.operation, 'generation');
+  assert.equal(events[0]!.schemaName, 'dashboard_spec_v2');
+  assert.equal(events[0]!.providerId, 'fake');
+  assert.equal(events[0]!.stage, 'schema');
+  assert.ok(events[0]!.details.some(issue => issue.instancePath === '/id' && issue.keyword === 'pattern'));
+  assert.ok(!events[0]!.outputPreview.includes('prompt-secret-phrase'));
+});
+
+test('diagnostics identify semantic widget failures and patch schema failures', async () => {
+  const incompatible = structuredClone(spec);
+  incompatible.widgets[0] = { id: 'mixed', type: 'line', dimension: 'month', series: [
+    { id: 'revenue', metric: 'revenue' }, { id: 'margin', metric: 'gross_margin' },
+  ] };
+  const events: import('../src/structured-diagnostics.ts').StructuredPlannerDiagnostic[] = [];
+  const planner = new StructuredDashboardPlanner(new SequenceProvider([incompatible]), { maxRepairAttempts: 0, diagnostics: event => events.push(event) });
+  await assert.rejects(planner.generate(request), { code: 'INVALID_STRUCTURED_OUTPUT' });
+  assert.equal(events[0]!.stage, 'semantic');
+  assert.match(events[0]!.details[0]!.message, /incompatible series/);
+
+  const patch = { schemaVersion: 2, operations: [{ op: 'set_title', title: { en: '', ar: 'عنوان' } }] };
+  const editor = new StructuredDashboardPlanner(new SequenceProvider([patch]), { maxRepairAttempts: 0, diagnostics: event => events.push(event) });
+  await assert.rejects(editor.edit(spec, 'Rename', profile, capabilities), { code: 'INVALID_STRUCTURED_OUTPUT' });
+  assert.equal(events[1]!.operation, 'edit');
+  assert.equal(events[1]!.schemaName, 'dashboard_patch_v2');
+  assert.equal(events[1]!.stage, 'schema');
+  assert.ok(events[1]!.details.some(issue => issue.keyword === 'minLength'));
+});
