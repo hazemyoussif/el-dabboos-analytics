@@ -3,16 +3,15 @@ import { validateDashboardLayout } from './layout.ts';
 import { isDimensionId, isMetricId, semanticCatalog, timeDimensions } from './catalog.ts';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
-import dashboardSchema from './dashboard-spec-v2.schema.json' with { type: 'json' };
-import patchSchema from './dashboard-patch-v2.schema.json' with { type: 'json' };
+import { dashboardSpecSchema, dashboardPatchSchema } from './schemas.ts';
 
 type AjvConstructor = new (options: { allErrors: boolean }) => { compile: (schema: object) => (value: unknown) => boolean };
 const AjvClass = ((Ajv2020 as unknown as { default?: AjvConstructor }).default ?? Ajv2020) as AjvConstructor;
 const addFormatsFn = ((addFormats as unknown as { default?: (instance: unknown) => void }).default ?? addFormats) as (instance: unknown) => void;
 const ajv = new AjvClass({ allErrors: true });
 addFormatsFn(ajv);
-const checkDashboardSchema = ajv.compile(dashboardSchema);
-const checkPatchSchema = ajv.compile(patchSchema);
+const checkDashboardSchema = ajv.compile(dashboardSpecSchema);
+const checkPatchSchema = ajv.compile(dashboardPatchSchema);
 const record = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === 'object' && !Array.isArray(v);
 const exactKeys = (v: Record<string, unknown>, allowed: readonly string[], required: readonly string[] = []): boolean =>
   Object.keys(v).every(k => allowed.includes(k)) && required.every(k => Object.hasOwn(v, k));
