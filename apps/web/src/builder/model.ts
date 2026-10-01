@@ -17,7 +17,7 @@ export interface BuilderTransition { history: BuilderHistory; execute: boolean }
 const MAX_HISTORY = 40;
 
 export function blankDashboardDraft(profile: TenantProfile, locale: Locale, now = new Date()): EmptyBuilderDraft {
-  return { kind: 'empty', base: { schemaVersion: 2, id: 'manual-dashboard', title: { en: 'New dashboard', ar: 'لوحة جديدة' },
+  return { kind: 'empty', base: { schemaVersion: 2, id: 'manual-dashboard', title: { en: 'Untitled Dashboard', ar: 'لوحة بدون اسم' },
     locale, filters: { dateRange: resolveDatePreset('current_year', profile, now) }, layout: { columns: 12, items: [] } } };
 }
 export function startBuilder(document: BuilderDocument): BuilderHistory {

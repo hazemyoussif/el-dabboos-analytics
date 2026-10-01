@@ -143,11 +143,11 @@ export function useWorkspace() {
   const openGenerated = (spec: DashboardSpec, result: DashboardExecutionResult) => {
     setDocument(generatedDocument(spec)); setExecution(result); navigate(null);
   };
-  const save = async (asNew = false) => {
+  const save = async (asNew = false, named?: DashboardSpec) => {
     if (!document?.spec || !profile) return false;
     const id = beginRequest(); setError(null); setLoading(true);
     try {
-      const saved = await persistDocument(document, asNew, {
+      const saved = await persistDocument(named ? editDocument(document, named) : document, asNew, {
         create: spec => createSavedDashboard(session(), spec),
         update: (recordId, spec, version) => updateSavedDashboard(session(), recordId, spec, version),
       });
