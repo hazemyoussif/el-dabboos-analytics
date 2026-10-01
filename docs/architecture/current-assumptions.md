@@ -10,7 +10,7 @@
 - Query dates are inclusive ISO dates. Comparisons use UTC calendar arithmetic and complete prior buckets. Template presets resolve against the tenant's time zone. Fiscal calendars remain unresolved.
 - `dataThrough` reflects the latest relevant tenant business/event date for each metric and is independent of the query period. The SQLite and mock adapters omit `sourceAsOf` unless a real synchronization/extraction timestamp is explicitly configured.
 - DashboardSpec v1 was the initial single-metric prototype schema. V2 is the active multi-series schema and patch contract. No persisted production specs require migration.
-- The mock planner demonstrates bounded sales intent and five edits; it is not an LLM or a general dialect parser. Planning can be disabled while templates continue working.
+- The mock planner remains the default and demonstrates bounded sales intent and five edits; it is not an LLM or a general dialect parser. The structured planner can use a configured local OpenAI-compatible server. Planning can be disabled while templates continue working.
 - Planned metrics in the product registry are recognized concepts only. They have no executable formula or approved source data and cannot enter a DashboardSpec.
 - Manual builder changes and undo/redo exist only in the current browser session. A new dashboard remains a non-executable draft until it contains a valid widget. Tenant switching reloads the active template and discards the prior market’s builder history.
 - Demo users and memberships are server-owned synthetic fixtures. `x-demo-user-id` is a local simulation, not authentication. The tenant header is validated against the selected user's membership.
