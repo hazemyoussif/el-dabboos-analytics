@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { DatabaseSync } from 'node:sqlite';
-import { MockAnalyticsRepository, SqliteDashboardRepository, SqliteDashboardLibraryRepository, createDashboardPersistenceSchema, createDashboardLibrarySchema } from '@el-dabbous/data';
-import type { DashboardSpec } from '@el-dabbous/domain';
+import { MockAnalyticsRepository, SqliteDashboardRepository, SqliteDashboardLibraryRepository, createDashboardPersistenceSchema, createDashboardLibrarySchema } from '@el-dabboos/data';
+import type { DashboardSpec } from '@el-dabboos/domain';
 import { buildApi } from '../src/app.ts';
 const spec: DashboardSpec = { schemaVersion: 2, id: 'portable', title: { en: 'Sales', ar: 'المبيعات' }, locale: 'en', filters: {}, layout: { columns: 1 }, widgets: [{ id: 'revenue', type: 'kpi', series: [{ id: 'revenue', metric: 'revenue' }] }] };
 const headers = (user = 'demo-iq-admin', tenant = 'demo-iq') => ({ 'x-demo-user-id': user, 'x-tenant-id': tenant, 'x-locale': 'en' });

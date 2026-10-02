@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { productMetricCatalog, tenantProfiles } from '@el-dabbous/domain';
-import type { DashboardSpec, DashboardWidget } from '@el-dabbous/domain';
+import { productMetricCatalog, tenantProfiles } from '@el-dabboos/domain';
+import type { DashboardSpec, DashboardWidget } from '@el-dabboos/domain';
 import { fromGridItems, toGridItems } from '../src/builder/grid-map.ts';
 import { analysisAllowed, blankDashboardDraft, canAddSeries, commitBuilderCommand, commonDimensions, redoBuilder, selectableMetric, startBuilder, undoBuilder, validWidgetDraft, withWidgetMetric } from '../src/builder/model.ts';
 const profile = tenantProfiles['demo-iq'];

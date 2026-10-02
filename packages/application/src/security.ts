@@ -1,6 +1,6 @@
-import { productMetricCatalog, semanticCatalog } from '@el-dabbous/domain';
-import type { AnalyticsContext, AnalyticsRepository, AnalyticsQuery, AnalyticsResult, AuditEvent, AuditSink, AuthorizationPolicy, DashboardSpec, IdentityProvider, Locale, MetricId, Permission, RequestContext, Role, TenantMembership, User } from '@el-dabbous/domain';
-import type { MetricDomain } from '@el-dabbous/domain';
+import { productMetricCatalog, semanticCatalog } from '@el-dabboos/domain';
+import type { AnalyticsContext, AnalyticsRepository, AnalyticsQuery, AnalyticsResult, AuditEvent, AuditSink, AuthorizationPolicy, DashboardSpec, IdentityProvider, Locale, MetricId, Permission, RequestContext, Role, TenantMembership, User } from '@el-dabboos/domain';
+import type { MetricDomain } from '@el-dabboos/domain';
 
 export class AuthorizationError extends Error {
   constructor(readonly code: string, message: string) { super(message); }

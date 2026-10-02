@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { resolveDashboardLayout } from '@el-dabbous/domain';
-import type { DashboardLayout, DashboardSpec, Locale } from '@el-dabbous/domain';
+import { resolveDashboardLayout } from '@el-dabboos/domain';
+import type { DashboardLayout, DashboardSpec, Locale } from '@el-dabboos/domain';
 import { editorMinimums, sizePresets, updateWidgetLayout, widgetSizes } from './layout-tools.ts';
 
 export function WidgetLayoutInspector({ spec, id, locale, onChange }: { spec: DashboardSpec; id: string; locale: Locale; onChange: (layout: DashboardLayout) => void }) {

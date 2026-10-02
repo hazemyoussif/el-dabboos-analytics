@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
-import { validateQuery } from '@el-dabbous/domain';
-import type { AnalyticsQuery } from '@el-dabbous/domain';
+import { validateQuery } from '@el-dabboos/domain';
+import type { AnalyticsQuery } from '@el-dabboos/domain';
 import { analyticsContext } from '../context.ts';
 import type { RouteContext } from '../context.ts';
 

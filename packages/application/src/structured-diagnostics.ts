@@ -1,4 +1,4 @@
-import type { DashboardSchemaIssue } from '@el-dabbous/domain';
+import type { DashboardSchemaIssue } from '@el-dabboos/domain';
 
 export interface StructuredPlannerDiagnostic {
   operation: 'generation' | 'edit';

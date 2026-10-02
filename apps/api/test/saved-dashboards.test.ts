@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import test from 'node:test';
-import { MockAnalyticsRepository, SqliteDashboardRepository, createDashboardPersistenceSchema } from '@el-dabbous/data';
-import type { DashboardSpec } from '@el-dabbous/domain';
+import { MockAnalyticsRepository, SqliteDashboardRepository, createDashboardPersistenceSchema } from '@el-dabboos/data';
+import type { DashboardSpec } from '@el-dabboos/domain';
 import { buildApi } from '../src/app.ts';
 
 const spec: DashboardSpec = { schemaVersion: 2, id: 'same-portable-id', title: { en: 'Sales', ar: 'المبيعات' }, locale: 'en',

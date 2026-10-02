@@ -1,5 +1,5 @@
 import { createElement } from 'react';
-import type { DimensionId, Locale, WidgetType } from '@el-dabbous/domain';
+import type { DimensionId, Locale, WidgetType } from '@el-dabboos/domain';
 import { copy } from '../i18n.ts';
 import { visualizationLabel } from './visualizations.ts';
 import { metricDropCopy } from './metric-drop.ts';

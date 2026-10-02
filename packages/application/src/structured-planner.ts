@@ -1,5 +1,5 @@
-import { applyDashboardPatch, dashboardPatchSchema, dashboardSpecSchema, dashboardPatchSchemaIssues, dashboardSpecSchemaIssues, isMetricId, widgetTypes, semanticCatalog, validateDashboardPatch, validateDashboardSpec } from '@el-dabbous/domain';
-import type { DashboardGenerationRequest, DashboardPatch, DashboardPlanner, DashboardSpec, LLMProvider, Locale, PlannerCapabilities, StructuredOutputRequest, TenantProfile } from '@el-dabbous/domain';
+import { applyDashboardPatch, dashboardPatchSchema, dashboardSpecSchema, dashboardPatchSchemaIssues, dashboardSpecSchemaIssues, isMetricId, widgetTypes, semanticCatalog, validateDashboardPatch, validateDashboardSpec } from '@el-dabboos/domain';
+import type { DashboardGenerationRequest, DashboardPatch, DashboardPlanner, DashboardSpec, LLMProvider, Locale, PlannerCapabilities, StructuredOutputRequest, TenantProfile } from '@el-dabboos/domain';
 import { dashboardTemplates } from './templates.ts';
 import { AuthorizationError } from './security.ts';
 import { projectProviderSchema } from './provider-schema.ts';

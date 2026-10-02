@@ -1,4 +1,4 @@
-# El-Dabbous Analytics agent entry
+# El Dabboos Analytics agent entry
 
 Governed bilingual analytics prototype: canonical semantic metrics, portable DashboardSpec/Patch v2, deterministic adapters, manual/AI drafts and explicit saved-record lifecycle. IQ/EG facts and identities are synthetic; production integration is future work.
 

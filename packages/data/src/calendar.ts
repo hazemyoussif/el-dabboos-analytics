@@ -1,4 +1,4 @@
-import type { ComparisonPeriod, DateRange, DimensionId } from '@el-dabbous/domain';
+import type { ComparisonPeriod, DateRange, DimensionId } from '@el-dabboos/domain';
 
 const date = (iso: string): Date => new Date(`${iso}T00:00:00Z`);
 const iso = (value: Date): string => value.toISOString().slice(0, 10);

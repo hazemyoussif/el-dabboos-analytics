@@ -1,4 +1,4 @@
-import type { AnalysisSpec, DashboardSeries, DashboardSpec, DashboardWidget, DimensionId, MetricId, ProductMetric, SemanticMetric, WidgetType } from '@el-dabbous/domain';
+import type { AnalysisSpec, DashboardSeries, DashboardSpec, DashboardWidget, DimensionId, MetricId, ProductMetric, SemanticMetric, WidgetType } from '@el-dabboos/domain';
 import { visualizationChoices, visualizationCandidate, visualizationNames } from './visualizations.ts';
 import { analysisAllowed, canAddSeries, validWidgetDraft } from './model.ts';
 import type { BuilderCommand, BuilderDocument } from './model.ts';

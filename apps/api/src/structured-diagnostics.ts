@@ -1,4 +1,4 @@
-import type { StructuredPlannerDiagnostic } from '@el-dabbous/application';
+import type { StructuredPlannerDiagnostic } from '@el-dabboos/application';
 
 export const structuredDiagnosticsEnabled = (value: string | undefined): boolean => value === 'true';
 

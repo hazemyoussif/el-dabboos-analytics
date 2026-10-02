@@ -1,4 +1,4 @@
-import type { DimensionId, FactMeasureId } from '@el-dabbous/domain';
+import type { DimensionId, FactMeasureId } from '@el-dabboos/domain';
 /** A dated canonical source measure. Derived metrics never appear as facts. */
 export interface AnalyticsFact {
   tenantId: string;

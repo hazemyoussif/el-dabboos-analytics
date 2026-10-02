@@ -177,7 +177,7 @@ flowchart TB
  O[Odoo or operational systems] --> P[Existing company Python processing]
  P --> M[Proposed canonical mart or PostgreSQL]
  M --> A[AnalyticsRepository adapter]
- A --> S[El-Dabbous semantic layer]
+ A --> S[El Dabboos semantic layer]
  S --> R[Agreed report reconciliation]
  B[Business metric currency tenant approvals] -. gate .-> A
 ```

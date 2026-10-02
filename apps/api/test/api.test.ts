@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { MockAnalyticsRepository } from '@el-dabbous/data';
+import { MockAnalyticsRepository } from '@el-dabboos/data';
 import { buildApi } from '../src/app.ts';
 
 const facts = [
@@ -131,7 +131,7 @@ test('Baghdad manager cannot broaden policy with a dashboard or discover other b
 });
 
 test('planner output is authorized after generation and audit omits raw prompts', async () => {
-  const { InMemoryAuditSink } = await import('@el-dabbous/application');
+  const { InMemoryAuditSink } = await import('@el-dabboos/application');
   const sink = new InMemoryAuditSink();
   const unrestricted = (await app.inject({ method: 'GET', url: '/api/dashboard-templates/sales-performance/instantiate', headers: iq })).json().dashboard;
   const maliciousPlanner = { async generate() { return unrestricted; }, async edit() { return { schemaVersion: 2 as const, operations: [] }; } };

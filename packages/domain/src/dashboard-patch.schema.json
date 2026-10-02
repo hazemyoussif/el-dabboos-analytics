@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://el-dabbous.example/schemas/dashboard-patch/v1",
+  "$id": "https://el-dabboos.example/schemas/dashboard-patch/v1",
   "title": "DashboardPatch v1",
   "type": "object",
   "additionalProperties": false,

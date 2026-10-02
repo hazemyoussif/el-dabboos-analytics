@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createServer } from 'vite';
-import type { DashboardRecord, DashboardSpec } from '@el-dabbous/domain';
+import type { DashboardRecord, DashboardSpec } from '@el-dabboos/domain';
 const spec: DashboardSpec = { schemaVersion:2,id:'portable',title:{ en:'Revenue review',ar:'مراجعة الإيرادات' },locale:'en',filters:{},layout:{ columns:1 },widgets:[{ id:'r',type:'kpi',series:[{ id:'r',metric:'revenue' }] }] };
 const record: DashboardRecord = { id:'record',tenantId:'demo-iq',ownerUserId:'alice',scope:'private',spec,version:1,createdBy:'alice',updatedBy:'alice',createdAt:'2026-01-01',updatedAt:'2026-01-01' };
 test('EN/AR naming dialog and library render localized accessible controls and scoped empty views', async()=>{

@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
-import type { AnalyticsContext, AnalyticsQuery, AnalyticsRepository, AnalyticsResult, DimensionId, FactMeasureId } from '@el-dabbous/domain';
-import { isFactMeasureId, requiredMeasures, semanticCatalog, validDateRange, validateQuery } from '@el-dabbous/domain';
+import type { AnalyticsContext, AnalyticsQuery, AnalyticsRepository, AnalyticsResult, DimensionId, FactMeasureId } from '@el-dabboos/domain';
+import { isFactMeasureId, requiredMeasures, semanticCatalog, validDateRange, validateQuery } from '@el-dabboos/domain';
 import { executeFacts } from './engine.ts';
 import type { AnalyticsFact } from './facts.ts';
 import type { RepositoryMetadataOptions } from './mock.ts';

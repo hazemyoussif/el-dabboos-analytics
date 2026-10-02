@@ -5,7 +5,7 @@ import { DashboardLibrary } from './library/DashboardLibrary.tsx';
 import { DashboardNameDialog } from './library/DashboardNameDialog.tsx';
 import { useDashboardLibrary } from './hooks/useDashboardLibrary.ts';
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
-import type { Locale } from '@el-dabbous/domain';
+import type { Locale } from '@el-dabboos/domain';
 import { DashboardRenderer } from './Renderer.tsx';
 import { useWorkspace } from './hooks/useWorkspace.ts';
 import { useDashboardBuilder } from './hooks/useDashboardBuilder.ts';
@@ -50,9 +50,9 @@ export default function App() {
     </WorkspaceNavigation>
     <main className="main-content">
       <header className="topbar"><NavigationTrigger locale={locale} onClick={() => setDrawerOpen(true)} /><div className="breadcrumb">{t.workspace} <span>/</span> {isCreating ? t.newDashboard : <>{breadcrumb} <span>/</span> {activeTitle}</>}</div>
-        <div className="top-actions"><label className="tenant-control demo-identity">{locale === 'ar' ? 'هوية تجريبية' : 'Demo identity'}<select aria-label="Demo identity" value={userId} onChange={event => flow.switchIdentity(event.target.value)}>{demoUsers.map(user => <option key={user.id} value={user.id}>{user.displayName}</option>)}</select></label>
-          <label className="tenant-control">{t.market}<select aria-label={t.market} value={profile?.id ?? 'demo-iq'} onChange={event => { const next = profiles.find(item => item.id === event.target.value); if (next) flow.selectTenant(next); }}>{profiles.map(item => <option key={item.id} value={item.id}>{item.labels[locale]}</option>)}</select></label>
-          <div className="language-toggle" role="group" aria-label="Language"><button className={locale === 'en' ? 'selected' : ''} onClick={() => workspace.selectLocale('en' as Locale)}>EN</button><button className={locale === 'ar' ? 'selected' : ''} onClick={() => workspace.selectLocale('ar' as Locale)}>عربي</button></div></div></header>
+        <div className="top-actions"><label className="topbar-control demo-identity"><span>{locale === 'ar' ? 'هوية تجريبية' : 'Demo identity'}</span><select aria-label="Demo identity" value={userId} onChange={event => flow.switchIdentity(event.target.value)}>{demoUsers.map(user => <option key={user.id} value={user.id}>{user.displayName}</option>)}</select></label>
+          <label className="topbar-control"><span>{t.market}</span><select aria-label={t.market} value={profile?.id ?? 'demo-iq'} onChange={event => { const next = profiles.find(item => item.id === event.target.value); if (next) flow.selectTenant(next); }}>{profiles.map(item => <option key={item.id} value={item.id}>{item.labels[locale]}</option>)}</select></label>
+          <div className="topbar-control"><span>{t.language}</span><div className="language-toggle" role="group" aria-label={t.language}><button className={locale === 'en' ? 'selected' : ''} onClick={() => workspace.selectLocale('en' as Locale)}>EN</button><button className={locale === 'ar' ? 'selected' : ''} onClick={() => workspace.selectLocale('ar' as Locale)}>عربي</button></div></div></div></header>
       <div className="page-content">
         <DashboardCreationPanel panel={flow.panel} locale={locale} profile={profile} templates={templates} prompt={planner.prompt} onPrompt={planner.setPrompt}
           loading={loading} canGenerate={permissions.includes('ai:generate')} onChooseAi={() => flow.enterCreation('create-ai')}
@@ -77,7 +77,7 @@ export default function App() {
         </>} />}
 
         {flow.nameDialog && <DashboardNameDialog key={`${flow.nameDialog.operation}-${locale}`} spec={flow.nameDialog.spec} locale={locale} busy={loading} onConfirm={spec => void flow.confirmName(spec)} onClose={() => flow.setNameDialog(null)} />}
-        <footer className="footer">© {new Date().getFullYear()} El-Dabbous · {locale === 'ar' ? 'منصة تحليلات تجريبية' : 'Analytics prototype'}</footer>
+        <footer className="footer">© {new Date().getFullYear()} El Dabboos · {locale === 'ar' ? 'منصة تحليلات تجريبية' : 'Analytics prototype'}</footer>
       </div>
     </main>
   </div>;

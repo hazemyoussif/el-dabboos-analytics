@@ -1,7 +1,7 @@
 import { GripVertical, MoreHorizontal } from 'lucide-react';
 import ReactGridLayout, { noCompactor, useContainerWidth } from 'react-grid-layout';
-import { resolveDashboardLayout, validateDashboardLayout } from '@el-dabbous/domain';
-import type { DashboardLayout, DashboardSpec, DashboardWidget, Locale, MetricId } from '@el-dabbous/domain';
+import { resolveDashboardLayout, validateDashboardLayout } from '@el-dabboos/domain';
+import type { DashboardLayout, DashboardSpec, DashboardWidget, Locale, MetricId } from '@el-dabboos/domain';
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import 'react-grid-layout/css/styles.css';

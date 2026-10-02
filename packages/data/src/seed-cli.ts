@@ -1,7 +1,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import { createSqliteSchema, insertFacts } from './sqlite.ts';
 import { generateSeedFacts } from './seed.ts';
-import { getTenantProfile, tenantProfiles } from '@el-dabbous/domain';
+import { getTenantProfile, tenantProfiles } from '@el-dabboos/domain';
 
 const path = process.argv[2] ?? 'demo.db';
 const requestedTenant = process.argv[3];

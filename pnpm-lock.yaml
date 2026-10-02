@@ -184,13 +184,13 @@ importers:
 
   apps/api:
     dependencies:
-      '@el-dabbous/application':
+      '@el-dabboos/application':
         specifier: workspace:*
         version: link:../../packages/application
-      '@el-dabbous/data':
+      '@el-dabboos/data':
         specifier: workspace:*
         version: link:../../packages/data
-      '@el-dabbous/domain':
+      '@el-dabboos/domain':
         specifier: workspace:*
         version: link:../../packages/domain
       '@fastify/cors':
@@ -206,10 +206,10 @@ importers:
 
   apps/web:
     dependencies:
-      '@el-dabbous/application':
+      '@el-dabboos/application':
         specifier: workspace:*
         version: link:../../packages/application
-      '@el-dabbous/domain':
+      '@el-dabboos/domain':
         specifier: workspace:*
         version: link:../../packages/domain
       lucide-react:
@@ -243,13 +243,13 @@ importers:
 
   packages/application:
     dependencies:
-      '@el-dabbous/domain':
+      '@el-dabboos/domain':
         specifier: workspace:*
         version: link:../domain
 
   packages/data:
     dependencies:
-      '@el-dabbous/domain':
+      '@el-dabboos/domain':
         specifier: workspace:*
         version: link:../domain
 

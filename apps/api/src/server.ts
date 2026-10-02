@@ -1,10 +1,10 @@
 import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
-import { SqliteDashboardLibraryRepository, createDashboardLibrarySchema, MockAnalyticsRepository, SqliteAnalyticsRepository, SqliteDashboardRepository, createSqliteSchema, createDashboardPersistenceSchema, generateSeedFacts } from '@el-dabbous/data';
-import type { AnalyticsRepository, DimensionValueRepository } from '@el-dabbous/domain';
-import { StructuredDashboardPlanner } from '@el-dabbous/application';
-import type { StructuredPlannerDiagnostic } from '@el-dabbous/application';
-import type { DashboardPlanner } from '@el-dabbous/domain';
+import { SqliteDashboardLibraryRepository, createDashboardLibrarySchema, MockAnalyticsRepository, SqliteAnalyticsRepository, SqliteDashboardRepository, createSqliteSchema, createDashboardPersistenceSchema, generateSeedFacts } from '@el-dabboos/data';
+import type { AnalyticsRepository, DimensionValueRepository } from '@el-dabboos/domain';
+import { StructuredDashboardPlanner } from '@el-dabboos/application';
+import type { StructuredPlannerDiagnostic } from '@el-dabboos/application';
+import type { DashboardPlanner } from '@el-dabboos/domain';
 import { OpenAICompatibleLLMProvider } from './providers/openai-compatible.ts';
 import { formatStructuredDiagnostic } from './structured-diagnostics.ts';
 import { parseRuntimeConfig, startupSummary } from './startup-config.ts';
@@ -54,7 +54,7 @@ const port = config.port;
 try {
   const address = await app.listen({ port, host: '127.0.0.1' });
   process.stdout.write(`${startupSummary({ analyticsProvider: provider, dashboardPath: config.dashboardPath, plannerMode, modelId: config.llm.modelId, baseUrl: config.llm.baseUrl, diagnostics: config.llm.diagnostics, port, executionConcurrency: config.executionConcurrency }, config.llm.apiKey)}\n`);
-  process.stdout.write(`El-Dabbous API listening at ${address}\n`);
+  process.stdout.write(`El Dabboos API listening at ${address}\n`);
 } catch (error) {
   close(); dashboardDb.close();
   throw error;

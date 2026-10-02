@@ -1,4 +1,4 @@
-import type { WidgetExecution } from '@el-dabbous/application';
+import type { WidgetExecution } from '@el-dabboos/application';
 import { Cell, Label, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { compactSeriesValue, valueKey } from './shared.ts';
 import type { ChartRow, RenderSeriesProps } from './shared.ts';

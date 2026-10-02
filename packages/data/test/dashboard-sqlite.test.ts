@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import test from 'node:test';
-import type { DashboardRecord, DashboardSpec } from '@el-dabbous/domain';
+import type { DashboardRecord, DashboardSpec } from '@el-dabboos/domain';
 import { createDashboardPersistenceSchema, SqliteDashboardRepository } from '../src/dashboard-sqlite.ts';
 
 const spec: DashboardSpec = { schemaVersion: 2, id: 'portable-spec', title: { en: 'Sales', ar: 'المبيعات' }, locale: 'en',

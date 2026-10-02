@@ -1,6 +1,6 @@
-import { applyDashboardPatch, resolveDashboardLayout, semanticCatalog, validateAnalysis, validateDashboardSpec, visualizationIssues } from '@el-dabbous/domain';
-import type { AnalysisSpec, DashboardLayout, DashboardPatch, DashboardSpec, DashboardWidget, DimensionId, Locale, MetricId, ProductMetric, SemanticMetric, TenantProfile } from '@el-dabbous/domain';
-import { resolveDatePreset } from '@el-dabbous/application';
+import { applyDashboardPatch, resolveDashboardLayout, semanticCatalog, validateAnalysis, validateDashboardSpec, visualizationIssues } from '@el-dabboos/domain';
+import type { AnalysisSpec, DashboardLayout, DashboardPatch, DashboardSpec, DashboardWidget, DimensionId, Locale, MetricId, ProductMetric, SemanticMetric, TenantProfile } from '@el-dabboos/domain';
+import { resolveDatePreset } from '@el-dabboos/application';
 
 export interface EmptyBuilderDraft {
   kind: 'empty';

@@ -1,4 +1,4 @@
-# El-Dabbous AI Analytics
+# El Dabboos AI Analytics
 
 A source-independent, bilingual analytics prototype with two controlled synthetic markets, a ready-made dashboard library, a manual Dashboard Builder with saved dashboard records, and DashboardSpec v2 multi-metric visualizations. The default local tenant is Iraq (`demo-iq`); Egypt (`demo-eg`) uses the same templates and metrics.
 
@@ -20,7 +20,7 @@ In another terminal:
 pnpm run dev:web
 ```
 
-Open <http://127.0.0.1:5173/>. The API listens at <http://127.0.0.1:3001/>. The seed command adds both `demo-iq` and `demo-eg` to a fresh local SQLite file; it refuses to overwrite existing facts for either tenant. If you retain an older v1 `demo.db`, the command can add the two new tenants to it. To use another path, pass it to `pnpm run seed <path>` and set `SQLITE_DB_PATH=<path>` for the API. API dev/start automatically load optional root `.env` then `.env.local`; shell variables take precedence. Tests do not load these files. Relative database paths are resolved from `apps/api` by workspace scripts; use absolute paths for a fixed database location. The built API starts with `pnpm run build` followed by `pnpm --filter @el-dabbous/api start`. `ANALYTICS_PROVIDER=mock` uses in-memory synthetic facts for both tenants.
+Open <http://127.0.0.1:5173/>. The API listens at <http://127.0.0.1:3001/>. The seed command adds both `demo-iq` and `demo-eg` to a fresh local SQLite file; it refuses to overwrite existing facts for either tenant. If you retain an older v1 `demo.db`, the command can add the two new tenants to it. To use another path, pass it to `pnpm run seed <path>` and set `SQLITE_DB_PATH=<path>` for the API. API dev/start automatically load optional root `.env` then `.env.local`; shell variables take precedence. Tests do not load these files. Relative database paths are resolved from `apps/api` by workspace scripts; use absolute paths for a fixed database location. The built API starts with `pnpm run build` followed by `pnpm --filter @el-dabboos/api start`. `ANALYTICS_PROVIDER=mock` uses in-memory synthetic facts for both tenants.
 
 The app opens the `Sales Performance` template under Iraq. Use the market selector to switch to Egypt, the language buttons for English/Arabic, and Templates navigation for the ready-made template library. The same template ID and widget definition are reused across markets. No AI service is required by default. The mock planner recognizes a bounded sales request such as `أريد dashboard للمبيعات ويّاه أعلى الزبائن والمديونيات` or `Create a sales dashboard`, then supports a few edits such as adding a three-month moving average or removing receivables. Unsupported intents return a structured error.
 
@@ -45,7 +45,7 @@ KPI widgets have one series. Line/bar widgets can combine compatible metrics suc
 
 The browser receives currency, time zone, locale, and branch labels from the server's controlled profile. Synthetic Iraqi monetary facts are nominal IQD and Egyptian facts nominal EGP; there is no FX conversion. In an operational source, transaction currency, company/base currency, and reporting currency must be distinguished before any aggregation. Unrelated currencies must not be summed without an approved conversion policy. Arabic UI uses Modern Standard Arabic; Iraqi and Egyptian dialect synonyms support future planning/evaluation, not ordinary labels. The demo selector is not authentication. Dashboard records are stored separately from DashboardSpec in SQLite (`DASHBOARD_DB_PATH`, default `dashboards.db`), independently of the analytics provider.
 
-The fixture spans October 2024 through September 2026 with synthetic branch/customer geography. No branch or customer represents actual El-Dabbous operations. Planned metric concepts are discoverable but cannot execute until their data/formulas are approved. See [current assumptions](docs/architecture/current-assumptions.md), [architecture overview](docs/architecture/overview.md), and [ADRs](docs/architecture/adr/).
+The fixture spans October 2024 through September 2026 with synthetic branch/customer geography. No branch or customer represents actual El Dabboos operations. Planned metric concepts are discoverable but cannot execute until their data/formulas are approved. See [current assumptions](docs/architecture/current-assumptions.md), [architecture overview](docs/architecture/overview.md), and [ADRs](docs/architecture/adr/).
 
 ## Dashboard product flow
 
@@ -75,3 +75,5 @@ and [all API environment settings](docs/architecture/openai-compatible-provider.
 - [Manual QA](docs/qa/manual-test-plan.md)
 - [Agent guide](AGENTS.md)
 - [Integration readiness](docs/integration/production-readiness.md) and [Malik questions](docs/integration/questions-for-malik.md)
+
+See [brand assets and browser preference compatibility](docs/developer/branding.md).

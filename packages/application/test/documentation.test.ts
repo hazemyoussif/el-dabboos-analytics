@@ -3,7 +3,7 @@ import test from 'node:test';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { widgetTypes } from '@el-dabbous/domain';
+import { widgetTypes } from '@el-dabboos/domain';
 const root = fileURLToPath(new URL('../../../', import.meta.url));
 function markdown(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap(entry => entry.isDirectory() ? markdown(join(directory, entry.name)) : entry.name.endsWith('.md') ? [join(directory, entry.name)] : []);

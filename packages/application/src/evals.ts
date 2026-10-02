@@ -1,4 +1,4 @@
-import type { MetricId } from '@el-dabbous/domain';
+import type { MetricId } from '@el-dabboos/domain';
 export type LanguageCategory = 'en' | 'msa' | 'iq' | 'eg' | 'iq_mixed' | 'eg_mixed' | 'arabic_indic_digits' | 'western_digits';
 export type PlanningAction = 'reuse_template' | 'modify_template' | 'create_composition' | 'clarify' | 'reject_unavailable';
 export interface PlanningEvaluationCase {

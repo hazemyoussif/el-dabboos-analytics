@@ -1,5 +1,5 @@
 import { Sparkles, ArrowUpRight } from 'lucide-react';
-import type { Locale, TenantProfile } from '@el-dabbous/domain';
+import type { Locale, TenantProfile } from '@el-dabboos/domain';
 import { copy } from '../i18n.ts';
 interface Props { locale: Locale; profile: TenantProfile; instruction: string; onInstruction: (value: string) => void;
   loading: boolean; onApply: () => void; onClose: () => void }

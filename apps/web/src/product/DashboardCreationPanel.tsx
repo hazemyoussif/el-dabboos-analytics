@@ -1,6 +1,6 @@
 import { Sparkles, Plus, LayoutTemplate, ArrowUpRight } from 'lucide-react';
 import { TemplateBrowser } from '../library/TemplateBrowser.tsx';
-import type { Locale, TenantProfile } from '@el-dabbous/domain';
+import type { Locale, TenantProfile } from '@el-dabboos/domain';
 import type { AccessibleTemplate } from '../api/client.ts';
 import { showCreationPanel } from '../product-flow.ts';
 import type { ProductPanel } from '../product-flow.ts';

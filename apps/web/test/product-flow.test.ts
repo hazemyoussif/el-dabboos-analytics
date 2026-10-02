@@ -1,13 +1,13 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { DashboardSection } from '../src/product/DashboardSection.ts';
-import { applyDashboardPatch } from '@el-dabbous/domain';
+import { applyDashboardPatch } from '@el-dabboos/domain';
 import { commitBuilderCommand, startBuilder } from '../src/builder/model.ts';
 import { documentIsDirty } from '../src/dashboard-lifecycle.ts';
 import type { ProductPanel } from '../src/product-flow.ts';
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import type { DashboardRecord, DashboardSpec } from '@el-dabbous/domain';
+import type { DashboardRecord, DashboardSpec } from '@el-dabboos/domain';
 import { editDocument, generatedDocument, newManualDocument, openTemplateDocument, savedDocument } from '../src/dashboard-lifecycle.ts';
 import { dashboardActions, dashboardStatus, switchDashboardEditor, mayEnterCreation, showAiCreation, showAiEditor, showCreationPanel } from '../src/product-flow.ts';
 

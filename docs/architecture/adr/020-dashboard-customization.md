@@ -60,7 +60,7 @@ same validation, persistence and application behavior.
 
 Available, authorized registry entries support native metric dragging and clickable
 keyboard-accessible buttons. Web-only BuilderDragItem distinguishes widget-type
-and metric payloads under `application/x-el-dabbous-builder`; a prefixed text
+and metric payloads under `application/x-el-dabboos-builder`; a prefixed text
 fallback is accepted. Parsing is size bounded, rejects unknown/extra identifiers,
 and rechecks both the available registry and authorized semantic catalog at drop.
 Planned entries remain nondraggable. Browser payloads never contain patches or SQL.

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { DemoIdentityProvider, DefaultAuthorizationPolicy, AuthorizedAnalyticsService, analyticsContext, authorizedCatalog, demoMemberships, demoRoles, InMemoryAuditSink } from '../src/security.ts';
-import type { AnalyticsRepository, AnalyticsQuery, AnalyticsContext, AnalyticsResult } from '@el-dabbous/domain';
+import type { AnalyticsRepository, AnalyticsQuery, AnalyticsContext, AnalyticsResult } from '@el-dabboos/domain';
 
 const identity = new DemoIdentityProvider();
 const policy = new DefaultAuthorizationPolicy();

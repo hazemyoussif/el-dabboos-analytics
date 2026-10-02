@@ -1,4 +1,4 @@
-import type { WidgetExecution } from '@el-dabbous/application';
+import type { WidgetExecution } from '@el-dabboos/application';
 import { Bar, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { localeTag } from '../i18n.ts';
 import { comparisonKey, seriesLabel, valueKey } from './shared.ts';

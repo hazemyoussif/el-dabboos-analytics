@@ -1,4 +1,4 @@
-import type { LLMProvider, StructuredOutputRequest, StructuredOutputResponse } from '@el-dabbous/domain';
+import type { LLMProvider, StructuredOutputRequest, StructuredOutputResponse } from '@el-dabboos/domain';
 
 export interface OpenAICompatibleConfig { baseUrl: string; modelId: string; apiKey?: string; timeoutMs: number }
 export class ProviderTransportError extends Error {

@@ -1,5 +1,5 @@
-import { validateDashboardSpec } from '@el-dabbous/domain';
-import type { DashboardGenerationRequest, DashboardPatch, DashboardPlanner, DashboardSpec, TenantProfile, PlannerCapabilities } from '@el-dabbous/domain';
+import { validateDashboardSpec } from '@el-dabboos/domain';
+import type { DashboardGenerationRequest, DashboardPatch, DashboardPlanner, DashboardSpec, TenantProfile, PlannerCapabilities } from '@el-dabboos/domain';
 import { getDashboardTemplate, instantiateDashboardTemplate } from './templates.ts';
 
 export class UnsupportedDemoIntentError extends Error { readonly code = 'UNSUPPORTED_DEMO_INTENT'; }

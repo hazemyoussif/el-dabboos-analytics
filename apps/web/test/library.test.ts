@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { tenantProfiles } from '@el-dabbous/domain';
-import type { DashboardRecord, DashboardSpec } from '@el-dabbous/domain';
-import { dashboardTemplates, instantiateDashboardTemplate } from '@el-dabbous/application';
+import { tenantProfiles } from '@el-dabboos/domain';
+import type { DashboardRecord, DashboardSpec } from '@el-dabboos/domain';
+import { dashboardTemplates, instantiateDashboardTemplate } from '@el-dabboos/application';
 import { namedSpec, filterLibrary, filterTemplates } from '../src/library-model.ts';
 import { blankDashboardDraft, commitBuilderCommand, startBuilder } from '../src/builder/model.ts';
 import { discardSavedChanges, documentIsDirty, editDocument, generatedDocument, openTemplateDocument, persistDocument, savedDocument } from '../src/dashboard-lifecycle.ts';

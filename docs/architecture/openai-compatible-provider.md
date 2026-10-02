@@ -34,8 +34,8 @@ Copy [.env.example](../../.env.example) to an ignored `.env.local` file if your 
 
 ## Native API environment loading (Node 24)
 
-`pnpm dev:api` / `pnpm --filter @el-dabbous/api dev` and
-`pnpm --filter @el-dabbous/api start` load optional repository-root `.env`, then
+`pnpm dev:api` / `pnpm --filter @el-dabboos/api dev` and
+`pnpm --filter @el-dabboos/api start` load optional repository-root `.env`, then
 `.env.local`, using Node's `--env-file-if-exists`. Precedence is the real shell
  environment, `.env.local`, `.env`, then application defaults. Workspace scripts
 run from `apps/api`; the explicit `../../` paths refer to the repository root.

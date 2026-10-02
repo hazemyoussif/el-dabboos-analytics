@@ -1,5 +1,5 @@
-import { timeDimensions, widgetTypes } from '@el-dabbous/domain';
-import type { DashboardSpec, DashboardWidget, Locale, SemanticMetric, WidgetPresentation, WidgetType } from '@el-dabbous/domain';
+import { timeDimensions, widgetTypes } from '@el-dabboos/domain';
+import type { DashboardSpec, DashboardWidget, Locale, SemanticMetric, WidgetPresentation, WidgetType } from '@el-dabboos/domain';
 import { validWidgetDraft } from './model.ts';
 
 export interface VisualizationOption { id: string; type: WidgetType; presentation?: WidgetPresentation; group: 'summary' | 'trend' | 'comparison' | 'composition' | 'detail' }
