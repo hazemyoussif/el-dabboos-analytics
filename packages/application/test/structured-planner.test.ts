@@ -18,11 +18,11 @@ const now = new Date('2026-10-01T00:00:00Z');
 const toPlan = (value: DashboardSpec): DashboardGenerationPlan => ({ titleEn: value.title.en, titleAr: value.title.ar,
   ...(value.filters.dateRange ? { dateFrom: value.filters.dateRange.from, dateTo: value.filters.dateRange.to } : {}),
   widgets: value.widgets.map(w => ({ requestedPresentation: { type: w.type, ...((({ legend, dataLabels, ...rest }) => ({ ...rest, ...(legend && legend !== 'auto' ? { legend } : {}), ...(dataLabels && dataLabels !== 'auto' ? { dataLabels } : {}) }))(w.presentation ?? {})) }, ...(w.dimension ? { dimension: w.dimension } : {}),
-    series: w.series.map(s => ({ metric: s.metric })) })) });
+    series: w.series.map(s => ({ metric: s.metric })) })) } as DashboardGenerationPlan);
 const plan = toPlan(spec);
 const compiled = (p = plan) => compileDashboardGenerationPlan(p, profile, 'en', now);
 const expectedSchema = structuredClone(dashboardGenerationPlanSchema);
-expectedSchema.properties.widgets.items.properties.series.items.properties.metric.enum = ['revenue'];
+expectedSchema.$defs.series.properties.metric.enum = ['revenue'];
 const request = { prompt: 'Show revenue', locale: 'en' as const, context: { tenantId: profile.id, locale: 'en' as const }, tenantProfile: profile, capabilities };
 class SequenceProvider implements LLMProvider {
   readonly requests: StructuredOutputRequest[] = [];

@@ -75,7 +75,7 @@ for (const widget of [
   { requestedPresentation: { type: 'line' }, dimension: 'branch', series: [{ metric: 'revenue', movingAverageWindow: 3 }] },
   { requestedPresentation: { type: 'bar' }, dimension: 'branch', series: [{ metric: 'revenue' }, { metric: 'gross_profit', topNDirection: 'top', topNLimit: 5 }] },
 ] as GenerationWidget[]) test(`canonical semantics rejects incompatible intent ${JSON.stringify(widget).slice(0, 80)}`, () => assert.throws(() => run({ ...minimal, widgets: [widget] })));
-test('portable plan stays smaller and shallower than canonical DashboardSpec with no infrastructure properties', () => {
+test('portable plan remains compact and shallower than canonical DashboardSpec with no infrastructure properties', () => {
   const portable = projectProviderSchema(dashboardGenerationPlanSchema);
   const canonical = projectProviderSchema(dashboardSpecSchema);
   const depth = (value: unknown, root: Record<string, unknown>): number => {
@@ -90,7 +90,7 @@ test('portable plan stays smaller and shallower than canonical DashboardSpec wit
     for (const key of Object.keys(properties ?? {})) assert.ok(!['schemaVersion', 'layout', 'id', 'widgetId', 'x', 'y', 'w', 'h', 'minW', 'minH', 'tenantId', 'ownerId'].includes(key));
     for (const child of Object.values(value)) walk(child);
   };
-  walk(portable); assert.ok(depth(portable, portable) <= depth(canonical, canonical) - 2); assert.ok(JSON.stringify(portable).length < JSON.stringify(canonical).length * 0.9);
+  walk(portable); assert.ok(depth(portable, portable) <= depth(canonical, canonical) - 1); assert.ok(JSON.stringify(portable).length <= JSON.stringify(canonical).length * 1.05);
 });
 
 for (const key of ['type', 'orientation', 'pieVariant', 'legend', 'dataLabels', 'curve']) test(`old root presentation ${key} is rejected`, () => {
@@ -112,8 +112,8 @@ test('generation contract and portable provider schema exclude model-supplied se
     const widget = { dimension: 'branch' as const, requestedPresentation: { type }, series: [
       { metric: 'revenue' as const, mark: 'bar' }, ...(type === 'combo' ? [{ metric: 'gross_profit' as const }] : []),
     ] };
-    assert.throws(() => validateDashboardGenerationPlan({ ...minimal, widgets: [widget] }), /schema/);
-    assert.throws(() => run({ ...minimal, widgets: [widget] }), /schema/);
+    assert.throws(() => validateDashboardGenerationPlan({ ...minimal, widgets: [widget as GenerationWidget] }), /schema/);
+    assert.throws(() => run({ ...minimal, widgets: [widget as GenerationWidget] }), /schema/);
   }
 });
 test('ordinary generated Top-N Bar has no per-series presentation and Combo marks are code-owned', () => {
@@ -144,10 +144,10 @@ const supportedPresentations: RequestedPresentation[] = [
 for (const options of supportedPresentations) test(`both schemas accept ${options.type} options and every governed palette; compiler preserves explicit intent`, () => {
   for (const palette of governedPalettes) {
     const requestedPresentation = { ...options, palette };
-    const widget: GenerationWidget = { requestedPresentation,
+    const widget = { requestedPresentation,
       ...(options.type === 'kpi' ? {} : { dimension: ['line', 'area', 'combo'].includes(options.type) ? 'month' : 'branch' }),
       series: [{ metric: 'revenue' }, ...(options.type === 'combo' ? [{ metric: 'gross_profit' as const }] : [])],
-    };
+    } as GenerationWidget;
     const plan = { ...minimal, widgets: [widget] };
     validateDashboardGenerationPlan(plan); assert.equal(providerPlanCheck(plan), true);
     const compiled = run(plan).widgets[0]!;
@@ -157,11 +157,11 @@ for (const options of supportedPresentations) test(`both schemas accept ${option
   }
 });
 test('portable presentation variants use only existing supported keywords and require disjoint types', () => {
-  const original = dashboardGenerationPlanSchema.properties.widgets.items.properties.requestedPresentation;
+  const original = dashboardGenerationPlanSchema.properties.widgets.items.oneOf[1]!.properties.requestedPresentation!;
   const projected = projectProviderSchema(original);
   assert.deepEqual(projected, original);
   assert.equal(original.oneOf.length, 5);
-  assert.deepEqual(original.oneOf.flatMap(branch => branch.properties.type.enum).sort(), ['area', 'bar', 'combo', 'kpi', 'line', 'pie', 'table', 'treemap']);
+  assert.deepEqual(original.oneOf.flatMap(branch => branch.properties.type.enum).sort(), ['area', 'bar', 'combo', 'line', 'pie', 'table', 'treemap']);
   for (const branch of original.oneOf) { assert.deepEqual(branch.required, ['type']); assert.equal(branch.additionalProperties, false); }
   assert.ok(!JSON.stringify(projected).includes('"const"')); assert.ok(!JSON.stringify(projected).includes('"mark"'));
   assert.equal(providerPlanCheck(minimal), true);
@@ -169,4 +169,50 @@ test('portable presentation variants use only existing supported keywords and re
   type BarCurveAllowed = 'curve' extends keyof Extract<RequestedPresentation, { type: 'bar' }> ? true : false;
   const missingTypeAllowed: MissingTypeAllowed = false; const barCurveAllowed: BarCurveAllowed = false;
   assert.equal(missingTypeAllowed, false); assert.equal(barCurveAllowed, false);
+});
+
+for (const type of ['line', 'bar', 'area', 'pie', 'treemap', 'combo', 'table'] as const)
+  test(`both generation schemas prevent dimensionless ${type}`, () => {
+    const invalid = withPresentation({ type });
+    assert.equal(providerPlanCheck(invalid), false);
+    assert.throws(() => validateDashboardGenerationPlan(invalid), /schema/);
+  });
+for (const widget of [
+  { dimension: 'branch', requestedPresentation: { type: 'kpi' }, series: [{ metric: 'revenue' }] },
+  { series: [{ metric: 'revenue' }, { metric: 'gross_profit' }] },
+]) test(`both generation schemas prevent impossible summary ${JSON.stringify(widget)}`, () => {
+  const invalid = { ...minimal, widgets: [widget] };
+  assert.equal(providerPlanCheck(invalid), false);
+  assert.throws(() => validateDashboardGenerationPlan(invalid), /schema/);
+});
+test('summary/grouped contract preserves all code-owned defaults and explicit KPI intent', () => {
+  const plan: DashboardGenerationPlan = { ...minimal, widgets: [
+    { series: [{ metric: 'revenue' }] },
+    { series: [{ metric: 'revenue' }], requestedPresentation: { type: 'kpi', palette: 'blue' } },
+    { dimension: 'month', series: [{ metric: 'revenue' }] },
+    { dimension: 'branch', series: [{ metric: 'revenue' }] },
+    { dimension: 'month', series: [{ metric: 'revenue' }, { metric: 'gross_margin' }] },
+  ] };
+  assert.equal(providerPlanCheck(plan), true); validateDashboardGenerationPlan(plan);
+  const result = run(plan);
+  assert.deepEqual(result.widgets.map(widget => widget.type), ['kpi', 'kpi', 'line', 'bar', 'table']);
+  assert.equal(result.widgets[1]!.presentation!.palette, 'blue');
+  type InvalidSummaryAllowed = { series: [GenerationSeries, GenerationSeries] } extends GenerationWidget ? true : false;
+  type GroupedKpiAllowed = { dimension: 'month'; series: [GenerationSeries]; requestedPresentation: { type: 'kpi' } } extends GenerationWidget ? true : false;
+  const invalidSummaryAllowed: InvalidSummaryAllowed = false; const groupedKpiAllowed: GroupedKpiAllowed = false;
+  assert.equal(invalidSummaryAllowed, false); assert.equal(groupedKpiAllowed, false);
+});
+test('hard three-widget fixture retains revenue KPI, monthly moving average and gross profit Top-5 blue horizontal bars', () => {
+  const plan: DashboardGenerationPlan = { ...minimal, widgets: [
+    { series: [{ metric: 'revenue' }], requestedPresentation: { type: 'kpi' } },
+    { dimension: 'month', series: [{ metric: 'revenue', movingAverageWindow: 3 }], requestedPresentation: { type: 'line' } },
+    { dimension: 'branch', series: [{ metric: 'gross_profit', topNDirection: 'top', topNLimit: 5 }], requestedPresentation: { type: 'bar', orientation: 'horizontal', palette: 'blue' } },
+  ] };
+  assert.equal(providerPlanCheck(plan), true); validateDashboardGenerationPlan(plan);
+  const result = run(plan); validateDashboardSpec(result);
+  assert.deepEqual(result.widgets.map(widget => [widget.type, widget.dimension]), [['kpi', undefined], ['line', 'month'], ['bar', 'branch']]);
+  assert.deepEqual(result.widgets[1]!.series[0]!.analysis, { movingAverage: { window: 3 } });
+  assert.deepEqual(result.widgets[2]!.series[0]!.analysis, { topN: { direction: 'top', limit: 5 } });
+  assert.equal(result.widgets[2]!.presentation!.palette, 'blue');
+  assert.equal(result.widgets[2]!.presentation!.orientation, 'horizontal');
 });

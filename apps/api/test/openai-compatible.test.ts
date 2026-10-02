@@ -89,7 +89,7 @@ test('HTTP adapter and planner repair malformed content with one bounded retry',
     const result = await planner.generate({ prompt: 'Show revenue', locale: 'en', context: { tenantId: 'demo-iq', locale: 'en' },
       tenantProfile: (await import('@el-dabboos/domain')).tenantProfiles['demo-iq'],
       capabilities: { metricIds: ['revenue'], templateIds: [], actions: ['ai:generate'] } });
-    assert.deepEqual(result, compileDashboardGenerationPlan(plan, (await import('@el-dabboos/domain')).tenantProfiles['demo-iq'], 'en', new Date()));
+    assert.deepEqual(result, compileDashboardGenerationPlan(plan as import('@el-dabboos/application').DashboardGenerationPlan, (await import('@el-dabboos/domain')).tenantProfiles['demo-iq'], 'en', new Date()));
     assert.equal(fake.requests.length, 2);
     assert.equal((fake.requests[1]?.messages as unknown[]).length, 3);
   } finally { await fake.close(); }

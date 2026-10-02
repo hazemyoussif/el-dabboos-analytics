@@ -20,12 +20,20 @@ export type RequestedPresentation = RequestedPalette & (
   | ({ type: 'line' | 'area' | 'combo'; curve?: NonNullable<WidgetPresentation['curve']> } & RequestedLegend)
   | ({ type: 'pie'; pieVariant?: NonNullable<WidgetPresentation['pieVariant']>; dataLabels?: 'show' | 'hide' } & RequestedLegend)
   | ({ type: 'treemap'; dataLabels?: 'show' | 'hide' } & RequestedLegend)
-  | { type: 'kpi' | 'table' }
+  | { type: 'kpi' } | { type: 'table' }
 );
-export interface GenerationWidget {
-  titleEn?: string; titleAr?: string; dimension?: DimensionId;
-  series: GenerationSeries[]; requestedPresentation?: RequestedPresentation;
-}
+type GenerationTitles = { titleEn?: string; titleAr?: string };
+export type SummaryGenerationWidget = GenerationTitles & {
+  dimension?: never;
+  series: [GenerationSeries];
+  requestedPresentation?: Extract<RequestedPresentation, { type: 'kpi' }>;
+};
+export type GroupedGenerationWidget = GenerationTitles & {
+  dimension: DimensionId;
+  series: [GenerationSeries, ...GenerationSeries[]];
+  requestedPresentation?: Exclude<RequestedPresentation, { type: 'kpi' }>;
+};
+export type GenerationWidget = SummaryGenerationWidget | GroupedGenerationWidget;
 export interface GenerationSeries {
   metric: MetricId; comparison?: AnalysisSpec['comparison']; movingAverageWindow?: number;
   runningTotal?: boolean; percentageContribution?: boolean; ranking?: boolean;
@@ -50,13 +58,20 @@ const requestedPresentationSchema = { oneOf: [
   object({ type: choice(['line', 'area', 'combo']), palette, curve: choice(['straight', 'smooth']), legend }, ['type']),
   object({ type: choice(['pie']), palette, pieVariant: choice(['pie', 'donut']), dataLabels, legend }, ['type']),
   object({ type: choice(['treemap']), palette, dataLabels, legend }, ['type']),
-  object({ type: choice(['kpi', 'table']), palette }, ['type']),
+  object({ type: choice(['table']), palette }, ['type']),
 ] };
-const widgetSchema = object({ titleEn: text, titleAr: text, dimension: { $ref: '#/$defs/dimension' },
-  series: { type: 'array', minItems: 1, maxItems: 8, items: seriesSchema },
-  requestedPresentation: requestedPresentationSchema,
-}, ['series']);
-export const dashboardGenerationPlanSchema = { $defs: { palette: choice(governedPalettes), dimension: choice(dimensions) }, ...object({ titleEn: text, titleAr: text,
+// Presence of dimension selects grouping; closed objects prevent summary charts.
+const widgetSchema = { oneOf: [
+  object({ titleEn: text, titleAr: text,
+    series: { type: 'array', minItems: 1, maxItems: 1, items: { $ref: '#/$defs/series' } },
+    requestedPresentation: object({ type: choice(['kpi']), palette }, ['type']),
+  }, ['series']),
+  object({ titleEn: text, titleAr: text, dimension: { $ref: '#/$defs/dimension' },
+    series: { type: 'array', minItems: 1, maxItems: 8, items: { $ref: '#/$defs/series' } },
+    requestedPresentation: requestedPresentationSchema,
+  }, ['dimension', 'series']),
+] as const };
+export const dashboardGenerationPlanSchema = { $defs: { series: seriesSchema, palette: choice(governedPalettes), dimension: choice(dimensions) }, ...object({ titleEn: text, titleAr: text,
   datePreset: choice(['current_year', 'last_12_months', 'last_6_months']),
   dateFrom: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' }, dateTo: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
   filters: { type: 'array', maxItems: 14, items: object({ dimension: { $ref: '#/$defs/dimension' },
