@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { AuthorizationError, dashboardTemplates, getDashboardTemplate, instantiateDashboardTemplate } from '@el-dabbous/application';
+import { AuthorizationError, dashboardTemplates, getDashboardTemplate, instantiateDashboardTemplate } from '@el-dabboos/application';
 import { analyticsContext } from '../context.ts';
 import type { RouteContext } from '../context.ts';
 import { ApiError } from '../errors.ts';

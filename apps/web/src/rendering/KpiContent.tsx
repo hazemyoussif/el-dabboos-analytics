@@ -1,4 +1,4 @@
-import type { WidgetExecution } from '@el-dabbous/application';
+import type { WidgetExecution } from '@el-dabboos/application';
 import { ArrowDownRight, ArrowUpRight, Minus } from 'lucide-react';
 import { formatValue } from '../i18n.ts';
 import { presentationCopy } from '../presentation/copy.ts';

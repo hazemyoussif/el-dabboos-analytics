@@ -1,5 +1,5 @@
 import type { DatabaseSync } from 'node:sqlite';
-import type { DashboardFolder, DashboardLibraryPreference, DashboardLibraryRepository, DashboardLibraryScope } from '@el-dabbous/domain';
+import type { DashboardFolder, DashboardLibraryPreference, DashboardLibraryRepository, DashboardLibraryScope } from '@el-dabboos/domain';
 export function createDashboardLibrarySchema(db: DatabaseSync): void {
   db.exec(`CREATE TABLE IF NOT EXISTS dashboard_folders (
     id TEXT NOT NULL, tenant_id TEXT NOT NULL, user_id TEXT NOT NULL, name TEXT NOT NULL,

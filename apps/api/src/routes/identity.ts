@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
-import { getTenantProfile } from '@el-dabbous/domain';
-import type { TenantProfile } from '@el-dabbous/domain';
+import { getTenantProfile } from '@el-dabboos/domain';
+import type { TenantProfile } from '@el-dabboos/domain';
 import type { RouteContext } from '../context.ts';
 
 export function registerIdentityRoutes(app: FastifyInstance, services: RouteContext): void {

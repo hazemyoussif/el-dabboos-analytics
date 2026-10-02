@@ -1,8 +1,8 @@
 {
-  "name": "@el-dabbous/application",
+  "name": "@el-dabboos/application",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "dependencies": { "@el-dabbous/domain": "workspace:*" },
+  "dependencies": { "@el-dabboos/domain": "workspace:*" },
   "exports": { ".": "./src/index.ts" }
 }

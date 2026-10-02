@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { WidgetExecution } from '@el-dabbous/application';
+import type { WidgetExecution } from '@el-dabboos/application';
 import { useChartTheme } from '../presentation/ThemeProvider.tsx';
 import { presentationCopy } from '../presentation/copy.ts';
 import { formatValue } from '../i18n.ts';

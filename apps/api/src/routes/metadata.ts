@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
-import { authorizedCatalog } from '@el-dabbous/application';
-import type { DimensionId } from '@el-dabbous/domain';
+import { authorizedCatalog } from '@el-dabboos/application';
+import type { DimensionId } from '@el-dabboos/domain';
 import { analyticsContext } from '../context.ts';
 import type { RouteContext } from '../context.ts';
 import { ApiError } from '../errors.ts';

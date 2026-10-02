@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { resolveDashboardLayout, validateDashboardLayout } from '@el-dabbous/domain';
-import type { DashboardRecord, DashboardSpec } from '@el-dabbous/domain';
+import { resolveDashboardLayout, validateDashboardLayout } from '@el-dabboos/domain';
+import type { DashboardRecord, DashboardSpec } from '@el-dabboos/domain';
 import { arrangeLayout, duplicateWidget, editorMinimums, insertWidget, keyboardLayout, resetLayout, sizePresets, updateWidgetLayout } from '../src/builder/layout-tools.ts';
 import { dropGridPosition } from '../src/builder/grid-map.ts';
 import { commitBuilderCommand, redoBuilder, startBuilder, undoBuilder } from '../src/builder/model.ts';

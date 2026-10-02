@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import test from 'node:test';
-import { MockAnalyticsRepository } from '@el-dabbous/data';
-import { StructuredDashboardPlanner } from '@el-dabbous/application';
-import type { DashboardSpec, StructuredOutputRequest } from '@el-dabbous/domain';
+import { MockAnalyticsRepository } from '@el-dabboos/data';
+import { StructuredDashboardPlanner } from '@el-dabboos/application';
+import type { DashboardSpec, StructuredOutputRequest } from '@el-dabboos/domain';
 import { buildApi } from '../src/app.ts';
 import { OpenAICompatibleLLMProvider, ProviderTransportError } from '../src/providers/openai-compatible.ts';
 
@@ -80,7 +80,7 @@ test('HTTP adapter and planner repair malformed content with one bounded retry',
     const provider = new OpenAICompatibleLLMProvider({ baseUrl: fake.baseUrl, modelId: 'bonsai-2', timeoutMs: 1000 });
     const planner = new StructuredDashboardPlanner(provider, { maxRepairAttempts: 1 });
     const result = await planner.generate({ prompt: 'Show revenue', locale: 'en', context: { tenantId: 'demo-iq', locale: 'en' },
-      tenantProfile: (await import('@el-dabbous/domain')).tenantProfiles['demo-iq'],
+      tenantProfile: (await import('@el-dabboos/domain')).tenantProfiles['demo-iq'],
       capabilities: { metricIds: ['revenue'], templateIds: [], actions: ['ai:generate'] } });
     assert.deepEqual(result, spec);
     assert.equal(fake.requests.length, 2);

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { productMetricCatalog, validateDashboardSpec } from '@el-dabbous/domain';
+import { productMetricCatalog, validateDashboardSpec } from '@el-dabboos/domain';
 import { dashboardTemplates } from '../src/templates.ts';
 import { planningEvaluationCases } from '../src/evals.ts';
 

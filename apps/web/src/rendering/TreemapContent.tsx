@@ -1,4 +1,4 @@
-import type { WidgetExecution } from '@el-dabbous/application';
+import type { WidgetExecution } from '@el-dabboos/application';
 import { ResponsiveContainer, Tooltip, Treemap } from 'recharts';
 import { valueKey } from './shared.ts';
 import type { ChartRow, RenderSeriesProps } from './shared.ts';

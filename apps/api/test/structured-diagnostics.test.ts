@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { MockAnalyticsRepository } from '@el-dabbous/data';
-import { StructuredDashboardPlanner } from '@el-dabbous/application';
-import type { DashboardSpec, LLMProvider } from '@el-dabbous/domain';
+import { MockAnalyticsRepository } from '@el-dabboos/data';
+import { StructuredDashboardPlanner } from '@el-dabboos/application';
+import type { DashboardSpec, LLMProvider } from '@el-dabboos/domain';
 import { buildApi } from '../src/app.ts';
 import { formatStructuredDiagnostic, structuredDiagnosticsEnabled } from '../src/structured-diagnostics.ts';
 

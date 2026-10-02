@@ -1,5 +1,5 @@
 import { Copy, MoreHorizontal, Pencil, Save, Sparkles, Undo2, Eye, Plus, LayoutTemplate } from 'lucide-react';
-import type { Locale } from '@el-dabbous/domain';
+import type { Locale } from '@el-dabboos/domain';
 import { libraryCopy } from '../library-copy.ts';
 import { copy } from '../i18n.ts';
 import type { dashboardActions, DashboardStatus } from '../product-flow.ts';

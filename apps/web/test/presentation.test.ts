@@ -9,7 +9,7 @@ test('System is the default; explicit themes persist independently of locale and
   assert.equal(resolveTheme('system',false),'light'); assert.equal(resolveTheme('system',true),'dark');
   for (const theme of ['light','dark','system'] as const) { storeTheme(storage,theme); assert.equal(preferredTheme(storage),theme); }
   assert.equal(resolveTheme('light',true),'light'); assert.equal(resolveTheme('dark',false),'dark');
-  storage.setItem('el-dabbous.ui-theme','untrusted'); assert.equal(preferredTheme(storage),'system');
+  storage.setItem('el-dabboos.ui-theme','untrusted'); assert.equal(preferredTheme(storage),'system');
   const unavailable={ getItem:()=>{ throw new Error('blocked'); },setItem:()=>{ throw new Error('blocked'); } };
   assert.equal(preferredTheme(unavailable),'system'); assert.doesNotThrow(()=>storeTheme(unavailable,'dark'));
   assert.equal(preferredTheme(null),'system');
@@ -17,7 +17,7 @@ test('System is the default; explicit themes persist independently of locale and
 test('sidebar collapse preference persists without writing theme, locale or dashboard data',()=>{
   const storage=store(); assert.equal(preferredSidebarCollapsed(storage),false);
   for (const value of [true,false]) { storeSidebarCollapsed(storage,value); assert.equal(preferredSidebarCollapsed(storage),value); }
-  assert.deepEqual([...storage.values.keys()],['el-dabbous.sidebar-collapsed']); assert.equal(preferredSidebarCollapsed(null),false);
+  assert.deepEqual([...storage.values.keys()],['el-dabboos.sidebar-collapsed']); assert.equal(preferredSidebarCollapsed(null),false);
 });
 test('chart palettes are bounded, distinct across themes, and stable by series order including wraparound',()=>{
   const light=chartTheme('light'); const dark=chartTheme('dark');

@@ -1,5 +1,5 @@
-import { requiredMeasures, semanticCatalog, timeDimensions, validateQuery } from '@el-dabbous/domain';
-import type { AdditiveAggregation, AnalyticsContext, AnalyticsQuery, AnalyticsResult, AnalyticsRow, DateRange, DimensionId, FactMeasureId, MetricId } from '@el-dabbous/domain';
+import { requiredMeasures, semanticCatalog, timeDimensions, validateQuery } from '@el-dabboos/domain';
+import type { AdditiveAggregation, AnalyticsContext, AnalyticsQuery, AnalyticsResult, AnalyticsRow, DateRange, DimensionId, FactMeasureId, MetricId } from '@el-dabboos/domain';
 import { periodKeys, periodRange, previousTimeKey, shiftRange, timeKey } from './calendar.ts';
 import type { AnalyticsFact } from './facts.ts';
 

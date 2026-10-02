@@ -1,6 +1,6 @@
 import type { AnalyticsFact } from './facts.ts';
-import { tenantProfiles } from '@el-dabbous/domain';
-import type { TenantProfile } from '@el-dabbous/domain';
+import { tenantProfiles } from '@el-dabboos/domain';
+import type { TenantProfile } from '@el-dabboos/domain';
 
 const categories = Array.from({ length: 18 }, (_, i) => `category_${String(i + 1).padStart(2, '0')}`);
 const products = Array.from({ length: 160 }, (_, i) => `product_${String(i + 1).padStart(3, '0')}`);

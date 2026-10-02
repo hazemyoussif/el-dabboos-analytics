@@ -4,18 +4,7 @@ The API defaults to `MockDashboardPlanner`. To use a configured model endpoint, 
 
 ## Configuration
 
-| Variable | Meaning | Default |
-| --- | --- | --- |
-| `DASHBOARD_DB_PATH` | Separate SQLite file for saved dashboards, independent of the analytics source | `dashboards.db` |
-| `DASHBOARD_PLANNER` | `mock`, `structured`, or `disabled` | `mock` |
-| `LLM_BASE_URL` | OpenAI-compatible API root, including `/v1`; required for `structured` | none |
-| `LLM_MODEL_ID` | Model ID sent in the chat completion request; required for `structured` | none |
-| `LLM_API_KEY` | Optional bearer token, if the server requires one | omitted |
-| `LLM_TIMEOUT_MS` | Positive integer request timeout in milliseconds | `120000` |
-| `LLM_REPAIR_ATTEMPTS` | Number of extra requests after invalid structured output; integer `0`–`2` | `1` |
-| `LLM_DEBUG_STRUCTURED_OUTPUT` | Write bounded, redacted validation diagnostics to the API terminal when exactly `true` | `false` |
-
-`ANALYTICS_PROVIDER` (`sqlite` by default, or `mock`) selects the deterministic analytics source independently of the planner. `SQLITE_DB_PATH` selects the analytics SQLite file; `DASHBOARD_DB_PATH` selects the independent saved-dashboard SQLite file. `DASHBOARD_PLANNER=disabled` keeps templates and manual dashboards available while disabling generation and editing through the planner.
+[API configuration](../developer/configuration.md) is the owning reference for exact variables, defaults, bounds and safe startup behavior. Structured mode requires LLM_BASE_URL and LLM_MODEL_ID; analytics and saved-dashboard persistence are independent of planner mode.
 
 ## Example: self-hosted Bonsai 2 via llama.cpp
 
@@ -45,8 +34,8 @@ Copy [.env.example](../../.env.example) to an ignored `.env.local` file if your 
 
 ## Native API environment loading (Node 24)
 
-`pnpm dev:api` / `pnpm --filter @el-dabbous/api dev` and
-`pnpm --filter @el-dabbous/api start` load optional repository-root `.env`, then
+`pnpm dev:api` / `pnpm --filter @el-dabboos/api dev` and
+`pnpm --filter @el-dabboos/api start` load optional repository-root `.env`, then
 `.env.local`, using Node's `--env-file-if-exists`. Precedence is the real shell
  environment, `.env.local`, `.env`, then application defaults. Workspace scripts
 run from `apps/api`; the explicit `../../` paths refer to the repository root.
@@ -54,19 +43,7 @@ Tests intentionally do not use these flags or load developer env files.
 Copy `.env.example` to `.env` for a mock analytics/mock planner demo without
 endpoint credentials. Both local env files remain ignored by Git.
 
-| Setting | Default / meaning |
-| --- | --- |
-| `ANALYTICS_PROVIDER` | `sqlite`; `mock` uses deterministic demo facts |
-| `SQLITE_DB_PATH` | Repository-root `demo.db`; SQLite analytics database |
-| `DASHBOARD_DB_PATH` | Repository-root `dashboards.db`; separate saved-dashboard database |
-| `DASHBOARD_PLANNER` | `mock`; `structured` uses the configured endpoint, `disabled` disables planning |
-| `LLM_BASE_URL` | Required for structured mode; OpenAI-compatible base URL |
-| `LLM_MODEL_ID` | Required for structured mode; configured model identifier |
-| `LLM_API_KEY` | Optional provider credential; never included in the startup summary |
-| `LLM_TIMEOUT_MS` | `120000`; provider HTTP timeout |
-| `LLM_REPAIR_ATTEMPTS` | `1`; bounded repair attempts after initial output |
-| `LLM_DEBUG_STRUCTURED_OUTPUT` | `false`; opt-in development-only diagnostics |
-| `PORT` | `3001`; loopback API listening port |
+See [configuration](../developer/configuration.md) for the full validated settings, including execution concurrency.
 
 Relative database paths resolve from the API process working directory
 (`apps/api` for workspace scripts); use absolute paths to choose a fixed location.

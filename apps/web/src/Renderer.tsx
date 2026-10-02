@@ -1,9 +1,9 @@
 import { TrendingUp, ChartLine, ChartArea, ChartBar, ChartPie, PanelsTopLeft, ChartNoAxesCombined, Table2, AlertCircle } from 'lucide-react';
 import { useChartTheme } from './presentation/ThemeProvider.tsx';
 import { EmptyState, Notice } from './presentation/Feedback.tsx';
-import type { DashboardExecutionResult, WidgetExecution } from '@el-dabbous/application';
-import { resolveDashboardLayout } from '@el-dabbous/domain';
-import type { DashboardSpec, DashboardWidget, Locale, SemanticMetric, TenantProfile } from '@el-dabbous/domain';
+import type { DashboardExecutionResult, WidgetExecution } from '@el-dabboos/application';
+import { resolveDashboardLayout } from '@el-dabboos/domain';
+import type { DashboardSpec, DashboardWidget, Locale, SemanticMetric, TenantProfile } from '@el-dabboos/domain';
 import { copy, formatKey } from './i18n.ts';
 import { AreaContent } from './rendering/AreaContent.tsx';
 import { PieContent } from './rendering/PieContent.tsx';

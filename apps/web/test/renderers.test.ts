@@ -4,9 +4,9 @@ import { fileURLToPath } from 'node:url';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createServer } from 'vite';
-import { semanticCatalog, tenantProfiles, widgetTypes } from '@el-dabbous/domain';
-import type { DashboardWidget } from '@el-dabbous/domain';
-import type { WidgetExecution } from '@el-dabbous/application';
+import { semanticCatalog, tenantProfiles, widgetTypes } from '@el-dabboos/domain';
+import type { DashboardWidget } from '@el-dabboos/domain';
+import type { WidgetExecution } from '@el-dabboos/application';
 
 test('every renderer has EN/AR titles and accessible chart values; composition rejects negative areas', async () => {
   const server = await createServer({ root: fileURLToPath(new URL('../', import.meta.url)), server: { middlewareMode: true }, appType: 'custom' });

@@ -1,5 +1,7 @@
-import { validateDashboardSpec, validateQuery } from '@el-dabbous/domain';
-import type { AnalyticsContext, AnalyticsQuery, AnalyticsRepository, AnalyticsResult, AnalyticsRow, DashboardSpec, DashboardWidget } from '@el-dabbous/domain';
+import { analyticsQueryIdentity, executionConcurrency, normalizeAnalyticsQuery, runBounded } from './query-execution.ts';
+import type { DashboardExecutionOptions } from './query-execution.ts';
+import { validateDashboardSpec, validateQuery } from '@el-dabboos/domain';
+import type { AnalyticsContext, AnalyticsQuery, AnalyticsRepository, AnalyticsResult, AnalyticsRow, DashboardSpec, DashboardWidget } from '@el-dabboos/domain';
 
 export type SeriesExecution = { status: 'success'; result: AnalyticsResult } | { status: 'error'; error: { code: string; message: string } };
 export type AlignedSeriesValue = Pick<AnalyticsRow, 'value' | 'comparisonValue' | 'absoluteChange' | 'percentageChange' | 'rank'>;
@@ -43,32 +45,43 @@ function align(widget: DashboardWidget, results: Record<string, SeriesExecution>
   });
 }
 export class DashboardExecutor {
-  constructor(private readonly repository: AnalyticsRepository, private readonly clock: () => Date = () => new Date()) {}
+  private readonly concurrency: number;
+  constructor(private readonly repository: AnalyticsRepository, private readonly clock: () => Date = () => new Date(), options: DashboardExecutionOptions = {}) { this.concurrency = executionConcurrency(options.maxConcurrency); }
   async execute(spec: DashboardSpec, context: AnalyticsContext): Promise<DashboardExecutionResult> {
     validateDashboardSpec(spec);
     if (!context.tenantId.trim() || !['en', 'ar'].includes(context.locale)) throw new Error('Invalid analytics context');
-    const entries = await Promise.all(spec.widgets.map(async widget => {
-      const seriesEntries = await Promise.all(widget.series.map(async series => {
-        const query: AnalyticsQuery = { metric: series.metric,
-          ...(widget.dimension ? { groupBy: widget.dimension } : {}),
-          ...(series.analysis ? { analysis: series.analysis } : {}),
-          ...(spec.filters.dateRange ? { dateRange: spec.filters.dateRange } : {}),
-          ...(spec.filters.dimensions ? { filters: spec.filters.dimensions } : {}),
-        };
-        try {
-          validateQuery(query, context);
-          return [series.id, { status: 'success', result: await this.repository.execute(query, context) } satisfies SeriesExecution] as const;
-        } catch (error) {
-          return [series.id, { status: 'error', error: { code: 'SERIES_EXECUTION_FAILED', message: error instanceof Error ? error.message : 'Series failed' } } satisfies SeriesExecution] as const;
-        }
-      }));
+    // All normalized requests are planned before any repository call starts.
+    const jobs = new Map<string, { query: AnalyticsQuery; result?: SeriesExecution }>();
+    const failure = (error: unknown): SeriesExecution => ({ status: 'error', error: { code: 'SERIES_EXECUTION_FAILED', message: error instanceof Error ? error.message : 'Series failed' } });
+    const plan = spec.widgets.map(widget => ({ widget, series: widget.series.map(series => {
+      const query: AnalyticsQuery = { metric: series.metric,
+        ...(widget.dimension ? { groupBy: widget.dimension } : {}),
+        ...(series.analysis ? { analysis: series.analysis } : {}),
+        ...(spec.filters.dateRange ? { dateRange: spec.filters.dateRange } : {}),
+        ...(spec.filters.dimensions ? { filters: spec.filters.dimensions } : {}),
+      };
+      try {
+        validateQuery(query, context);
+        const normalized = normalizeAnalyticsQuery(query);
+        const key = analyticsQueryIdentity(normalized, context);
+        if (!jobs.has(key)) jobs.set(key, { query: normalized });
+        return { id: series.id, key };
+      } catch (error) { return { id: series.id, error: failure(error) }; }
+    }) }));
+    await runBounded([...jobs.values()].map(job => async () => {
+      try { job.result = { status: 'success', result: await this.repository.execute(job.query, context) }; }
+      catch (error) { job.result = failure(error); }
+    }), this.concurrency);
+    const entries = plan.map(({ widget, series }) => {
+      // Each dependent series retains its own result/error object and null metadata.
+      const seriesEntries = series.map(item => [item.id, structuredClone(item.error ?? jobs.get(item.key!)!.result!)] as const);
       const seriesResults = Object.fromEntries(seriesEntries) as Record<string, SeriesExecution>;
       const succeeded = seriesEntries.filter(([, value]) => value.status === 'success').length;
       const selectionFailed = Boolean(widget.series[0]?.analysis?.topN && seriesResults[widget.series[0].id]?.status !== 'success');
       const execution: WidgetExecution = { status: selectionFailed || succeeded === 0 ? 'error' : succeeded === seriesEntries.length ? 'success' : 'partial',
         seriesResults, alignedRows: align(widget, seriesResults) };
       return [widget.id, execution] as const;
-    }));
+    });
     const widgetResults = Object.fromEntries(entries) as Record<string, WidgetExecution>;
     const succeeded = entries.filter(([, value]) => value.status !== 'error').length;
     const succeededSeries = entries.reduce((sum, [, value]) => sum + Object.values(value.seriesResults).filter(result => result.status === 'success').length, 0);

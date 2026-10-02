@@ -1,4 +1,4 @@
-import type { WidgetExecution } from '@el-dabbous/application';
+import type { WidgetExecution } from '@el-dabboos/application';
 import { copy, formatKey } from '../i18n.ts';
 import { seriesLabel } from './shared.ts';
 import type { RenderSeriesProps } from './shared.ts';

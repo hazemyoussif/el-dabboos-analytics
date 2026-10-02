@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent, ReactNode } from 'react';
-import type { Locale } from '@el-dabbous/domain';
-import { ChartNoAxesCombined, LibraryBig, Menu, PanelLeftClose, PanelLeftOpen, Plus, X, Monitor, Moon, Sun } from 'lucide-react';
+import type { Locale } from '@el-dabboos/domain';
+import { LibraryBig, Menu, PanelLeftClose, PanelLeftOpen, Plus, X, Monitor, Moon, Sun } from 'lucide-react';
 import { browserPreferenceStore, preferredSidebarCollapsed, storeSidebarCollapsed } from '../presentation/preferences.ts';
 import type { ThemePreference } from '../presentation/preferences.ts';
 import { useTheme } from '../presentation/ThemeProvider.tsx';
 import { presentationCopy } from '../presentation/copy.ts';
+import { WorkspaceBrand } from './WorkspaceBrand.tsx';
 import { copy } from '../i18n.ts';
 export function WorkspaceNavigation({ locale, children, onNew, onTemplates, drawerOpen, onDrawerClose }: { locale: Locale; children: ReactNode; onNew: () => void; onTemplates: () => void; drawerOpen: boolean; onDrawerClose: () => void }) {
   const [collapsed, setCollapsed] = useState(() => preferredSidebarCollapsed(browserPreferenceStore()));
@@ -33,7 +34,7 @@ export function WorkspaceNavigation({ locale, children, onNew, onTemplates, draw
     else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
   };
   const contents = (drawer = false) => <>
-    <div className="sidebar-header"><div className="brand"><div className="brand-mark"><ChartNoAxesCombined aria-hidden="true" /></div><div className="nav-label"><strong>{app.product}</strong><span>{app.studio}</span></div></div><button className="sidebar-toggle button-icon button-ghost" title={drawer ? t.close : isCollapsed ? t.expand : t.collapse} aria-label={drawer ? t.close : isCollapsed ? t.expand : t.collapse} onClick={drawer ? onDrawerClose : toggle}>{drawer ? <X /> : isCollapsed ? <PanelLeftOpen /> : <PanelLeftClose />}</button></div>
+    <div className="sidebar-header"><WorkspaceBrand locale={locale} collapsed={!drawer && isCollapsed} /><button className="sidebar-toggle button-icon button-ghost" title={drawer ? t.close : isCollapsed ? t.expand : t.collapse} aria-label={drawer ? t.close : isCollapsed ? t.expand : t.collapse} onClick={drawer ? onDrawerClose : toggle}>{drawer ? <X /> : isCollapsed ? <PanelLeftOpen /> : <PanelLeftClose />}</button></div>
     <button className="sidebar-new primary-button" title={app.newDashboard} onClick={() => { onNew(); onDrawerClose(); }}><Plus aria-hidden="true" /><span className="nav-label">{app.newDashboard}</span></button>
     <div className="sidebar-scroll">{children}<div className="sidebar-section"><button className="sidebar-browse" title={t.browse} onClick={() => { onTemplates(); onDrawerClose(); }}><LibraryBig aria-hidden="true" /><span className="nav-label">{t.browse}</span></button></div></div>
     <div className="sidebar-foot"><div className="workspace-status"><span className="status-dot" /><span className="nav-label">{locale === 'ar' ? 'بيانات تجريبية اصطناعية' : 'Synthetic demo data'}</span></div><label className="theme-control" title={t.theme}>{preference === 'system' ? <Monitor aria-hidden="true" /> : preference === 'dark' ? <Moon aria-hidden="true" /> : <Sun aria-hidden="true" />}<span className="sr-only">{t.theme}</span><select aria-label={t.theme} value={preference} onChange={event => setPreference(event.target.value as ThemePreference)}>{(['system','light','dark'] as const).map(value => <option key={value} value={value}>{t[value]}</option>)}</select></label></div>

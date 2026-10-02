@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { tenantProfiles } from '@el-dabbous/domain';
-import type { DashboardRecord, DashboardSpec } from '@el-dabbous/domain';
+import { tenantProfiles } from '@el-dabboos/domain';
+import type { DashboardRecord, DashboardSpec } from '@el-dabboos/domain';
 import { discardSavedChanges, documentIsDirty, editDocument, generatedDocument, newManualDocument, openTemplateDocument, persistDocument, savedDocument } from '../src/dashboard-lifecycle.ts';
 import { preferredDemoUser, preferredLocale, preferredTenant, storeDemoUser, storeLocale, storeTenant } from '../src/ui-preferences.ts';
 
@@ -16,7 +16,7 @@ test('locale and last tenant preferences restore only valid values and membershi
   assert.equal(preferredLocale(store), 'ar');
   assert.equal(preferredTenant(store, [tenantProfiles['demo-iq'], tenantProfiles['demo-eg']], 'demo-iq')?.id, 'demo-eg');
   assert.equal(preferredTenant(store, [tenantProfiles['demo-iq']], 'demo-iq')?.id, 'demo-iq');
-  values.set('el-dabbous.ui-locale', 'invalid');
+  values.set('el-dabboos.ui-locale', 'invalid');
   assert.equal(preferredLocale(store), null);
 });
 test('template editing makes a new draft without mutating the template', () => {
@@ -95,6 +95,6 @@ test('demo identity selection survives refresh only as a revalidated session pre
   const session = { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => { values.set(key, value); } };
   storeDemoUser(session, 'demo-regional-analyst');
   assert.equal(preferredDemoUser(session), 'demo-regional-analyst');
-  values.set('el-dabbous.demo-user', 'untrusted user');
+  values.set('el-dabboos.demo-user', 'untrusted user');
   assert.equal(preferredDemoUser(session), null);
 });

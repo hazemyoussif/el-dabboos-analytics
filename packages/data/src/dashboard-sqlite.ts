@@ -1,5 +1,5 @@
 import type { DatabaseSync } from 'node:sqlite';
-import type { DashboardRecord, DashboardRepository, DashboardUpdate } from '@el-dabbous/domain';
+import type { DashboardRecord, DashboardRepository, DashboardUpdate } from '@el-dabboos/domain';
 
 interface RecordRow {
   id: string; tenant_id: string; owner_user_id: string; scope: DashboardRecord['scope']; spec_json: string;
