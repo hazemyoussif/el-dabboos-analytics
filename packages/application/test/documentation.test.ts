@@ -9,7 +9,7 @@ function markdown(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap(entry => entry.isDirectory() ? markdown(join(directory, entry.name)) : entry.name.endsWith('.md') ? [join(directory, entry.name)] : []);
 }
 test('documentation and root agent links resolve to existing local files', () => {
-  for (const path of [join(root, 'AGENTS.md'), join(root, 'README.md'), ...markdown(join(root, 'docs'))]) {
+  for (const path of [join(root, 'AGENTS.md'), join(root, 'README.md'), ...markdown(join(root, 'docs')), ...markdown(join(root, '.agents/skills'))]) {
     const content = readFileSync(path, 'utf8');
     for (const match of content.matchAll(/\[[^\]]*\]\(([^)]+)\)/gu)) {
       const target = match[1]!.split('#')[0]!;

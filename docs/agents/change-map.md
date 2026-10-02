@@ -67,3 +67,5 @@ Inspect current code/tests first. Choose the smallest correct layer. A feature r
 **Likely touch:** web ThemeProvider/preferences/tokens/chart-theme/shell → SSR and browser checks.
 **Do NOT start in:** Application/domain or arbitrary injected styles.
 **Checklist:** [repository map](../architecture/repository-map.md) and [handbook](../developer/handbook.md).
+
+For Theme/UI changes, read the [project UI quality skill](../../.agents/skills/el-dabboos-dashboard-quality/SKILL.md): AFTER by default; apply pre-flight constraints as well when the user explicitly requests the gate as part of implementation delivery.

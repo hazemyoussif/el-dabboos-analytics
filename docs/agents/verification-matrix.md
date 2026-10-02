@@ -7,7 +7,7 @@
 | Config/health | runtime-config/environment/health API tests | Valid mock/structured startup; invalid safe failure; live/ready |
 | Authorization | API api/template-matrix/saved/library + data security | Sales Analyst, Baghdad Manager, tenant/private/shared isolation |
 | AI | provider-schema/structured-planner/diagnostics + fake HTTP adapter | Generate/edit unsaved, generic errors, manual↔AI |
-| Builder/layout/chart | web builder/metric-drop/layout/visualizations/renderers | Pointer/keyboard/narrow viewport/AR/themes; no layout query |
+| Builder/layout/chart/UI | web builder/metric-drop/layout/visualizations/renderers | Pointer/keyboard/narrow viewport/AR/themes; no layout query; [project UI quality gate](../../.agents/skills/el-dabboos-dashboard-quality/SKILL.md) AFTER review |
 | Lifecycle/library | saved record/library API + web lifecycle/product-flow | Save/reopen/rename/Save As/conflict/folders/favorites |
 | Documentation | docs sanity tests | Read owning code and check current/proposed labels, Mermaid source and links |
 

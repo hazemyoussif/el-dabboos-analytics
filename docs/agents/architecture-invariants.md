@@ -30,3 +30,5 @@ Current rules, grounded in canonical validators, authorization services and life
 - ALWAYS Document new invariants in ADRs when necessary and inspect executable code before trusting stale prose.
 
 Request dedup is scoped to one execution and includes effective security context. Bounded concurrency is injectable, not application env parsing. Theme/locale/layout-only presentation changes do not execute analytics or Save. First-series top N is the selection anchor; anchor failure cannot display unrestricted union. Metadata must distinguish business dataThrough from known sourceAsOf.
+
+Presentation stays in apps/web; visual cleanup must not change analytics semantics. Chart theme remains centralized in web rendering, and theme state stays outside DashboardSpec. For presentation review, consult the [project quality gate](../architecture/dashboard-quality-gate.md), which does not replace these architecture rules.

@@ -18,6 +18,16 @@ Full canonical + semantic validation and post-planner authorization are required
 - Source work must consult [production readiness](docs/integration/production-readiness.md) and [real-data contract](docs/integration/real-data-contract.md).
 - Use [verification matrix](docs/agents/verification-matrix.md) and [handoff template](docs/agents/handoff-template.md). Update owning docs when behavior intentionally changes; do not redesign unrelated contracts.
 
+## UI / UX quality gate
+
+When a task changes, reviews, or polishes apps/web presentation, dashboards, charts, tables, navigation, responsive behavior, themes, or accessibility, read the project-specific [dashboard quality skill](.agents/skills/el-dabboos-dashboard-quality/SKILL.md).
+
+Use the skill in **AFTER** mode by default.
+
+For implementation tasks where the user explicitly asks to apply the quality gate as part of delivery, use it both as a pre-flight constraint and as the final AFTER review, without introducing unrelated redesign.
+
+Do not load this skill for backend, domain, data, integration, infrastructure, or non-UI documentation work unless that task also changes the web presentation. Project architecture, domain invariants, and ADRs override generic aesthetic guidance.
+
 ## Verification before push
 
 ```bash
