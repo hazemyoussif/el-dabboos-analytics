@@ -50,7 +50,7 @@ Executor validates, normalizes and deduplicates queries **within one execute cal
 
 ## Structured planning
 
-Generation uses prompt → compact application-owned DashboardGenerationPlan → plan validation → deterministic compiler → full canonical DashboardSpec v2/semantic validation → authorization → execution. The model chooses governed business intent; code owns IDs, tenant-timezone dates and canonical 12-column layout. Provider schema constraints must not weaken domain contracts. Editing continues through canonical DashboardPatch v2 and full validation of the applied draft. Repair is bounded; HTTP failures do not trigger semantic repair. [ADR 024](adr/024-compact-generation-plan.md), [provider contract and diagnostics](openai-compatible-provider.md).
+Generation uses prompt → compact application-owned DashboardGenerationPlan → plan validation → deterministic compiler → full canonical DashboardSpec v2/semantic validation → authorization → execution. The model chooses governed business intent and only explicitly requested presentation/analysis. A deterministic resolver owns unspecified KPI/Line/Bar/Table choice and compatible presentation defaults; explicit incompatible requests fail canonical validation. Only governed palette names can enter spec/patch, with actual colors resolved by web themes. Code owns IDs, tenant-timezone dates and canonical 12-column layout. Provider schema constraints must not weaken domain contracts. Editing continues through canonical DashboardPatch v2 and full validation of the applied draft. Repair is bounded; HTTP failures do not trigger semantic repair. [ADR 024](adr/024-compact-generation-plan.md), [provider contract and diagnostics](openai-compatible-provider.md).
 
 ## Semantics and representation
 

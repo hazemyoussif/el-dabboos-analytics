@@ -33,3 +33,25 @@ AFTER findings:
 3. Real configured-endpoint generation remains the user's post-push manual gate. This branch does not claim live Gemini schema acceptance or model output quality. Canonical DashboardPatch compatibility is intentionally a separate follow-up if actual endpoint evidence requires it.
 
 Temporary preview servers/files are outside the repository and are not product/demo fixtures. No plan is persisted or returned as a domain dashboard; generated/edited specs still require explicit Save.
+
+## Explicit-intent refinement closeout (October 2, 2026)
+
+The sections above preserve the previous `05517b656f34aedcd3b1f7754608b4bf82fb23a8` closeout and its manual limitations. This follow-up starts there on the same feature branch, with main remaining `2ead49d4ec7a787656d23147ac5329350745963e`. Baseline is 256 tests; the refined suite has **325 passing tests (69 added)**. Frozen install, lint, typecheck, API/web builds and diff whitespace checks pass. The existing Vite chunk-size advisory remains. Remote CI is a separate post-push gate reported against final HEAD.
+
+Generation widgets now omit root type/style properties and optionally supply sparse `requestedPresentation` only for explicit user requests. Analysis is likewise explicit. The pure resolver chooses KPI/Line/Bar/Table using grouping and current metric type/unit compatibility, supplies presentation defaults, and retains incompatible explicit intent for canonical rejection/repair. Canonical v2 spec/patch schemas gain only the governed palette enum; existing semantic, layout, metric and tenant authorization constraints remain. Editing stays canonical patch replacement; manual visualization changes retain governed palette intent through Undo/Redo without requerying. Actual colors stay in centralized web rendering; global UI theme remains independent of spec state.
+
+Added automated coverage establishes optional/bounded presentation, legacy root-property rejection, raw color/renderer exclusion, analysis bounds, all time-dimension defaults, mixed-unit Table fallback, explicit categorical Line, governed palettes, combo/pie defaults and hard presentation rules. Controlled fake responses cover the exact Arabic sales/branch/profit request, explicit blue Line request and top-five horizontal blue Bar request. These tests establish the contract/compiler/prompt boundary, **not live model understanding or proof that an endpoint never invents intent**.
+
+API tests cover temperature/max-token defaults, optional thinking budget/seed omission and configured values (including zero), invalid/bounded config, safe startup summaries, strict schema envelopes, ignored reasoning content, object/array diagnostics and distinct 429 classification. Transport failures bypass repair; rate-limit UI tests preserve the draft. Domain normal patch tests preserve business intent/layout with palette changes. Theme tests check deterministic colors and >=3:1 graphic / >=4.5:1 on-mark label contrast in both themes; SSR tests preserve legends, reference styling, missing values and accessible tables.
+
+### Performed controlled preview and AFTER review
+
+A disposable loopback API/web preview used existing synthetic IQ/EG facts, in-memory dashboard/library storage and a fake HTTP provider. No local env file, credential or real model endpoint was read/contacted. Actual generation opened an unsaved blue categorical Line dashboard. A normal AI patch changed its palette to purple; a subsequent HTTP 429 preserved the purple draft and instruction and displayed the safe English message, then its MSA translation after switching UI language. Chart values were opened and inspected in Arabic, retaining precise IQD formatting.
+
+DOM checks covered EN/Arabic × Light/Dark × 1280/1024/390: no page-level horizontal overflow; strokes matched centralized Light/Dark blue palettes and bilingual legends. Settled screenshot spot review covered desktop English Light, mobile Arabic Dark (including rate-limit state), and tablet Arabic Light after the purple edit. Temporary screenshots are under `/tmp/planner-refinement-ui/`, outside the repository; rapid resize captures are not substitutes for these settled spot inspections. Temporary tabs/servers were closed and the viewport override reset.
+
+AFTER findings:
+
+1. **No new blocker/high finding** in the reviewed palette/error states: distinguishable series plus labels, safe wrapping error copy, appropriate theme colors, preserved value-table access and draft state.
+2. **Low, existing shell debt:** the collapsed tablet sidebar's empty-library text wraps narrowly. No unrelated shell redesign was made.
+3. **Verification limits:** no new real Bonsai/Gemini call or model benchmark, full keyboard traversal, reduced-motion emulation, or complete lifecycle manual suite was performed in this pass. Existing focused tests remain the evidence for unaffected contracts. Re-run live endpoint intent adherence with the documented inference controls separately.

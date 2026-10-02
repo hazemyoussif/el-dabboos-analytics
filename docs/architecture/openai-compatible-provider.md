@@ -2,9 +2,9 @@
 
 The API defaults to `MockDashboardPlanner`. Structured generation uses a configured OpenAI-compatible endpoint supporting `response_format.type=json_schema` on `/v1/chat/completions`.
 
-Generation follows **prompt → compact DashboardGenerationPlan → plan validation → deterministic application compiler → canonical DashboardSpec v2 validation (including semantics/visualization/layout) → authorization → execution**. The plan is a transient application intent object; it is never persisted, executed, or returned as the dashboard contract. Canonical schemas optimize application correctness; provider contracts optimize constrained model communication. Endpoint schema limitations must not weaken the canonical application contract.
+Generation follows **prompt → compact DashboardGenerationPlan → plan validation → deterministic application compiler/resolver → canonical DashboardSpec v2 validation (including semantics/visualization/layout) → authorization → execution**. The plan is a transient application intent object; it is never persisted, executed, or returned as the dashboard contract. Canonical schemas optimize application correctness; provider contracts optimize constrained model communication. Endpoint schema limitations must not weaken the canonical application contract.
 
-The shallow `dashboard_generation_plan` schema contains bilingual titles, bounded widgets/series, optional date preset or explicit range, business filters, flattened analysis flags/top-N and bounded visualization intent. It contains no IDs, version, grid positions, persistence/security metadata or chart-library properties. Metric choices are restricted to authorized capabilities. The application validates with AJV and additional pairing/date rules, then creates stable `generated-dashboard`, `widget-N`, and `widget-N-series-M` IDs, canonical analysis/presentation objects, and `defaultDashboardLayout` on 12 columns. False flags and empty presentation objects are omitted. Missing dates use `current_year`; presets use existing tenant-timezone semantics. Date pairs cannot mix with presets; top-N requires both direction and a valid integer limit. Incompatible visualization intent is rejected by full canonical validation.
+The shallow `dashboard_generation_plan` schema contains bilingual titles, bounded widgets/series, optional date preset or explicit range, business filters, flattened explicitly requested analysis flags/top-N and sparse `requestedPresentation` intent. Widget root type/style fields are rejected. Unrequested type, palette, orientation, legend, labels, curve and analysis must be omitted by the model. It contains no IDs, version, grid positions, persistence/security metadata or chart-library properties. Metric choices are restricted to authorized capabilities. The application validates with AJV and additional pairing/date rules, then creates stable `generated-dashboard`, `widget-N`, and `widget-N-series-M` IDs, canonical analysis/presentation objects, and `defaultDashboardLayout` on 12 columns. False flags and empty presentation objects are omitted. Missing dates use `current_year`; presets use existing tenant-timezone semantics. Date pairs cannot mix with presets; top-N requires both direction and a valid integer limit. The resolver supplies KPI for one ungrouped series, Line for compatible time series, Bar for compatible categorical series, and Table for mixed single-axis type/unit series. Explicit types use current canonical policy (categorical Line remains supported). It supplies bar orientation, line curve, pie variant, legend behavior and combo marks; incompatible explicit fields remain present and fail canonical semantic validation, eligible for bounded repair. No palette request leaves the token absent.
 
 Provider schemas use the existing portable keyword projection; original application-plan and domain spec/patch validators retain all constraints. Compact contracts improve portability across constrained endpoints, including Gemini, OpenAI-compatible services and smaller/self-hosted models; live adherence still requires endpoint testing.
 
@@ -16,29 +16,33 @@ Repair remains bounded by `LLM_REPAIR_ATTEMPTS` (0–2; default 1); generation r
 
 [API configuration](../developer/configuration.md) is the owning reference for exact variables, defaults, bounds and safe startup behavior. Structured mode requires LLM_BASE_URL and LLM_MODEL_ID; analytics and saved-dashboard persistence are independent of planner mode.
 
-## Example: self-hosted Bonsai 2 via llama.cpp
+## Evaluated development example: Bonsai 2 27B via llama.cpp
 
-Obtain a compatible Bonsai 2 GGUF file and a `llama-server` build separately. In one terminal, replace the model path with the actual local file:
+Bonsai 2 27B (`Ternary-Bonsai-2-27B-PTQ1_0.gguf`) is the project's currently preferred evaluated local/development model. This is deployment guidance only; application and transport contain no model-name or server-specific branches. Obtain a compatible GGUF and llama.cpp build separately; supply your own model file to `llama-server`. Read `/v1/models` for the exact model ID and configure:
 
-```bash
-llama-server -m /absolute/path/to/bonsai-2.gguf --alias bonsai-2 --host 127.0.0.1 --port 8080
+```dotenv
+DASHBOARD_PLANNER=structured
+LLM_BASE_URL=http://<llama-server-host>:8080/v1
+LLM_MODEL_ID=<exact model id returned by /v1/models>
+LLM_TEMPERATURE=0
+LLM_MAX_TOKENS=2048
+LLM_REASONING_BUDGET_TOKENS=1024
+LLM_TIMEOUT_MS=120000
+LLM_REPAIR_ATTEMPTS=1
+LLM_DEBUG_STRUCTURED_OUTPUT=false
+# Optional reproducible evaluation, normally unset:
+# LLM_SEED=42
 ```
 
-In the repository root, seed the demo database if needed, then start the API in another terminal:
+User-reported controlled runs with temperature 0, thinking budget 1024 and maximum output 2048 completed around 42–43 seconds at approximately 33 tokens/sec. Three seed-42 runs were effectively identical; a seed-43 run produced the same high-level result with similar timing. These are reported endpoint observations, not a repository benchmark, CI guarantee or new live verification of this plan revision.
 
-```bash
-pnpm run seed demo.db
-DASHBOARD_PLANNER=structured \
-LLM_BASE_URL=http://127.0.0.1:8080/v1 \
-LLM_MODEL_ID=bonsai-2 \
-LLM_TIMEOUT_MS=120000 \
-LLM_REPAIR_ATTEMPTS=1 \
-pnpm run dev:api
-```
+The adapter sends `temperature` and `max_tokens` on every request. It sends `thinking_budget_tokens` and `seed` only when explicitly configured; endpoints may not support the optional fields. `response_format.type=json_schema`, `strict=true` remains the only path: no JSON text/object fallback. Only `message.content` supplies the structured result; `reasoning_content` is ignored. Seed is normally unset. Start the web app with `pnpm run dev:web`; seed synthetic analytics if needed. For an authenticated endpoint supply `LLM_API_KEY` in the API process environment. Never append `/chat/completions` to `LLM_BASE_URL`.
 
-Start the web app with `pnpm run dev:web`. The server's [OpenAI-compatible chat endpoint and JSON Schema response format](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md) are the intended protocol. For a server that requires authentication, set `LLM_API_KEY` in the API process environment. Do not append `/chat/completions` to `LLM_BASE_URL`.
+Repository/CI fake HTTP tests require no model/key. Live schema adherence, output quality, latency and server capabilities remain a separate configured-endpoint acceptance gate.
 
-The repository and CI do not include a model endpoint. Fake HTTP tests verify the request and response protocol, bounded repair, authorization checks, and timeout behavior. Actual model adherence to the schemas, output quality, and latency depend on the selected model and server build and need evaluation against the selected endpoint.
+## Governed presentation
+
+`requestedPresentation` contains optional type, palette, orientation, pieVariant, legend show/hide, dataLabels show/hide and curve. It represents explicit user intent only. Canonical WidgetPresentation supports the finite `default|blue|green|orange|purple|red|neutral` palette vocabulary through generation and normal patch widget replacement. Actual Light/Dark colors, hover/selection styling and deterministic series assignment remain in web `chart-theme.ts`; no raw hex/RGB, CSS, fill/stroke, axis, animation or renderer properties are accepted. Global UI theme preference stays outside saved content. Named palette intent may be saved as a bounded widget preference, without changing analytics queries.
 
 Copy [.env.example](../../.env.example) to an ignored `.env.local` file if your development runner loads it, or export the variables in the API process environment. Never commit credentials. The debug switch does not alter browser responses and should remain off outside development.
 
@@ -65,8 +69,8 @@ Reference: [Node CLI env-file support](https://nodejs.org/docs/latest-v24.x/api/
 
 ## Safe development diagnostics and UI progress
 
-`LLM_DEBUG_STRUCTURED_OUTPUT=true` enables terminal-only validation and HTTP diagnostics at the API composition root; default false. Validation diagnostics report generation/edit, attempt, schema/provider identity, schema/semantic/authorization stage, safe AJV details and a redacted bounded output shape. HTTP diagnostics inspect at most 16 KiB of an error envelope, allowlist known error code/type/status values, and classify messages into fixed safe descriptions. Arbitrary upstream strings, prompts, filter values, customer data and request/response bodies are never echoed. Oversized/unreadable envelopes retain status only. Callback failures cannot alter normal transport classification. Browser errors remain safe codes (timeout 504; upstream/unavailable 502; invalid structured output 422).
+`LLM_DEBUG_STRUCTURED_OUTPUT=true` enables terminal-only validation and HTTP diagnostics at the API composition root; default false. Validation diagnostics report generation/edit, attempt, schema/provider identity, schema/semantic/authorization stage, safe AJV details and a redacted bounded output shape. HTTP diagnostics inspect at most 16 KiB of an object `{error:{...}}` or first array entry `[{error:{...}}]` error envelope, allowlist known error code/type/status values, and classify messages into fixed safe descriptions. Arbitrary upstream strings, prompts, filter values, customer data and request/response bodies are never echoed. Oversized/unreadable envelopes retain status only. Callback failures cannot alter normal transport classification. Browser errors remain safe codes (rate limit `LLM_RATE_LIMITED` 429; timeout 504; upstream/unavailable 502; invalid structured output 422).
 
-Structured startup summary includes actual `llmTimeoutMs` and `llmRepairAttempts`, model ID and sanitized endpoint, never credentials. No application code reads environment variables.
+Structured startup summary includes actual temperature, max tokens, timeout and repair limits, optional reasoning budget/seed only when configured, model ID and sanitized endpoint, never credentials. No application code reads environment variables.
 
 The web planner owns idle/generating/editing state and a real elapsed timer independent of workspace loading. Create/edit retain the instruction and show a polite status, a quiet elapsed timer, and Lucide loading icon respecting reduced motion. They expose one truthful waiting state, not fabricated backend phases. Success/failure/reset/stale requests stop the timer; failures do not apply a draft or persist anything. Known provider codes receive safe English/MSA copy. There is no streaming progress or server-side cancellation contract.

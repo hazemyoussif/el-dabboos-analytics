@@ -8,7 +8,7 @@ apps/web owns React/UI; apps/api owns Fastify/HTTP/config/composition; packages/
 
 ## Mandatory invariants
 
-AI generation must validate the compact application-owned DashboardGenerationPlan and compile it deterministically before canonical validation; never persist plans or ask the model for IDs/layout/security infrastructure. AI edit remains canonical DashboardPatch v2. Full canonical + semantic validation and post-planner authorization are required. Validate membership, enforce tenant/policy filters, keep secrets/data out of default logs. No LLM SQL, browser DB access, auto-save, policy/theme/folder/chart-library objects in spec, planned metric execution, snapshot summing across dates or silent mixed currency. Preserve explicit Save/version checks and null/partial behavior. See [full invariants](docs/agents/architecture-invariants.md).
+AI generation must validate the compact application-owned DashboardGenerationPlan and compile it deterministically before canonical validation; plans contain business intent plus only explicit requestedPresentation/analysis, with unspecified defaults owned by the resolver; never persist plans or ask the model for IDs/layout/security infrastructure. AI edit remains canonical DashboardPatch v2. Full canonical + semantic validation and post-planner authorization are required. Validate membership, enforce tenant/policy filters, keep secrets/data out of default logs. No LLM SQL, browser DB access, auto-save, policy/theme/folder/chart-library objects in spec, planned metric execution, snapshot summing across dates or silent mixed currency. Preserve explicit Save/version checks and null/partial behavior. See [full invariants](docs/agents/architecture-invariants.md).
 
 ## Change routing and required reading
 
