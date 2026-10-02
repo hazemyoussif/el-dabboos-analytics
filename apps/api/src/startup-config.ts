@@ -1,6 +1,6 @@
 /** Explicit startup allowlist: never serialize process.env or provider requests. */
 export function startupSummary(config: { analyticsProvider: string; dashboardPath: string; plannerMode: string;
-  modelId?: string | undefined; baseUrl?: string | undefined; diagnostics: boolean; port: number; executionConcurrency?: number }, apiKey?: string): string {
+  modelId?: string | undefined; baseUrl?: string | undefined; diagnostics: boolean; port: number; executionConcurrency?: number; llmTimeoutMs?: number; llmRepairAttempts?: number; llmTemperature?: number; llmMaxTokens?: number; llmReasoningBudgetTokens?: number; llmSeed?: number }, apiKey?: string): string {
   const safe = (value: string) => {
     let result = value.replace(/[\r\n\t]/gu, ' ');
     if (apiKey) result = result.split(apiKey).join('[redacted]');
@@ -13,14 +13,14 @@ export function startupSummary(config: { analyticsProvider: string; dashboardPat
   };
   return `API configuration ${JSON.stringify({ analyticsProvider: safe(config.analyticsProvider),
     dashboardDatabase: safe(config.dashboardPath), plannerMode: safe(config.plannerMode),
-    ...(config.plannerMode === 'structured' ? { modelId: safe(config.modelId ?? ''), endpoint: endpoint(config.baseUrl) } : {}),
+    ...(config.plannerMode === 'structured' ? { modelId: safe(config.modelId ?? ''), endpoint: endpoint(config.baseUrl), llmTimeoutMs: config.llmTimeoutMs ?? 120000, llmRepairAttempts: config.llmRepairAttempts ?? 1, llmTemperature: config.llmTemperature ?? 0, llmMaxTokens: config.llmMaxTokens ?? 2048, ...(config.llmReasoningBudgetTokens !== undefined ? { llmReasoningBudgetTokens: config.llmReasoningBudgetTokens } : {}), ...(config.llmSeed !== undefined ? { llmSeed: config.llmSeed } : {}) } : {}),
     structuredDiagnostics: config.diagnostics, port: config.port, ...(config.executionConcurrency === undefined ? {} : { executionConcurrency: config.executionConcurrency }) })}`;
 }
 
 export interface RuntimeConfig {
   analyticsProvider: 'sqlite' | 'mock'; plannerMode: 'mock' | 'structured' | 'disabled';
   analyticsPath: string; dashboardPath: string; port: number; executionConcurrency: number;
-  llm: { baseUrl?: string; modelId?: string; apiKey?: string; timeoutMs: number; repairAttempts: number; diagnostics: boolean };
+  llm: { baseUrl?: string; modelId?: string; apiKey?: string; timeoutMs: number; repairAttempts: number; diagnostics: boolean; temperature: number; maxTokens: number; reasoningBudgetTokens?: number; seed?: number };
 }
 export class ConfigurationError extends Error {
   constructor(field: string) { super(`Invalid API configuration: ${field}. Check the documented settings.`); }
@@ -37,6 +37,8 @@ export function parseRuntimeConfig(env: Readonly<Record<string, string | undefin
     if (raw !== undefined && !/^\d+$/u.test(raw) || !Number.isSafeInteger(value) || value < min || value > max) throw new ConfigurationError(field);
     return value;
   };
+  const temperature = env.LLM_TEMPERATURE === undefined ? 0 : Number(env.LLM_TEMPERATURE);
+  if (env.LLM_TEMPERATURE !== undefined && !/^\d+(?:\.\d+)?$/u.test(env.LLM_TEMPERATURE) || !Number.isFinite(temperature) || temperature < 0 || temperature > 2) throw new ConfigurationError('LLM_TEMPERATURE');
   const path = (field: string, fallback: string): string => {
     const value = env[field] ?? fallback;
     if (!value.trim() || value.includes('\0')) throw new ConfigurationError(field);
@@ -56,5 +58,8 @@ export function parseRuntimeConfig(env: Readonly<Record<string, string | undefin
     analyticsPath: path('SQLITE_DB_PATH', defaults.analyticsPath), dashboardPath: path('DASHBOARD_DB_PATH', defaults.dashboardPath),
     port: integer('PORT', 3001, 1, 65535), executionConcurrency: integer('ANALYTICS_EXECUTION_CONCURRENCY', 8, 1, 64),
     llm: { ...(baseUrl ? { baseUrl } : {}), ...(modelId ? { modelId } : {}), ...(env.LLM_API_KEY ? { apiKey: env.LLM_API_KEY } : {}),
+      temperature, maxTokens: integer('LLM_MAX_TOKENS', 2048, 1, 65536),
+      ...(env.LLM_REASONING_BUDGET_TOKENS !== undefined ? { reasoningBudgetTokens: integer('LLM_REASONING_BUDGET_TOKENS', 0, 0, 65536) } : {}),
+      ...(env.LLM_SEED !== undefined ? { seed: integer('LLM_SEED', 0, 0, 2147483647) } : {}),
       timeoutMs: integer('LLM_TIMEOUT_MS', 120000, 1, 600000), repairAttempts: integer('LLM_REPAIR_ATTEMPTS', 1, 0, 2), diagnostics: diagnosticsValue === 'true' } };
 }

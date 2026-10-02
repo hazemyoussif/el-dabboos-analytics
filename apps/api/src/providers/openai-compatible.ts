@@ -1,8 +1,10 @@
+import { providerHttpDiagnostic } from './transport-diagnostics.ts';
+import type { ProviderHttpDiagnostic } from './transport-diagnostics.ts';
 import type { LLMProvider, StructuredOutputRequest, StructuredOutputResponse } from '@el-dabboos/domain';
 
-export interface OpenAICompatibleConfig { baseUrl: string; modelId: string; apiKey?: string; timeoutMs: number }
+export interface OpenAICompatibleConfig { baseUrl: string; modelId: string; apiKey?: string; timeoutMs: number; temperature?: number; maxTokens?: number; reasoningBudgetTokens?: number; seed?: number; diagnostics?: (event: ProviderHttpDiagnostic) => void }
 export class ProviderTransportError extends Error {
-  constructor(readonly code: 'LLM_TIMEOUT' | 'LLM_HTTP_ERROR' | 'LLM_PROTOCOL_ERROR' | 'LLM_UNAVAILABLE', message: string) { super(message); }
+  constructor(readonly code: 'LLM_RATE_LIMITED' | 'LLM_TIMEOUT' | 'LLM_HTTP_ERROR' | 'LLM_PROTOCOL_ERROR' | 'LLM_UNAVAILABLE', message: string) { super(message); }
 }
 const record = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === 'object' && !Array.isArray(value);
 export class OpenAICompatibleLLMProvider implements LLMProvider {
@@ -11,6 +13,10 @@ export class OpenAICompatibleLLMProvider implements LLMProvider {
     const url = new URL(config.baseUrl);
     if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.search || url.hash || !config.modelId.trim() || !Number.isInteger(config.timeoutMs) || config.timeoutMs < 1)
       throw new Error('Invalid OpenAI-compatible provider configuration');
+    const { temperature = 0, maxTokens = 2048, reasoningBudgetTokens, seed } = config;
+    if (!Number.isFinite(temperature) || temperature < 0 || temperature > 2 || !Number.isSafeInteger(maxTokens) || maxTokens < 1 || maxTokens > 65536 ||
+      reasoningBudgetTokens !== undefined && (!Number.isSafeInteger(reasoningBudgetTokens) || reasoningBudgetTokens < 0 || reasoningBudgetTokens > 65536) ||
+      seed !== undefined && (!Number.isSafeInteger(seed) || seed < 0 || seed > 2147483647)) throw new Error('Invalid OpenAI-compatible inference configuration');
     this.endpoint = `${url.toString().replace(/\/+$/, '')}/chat/completions`;
   }
   async generateStructured(request: StructuredOutputRequest): Promise<StructuredOutputResponse> {
@@ -22,10 +28,19 @@ export class OpenAICompatibleLLMProvider implements LLMProvider {
         method: 'POST', signal: controller.signal,
         headers: { 'content-type': 'application/json', ...(this.config.apiKey ? { authorization: `Bearer ${this.config.apiKey}` } : {}) },
         body: JSON.stringify({ model: this.config.modelId, messages: request.messages, stream: false,
+          temperature: this.config.temperature ?? 0, max_tokens: this.config.maxTokens ?? 2048,
+          ...(this.config.reasoningBudgetTokens !== undefined ? { thinking_budget_tokens: this.config.reasoningBudgetTokens } : {}),
+          ...(this.config.seed !== undefined ? { seed: this.config.seed } : {}),
           response_format: { type: 'json_schema', json_schema: { name: request.responseFormat.name, strict: request.responseFormat.strict,
             schema: request.responseFormat.jsonSchema } } }),
       });
-      if (!response.ok) throw new ProviderTransportError('LLM_HTTP_ERROR', `Structured provider returned HTTP ${response.status}.`);
+      if (!response.ok) {
+        if (this.config.diagnostics) {
+          try { this.config.diagnostics(await providerHttpDiagnostic(response, request, this.config.modelId, this.config.apiKey)); }
+          catch { /* Diagnostics never change safe API behavior. */ }
+        }
+        throw new ProviderTransportError(response.status === 429 ? 'LLM_RATE_LIMITED' : 'LLM_HTTP_ERROR', `Structured provider returned HTTP ${response.status}.`);
+      }
       const body = await response.text();
       if (body.length > 2_000_000) throw new ProviderTransportError('LLM_PROTOCOL_ERROR', 'Structured provider response exceeded the size limit.');
       let payload: unknown;

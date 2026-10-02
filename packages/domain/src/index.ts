@@ -12,3 +12,4 @@ export * from './dashboard-repository.ts';
 export * from './visualization.ts';
 
 export * from './dashboard-library.ts';
+export * from './dimension-labels.ts';

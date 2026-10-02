@@ -10,3 +10,16 @@
 8. Renderer uses centralized presentation and tenant currency. UI theme does not change spec/query. Saved records and library preferences use separate metadata repositories, independent of analytics provider.
 
 [Contracts and formulas](../developer/data-model.md), [execution ADR](adr/023-execution-and-runtime-readiness.md), [proposed source flow](source-integration.md).
+
+## Planner and manual intent paths
+
+- Generation: natural language → compact summary/grouped DashboardGenerationPlan → plan validation → deterministic compiler → canonical DashboardSpec validation → authorization → execution.
+- AI edit: instruction + current spec → sparse DashboardEditPlan → plan validation → deterministic compiler → canonical DashboardPatch v2 → applied canonical DashboardSpec → validation/authorization → preview.
+- Manual edit: builder → bounded BuilderCommand/canonical DashboardPatch → same working DashboardSpec and validation/history. Palette-only edits reuse analytics results.
+- Presentation: AI/manual governed palette token → centralized web theme → actual Light/Dark renderer colors. Only explicit Save persists the draft.
+
+## Provider reference context
+
+Generation attaches explicitly requested governed presentation to the exact described widget; the compiler preserves emitted values without reading raw natural language to infer omissions. Before edit invocation, canonical validation and allowed-metric checks precede a compact widget identity index, sent before the full current spec and instruction. The provider resolves descriptors to existing widgetId/seriesId; sparse compilation and canonical patch/spec validation remain the mutation path. The index contains no analytics rows, customer filter values or security data and is never persisted.
+
+requestedPresentation is optional as a whole; every emitted type-specific presentation requires a governed palette token, with default for an explicit type without color. The compiler does not parse or reconstruct palette intent. The edit index includes bilingual canonical metric/dimension labels and existing explicit widget titles only; it invents no titles. User-facing “gross profit” maps to gross_profit and “branch” to branch through provider-selected canonical references, with no application-side fuzzy matching or selector language. Full current-spec context is retained.

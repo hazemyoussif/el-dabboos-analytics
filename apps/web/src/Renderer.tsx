@@ -1,4 +1,5 @@
 import { TrendingUp, ChartLine, ChartArea, ChartBar, ChartPie, PanelsTopLeft, ChartNoAxesCombined, Table2, AlertCircle } from 'lucide-react';
+import { withGovernedPalette } from './rendering/chart-theme.ts';
 import { useChartTheme } from './presentation/ThemeProvider.tsx';
 import { EmptyState, Notice } from './presentation/Feedback.tsx';
 import type { DashboardExecutionResult, WidgetExecution } from '@el-dabboos/application';
@@ -22,7 +23,7 @@ const renderers = { kpi: KpiContent, line: LineContent, area: AreaContent, bar: 
 interface Props { execution: DashboardExecutionResult; catalog: Record<string, SemanticMetric>; locale: Locale; profile: TenantProfile }
 export function WidgetCard({ widget, entry, catalog, locale, profile }: { widget: DashboardWidget; entry: WidgetExecution | undefined; catalog: Record<string, SemanticMetric>; locale: Locale; profile: TenantProfile }) {
   const t = copy[locale];
-  const theme = useChartTheme();
+  const theme = withGovernedPalette(useChartTheme(), widget.presentation?.palette);
   const Icon = icons[widget.type];
   const labels = widget.series.map(series => catalog[series.metric]?.labels[locale] ?? series.metric.replaceAll('_', ' '));
   const title = widget.title?.[locale] ?? (labels.length === 1 ? labels[0]! : labels.join(' · '));

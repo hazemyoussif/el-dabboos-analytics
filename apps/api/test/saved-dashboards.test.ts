@@ -62,3 +62,23 @@ test('saved dashboard API enforces private ownership, tenant boundaries and shar
     assert.equal((await app.inject({ method: 'GET', url: `/api/saved-dashboards/${shared.json().id}`, headers: other })).statusCode, 200);
   } finally { await app.close(); db.close(); }
 });
+
+test('governed palette survives explicit save, update and reopening through a fresh API composition', async () => {
+  const db = new DatabaseSync(':memory:'); createDashboardPersistenceSchema(db);
+  const facts = new MockAnalyticsRepository([]);
+  const deps = { analyticsRepository: facts, dimensionValues: facts, dashboardRepository: new SqliteDashboardRepository(db) };
+  let app = await buildApi(deps);
+  try {
+    const owner = headers('demo-iq-admin');
+    const blue = { ...spec, widgets: [{ ...spec.widgets[0]!, presentation: { palette: 'blue' as const } }] };
+    const saved = (await app.inject({ method: 'POST', url: '/api/saved-dashboards', headers: owner, payload: { dashboard: blue } })).json();
+    assert.equal(saved.spec.widgets[0].presentation.palette, 'blue');
+    const green = { ...blue, widgets: [{ ...blue.widgets[0]!, presentation: { palette: 'green' as const } }] };
+    const update = await app.inject({ method: 'PUT', url: `/api/saved-dashboards/${saved.id}`, headers: owner, payload: { dashboard: green, expectedVersion: saved.version } });
+    assert.equal(update.statusCode, 200);
+    await app.close(); app = await buildApi(deps);
+    const reopened = await app.inject({ method: 'GET', url: `/api/saved-dashboards/${saved.id}`, headers: owner });
+    assert.equal(reopened.statusCode, 200); assert.deepEqual(reopened.json().spec, green);
+    assert.equal(reopened.json().version, 2);
+  } finally { await app.close(); db.close(); }
+});

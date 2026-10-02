@@ -15,6 +15,7 @@ export const visualizationLabel = (option: Pick<VisualizationOption, 'id'>, loca
 export function visualizationCandidate(widget: DashboardWidget, option: VisualizationOption): DashboardWidget {
   const { presentation: old, ...rest } = widget;
   const presentation: WidgetPresentation = { ...option.presentation };
+  if (old?.palette) presentation.palette = old.palette;
   if (!['kpi', 'table'].includes(option.type) && old?.legend) presentation.legend = old.legend;
   if (['line', 'area', 'combo'].includes(option.type) && old?.curve) presentation.curve = old.curve;
   if (['pie', 'treemap'].includes(option.type) && old?.dataLabels) presentation.dataLabels = old.dataLabels;

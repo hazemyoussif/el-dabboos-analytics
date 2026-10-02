@@ -64,7 +64,7 @@ flowchart LR
  V --> H[Undo redo draft history]
  H --> C{Semantic change}
  C -->|yes| P[Authorized analytics preview]
- C -->|layout only| U[Local presentation]
+ C -->|layout or palette only| U[Local presentation]
  H --> S[Explicit Save only]
 ```
 
@@ -89,8 +89,9 @@ flowchart LR
 flowchart LR
  C[Authorized capabilities and metadata] --> P[StructuredDashboardPlanner]
  P --> L[LLMProvider with projected schema]
- L --> J[Unknown JSON]
- J --> V[Canonical schema validation]
+ L --> J[Unknown summary or grouped generation intent]
+ J --> I[Plan validation and deterministic compiler]
+ I --> V[Canonical schema validation]
  V --> S[Semantic layout validation]
  S --> A[Authorization]
  A --> E[Execution preview]
@@ -103,9 +104,10 @@ flowchart LR
 ```mermaid
 flowchart LR
  D[Working spec and instruction] --> P[Planner with authorized capabilities]
- P --> L[Provider projected patch schema]
- L --> J[Unknown patch JSON]
- J --> V[Canonical patch validation]
+ P --> L[Provider projected sparse edit schema]
+ L --> J[Unknown DashboardEditPlan JSON]
+ J --> I[Plan validation and deterministic compiler]
+ I --> V[Canonical patch validation]
  V --> N[Atomic patch application]
  N --> S[Completed spec schema and semantics]
  S --> A[Post-validation authorization]

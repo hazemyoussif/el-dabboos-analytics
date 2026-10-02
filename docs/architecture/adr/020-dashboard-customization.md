@@ -93,3 +93,9 @@ changes or additional DnD dependency are introduced.
 The v2 contract accepts Area, Pie, Treemap and Combo plus bounded widget presentation and Combo series marks. Both canonical schemas retain backward compatibility; provider projection and authorization are unchanged. Domain visualization suitability is centralized; web options and recommendations reuse canonical validation. Renderer dispatch maps governed types to focused Recharts components. Presentation-only changes reuse existing analytics results and participate in explicit Save and history.
 
 See [visualization capabilities](../visualization-capabilities.md) for rules, defaults, compatibility, warnings and deferred chart contracts. Generic stacking is prohibited because matching metric units do not imply disjoint business components.
+
+## Manual governed palette
+
+The manual builder offers a native localized Palette / لوحة الألوان selector for the domain governed palette vocabulary. Existing widgets preview a palette change immediately through normal BuilderCommand/canonical replacement, without another analytics request. Metrics, dimension, analyses, filters, layout and unrelated presentation remain unchanged; pending editor settings are retained. Undo/Redo participates in normal bounded history. Changes remain unsaved until explicit Save and survive record reopening. A new widget retains its chosen palette in the editor until Apply adds it. Selecting Default writes `palette: "default"`; omission from older specs or unrequested AI intent resolves to the same default colors. No raw color picker is exposed.
+
+Manual and sparse AI palette edits converge on `WidgetPresentation.palette`; generation can supply the same governed token. The centralized web ChartTheme resolves actual Light/Dark colors. Builder and provider plans never store resolved colors, CSS or chart-library options. Global theme/locale remain preferences outside saved content.

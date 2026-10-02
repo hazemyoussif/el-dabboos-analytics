@@ -1,7 +1,7 @@
 import { ArrowUp, ArrowDown, X, Undo2, Redo2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { resolveDashboardLayout, widgetTypes } from '@el-dabboos/domain';
-import type { AnalysisSpec, DashboardPatch, DashboardSeries, DashboardSpec, DashboardWidget, DimensionId, Locale, MetricId, ProductMetric, SemanticMetric, TenantProfile, WidgetType } from '@el-dabboos/domain';
+import { governedPalettes, resolveDashboardLayout, widgetTypes } from '@el-dabboos/domain';
+import type { AnalysisSpec, DashboardPatch, DashboardSeries, DashboardSpec, DashboardWidget, DimensionId, GovernedPalette, Locale, MetricId, ProductMetric, SemanticMetric, TenantProfile, WidgetType } from '@el-dabboos/domain';
 import type { DashboardExecutionResult } from '@el-dabboos/application';
 import { WidgetCard } from '../Renderer.tsx';
 import { DashboardGrid } from './DashboardGrid.tsx';
@@ -14,7 +14,7 @@ import type { BuilderDragItem } from './drag-item.ts';
 import { applyMetricDrop, createMetricCommand, metricAvailable, metricDropActions, metricDropCopy, metricVisualizationOptions, nextSeriesId } from './metric-drop.ts';
 import type { MetricDropAction } from './metric-drop.ts';
 import { copy } from '../i18n.ts';
-import { analysisAllowed, canAddSeries, commonDimensions, selectableMetric, validWidgetDraft, withWidgetMetric } from './model.ts';
+import { analysisAllowed, canAddSeries, commonDimensions, selectableMetric, validWidgetDraft, widgetPaletteCommand, withWidgetMetric } from './model.ts';
 import type { BuilderCommand, BuilderDocument, BuilderHistory } from './model.ts';
 
 export type FilterOptions = Partial<Record<DimensionId, Array<{ id: string; label: string }>>>;
@@ -61,17 +61,31 @@ const makeWidget = (id: string, type: WidgetType, metric: MetricId = 'revenue', 
 };
 const patch = (operation: DashboardPatch['operations'][number]): BuilderCommand => ({ type: 'patch', patch: { schemaVersion: 2, operations: [operation] } });
 
-function WidgetEditor({ initial, adding, base, registry, catalog, locale, onApply, onRemove }: {
+function WidgetEditor({ initial, adding, base, registry, catalog, locale, onApply, onPalette, onRemove }: {
   initial: DashboardWidget; adding: boolean; base: Omit<DashboardSpec, 'widgets'>; registry: ProductMetric[];
-  catalog: Record<string, SemanticMetric>; locale: Locale; onApply: (widget: DashboardWidget) => void; onRemove: () => void;
+  catalog: Record<string, SemanticMetric>; locale: Locale; onApply: (widget: DashboardWidget) => void; onPalette: (value: string) => void; onRemove: () => void;
 }) {
   const t = labels[locale];
   const available = registry.filter(selectableMetric);
   const [draft, setDraft] = useState<DashboardWidget>(() => structuredClone(initial));
   const [newMetric, setNewMetric] = useState<MetricId>('revenue');
   const [message, setMessage] = useState('');
-  const initialSignature = JSON.stringify(initial);
+  // A palette-only preview must not discard other pending editor controls.
+  const initialSignature = JSON.stringify({ ...initial, presentation: { ...initial.presentation, palette: undefined } });
   useEffect(() => { setDraft(structuredClone(initial)); setMessage(''); }, [initialSignature]);
+  const initialPalette = initial.presentation?.palette;
+  const initialHasPresentation = initial.presentation !== undefined;
+  useEffect(() => {
+    setDraft(current => {
+      if (initialPalette === undefined && current.presentation === undefined) return current;
+      const presentation = { ...current.presentation };
+      if (initialPalette === undefined) delete presentation.palette;
+      else presentation.palette = initialPalette;
+      const next: DashboardWidget = { ...current, presentation };
+      if (!initialHasPresentation && !Object.keys(presentation).length) delete next.presentation;
+      return next;
+    });
+  }, [initialPalette, initialHasPresentation]);
   const dimensions = commonDimensions(draft.series.map(series => series.metric), catalog);
   const updateSeries = (id: string, update: (series: DashboardSeries) => DashboardSeries) => setDraft(current => ({ ...current, series: current.series.map(series => series.id === id ? update(series) : series) }));
   const changeAnalysis = (series: DashboardSeries, change: Partial<AnalysisSpec>, remove?: keyof AnalysisSpec) => {
@@ -111,6 +125,10 @@ function WidgetEditor({ initial, adding, base, registry, catalog, locale, onAppl
     <h3>{adding ? t.newWidget : t.properties}</h3>
     <label>{t.type}<select value={choiceId} onChange={event => typeChanged(event.target.value)}>{(['summary', 'trend', 'comparison', 'composition', 'detail'] as const).map(group => <optgroup key={group} label={visualizationNames[locale][group]}>{choices.filter(option => option.group === group).map(option => <option key={option.id} value={option.id}>{visualizationLabel(option, locale)}</option>)}</optgroup>)}</select></label>
     {recommendation && <p className="builder-hint">{locale === 'ar' ? 'العرض المقترح: ' : 'Suggested visualization: '}{visualizationLabel(recommendation, locale)}</p>}
+    <PaletteSelect locale={locale} value={draft.presentation?.palette ?? 'default'} onChange={value => {
+      setDraft(current => ({ ...current, presentation: { ...current.presentation, palette: value } }));
+      if (!adding) onPalette(value);
+    }} />
     <label>{t.dimension}<select value={draft.dimension ?? ''} onChange={event => dimensionChanged(event.target.value as DimensionId || undefined)}>
       <option value="">{t.none}</option>{dimensions.map(dimension => <option key={dimension} value={dimension}>{copy[locale].dimensions[dimension]}</option>)}</select></label>
     {!['kpi', 'table'].includes(draft.type) && <label>{locale === 'ar' ? 'مفتاح الرسم' : 'Legend'}<select value={draft.presentation?.legend ?? 'auto'} onChange={event => setPresentation('legend', event.target.value)}>{(['auto', 'show', 'hide'] as const).map(value => <option key={value} value={value}>{locale === 'ar' ? { auto: 'تلقائي', show: 'إظهار', hide: 'إخفاء' }[value] : value}</option>)}</select></label>}
@@ -263,9 +281,23 @@ export function BuilderWorkspace({ history, execution, catalog, registry, profil
         renderWidget={widget => busy || !execution?.widgetResults[widget.id] ? <article className="widget"><p role="status">{copy[locale].loading}</p></article> : <WidgetCard widget={widget} entry={execution?.widgetResults[widget.id]} catalog={catalog} locale={locale} profile={profile} />} />}
       {!spec && <p className="builder-hint">{t.selectWidget}</p>}
     </div>
-    <aside className="builder-properties">{spec && selected && <WidgetLayoutInspector key={`layout-${selected.id}`} spec={spec} id={selected.id} locale={locale} onChange={layout => onCommand({ type: 'layout', layout })} />}{base && (selected || newWidget) ? <WidgetEditor key={selected?.id ?? `${newWidget?.id}-${addingType}`} initial={(selected ?? newWidget)!} adding={!!newWidget} base={base} registry={registry} catalog={catalog} locale={locale} onApply={applyWidget} onRemove={() => removeWidget()} /> : <p>{t.selectWidget}</p>}
+    <aside className="builder-properties">{spec && selected && <WidgetLayoutInspector key={`layout-${selected.id}`} spec={spec} id={selected.id} locale={locale} onChange={layout => onCommand({ type: 'layout', layout })} />}{base && (selected || newWidget) ? <WidgetEditor key={selected?.id ?? `${newWidget?.id}-${addingType}`} initial={(selected ?? newWidget)!} adding={!!newWidget} base={base} registry={registry} catalog={catalog} locale={locale} onApply={applyWidget} onPalette={value => { if (selected) onCommand(widgetPaletteCommand(selected, value)); }} onRemove={() => removeWidget()} /> : <p>{t.selectWidget}</p>}
       <div className="builder-filters"><h3>{t.filters}</h3><div className="builder-dates"><label>{t.dateFrom}<input type="date" value={dateFrom} onChange={event => setDateFrom(event.target.value)} /></label><label>{t.dateTo}<input type="date" value={dateTo} onChange={event => setDateTo(event.target.value)} /></label><button disabled={!spec || !dateFrom || !dateTo || dateFrom > dateTo} onClick={applyDates}>{t.applyDates}</button></div>
       {filterDimensions.map(dimension => <label key={dimension}>{copy[locale].dimensions[dimension]}<select value={requestedFilters.find(filter => filter.dimension === dimension)?.values[0] ?? ''} disabled={!spec || !spec.widgets.every(widget => widget.series.every(series => catalog[series.metric]?.dimensions.includes(dimension)))} onChange={event => setRequestedFilter(dimension, event.target.value)}><option value="">{t.all}</option>{(filterOptions[dimension] ?? []).map(option => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label>)}
       </div></aside>
   </div>;
+}
+
+/** Labels are localized here; the selectable vocabulary belongs to domain. */
+export function PaletteSelect({ locale, value, onChange }: {
+  locale: Locale; value: GovernedPalette;
+  onChange: (palette: GovernedPalette) => void;
+}) {
+  const names = locale === 'ar'
+    ? { default: 'افتراضية', blue: 'أزرق', green: 'أخضر', orange: 'برتقالي', purple: 'بنفسجي', red: 'أحمر', neutral: 'محايدة' }
+    : { default: 'Default', blue: 'Blue', green: 'Green', orange: 'Orange', purple: 'Purple', red: 'Red', neutral: 'Neutral' };
+  return <label>{locale === 'ar' ? 'لوحة الألوان' : 'Palette'}<select value={value} onChange={event => {
+    const palette = governedPalettes.find(palette => palette === event.target.value);
+    if (palette) onChange(palette);
+  }}>{governedPalettes.map(palette => <option key={palette} value={palette}>{names[palette]}</option>)}</select></label>;
 }

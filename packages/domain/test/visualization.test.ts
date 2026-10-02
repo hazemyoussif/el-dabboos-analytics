@@ -46,3 +46,19 @@ test('Combo requires two to four matching series; all axis charts retain unit co
   for (const type of ['line', 'area', 'bar', 'combo'] as const) assert.throws(() => validateDashboardSpec(spec({ ...widget(type), series: [{ id: 'revenue', metric: 'revenue' }, { id: 'orders', metric: 'order_count' }] })));
   assert.equal(visualizationIssues(widget('combo'), semanticCatalog).length, 0);
 });
+
+test('governed palette tokens survive canonical spec and normal widget replacement without raw renderer properties', async () => {
+  const { governedPalettes } = await import('../src/index.ts');
+  for (const palette of governedPalettes) {
+    const current = spec(widget('bar')); const next = { ...widget('bar'), presentation: { palette } };
+    const patch = { schemaVersion: 2 as const, operations: [{ op: 'replace' as const, widgetId: 'chart', widget: next }] };
+    validateDashboardPatch(patch); const changed = applyDashboardPatch(current, patch); validateDashboardSpec(changed);
+    assert.equal(changed.widgets[0]!.presentation?.palette, palette); assert.deepEqual(changed.layout, current.layout);
+    assert.deepEqual(changed.widgets[0]!.series, current.widgets[0]!.series);
+  }
+  for (const presentation of [{ palette: '#0078d4' }, { palette: 'rgb(1,2,3)' }, { palette: 'blue', fill: '#0078d4' }]) {
+    const next = { ...widget('bar'), presentation };
+    assert.throws(() => validateDashboardSpec(spec(next as DashboardWidget)));
+    assert.throws(() => validateDashboardPatch({ schemaVersion: 2, operations: [{ op: 'replace', widgetId: 'chart', widget: next }] }));
+  }
+});

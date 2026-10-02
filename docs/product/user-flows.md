@@ -19,3 +19,7 @@ All / Favorites / My dashboards / Shared are accessible-record views. Shared mea
 ## Governance and failure
 
 Full schema + semantic validation precedes execution. Membership, permissions, available metrics and enforced filters constrain manual and AI paths. Partial series preserve usable values and nulls. A failed required top-N anchor cannot produce an unrestricted result union. Public AI errors are safe and generic. [Stories](user-stories.md), [criteria](acceptance-criteria.md) and [diagrams](../architecture/diagrams.md) provide traceable details.
+
+## Choose a widget palette
+
+Select an existing chart in Edit and choose Palette (لوحة الألوان). The preview updates immediately, without changing the metric, grouping, filters or analysis. Undo/Redo restores earlier choices. A new widget keeps its chosen palette when applied. Save is explicit; reopening the saved dashboard restores the choice. AI instructions such as “Make the branch chart blue” and manual Blue selection have the same effect. Light/Dark uses the same choice with theme-appropriate colors.

@@ -1,4 +1,4 @@
-import { applyDashboardPatch, resolveDashboardLayout, semanticCatalog, validateAnalysis, validateDashboardSpec, visualizationIssues } from '@el-dabboos/domain';
+import { applyDashboardPatch, governedPalettes, resolveDashboardLayout, semanticCatalog, validateAnalysis, validateDashboardSpec, visualizationIssues } from '@el-dabboos/domain';
 import type { AnalysisSpec, DashboardLayout, DashboardPatch, DashboardSpec, DashboardWidget, DimensionId, Locale, MetricId, ProductMetric, SemanticMetric, TenantProfile } from '@el-dabboos/domain';
 import { resolveDatePreset } from '@el-dabboos/application';
 
@@ -92,4 +92,13 @@ export function analysisAllowed(metric: MetricId, dimension: DimensionId | undef
 }
 export function validWidgetDraft(widget: DashboardWidget, base: Omit<DashboardSpec, 'widgets'>): boolean {
   try { validateDashboardSpec({ ...base, layout: { columns: 12 }, widgets: [widget] }); return true; } catch { return false; }
+}
+
+/** Palette edits use the same canonical replacement/history path as other edits. */
+export function widgetPaletteCommand(widget: DashboardWidget, value: string): BuilderCommand {
+  const palette = governedPalettes.find(palette => palette === value);
+  if (!palette) throw new Error('Invalid governed palette.');
+  return { type: 'patch', patch: { schemaVersion: 2, operations: [{ op: 'replace', widgetId: widget.id,
+    widget: { ...widget, presentation: { ...widget.presentation, palette } },
+  }] } };
 }

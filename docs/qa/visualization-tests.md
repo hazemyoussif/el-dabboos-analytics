@@ -247,3 +247,7 @@ Current synthetic-demo regression cases. Use the setup and evidence rules in [ma
 **Cleanup:** Discard unsaved changes; restore identity, tenant, filters and preferences; remove test folders/associations. Saved QA records may remain because record deletion is not implemented; use a disposable metadata DB.
 **Automation coverage:** [data engine tests](../../packages/data/test/engine.test.ts) covers the related contract; human interaction and appearance still require this case.
 **Story / acceptance:** [US-DATA-002](../product/user-stories.md#us-data-002) / [AC-DATA-002](../product/acceptance-criteria.md#ac-data-002).
+
+## Governed palette regression coverage
+
+Run [TC-BUILD-016](builder-tests.md#tc-build-016) for native palette selection, immediate preview, AI/manual parity, history and saved reopening. Repeat in EN/Arabic, Light/Dark and at 1280/1024/390. Check charts use theme-resolved colors, precise value tables retain unchanged values and missing rows stay missing. KPI/Table accept the token without implying new chart marks. This is documented coverage; performed checks are recorded separately in [planner closeout](ai-planner-provider-ux-verification.md).

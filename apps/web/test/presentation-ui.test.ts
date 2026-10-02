@@ -95,3 +95,39 @@ test('identity, market and localized language controls share label/control rows 
     await server.close();
   }
 });
+
+test('governed blue palette reaches the shared renderer in Light/Dark and EN/Arabic without changing queries or saved content', async () => {
+  const server = await createServer({ root: fileURLToPath(new URL('../', import.meta.url)), server: { middlewareMode: true }, optimizeDeps: { noDiscovery: true }, appType: 'custom' });
+  try {
+    const { WidgetCard } = await server.ssrLoadModule('/src/Renderer.tsx');
+    const { ThemeContext } = await server.ssrLoadModule('/src/presentation/ThemeProvider.tsx');
+    const { withGovernedPalette } = await server.ssrLoadModule('/src/rendering/chart-theme.ts');
+    const widget: DashboardWidget = { id: 'blue', type: 'line', dimension: 'branch', presentation: { palette: 'blue' }, series: [{ id: 'revenue', metric: 'revenue' }, { id: 'profit', metric: 'gross_profit' }] };
+    const original = JSON.stringify(widget);
+    const entry = { status: 'success', seriesResults: {}, alignedRows: [{ key: 'baghdad', series: { revenue: { value: 100, comparisonValue: 80, rank: 1 }, profit: { value: null } } }] };
+    for (const mode of ['light', 'dark'] as const) for (const locale of ['en', 'ar'] as const) {
+      const base = chartTheme(mode); const palette = withGovernedPalette(base, 'blue');
+      const html = renderToStaticMarkup(createElement(ThemeContext.Provider, { value: { preference: mode, theme: base, setPreference() {} } }, createElement(WidgetCard, { widget, entry, locale, catalog: semanticCatalog, profile: tenantProfiles['demo-iq'] })));
+      assert.ok(html.includes(palette.categorical[0])); assert.ok(html.includes(palette.categorical[1]));
+      assert.ok(html.includes('reference')); assert.ok(html.includes('chart-summary')); assert.ok(html.includes('—'));
+      assert.ok(html.includes(locale === 'ar' ? 'عرض قيم الرسم' : 'View chart values')); assert.equal(JSON.stringify(widget), original);
+    }
+  } finally { await server.close(); }
+});
+
+test('builder palette select exposes the domain vocabulary with localized native labels in both themes', async () => {
+  const { governedPalettes } = await import('@el-dabboos/domain');
+  const server = await createServer({ root: fileURLToPath(new URL('../', import.meta.url)), server: { middlewareMode: true }, optimizeDeps: { noDiscovery: true }, appType: 'custom' });
+  try {
+    const { PaletteSelect } = await server.ssrLoadModule('/src/builder/BuilderWorkspace.tsx');
+    const { ThemeContext } = await server.ssrLoadModule('/src/presentation/ThemeProvider.tsx');
+    for (const locale of ['en', 'ar'] as const) for (const mode of ['light', 'dark'] as const) {
+      const html = renderToStaticMarkup(createElement(ThemeContext.Provider, { value: { preference: mode, theme: chartTheme(mode), setPreference() {} } }, createElement(PaletteSelect, { locale, value: 'blue', onChange() {} })));
+      assert.ok(html.startsWith(`<label>${locale === 'ar' ? 'لوحة الألوان' : 'Palette'}<select>`));
+      assert.equal((html.match(/<option/g) ?? []).length, governedPalettes.length);
+      for (const palette of governedPalettes) assert.ok(html.includes(`value="${palette}"`));
+      assert.ok(html.includes('value="blue" selected=""')); assert.ok(!html.includes('#'));
+      assert.ok(html.includes(locale === 'ar' ? 'محايدة' : 'Neutral'));
+    }
+  } finally { await server.close(); }
+});

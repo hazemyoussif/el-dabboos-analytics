@@ -27,6 +27,8 @@ Runtime flow is Web → HTTP API → Application → domain ports/contracts → 
 | MetricSemantics | Additive, ratio, snapshot, comparison-derived and duration-derived aggregation meaning |
 | AnalyticsQuery | Bounded metric, grouping, date, filters and compatible analysis request |
 | AnalyticsResult | Nullable rows with comparison/rank plus sourceId, executedAt, dataThrough and optional sourceAsOf/type/unit |
+| DashboardGenerationPlan | Transient application-owned model intent; deterministic compilation into DashboardSpec, never persistence/execution |
+| DashboardEditPlan | Transient sparse application intent; deterministic compilation into canonical patch, never persistence/execution |
 | DashboardSpec | Portable v2 titles, widgets/series, user filters and canonical layout; no policy/theme/folder/SQL |
 | DashboardPatch | Bounded add/remove/replace/title/filter/layout edit operations, not an expression language |
 | DashboardRecord | Persisted spec plus record ID, tenant, owner, scope, optimistic version and timestamps |
@@ -47,6 +49,10 @@ API validates identity membership and route permission; canonical validators enf
 
 Executor validates, normalizes and deduplicates queries **within one execute call**, then runs unique repository calls with a configurable bound (default 8). Identity includes metric/aggregation/group/date/filters/analysis and tenant/locale/enforced policy. No global cache exists. Result clones preserve independent series behavior and deterministic widget order. Failure isolation and required top-N anchor semantics are unchanged. [ADR 023](adr/023-execution-and-runtime-readiness.md).
 
+## Structured planning
+
+Generation uses prompt → compact application-owned DashboardGenerationPlan → plan validation → deterministic compiler → full canonical DashboardSpec v2/semantic validation → authorization → execution. The model chooses governed business intent and only explicitly requested presentation/analysis. Generation schema separates one-series, dimensionless KPI summaries from required-dimension non-KPI groups. A deterministic resolver owns unspecified KPI/Line/Bar/Table choice and compatible presentation defaults; explicit incompatible requests fail canonical validation. Only governed palette names can enter spec/patch, with actual colors resolved by web themes. Code owns IDs, tenant-timezone dates and canonical 12-column layout. Provider schema constraints must not weaken domain contracts. Editing validates transient sparse DashboardEditPlan, compiles canonical DashboardPatch v2 and fully validates/authorizes the applied draft; omitted values preserve current business intent and layout. [ADR-025](adr/025-compact-dashboard-edit-plan.md). Repair is bounded; HTTP failures do not trigger semantic repair. [ADR 024](adr/024-compact-generation-plan.md), [provider contract and diagnostics](openai-compatible-provider.md).
+
 ## Semantics and representation
 
 Revenue/order counts are additive. AOV = sum(revenue)/sum(order_count); gross margin = sum(gross_profit)/sum(net_revenue) with catalog scale; win rate derives from won/closed opportunities. Sales growth is comparison-derived. MTBF and MTTR derive from operating/failure and repair/completed-repair measures. Snapshot balances take latest entity/measure at cutoff, then aggregate entities, never dates. Compare periods using deterministic UTC calendar functions, not JavaScript overflowing month arithmetic. See [data model](../developer/data-model.md).
@@ -60,3 +66,9 @@ Theme/UI locale are preferences outside spec and never imply Save. Layout-only c
 ## Current operational limits
 
 Node DatabaseSync executes synchronously; async repository facades and bounded concurrency do not make SQLite parallel/non-blocking. Analytics loads relevant tenant measure facts into memory for the deterministic engine. There is no source query cancellation/pool, production authentication, persistent audit, migration version table or operational data reconciliation. Health probes check structure without business data and cannot interrupt synchronous blocking work. These are explicit integration risks, not completed production capabilities.
+
+## Manual palette path
+
+The manual builder offers a native localized Palette / لوحة الألوان selector for the domain governed palette vocabulary. Existing widgets preview a palette change immediately through normal BuilderCommand/canonical replacement, without another analytics request. Metrics, dimension, analyses, filters, layout and unrelated presentation remain unchanged; pending editor settings are retained. Undo/Redo participates in normal bounded history. Changes remain unsaved until explicit Save and survive record reopening. A new widget retains its chosen palette in the editor until Apply adds it. Selecting Default writes `palette: "default"`; omission from older specs or unrequested AI intent resolves to the same default colors. No raw color picker is exposed.
+
+Manual and sparse AI palette edits converge on `WidgetPresentation.palette`; generation can supply the same governed token. The centralized web ChartTheme resolves actual Light/Dark colors. Builder and provider plans never store resolved colors, CSS or chart-library options. Global theme/locale remain preferences outside saved content.

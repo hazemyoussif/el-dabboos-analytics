@@ -20,7 +20,8 @@ Web main.tsx mounts App, theme provider and workspace feature hooks. API server.
 | Templates? | application/templates.ts; API routes/templates.ts; web library/TemplateBrowser.tsx |
 | Saved dashboard lifecycle? | application/saved-dashboards.ts; data/dashboard-sqlite.ts; API routes/saved-dashboards.ts; web dashboard-lifecycle.ts and hooks/useDashboardProductFlow.ts |
 | Folders/preferences? | application/dashboard-library.ts; data/library-sqlite.ts; API routes/dashboard-library.ts; web library-model.ts and hooks/useDashboardLibrary.ts |
-| LLM transport / planner? | API providers/openai-compatible.ts; application/structured-planner.ts, provider-schema.ts, structured-diagnostics.ts; API structured-diagnostics.ts |
+| LLM transport / planner? | API providers/openai-compatible.ts; application/structured-planner.ts, generation-plan.ts, edit-plan.ts, visualization-intent.ts, provider-schema.ts, structured-diagnostics.ts; API structured-diagnostics.ts |
+| AI operation progress/errors? | web hooks/useDashboardPlanner.ts, planner-activity.ts, planner-copy.ts and product/AiProgress.tsx |
 | Themes and chart colors? | web presentation/ThemeProvider.tsx, preferences.ts; styles/tokens.css; rendering/chart-theme.ts |
 | Sidebar/navigation? | web shell/WorkspaceNavigation.tsx; product/ and library/ flows |
 | Renderer? | web Renderer.tsx plus focused rendering/*Content.tsx and composition.ts |

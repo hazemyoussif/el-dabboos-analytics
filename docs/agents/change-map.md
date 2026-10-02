@@ -46,8 +46,8 @@ Inspect current code/tests first. Choose the smallest correct layer. A feature r
 
 ## AI planner/provider
 
-**Likely touch:** LLMProvider adapter → root config → structured planner projection/full validators → post-output auth → fake transport tests.
-**Do NOT start in:** Provider-specific fields in DashboardSpec.
+**Likely touch:** LLMProvider adapter → root config → compact generation plan/compiler (edit remains canonical patch), portable projection/full validators → post-output auth → fake transport tests.
+**Do NOT start in:** Provider-specific fields in DashboardSpec, canonical infrastructure in generation-plan schemas, or bypassing the compiler.
 **Checklist:** [add-llm-provider](../developer/change-guides/add-llm-provider.md).
 
 ## Dashboard persistence

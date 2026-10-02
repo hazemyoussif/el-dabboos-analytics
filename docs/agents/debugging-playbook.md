@@ -10,8 +10,8 @@
 | Missing builder metric | registry availability → metricDomains → authorized catalog; API authorization and builder tests |
 | Wrong branch/tenant | identity membership → analyticsContext.enforcedFilters → adapter intersection; data/security + API tests |
 | Partial or anchor failure | seriesResults → first top-N selection → alignment; application/query-execution tests |
-| AI invalid output | unknown JSON → provider projection → original canonical schema → semantic rules → auth; structured planner/projection tests |
-| AI edit rejected | patch validator → atomic apply → full completed spec → auth; patch/planner/API tests |
+| AI invalid output | generation: compact plan schema → deterministic compiler → original canonical spec/semantic rules → auth; edits: sparse edit plan → deterministic canonical patch → applied spec → auth. Check safe terminal validation/HTTP diagnostics; no raw bodies/prompts |
+| AI edit rejected | edit-plan validator/compiler → patch validator → atomic apply → full completed spec → auth; patch/planner/API tests |
 | Save/conflict | working state → permissions/owner → expectedVersion → metadata repo; saved-dashboard/lifecycle tests |
 | Folder/favorite mismatch | personal tenant/user preference → accessible record → library view; library tests |
 | Theme/chart issue | central tokens/theme → presentation composition → focused renderer; SSR/browser checks |

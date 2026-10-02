@@ -98,7 +98,10 @@ export interface AnalyticsRepository {
 }
 export const widgetTypes = ['kpi', 'line', 'area', 'bar', 'pie', 'treemap', 'combo', 'table'] as const;
 export type WidgetType = typeof widgetTypes[number];
+export const governedPalettes = ['default', 'blue', 'green', 'orange', 'purple', 'red', 'neutral'] as const;
+export type GovernedPalette = typeof governedPalettes[number];
 export interface WidgetPresentation {
+  palette?: GovernedPalette;
   orientation?: 'vertical' | 'horizontal';
   pieVariant?: 'pie' | 'donut';
   legend?: 'auto' | 'show' | 'hide';

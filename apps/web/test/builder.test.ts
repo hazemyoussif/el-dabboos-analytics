@@ -79,3 +79,34 @@ test('web grid adapter round-trips canonical coordinates independent of locale',
   assert.deepEqual(fromGridItems(toGridItems(portable.items), portable), portable);
   assert.deepEqual(toGridItems(portable.items), [{ i: 'revenue', x: 5, y: 2, w: 3, h: 2 }]);
 });
+
+test('manual palette changes preserve business intent, participate in history and equal sparse AI intent', async () => {
+  const { widgetPaletteCommand } = await import('../src/builder/model.ts');
+  const { compileDashboardEditPlan } = await import('@el-dabboos/application');
+  const { applyDashboardPatch } = await import('@el-dabboos/domain');
+  const chart: DashboardWidget = { id: 'branch', type: 'bar', dimension: 'branch', title: { en: 'Branches', ar: 'الفروع' },
+    presentation: { orientation: 'horizontal', legend: 'hide' },
+    series: [{ id: 'profit', metric: 'gross_profit', analysis: { topN: { direction: 'top', limit: 5 }, ranking: true } }] };
+  const current: DashboardSpec = { ...spec, widgets: [chart], filters: { dateRange: { from: '2026-01-01', to: '2026-10-01' } },
+    layout: { columns: 12, items: [{ widgetId: 'branch', x: 2, y: 3, w: 6, h: 4 }] } };
+  const original = structuredClone(current);
+  const blue = commitBuilderCommand(startBuilder({ kind: 'dashboard', spec: current }), widgetPaletteCommand(chart, 'blue'));
+  assert.equal(blue.execute, false); assert.equal(blue.history.present.kind, 'dashboard');
+  if (blue.history.present.kind !== 'dashboard') throw new Error('Missing draft');
+  assert.equal(blue.history.present.spec.widgets[0]!.presentation!.palette, 'blue');
+  const ai = compileDashboardEditPlan(current, { operations: [{ op: 'update_widget', widgetId: chart.id, changes: { presentation: { palette: 'blue' } } }] });
+  assert.deepEqual(blue.history.present.spec, applyDashboardPatch(current, ai));
+  const green = commitBuilderCommand(blue.history, widgetPaletteCommand(blue.history.present.spec.widgets[0]!, 'green'));
+  assert.equal(green.execute, false);
+  if (green.history.present.kind !== 'dashboard') throw new Error('Missing draft');
+  const after = green.history.present.spec;
+  assert.deepEqual(after, { ...original, widgets: [{ ...chart, presentation: { ...chart.presentation, palette: 'green' } }] });
+  const undone = undoBuilder(green.history); assert.equal(undone.execute, false);
+  assert.equal(undone.history.present.kind === 'dashboard' && undone.history.present.spec.widgets[0]!.presentation!.palette, 'blue');
+  const redone = redoBuilder(undone.history); assert.equal(redone.execute, false);
+  assert.deepEqual(redone.history.present, green.history.present);
+  const reset = commitBuilderCommand(green.history, widgetPaletteCommand(after.widgets[0]!, 'default'));
+  assert.equal(reset.history.present.kind === 'dashboard' && reset.history.present.spec.widgets[0]!.presentation!.palette, 'default');
+  assert.deepEqual(current, original);
+  for (const raw of ['#0000ff', 'rgb(0,0,255)', 'cyan']) assert.throws(() => widgetPaletteCommand(chart, raw), /Invalid governed palette/);
+});
