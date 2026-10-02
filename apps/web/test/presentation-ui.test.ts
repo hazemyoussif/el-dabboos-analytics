@@ -49,3 +49,25 @@ test('navigation shell retains labelled dashboard actions in collapsed state and
     }
   } finally {await server.close();}
 });
+
+test('official shell branding is accessible in expanded, collapsed and mobile navigation across themes/locales', async () => {
+  const server = await createServer({ root: fileURLToPath(new URL('../', import.meta.url)), server: { middlewareMode: true }, appType: 'custom' });
+  try {
+    const { WorkspaceBrand } = await server.ssrLoadModule('/src/shell/WorkspaceBrand.tsx');
+    const { WorkspaceNavigation } = await server.ssrLoadModule('/src/shell/WorkspaceNavigation.tsx');
+    const { ThemeContext } = await server.ssrLoadModule('/src/presentation/ThemeProvider.tsx');
+    for (const locale of ['en', 'ar'] as const) for (const mode of ['light', 'dark'] as const) {
+      for (const collapsed of [false, true]) {
+        const html = renderToStaticMarkup(createElement(ThemeContext.Provider, { value: { preference: mode, theme: chartTheme(mode), setPreference() {} } }, createElement(WorkspaceBrand, { locale, collapsed })));
+        assert.ok(html.includes('src="/brand/el-dabboos-mark.png"')); assert.ok(html.includes('width="692" height="518"'));
+        assert.ok(html.includes(`alt="${collapsed ? 'El Dabboos' : ''}"`));
+        assert.equal(html.includes('<strong'), !collapsed); assert.ok(!html.includes('corporate-logo'));
+        if (!collapsed) { assert.ok(html.includes('<strong dir="ltr">El Dabboos</strong>')); assert.ok(html.includes(locale === 'en' ? 'Analytics Studio' : 'استوديو التحليلات')); }
+      }
+      const shell = renderToStaticMarkup(createElement(WorkspaceNavigation, { locale, drawerOpen: false, onDrawerClose() {}, onNew() {}, onTemplates() {} }));
+      const mobile = shell.slice(shell.indexOf('<dialog'));
+      assert.ok(mobile.includes('alt=""')); assert.ok(mobile.includes('<strong dir="ltr">El Dabboos</strong>'));
+      assert.ok(!shell.includes('lucide-chart-no-axes-combined'));
+    }
+  } finally { await server.close(); }
+});
