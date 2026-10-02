@@ -54,7 +54,7 @@ const port = config.port;
 try {
   const address = await app.listen({ port, host: '127.0.0.1' });
   process.stdout.write(`${startupSummary({ analyticsProvider: provider, dashboardPath: config.dashboardPath, plannerMode, modelId: config.llm.modelId, baseUrl: config.llm.baseUrl, diagnostics: config.llm.diagnostics, port, executionConcurrency: config.executionConcurrency }, config.llm.apiKey)}\n`);
-  process.stdout.write(`El-Dabbous API listening at ${address}\n`);
+  process.stdout.write(`El Dabboos API listening at ${address}\n`);
 } catch (error) {
   close(); dashboardDb.close();
   throw error;

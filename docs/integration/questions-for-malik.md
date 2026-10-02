@@ -24,7 +24,7 @@ All answers are pending. Original questions Q01–Q18 remain unresolved and are 
 
 **Q13 (original 13):** Is Odoo the source of user identity? Are users shared between the two Odoo systems, or represented separately?
 
-**Q14 (original 14):** Does El-Dabbous use an external identity provider or SSO? Can the existing Python backend identify the authenticated Odoo user?
+**Q14 (original 14):** Does El Dabboos use an external identity provider or SSO? Can the existing Python backend identify the authenticated Odoo user?
 
 **Q17 (original 17):** How are inactive users and revoked memberships handled? What latency is required for revocation?
 

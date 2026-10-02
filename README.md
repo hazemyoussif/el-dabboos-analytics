@@ -1,4 +1,4 @@
-# El-Dabbous AI Analytics
+# El Dabboos AI Analytics
 
 A source-independent, bilingual analytics prototype with two controlled synthetic markets, a ready-made dashboard library, a manual Dashboard Builder with saved dashboard records, and DashboardSpec v2 multi-metric visualizations. The default local tenant is Iraq (`demo-iq`); Egypt (`demo-eg`) uses the same templates and metrics.
 
@@ -45,7 +45,7 @@ KPI widgets have one series. Line/bar widgets can combine compatible metrics suc
 
 The browser receives currency, time zone, locale, and branch labels from the server's controlled profile. Synthetic Iraqi monetary facts are nominal IQD and Egyptian facts nominal EGP; there is no FX conversion. In an operational source, transaction currency, company/base currency, and reporting currency must be distinguished before any aggregation. Unrelated currencies must not be summed without an approved conversion policy. Arabic UI uses Modern Standard Arabic; Iraqi and Egyptian dialect synonyms support future planning/evaluation, not ordinary labels. The demo selector is not authentication. Dashboard records are stored separately from DashboardSpec in SQLite (`DASHBOARD_DB_PATH`, default `dashboards.db`), independently of the analytics provider.
 
-The fixture spans October 2024 through September 2026 with synthetic branch/customer geography. No branch or customer represents actual El-Dabbous operations. Planned metric concepts are discoverable but cannot execute until their data/formulas are approved. See [current assumptions](docs/architecture/current-assumptions.md), [architecture overview](docs/architecture/overview.md), and [ADRs](docs/architecture/adr/).
+The fixture spans October 2024 through September 2026 with synthetic branch/customer geography. No branch or customer represents actual El Dabboos operations. Planned metric concepts are discoverable but cannot execute until their data/formulas are approved. See [current assumptions](docs/architecture/current-assumptions.md), [architecture overview](docs/architecture/overview.md), and [ADRs](docs/architecture/adr/).
 
 ## Dashboard product flow
 

@@ -1,7 +1,7 @@
 import type { DimensionId, Locale, MetricType, TenantProfile } from '@el-dabbous/domain';
 export const copy = {
   en: {
-    studio: 'Analytics Studio', product: 'EL-DABBOUS', metricCatalog: 'Metric catalog', available: 'available', planned: 'planned', tagline: 'Ask your business. See the answer.',
+    studio: 'Analytics Studio', product: 'El Dabboos', metricCatalog: 'Metric catalog', available: 'available', planned: 'planned', tagline: 'Ask your business. See the answer.',
     workspace: 'Workspace', createWithAi: 'Create with AI', createWithAiHint: 'Describe the dashboard you need', blankDashboard: 'Blank dashboard', blankDashboardHint: 'Build it manually from an empty canvas', startFromTemplate: 'Start from template', startFromTemplateHint: 'Choose a ready-made dashboard', useTemplate: 'Use template', editWithAi: 'Edit with AI', edit: 'Edit', view: 'View', cancel: 'Cancel', savedDashboards: 'Saved dashboards', noSavedDashboards: 'No saved dashboards yet', templateBadge: 'Template', savedDashboard: 'Saved dashboard', unsaved: 'Unsaved draft', modified: 'Unsaved changes', newDashboard: 'New dashboard', save: 'Save', saveAs: 'Save As', discard: 'Discard', ready: 'Ready to explore', library: 'Dashboard templates', market: 'Market', promptTitle: 'Describe the dashboard you need',
     promptHint: 'Ask in English or Arabic. This prototype recognizes the executive sales scenario.',
     promptPlaceholder: 'Create an executive sales dashboard for this year showing revenue, gross margin, order count, monthly revenue vs last year, top customers and outstanding receivables.',
@@ -14,7 +14,7 @@ export const copy = {
     dimensions: { date: 'Date', month: 'Month', quarter: 'Quarter', year: 'Year', customer: 'Customer', branch: 'Branch', region: 'Region', salesperson: 'Salesperson', product: 'Product', product_category: 'Category', warehouse: 'Warehouse', equipment: 'Equipment', equipment_category: 'Equipment category', technician: 'Technician' },
   },
   ar: {
-    studio: 'استوديو التحليلات', product: 'الدبوس', metricCatalog: 'دليل المؤشرات', available: 'متاح', planned: 'قيد التخطيط', tagline: 'اسأل عن أعمالك. وشاهد الإجابة.',
+    studio: 'استوديو التحليلات', product: 'El Dabboos', metricCatalog: 'دليل المؤشرات', available: 'متاح', planned: 'قيد التخطيط', tagline: 'اسأل عن أعمالك. وشاهد الإجابة.',
     workspace: 'مساحة العمل', createWithAi: 'إنشاء بالذكاء الاصطناعي', createWithAiHint: 'صف لوحة المعلومات التي تحتاجها', blankDashboard: 'لوحة فارغة', blankDashboardHint: 'ابدأ البناء من لوحة فارغة', startFromTemplate: 'البدء من قالب', startFromTemplateHint: 'اختر لوحة جاهزة', useTemplate: 'استخدام القالب', editWithAi: 'تحرير بالذكاء الاصطناعي', edit: 'تحرير', view: 'عرض', cancel: 'إلغاء', savedDashboards: 'لوحات محفوظة', noSavedDashboards: 'لا توجد لوحات محفوظة بعد', templateBadge: 'قالب', savedDashboard: 'لوحة محفوظة', unsaved: 'مسودة غير محفوظة', modified: 'تغييرات غير محفوظة', newDashboard: 'لوحة جديدة', save: 'حفظ', saveAs: 'حفظ كنسخة', discard: 'تجاهل', ready: 'جاهز للاستكشاف', library: 'قوالب لوحات المعلومات', market: 'السوق', promptTitle: 'صف لوحة المعلومات التي تحتاجها',
     promptHint: 'اكتب بالعربية أو الإنجليزية. يدعم النموذج التجريبي سيناريو المبيعات التنفيذية.',
     promptPlaceholder: 'أنشئ لوحة للمبيعات تعرض الإيرادات وهامش الربح وأعلى العملاء والمديونيات',
