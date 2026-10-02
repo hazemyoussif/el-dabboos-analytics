@@ -11,7 +11,7 @@ import { OpenAICompatibleLLMProvider, ProviderTransportError } from '../src/prov
 const spec: DashboardSpec = { schemaVersion: 2, id: 'generated-sales', title: { en: 'Sales', ar: 'المبيعات' }, locale: 'en',
   filters: { dateRange: { from: '2026-01-01', to: '2026-01-31' } }, layout: { columns: 1 },
   widgets: [{ id: 'revenue', type: 'kpi', series: [{ id: 'revenue', metric: 'revenue' }] }] };
-const plan = { titleEn: 'Sales', titleAr: 'المبيعات', dateFrom: '2026-01-01', dateTo: '2026-01-31', widgets: [{ type: 'kpi' as const, series: [{ metric: 'revenue' as const }] }] };
+const plan = { titleEn: 'Sales', titleAr: 'المبيعات', dateFrom: '2026-01-01', dateTo: '2026-01-31', widgets: [{ series: [{ metric: 'revenue' as const }] }] };
 async function fakeServer(handler: (body: Record<string, unknown>, headers: Record<string, string | string[] | undefined>) => unknown) {
   const requests: Record<string, unknown>[] = [];
   const server = createServer(async (request, response) => {

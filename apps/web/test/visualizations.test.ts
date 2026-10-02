@@ -78,3 +78,22 @@ test('EN/AR chooser smoke renders the expanded labels and accessible native cont
     assert.ok(html.includes(locale === 'ar' ? 'حلقي' : 'Donut')); assert.ok(html.includes(locale === 'ar' ? 'خريطة شجرية' : 'Treemap')); assert.ok(html.includes('<select')); assert.ok(html.includes('<button'));
   }
 });
+
+test('AI palette intent survives compatible manual visualization conversion and Undo/Redo without analytics', () => {
+  const blue: DashboardWidget = { ...w, presentation: { palette: 'blue' } };
+  const current: DashboardSpec = { ...spec, widgets: [blue] };
+  for (const id of ['line', 'horizontal', 'donut', 'treemap', 'table']) {
+    const candidate = visualizationCandidate(blue, option(id)); assert.equal(candidate.presentation?.palette, 'blue');
+    const step = commitBuilderCommand(startBuilder({ kind: 'dashboard', spec: current }), { type: 'patch', patch: { schemaVersion: 2, operations: [{ op: 'replace', widgetId: blue.id, widget: candidate }] } });
+    assert.equal(step.execute, false);
+    if (step.history.present.kind !== 'dashboard') throw new Error('Expected dashboard');
+    validateDashboardSpec(step.history.present.spec); assert.deepEqual(step.history.present.spec.layout, current.layout);
+    assert.deepEqual(step.history.present.spec.filters, current.filters); assert.deepEqual(step.history.present.spec.widgets[0]!.series, blue.series);
+    const undone = undoBuilder(step.history); const redone = redoBuilder(undone.history);
+    assert.equal(undone.execute, false); assert.equal(redone.execute, false);
+    for (const state of [undone.history.present, redone.history.present]) {
+      if (state.kind !== 'dashboard') throw new Error('Expected dashboard');
+      assert.equal(state.spec.widgets[0]!.presentation?.palette, 'blue');
+    }
+  }
+});

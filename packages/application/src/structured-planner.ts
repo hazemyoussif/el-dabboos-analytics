@@ -1,4 +1,4 @@
-import { applyDashboardPatch, dashboardPatchSchema, dashboardPatchSchemaIssues, isMetricId, widgetTypes, semanticCatalog, validateDashboardPatch, validateDashboardSpec } from '@el-dabboos/domain';
+import { applyDashboardPatch, dashboardPatchSchema, dashboardPatchSchemaIssues, isMetricId, widgetTypes, governedPalettes, semanticCatalog, validateDashboardPatch, validateDashboardSpec } from '@el-dabboos/domain';
 import type { DashboardGenerationRequest, DashboardPatch, DashboardPlanner, DashboardSpec, LLMProvider, Locale, PlannerCapabilities, StructuredOutputRequest, TenantProfile } from '@el-dabboos/domain';
 import { compileDashboardGenerationPlan, dashboardGenerationPlanSchema, generationPlanSchemaIssues, validateDashboardGenerationPlan } from './generation-plan.ts';
 import { dashboardTemplates } from './templates.ts';
@@ -47,12 +47,12 @@ function authorizedContext(capabilities: PlannerCapabilities, profile: TenantPro
     tags: template.tags, datePreset: template.datePreset,
   }));
   return { market: marketContext(profile, clock), metrics, templates, actions: capabilities.actions,
-    visualizations: { types: widgetTypes, rules: [
+    visualizations: { types: widgetTypes, governedPalettes, rules: [
       'KPI: one series, no dimension. Line: shared dimension, matching type/unit. Area: ordered date/month/quarter/year, compatible series, no stacking.',
-      'Bar: grouped compatible series. orientation vertical or horizontal; choose horizontal for categorical TopN/ranking. No stacking.',
+      'Bar: grouped compatible series. orientation vertical or horizontal. No stacking.',
       'Pie and Treemap: exactly one additive or appropriate snapshot series, non-time categorical grouping; no ratio, duration, comparison, moving average, running total or percentage contribution. Pie variant pie or donut.',
-      'Combo: two to four same-unit/type series with a common dimension and one axis; series presentation mark bar or line (default first bar, remaining line).',
-      'Table: shared grouping, mixed units allowed. Presentation is intent only: orientation (Bar), pieVariant (Pie), legend auto/show/hide (charts), dataLabels auto/show/hide (Pie/Treemap), curve straight/smooth (Line/Area/Combo).',
+      'Combo: two to four same-unit/type series with a common dimension and one axis; series presentation mark bar or line (only explicitly requested combo-series marks).',
+      'Table: shared grouping, mixed units allowed. Presentation is intent only: orientation (Bar), pieVariant (Pie), explicit legend show/hide (charts), explicit dataLabels show/hide (Pie/Treemap), curve straight/smooth (Line/Area/Combo).',
       'Visualization edits preserve metrics, filters, analysis and layout unless explicitly requested. Reject semantically incompatible conversions. Never generate chart-library properties.'
     ] } };
 }
@@ -95,7 +95,7 @@ export class StructuredDashboardPlanner implements DashboardPlanner {
     const now = this.clock();
     const context = authorizedContext(capabilities, request.tenantProfile, () => now);
     const messages: StructuredOutputRequest['messages'] = [
-      { role: 'system', content: `Produce only a DashboardGenerationPlan JSON object. Choose metrics, dimensions, analyses and visualization intent only from the authorized context. Supply bilingual titles. Omit optional fields when unused. Use a datePreset or a complete dateFrom/dateTo pair, never both; default current_year. Do not generate IDs, grid positions, layout, persistence metadata or tenant/security information. Use only authorized metrics and templates. Keep calculations in the deterministic analytics engine. Do not generate SQL, React, chart-library options, arbitrary expressions, or policy filters. Context: ${JSON.stringify(context)}` },
+      { role: 'system', content: `Produce only a DashboardGenerationPlan JSON object. Choose business metrics, dimensions, dates and filters only from the authorized context. Include analysis only when explicitly requested: otherwise omit comparisons, moving averages, running totals, percentage contribution, ranking and top N. Include requestedPresentation only for explicit user presentation requests. Otherwise omit type, palette/color, orientation, pie variant, legend, data labels and curve; deterministic code supplies visualization defaults. Do not invent helpful analyses or decorations. Only emit a series mark for an explicit combo-series request. Never emit raw colors or renderer configuration. Supply bilingual titles. Omit optional fields when unused. For explicit date requests use a datePreset or a complete dateFrom/dateTo pair, never both; otherwise omit date fields and code defaults to current_year. Do not generate IDs, grid positions, layout, persistence metadata or tenant/security information. Use only authorized metrics and templates. Keep calculations in the deterministic analytics engine. Do not generate SQL, React, chart-library options, arbitrary expressions, or policy filters. Context: ${JSON.stringify(context)}` },
       { role: 'user', content: request.prompt },
     ];
     const schema = structuredClone(dashboardGenerationPlanSchema);

@@ -436,6 +436,17 @@
             "straight",
             "smooth"
           ]
+        },
+        "palette": {
+          "enum": [
+            "default",
+            "blue",
+            "green",
+            "orange",
+            "purple",
+            "red",
+            "neutral"
+          ]
         }
       }
     }

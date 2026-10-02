@@ -15,7 +15,7 @@ const spec: DashboardSpec = { schemaVersion: 2, id: 'generated-sales', title: { 
 const now = new Date('2026-10-01T00:00:00Z');
 const toPlan = (value: DashboardSpec): DashboardGenerationPlan => ({ titleEn: value.title.en, titleAr: value.title.ar,
   ...(value.filters.dateRange ? { dateFrom: value.filters.dateRange.from, dateTo: value.filters.dateRange.to } : {}),
-  widgets: value.widgets.map(w => ({ type: w.type, ...(w.dimension ? { dimension: w.dimension } : {}), ...w.presentation,
+  widgets: value.widgets.map(w => ({ requestedPresentation: { type: w.type, ...((({ legend, dataLabels, ...rest }) => ({ ...rest, ...(legend && legend !== 'auto' ? { legend } : {}), ...(dataLabels && dataLabels !== 'auto' ? { dataLabels } : {}) }))(w.presentation ?? {})) }, ...(w.dimension ? { dimension: w.dimension } : {}),
     series: w.series.map(s => ({ metric: s.metric, ...s.presentation })) })) });
 const plan = toPlan(spec);
 const compiled = (p = plan) => compileDashboardGenerationPlan(p, profile, 'en', now);
@@ -186,8 +186,8 @@ test('AI visualization patches preserve the latest layout and query intent; inva
 test('Arabic sales, branch performance and profitability intent compiles governed metrics without a fixed arrangement', async () => {
   const prompt = 'اريد ان ارى المبيعات و اداء الفروع مع الارباح';
   const output: DashboardGenerationPlan = { titleEn: 'Sales and profitability', titleAr: 'المبيعات والربحية', widgets: [
-    { type: 'line', dimension: 'month', series: [{ metric: 'revenue' }, { metric: 'gross_profit' }] },
-    { type: 'table', dimension: 'branch', series: [{ metric: 'revenue' }, { metric: 'gross_profit' }, { metric: 'gross_margin' }] },
+    { dimension: 'month', series: [{ metric: 'revenue' }, { metric: 'gross_profit' }] },
+    { dimension: 'branch', series: [{ metric: 'revenue' }, { metric: 'gross_profit' }, { metric: 'gross_margin' }] },
   ] };
   const provider = new SequenceProvider([output]);
   const result = await new StructuredDashboardPlanner(provider, { clock: () => now }).generate({ ...request, prompt, locale: 'ar', context: { tenantId: profile.id, locale: 'ar' }, capabilities: { ...capabilities, metricIds: ['revenue', 'gross_profit', 'gross_margin'] } });
@@ -203,4 +203,57 @@ for (const maxRepairAttempts of [0, 1, 2]) test(`generation repair remains bound
   await assert.rejects(planner.generate(request), { code: 'INVALID_STRUCTURED_OUTPUT' });
   assert.equal(provider.requests.length, maxRepairAttempts + 1);
   for (const repair of provider.requests.slice(1)) assert.match(repair.messages.at(-1)!.content, /DashboardGenerationPlan/);
+});
+
+test('generation prompt distinguishes explicit business/presentation intent from deterministic defaults', async () => {
+  const provider = new SequenceProvider([plan]);
+  await new StructuredDashboardPlanner(provider).generate(request);
+  const prompt = provider.requests[0]!.messages[0]!.content;
+  assert.match(prompt, /requestedPresentation only for explicit user presentation requests/);
+  assert.match(prompt, /Otherwise omit type, palette\/color, orientation, pie variant, legend, data labels and curve/);
+  assert.match(prompt, /Include analysis only when explicitly requested/);
+  assert.match(prompt, /omit comparisons, moving averages, running totals, percentage contribution, ranking and top N/);
+  assert.match(prompt, /Do not invent helpful analyses or decorations/);
+  assert.match(prompt, /Do not generate IDs, grid positions, layout/);
+  assert.match(prompt, /only authorized metrics/);
+  assert.match(prompt, /SQL, React, chart-library options/);
+});
+const acceptanceCases: [string, DashboardGenerationPlan, string][] = [
+  ['اريد ان ارى المبيعات و اداء الفروع مع الارباح', { titleEn: 'Sales and profit', titleAr: 'المبيعات والأرباح', widgets: [
+    { series: [{ metric: 'revenue' }] }, { series: [{ metric: 'gross_profit' }] },
+    { dimension: 'branch', series: [{ metric: 'revenue' }, { metric: 'gross_profit' }] },
+  ] }, 'bar'],
+  ['I want to see the revenue, branch sales and profit using blue line charts', { titleEn: 'Sales and profit', titleAr: 'المبيعات والأرباح', widgets: [
+    { dimension: 'branch', series: [{ metric: 'revenue' }, { metric: 'gross_profit' }], requestedPresentation: { type: 'line', palette: 'blue' } },
+  ] }, 'line'],
+  ['Show the top 5 branches by revenue as horizontal blue bars', { titleEn: 'Top branches', titleAr: 'أعلى الفروع', widgets: [
+    { dimension: 'branch', series: [{ metric: 'revenue', topNDirection: 'top', topNLimit: 5 }], requestedPresentation: { type: 'bar', orientation: 'horizontal', palette: 'blue' } },
+  ] }, 'bar'],
+];
+for (const [prompt, intent, type] of acceptanceCases) test(`controlled intent acceptance: ${prompt}`, async () => {
+  const provider = new SequenceProvider([intent]); const original = structuredClone(intent);
+  const result = await new StructuredDashboardPlanner(provider, { clock: () => now }).generate({ ...request, prompt,
+    capabilities: { ...capabilities, metricIds: ['revenue', 'gross_profit'] } });
+  assert.equal(provider.requests.length, 1); assert.deepEqual(intent, original);
+  assert.equal(provider.requests[0]!.messages[1]!.content, prompt);
+  const branch = result.widgets.find(widget => widget.dimension === 'branch')!;
+  assert.equal(branch.type, type); validateDashboardSpec(result);
+  if (prompt.startsWith('اريد')) {
+    assert.ok(result.widgets.some(widget => widget.series.some(series => series.metric === 'gross_profit')));
+    for (const widget of intent.widgets) { assert.equal(widget.requestedPresentation, undefined); for (const series of widget.series) assert.deepEqual(Object.keys(series), ['metric']); }
+    assert.equal(branch.presentation?.palette, undefined); assert.equal(branch.presentation?.curve, undefined); assert.equal(branch.presentation?.dataLabels, undefined);
+    assert.ok(result.widgets.every(widget => widget.series.every(series => series.analysis === undefined)));
+  } else {
+    assert.equal(branch.presentation?.palette, 'blue'); assert.ok(!JSON.stringify(intent).includes('#'));
+    if (prompt.startsWith('Show')) { assert.equal(branch.presentation?.orientation, 'horizontal'); assert.deepEqual(branch.series[0]!.analysis, { topN: { direction: 'top', limit: 5 } }); }
+    else assert.deepEqual(branch.series.map(series => series.metric), ['revenue', 'gross_profit']);
+  }
+});
+test('AI palette editing stays on canonical patch replacement with unchanged layout and business intent', async () => {
+  const current = { ...spec, widgets: [{ id: 'chart', type: 'line' as const, dimension: 'branch' as const, series: [{ id: 'revenue', metric: 'revenue' as const }] }] };
+  const patch = { schemaVersion: 2 as const, operations: [{ op: 'replace' as const, widgetId: 'chart', widget: { ...current.widgets[0]!, presentation: { palette: 'blue' as const } } }] };
+  const returned = await new StructuredDashboardPlanner(new SequenceProvider([patch])).edit(current, 'Make this chart blue', profile, capabilities);
+  const changed = applyDashboardPatch(current, returned);
+  assert.equal(changed.widgets[0]!.presentation?.palette, 'blue'); assert.deepEqual(changed.filters, current.filters); assert.deepEqual(changed.layout, current.layout);
+  assert.deepEqual(changed.widgets[0]!.series, current.widgets[0]!.series);
 });
