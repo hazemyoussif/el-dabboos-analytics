@@ -14,7 +14,7 @@ import { savedDocument, documentIsDirty } from '../src/dashboard-lifecycle.ts';
 const widgets: DashboardWidget[] = widgetTypes.map((type,index)=>({ id:`w${index}`,type,series:[{ id:`s${index}`,metric:'revenue' },...(type==='combo'?[{ id:'profit',metric:'gross_profit' as const }]:[])],...(type==='kpi'?{}:{ dimension: ['line','area','combo'].includes(type)?'month' as const:'branch' as const }) }));
 const spec:DashboardSpec={...blankDashboardDraft(tenantProfiles['demo-iq'],'en').base,layout:{columns:12},widgets};
 test('every renderer uses centralized presentation in both themes/locales without execution, spec edits or dirtying saved content',async()=>{
-  const server=await createServer({root:fileURLToPath(new URL('../',import.meta.url)),server:{middlewareMode:true},appType:'custom'});
+  const server=await createServer({root:fileURLToPath(new URL('../',import.meta.url)),server:{middlewareMode:true},optimizeDeps:{noDiscovery:true},appType:'custom'});
   try {
     let calls=0;const repository:AnalyticsRepository={execute:async query=>{calls++;return {metric:query.metric,groupBy:query.groupBy??null,rows:[{key:query.groupBy?'2026-01':null,value:100,comparisonValue:80,absoluteChange:20,percentageChange:25,rank:1}],metadata:{sourceId:'test',executedAt:'2026-01-01',metricType:'currency',semantics:'additive'}};}};
     const execution=await new DashboardExecutor(repository).execute(spec,{tenantId:'demo-iq',locale:'en'});const expectedCalls=calls;const original=JSON.stringify(spec);
@@ -39,7 +39,7 @@ test('every renderer uses centralized presentation in both themes/locales withou
   } finally {await server.close();}
 });
 test('navigation shell retains labelled dashboard actions in collapsed state and a modal mobile drawer',async()=>{
-  const server=await createServer({root:fileURLToPath(new URL('../',import.meta.url)),server:{middlewareMode:true},appType:'custom'});
+  const server=await createServer({root:fileURLToPath(new URL('../',import.meta.url)),server:{middlewareMode:true},optimizeDeps:{noDiscovery:true},appType:'custom'});
   try {
     const {WorkspaceNavigation,NavigationTrigger}=await server.ssrLoadModule('/src/shell/WorkspaceNavigation.tsx');
     for(const locale of ['en','ar'] as const) {
@@ -51,7 +51,7 @@ test('navigation shell retains labelled dashboard actions in collapsed state and
 });
 
 test('official shell branding is accessible in expanded, collapsed and mobile navigation across themes/locales', async () => {
-  const server = await createServer({ root: fileURLToPath(new URL('../', import.meta.url)), server: { middlewareMode: true }, appType: 'custom' });
+  const server = await createServer({ root: fileURLToPath(new URL('../', import.meta.url)), server: { middlewareMode: true }, optimizeDeps: { noDiscovery: true }, appType: 'custom' });
   try {
     const { WorkspaceBrand } = await server.ssrLoadModule('/src/shell/WorkspaceBrand.tsx');
     const { WorkspaceNavigation } = await server.ssrLoadModule('/src/shell/WorkspaceNavigation.tsx');
@@ -70,4 +70,28 @@ test('official shell branding is accessible in expanded, collapsed and mobile na
       assert.ok(!shell.includes('lucide-chart-no-axes-combined'));
     }
   } finally { await server.close(); }
+});
+
+test('identity, market and localized language controls share label/control rows in both locales and themes', async () => {
+  const server = await createServer({ root: fileURLToPath(new URL('../', import.meta.url)), server: { middlewareMode: true }, optimizeDeps: { noDiscovery: true }, appType: 'custom' });
+  const originalWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
+  try {
+    const { default: App } = await server.ssrLoadModule('/src/App.tsx');
+    const { ThemeContext } = await server.ssrLoadModule('/src/presentation/ThemeProvider.tsx');
+    for (const locale of ['en', 'ar'] as const) for (const mode of ['light', 'dark'] as const) {
+      Object.defineProperty(globalThis, 'window', { configurable: true, value: { localStorage: { getItem: (key: string) => key.endsWith('.ui-locale') ? locale : null }, location: { pathname: '/' }, matchMedia: () => ({ matches: false }) } });
+      const html = renderToStaticMarkup(createElement(ThemeContext.Provider, { value: { preference: mode, theme: chartTheme(mode), setPreference() {} } }, createElement(App)));
+      assert.equal((html.match(/class="topbar-control/g) ?? []).length, 3);
+      assert.match(html, /class="topbar-control demo-identity"><span>[^<]+<\/span><select/);
+      assert.match(html, /class="topbar-control"><span>(Market|السوق)<\/span><select/);
+      const language = locale === 'en' ? 'Language' : 'اللغة';
+      assert.ok(html.includes(`<div class="topbar-control"><span>${language}</span><div class="language-toggle" role="group" aria-label="${language}">`));
+      assert.ok(html.includes(`${locale === 'en' ? 'class="selected"' : 'class=""'}>EN</button>`));
+      assert.ok(html.includes(`${locale === 'ar' ? 'class="selected"' : 'class=""'}>عربي</button>`));
+      assert.ok(html.includes('src="/brand/el-dabboos-mark.png"'));
+    }
+  } finally {
+    if (originalWindow) Object.defineProperty(globalThis, 'window', originalWindow); else Reflect.deleteProperty(globalThis, 'window');
+    await server.close();
+  }
 });

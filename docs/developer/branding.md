@@ -11,7 +11,7 @@ The unchanged transparent RGBA originals were copied from the developer's Downlo
 | `dabboos-logo-cropped.png` | `apps/web/public/brand/el-dabboos-mark.png` | 692 × 518 | Sidebar, mobile drawer, PNG favicon |
 | `dabboos-logo.png` | `apps/web/public/brand/el-dabboos-corporate-logo.png` | 1709 × 532 | Retained official corporate asset; currently not displayed |
 
-The mark keeps its aspect ratio and original blue gradient. Expanded navigation renders El Dabboos and the existing localized Analytics Studio descriptor alongside it; collapsed navigation uses only the mark. The image is decorative (`alt=""`) beside visible brand text and named `El Dabboos` when alone. The full lockup embeds “Dabboos / Technical Solutions”; displaying it beside the app name would duplicate branding. No new corporate page was added. Never recolor, filter, stretch or flatten these assets.
+The mark keeps its aspect ratio and original blue gradient. Expanded navigation renders El Dabboos and the existing localized Analytics Studio descriptor alongside it; collapsed navigation uses only the mark. The image is decorative (`alt=""`) beside visible brand text and named `El Dabboos` when alone. The full lockup embeds “Dabboos / Technical Solutions”; displaying it beside the app name would duplicate branding. No new corporate page was added. Do not modify, stretch or flatten these assets. Only sidebar branding applies `brightness(0) invert(1)` in CSS to display the mark in white while preserving transparency. The favicon retains the original blue gradient, and the corporate lockup remains unchanged.
 
 Asset tests verify original dimensions, RGBA type and SHA-256 bytes. Ordinary interface icons remain Lucide; chart palettes and semantic design tokens remain unchanged.
 

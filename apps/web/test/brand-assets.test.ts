@@ -17,3 +17,11 @@ test('official RGBA assets retain their original bytes and dimensions; favicon u
   assert.ok(html.includes('<title>El Dabboos | Analytics Studio</title>'));
   assert.equal(copy.en.product, 'El Dabboos'); assert.equal(copy.ar.product, 'El Dabboos');
 });
+
+test('white mark treatment is scoped to sidebar branding and preserves the asset aspect ratio', () => {
+  const css = readFileSync(new URL('../src/styles/shell.css', import.meta.url), 'utf8');
+  assert.match(css, /\.sidebar \.brand-mark \{ filter: brightness\(0\) invert\(1\); \}/);
+  assert.match(css, /\.brand-mark \{[^}]*height: auto;[^}]*\}/);
+  assert.equal((css.match(/filter:/g) ?? []).length, 1);
+  assert.ok(!/\.brand-mark \{[^}]*filter:/.test(css.replace(/\.sidebar \.brand-mark \{[^}]*\}/g, '')));
+});
