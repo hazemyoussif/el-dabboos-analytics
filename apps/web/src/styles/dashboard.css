@@ -71,3 +71,12 @@ html[dir=rtl] .viewer-item { direction: rtl; }
 .skeleton-label { width: 45%; height: 12px; }.skeleton-value { width: 65%; height: 32px; }.skeleton-context { width: 80%; height: 10px; }
 @media(max-width:1100px) { .dashboard-title-row { flex-direction: column; gap: var(--space-3); }.dashboard-actions { justify-content: start; } }
 @media(max-width:760px) { .viewer-canvas { display: flex; flex-direction: column; }.viewer-item { min-height: 176px; }.viewer-item:has(.widget:not(.widget-kpi)) { height: 340px; }.widget { padding: var(--space-4); }.creation-choices,.edit-panel { grid-template-columns: 1fr; }.catalog-list { grid-template-columns: 1fr; }.dashboard-skeleton { grid-template-columns: 1fr; }.dashboard-title-row h2 { font-size: 24px; } }
+
+.ai-progress { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); padding-block: var(--space-3); padding-inline-start: var(--space-4); border-inline-start: 3px solid var(--info); margin-block: var(--space-4); min-width: 0; }
+.ai-progress strong { font-size: var(--text-sm); }
+.ai-progress p { margin: var(--space-1) 0 0; color: var(--text-secondary); font-size: var(--text-sm); }
+.ai-elapsed { color: var(--text-secondary); font-variant-numeric: tabular-nums; font-size: var(--text-sm); white-space: nowrap; }
+.edit-panel > .ai-progress { grid-column: 1 / -1; margin-block: 0; }
+.ai-loading-icon { animation: ai-loading-spin 1.2s linear infinite; }
+@keyframes ai-loading-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .ai-loading-icon { animation: none; } }

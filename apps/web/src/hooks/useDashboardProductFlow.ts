@@ -12,7 +12,7 @@ export function useDashboardProductFlow(workspace: WorkspaceController, builder:
   const actions = dashboardActions(workspace.document, !!builder.history, workspace.permissions.includes('ai:generate'), workspace.permissions.includes('ai:edit'));
   const status = dashboardStatus(workspace.document);
   const close = () => { setPanel('none'); setNameDialog(null); };
-  const launchNew = () => setPanel('new');
+  const launchNew = () => { planner.reset(); setPanel('new'); };
   const enterCreation = (next: 'create-ai' | 'choose-template') => {
     if (next === 'create-ai' && !mayEnterCreation(workspace.dirty, workspace.confirmAbandon)) return;
     planner.reset(); setPanel(next);
