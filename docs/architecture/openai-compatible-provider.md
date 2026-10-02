@@ -12,9 +12,21 @@ For generation visualization failures, the compiler first invokes the unchanged 
 
 Provider schemas use the existing portable keyword projection; original application-plan and domain spec/patch validators retain all constraints. Compact contracts improve portability across constrained endpoints, including Gemini, OpenAI-compatible services and smaller/self-hosted models; live adherence still requires endpoint testing.
 
-**AI edit is unchanged:** the provider generates `dashboard_patch_v2` using the portable projection of canonical DashboardPatch v2. Patch validation, application to the current draft, full resulting-spec validation and authorization remain required. A separate edit-plan compiler is deferred until actual endpoint evidence requires it.
+**AI editing:** instruction + bounded current DashboardSpec → transient `DashboardEditPlan` → deterministic compiler → canonical DashboardPatch v2 → applyDashboardPatch → full canonical validation → authorization. The provider receives the projected `dashboard_edit_plan` schema, never the full canonical patch schema. The public planner/API still returns a canonical patch and resulting dashboard; plans are not persisted.
 
-Repair remains bounded by `LLM_REPAIR_ATTEMPTS` (0–2; default 1); generation repairs the plan, edits repair the patch. Transport failures bypass repair. The provider never executes analytics, SQL, or UI code.
+For example, "make the branch chart blue" needs only:
+
+```json
+{"operations":[{"op":"update_widget","widgetId":"widget-1","changes":{"presentation":{"palette":"blue"}}}]}
+```
+
+The compiler clones the existing widget, preserving dimension, metrics, stable series IDs, analyses/Top-N, title, other presentation fields, filters and layout. Omitted values preserve; null clears optional presentation/title/dimension or whole analysis, and false clears analysis flags. Changes compose in order on a clone and only the final patch is validated atomically. Type changes must explicitly clear now-incompatible inherited presentation fields; they do not implicitly discard business intent.
+
+Operations are update_widget, update_series, add_widget, remove_widget, set_title, set_filters and explicit update_layout. Series edits reference widgetId/seriesId; presentation:null is a clear-only option for inherited Combo marks. They support metric plus flattened comparison/movingAverageWindow/boolean flags/topNDirection/topNLimit under changes.analysis. Adding Top-N requires both fields; changing one preserves the other; clearing either removes selection and cannot be mixed with a supplied non-null counterpart. Additions use business intent, optional type/presentation and per-series analysis; code owns collision-free widget-N/series IDs, defaults, Combo marks and canonical placement. Sparse set_filters preserves omitted dateRange/dimensions; dateRange null and an empty dimensions array clear their respective user filters. Only explicit layout requests use update_layout to update an existing widget's x/y/w/h; normal edits never emit layout.
+
+Schema membership/compatibility and allowed metrics are checked by the original canonical validators and post-output authorization, as on the prior patch path. Only authorized semantic/template metadata is supplied. Sparse presentation uses governed values, without generation's required type discriminator, because the current widget supplies type. Projected edit plan: 4,165 bytes/depth 16 versus canonical patch 4,196 bytes/depth 18; the serialized saving is modest, while output reconstruction is removed. See [ADR-025](adr/025-compact-dashboard-edit-plan.md).
+
+Repair remains bounded by `LLM_REPAIR_ATTEMPTS` (0–2; default 1); generation repairs DashboardGenerationPlan; edits repair DashboardEditPlan. Transport failures bypass repair. The provider never executes analytics, SQL, or UI code.
 
 ## Configuration
 

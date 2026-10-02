@@ -28,6 +28,7 @@ Runtime flow is Web → HTTP API → Application → domain ports/contracts → 
 | AnalyticsQuery | Bounded metric, grouping, date, filters and compatible analysis request |
 | AnalyticsResult | Nullable rows with comparison/rank plus sourceId, executedAt, dataThrough and optional sourceAsOf/type/unit |
 | DashboardGenerationPlan | Transient application-owned model intent; deterministic compilation into DashboardSpec, never persistence/execution |
+| DashboardEditPlan | Transient sparse application intent; deterministic compilation into canonical patch, never persistence/execution |
 | DashboardSpec | Portable v2 titles, widgets/series, user filters and canonical layout; no policy/theme/folder/SQL |
 | DashboardPatch | Bounded add/remove/replace/title/filter/layout edit operations, not an expression language |
 | DashboardRecord | Persisted spec plus record ID, tenant, owner, scope, optimistic version and timestamps |
@@ -50,7 +51,7 @@ Executor validates, normalizes and deduplicates queries **within one execute cal
 
 ## Structured planning
 
-Generation uses prompt → compact application-owned DashboardGenerationPlan → plan validation → deterministic compiler → full canonical DashboardSpec v2/semantic validation → authorization → execution. The model chooses governed business intent and only explicitly requested presentation/analysis. A deterministic resolver owns unspecified KPI/Line/Bar/Table choice and compatible presentation defaults; explicit incompatible requests fail canonical validation. Only governed palette names can enter spec/patch, with actual colors resolved by web themes. Code owns IDs, tenant-timezone dates and canonical 12-column layout. Provider schema constraints must not weaken domain contracts. Editing continues through canonical DashboardPatch v2 and full validation of the applied draft. Repair is bounded; HTTP failures do not trigger semantic repair. [ADR 024](adr/024-compact-generation-plan.md), [provider contract and diagnostics](openai-compatible-provider.md).
+Generation uses prompt → compact application-owned DashboardGenerationPlan → plan validation → deterministic compiler → full canonical DashboardSpec v2/semantic validation → authorization → execution. The model chooses governed business intent and only explicitly requested presentation/analysis. A deterministic resolver owns unspecified KPI/Line/Bar/Table choice and compatible presentation defaults; explicit incompatible requests fail canonical validation. Only governed palette names can enter spec/patch, with actual colors resolved by web themes. Code owns IDs, tenant-timezone dates and canonical 12-column layout. Provider schema constraints must not weaken domain contracts. Editing validates transient sparse DashboardEditPlan, compiles canonical DashboardPatch v2 and fully validates/authorizes the applied draft; omitted values preserve current business intent and layout. [ADR-025](adr/025-compact-dashboard-edit-plan.md). Repair is bounded; HTTP failures do not trigger semantic repair. [ADR 024](adr/024-compact-generation-plan.md), [provider contract and diagnostics](openai-compatible-provider.md).
 
 ## Semantics and representation
 
