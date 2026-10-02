@@ -3,8 +3,7 @@
 .sidebar { width: var(--sidebar-width); flex: none; height: 100dvh; position: sticky; top: 0; background: var(--surface-sidebar); color: var(--text-sidebar); display: flex; flex-direction: column; padding: var(--space-6) var(--space-4) var(--space-4); }
 .sidebar-header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); min-height: 36px; margin-bottom: var(--space-6); }
 .brand { display: flex; gap: var(--space-3); align-items: center; min-width: 0; }
-.brand-mark { width: 34px; height: 34px; display: grid; place-items: center; background: var(--brand-sidebar); color: var(--surface-sidebar); border-radius: var(--radius-md); flex: none; }
-.brand-mark svg { width: 22px; height: 22px; }
+.brand-mark { width: 40px; height: auto; display: block; flex: none; }
 .brand strong { display: block; font-size: var(--text-sm); letter-spacing: .08em; font-weight: 750; }
 .brand span { display: block; font-size: var(--text-xs); color: var(--text-sidebar-muted); margin-top: var(--space-1); }
 .sidebar button { color: var(--text-sidebar); background: transparent; border-color: transparent; }

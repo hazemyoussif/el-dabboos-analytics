@@ -75,3 +75,5 @@ and [all API environment settings](docs/architecture/openai-compatible-provider.
 - [Manual QA](docs/qa/manual-test-plan.md)
 - [Agent guide](AGENTS.md)
 - [Integration readiness](docs/integration/production-readiness.md) and [Malik questions](docs/integration/questions-for-malik.md)
+
+See [brand assets and browser preference compatibility](docs/developer/branding.md).

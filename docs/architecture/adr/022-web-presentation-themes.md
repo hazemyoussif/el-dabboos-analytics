@@ -4,7 +4,7 @@
 
 Presentation belongs to apps/web. Semantic CSS tokens define the restrained teal/slate identity and Light/Dark surfaces, text, borders, semantic feedback, focus, spacing, typography and elevation. styles.css is an import entry; tokens, base, shell, dashboard, charts, builder and library files own their respective presentation. React composition, feature hooks and governed visualization contracts retain their responsibilities. Lucide provides tree-shaken UI icons.
 
-ThemeProvider resolves System (default), Light and Dark, writes data-theme on the document root and follows prefers-color-scheme changes in System mode. The localStorage key el-dabbous.ui-theme is independent of el-dabbous.ui-locale. Sidebar collapse uses el-dabbous.sidebar-collapsed. None enters DashboardSpec, DashboardRecord or API requests. Switching theme only rerenders presentation; it cannot execute analytics, save, increment a record version or dirty a working draft. Preferences gracefully fall back when storage is unavailable.
+ThemeProvider resolves System (default), Light and Dark, writes data-theme on the document root and follows prefers-color-scheme changes in System mode. The localStorage key el-dabboos.ui-theme is independent of el-dabboos.ui-locale. Sidebar collapse uses el-dabboos.sidebar-collapsed. None enters DashboardSpec, DashboardRecord or API requests. Switching theme only rerenders presentation; it cannot execute analytics, save, increment a record version or dirty a working draft. Preferences gracefully fall back when storage is unavailable.
 
 ChartTheme centrally supplies separate eight-color categorical and sequential palettes, semantic colors, axes, grid, tooltip and highlight colors. Series order determines colors with bounded palette wraparound. Composition charts use retained category order/source indices so marks, tooltip markers and legends agree. Comparison lines use the corresponding series color with reduced opacity and a dashed stroke. Shared axes, legends and enterprise tooltips preserve formatted comparison/change/rank metadata. Compact chart labels never replace precise tenant-aware tooltip values or accessible chart tables. Missing values remain missing; no synthetic trends or sparkline data are introduced.
 
@@ -19,3 +19,5 @@ A future tenant branding configuration may supply validated, controlled token va
 ## Tradeoffs
 
 The chart bundle remains substantial; Lucide tree shaking adds a small increment without a component framework. Native selects/details retain their keyboard semantics beneath the visual styling. Very large category sets repeat the bounded palette and retain labels/legends; no categories are silently dropped. Desktop grid sizing remains authoritative, so intentional space between differently sized widgets can remain.
+
+Brand assets and backward-compatible browser preference migration are documented in [branding](../../developer/branding.md).
