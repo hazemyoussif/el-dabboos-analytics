@@ -209,8 +209,9 @@ test('generation prompt distinguishes explicit business/presentation intent from
   const provider = new SequenceProvider([plan]);
   await new StructuredDashboardPlanner(provider).generate(request);
   const prompt = provider.requests[0]!.messages[0]!.content;
-  assert.match(prompt, /requestedPresentation only for explicit user presentation requests/);
-  assert.match(prompt, /Otherwise omit type, palette\/color, orientation, pie variant, legend, data labels and curve/);
+  assert.match(prompt, /Omit requestedPresentation entirely when the user did not request presentation/);
+  assert.match(prompt, /set its required type and only type-valid options from the schema/);
+  assert.match(prompt, /Preserve explicit palette, orientation and other requested options/);
   assert.match(prompt, /Include analysis only when explicitly requested/);
   assert.match(prompt, /omit comparisons, moving averages, running totals, percentage contribution, ranking and top N/);
   assert.match(prompt, /Do not invent helpful analyses or decorations/);
@@ -268,8 +269,8 @@ test('Top-N system guidance maps explicit selection to the anchor series and use
   assert.match(system, /bottom N set topNDirection='bottom' and topNLimit=N/);
   assert.match(system, /apply Top-N only to that first relevant series/);
   assert.match(system, /Never drop an explicit Top-N request/);
-  assert.match(system, /Do not emit a presentation field merely because it seems visually helpful/);
-  for (const rule of ['orientation is Bar only', 'pieVariant is Pie only', 'curve is Line/Area/Combo only', 'dataLabels is Pie/Treemap only', 'never KPI/Table']) assert.ok(system.includes(rule));
+  assert.match(system, /Do not invent helpful analyses or decorations/);
+  assert.match(system, /set its required type and only type-valid options from the schema/);
   assert.ok(!system.includes('series mark')); assert.ok(!system.includes('"mark"'));
   const fixture = acceptanceCases[2]![1].widgets[0]!;
   assert.deepEqual(fixture.series, [{ metric: 'revenue', topNDirection: 'top', topNLimit: 5 }]);
@@ -280,12 +281,11 @@ test('Top-N system guidance maps explicit selection to the anchor series and use
   assert.equal(widget.series[0]!.presentation, undefined);
   assert.equal(widget.presentation?.dataLabels, undefined); assert.equal(widget.presentation?.curve, undefined);
   // A code-owned legend default is allowed; the intent fixture does not ask for it.
-  assert.equal(fixture.requestedPresentation?.legend, undefined);
+  assert.ok(!Object.hasOwn(fixture.requestedPresentation!, 'legend'));
 });
 test('safe specific visualization reasons reach bounded repair without copying private content', async () => {
   const valid = acceptanceCases[2]![1]; const invalid = structuredClone(valid);
-  invalid.titleEn = 'private output title'; invalid.widgets[0]!.requestedPresentation!.dataLabels = 'show';
-  invalid.widgets[0]!.requestedPresentation!.curve = 'smooth';
+  invalid.titleEn = 'private output title'; invalid.widgets[0]!.requestedPresentation = { type: 'combo', curve: 'smooth' };
   invalid.filters = [{ dimension: 'branch', values: ['private customer filter'] }];
   const provider = new SequenceProvider([invalid, valid]);
   const events: import('../src/structured-diagnostics.ts').StructuredPlannerDiagnostic[] = [];
@@ -293,19 +293,19 @@ test('safe specific visualization reasons reach bounded repair without copying p
   const result = await planner.generate({ ...request, prompt: 'private user prompt' });
   assert.equal(result.widgets[0]!.type, 'bar'); assert.equal(provider.requests.length, 2);
   const repair = provider.requests[1]!.messages.at(-1)!.content;
-  assert.match(repair, /Data labels are only supported for composition/); assert.match(repair, /Curve is only supported for trends/);
-  assert.equal(events[0]!.stage, 'semantic'); assert.match(events[0]!.details[0]!.message, /Data labels/);
+  assert.match(repair, /Combo requires two to four series/);
+  assert.equal(events[0]!.stage, 'semantic'); assert.match(events[0]!.details[0]!.message, /Combo requires/);
   assert.ok(repair.length < 1200); assert.ok(events[0]!.details[0]!.message.length <= 800);
   for (const token of ['private output title', 'private customer filter', 'private user prompt']) {
     assert.ok(!repair.includes(token)); assert.ok(!JSON.stringify(events).includes(token));
   }
 });
 test('persistent incompatible explicit presentation still fails canonical validation after bounded repair', async () => {
-  const invalid = structuredClone(acceptanceCases[2]![1]); invalid.widgets[0]!.requestedPresentation!.dataLabels = 'show';
+  const invalid = structuredClone(acceptanceCases[2]![1]); invalid.widgets[0]!.requestedPresentation = { type: 'combo' };
   const provider = new SequenceProvider([invalid, invalid]);
   await assert.rejects(new StructuredDashboardPlanner(provider, { maxRepairAttempts: 1 }).generate(request), error => {
     assert.ok(error instanceof Error); assert.equal((error as { code?: string }).code, 'INVALID_STRUCTURED_OUTPUT');
-    assert.match(error.message, /Invalid dashboard widget or incompatible series/); assert.ok(!error.message.includes('Data labels'));
+    assert.match(error.message, /Invalid dashboard widget or incompatible series/); assert.ok(!error.message.includes('Combo requires'));
     return true;
   });
   assert.equal(provider.requests.length, 2);

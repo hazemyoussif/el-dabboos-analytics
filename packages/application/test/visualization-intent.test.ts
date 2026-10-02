@@ -3,7 +3,7 @@ import test from 'node:test';
 import { governedPalettes } from '@el-dabboos/domain';
 import type { DashboardSeries, DimensionId } from '@el-dabboos/domain';
 import { resolveGenerationWidget } from '../src/visualization-intent.ts';
-import { compileDashboardGenerationPlan } from '../src/generation-plan.ts';
+import { compileDashboardGenerationPlan, validateDashboardGenerationPlan } from '../src/generation-plan.ts';
 import { tenantProfiles } from '@el-dabboos/domain';
 const revenue: DashboardSeries = { id: 'revenue', metric: 'revenue' };
 const profit: DashboardSeries = { id: 'profit', metric: 'gross_profit' };
@@ -44,5 +44,6 @@ for (const [dimension, requestedPresentation, series] of [
   ['branch', { type: 'line' }, [{ ...revenue, mark: 'bar' }]],
   ['branch', { type: 'line' }, [revenue, margin]],
 ] as const) test(`invalid generation intent is rejected instead of discarded: ${JSON.stringify(requestedPresentation)}`, () => {
-  assert.throws(() => compileDashboardGenerationPlan({ titleEn: 'Sales', titleAr: 'المبيعات', widgets: [{ ...(dimension ? { dimension: dimension as DimensionId } : {}), requestedPresentation, series: series.map(s => ({ metric: s.metric, ...('mark' in s ? { mark: s.mark } : {}) })) }] }, tenantProfiles['demo-iq'], 'en', new Date('2026-10-01T00:00:00Z')));
+  const intent: unknown = { titleEn: 'Sales', titleAr: 'المبيعات', widgets: [{ ...(dimension ? { dimension: dimension as DimensionId } : {}), requestedPresentation, series: series.map(s => ({ metric: s.metric, ...('mark' in s ? { mark: s.mark } : {}) })) }] };
+  assert.throws(() => { validateDashboardGenerationPlan(intent); compileDashboardGenerationPlan(intent, tenantProfiles['demo-iq'], 'en', new Date('2026-10-01T00:00:00Z')); });
 });

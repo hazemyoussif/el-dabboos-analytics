@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { dashboardSpecSchema, tenantProfiles, validateDashboardSpec } from '@el-dabboos/domain';
+import { Ajv2020 } from 'ajv/dist/2020.js';
+import { dashboardSpecSchema, governedPalettes, tenantProfiles, validateDashboardSpec } from '@el-dabboos/domain';
 import { compileDashboardGenerationPlan as compile, dashboardGenerationPlanSchema, validateDashboardGenerationPlan } from '../src/generation-plan.ts';
-import type { DashboardGenerationPlan, GenerationSeries, GenerationWidget } from '../src/generation-plan.ts';
+import type { DashboardGenerationPlan, GenerationSeries, GenerationWidget, RequestedPresentation } from '../src/generation-plan.ts';
 import { projectProviderSchema } from '../src/provider-schema.ts';
 const profile = tenantProfiles['demo-iq'];
 const now = new Date('2026-10-01T00:00:00Z');
@@ -71,8 +72,6 @@ for (const invalid of [null, {}, { ...minimal, titleEn: '' }, { ...minimal, widg
   test(`malformed intent rejected (${JSON.stringify(invalid).slice(0, 75)})`, () => assert.throws(() => validateDashboardGenerationPlan(invalid)));
 for (const widget of [
   { requestedPresentation: { type: 'pie' }, dimension: 'branch', series: [{ metric: 'gross_margin' }] },
-  { requestedPresentation: { type: 'kpi', orientation: 'horizontal' }, series: [{ metric: 'revenue' }] },
-  { requestedPresentation: { type: 'bar', curve: 'smooth' }, dimension: 'branch', series: [{ metric: 'revenue' }] },
   { requestedPresentation: { type: 'line' }, dimension: 'branch', series: [{ metric: 'revenue', movingAverageWindow: 3 }] },
   { requestedPresentation: { type: 'bar' }, dimension: 'branch', series: [{ metric: 'revenue' }, { metric: 'gross_profit', topNDirection: 'top', topNLimit: 5 }] },
 ] as GenerationWidget[]) test(`canonical semantics rejects incompatible intent ${JSON.stringify(widget).slice(0, 80)}`, () => assert.throws(() => run({ ...minimal, widgets: [widget] })));
@@ -91,7 +90,7 @@ test('portable plan stays smaller and shallower than canonical DashboardSpec wit
     for (const key of Object.keys(properties ?? {})) assert.ok(!['schemaVersion', 'layout', 'id', 'widgetId', 'x', 'y', 'w', 'h', 'minW', 'minH', 'tenantId', 'ownerId'].includes(key));
     for (const child of Object.values(value)) walk(child);
   };
-  walk(portable); assert.ok(depth(portable, portable) < depth(canonical, canonical)); assert.ok(JSON.stringify(portable).length < JSON.stringify(canonical).length);
+  walk(portable); assert.ok(depth(portable, portable) <= depth(canonical, canonical) - 2); assert.ok(JSON.stringify(portable).length < JSON.stringify(canonical).length * 0.9);
 });
 
 for (const key of ['type', 'orientation', 'pieVariant', 'legend', 'dataLabels', 'curve']) test(`old root presentation ${key} is rejected`, () => {
@@ -122,4 +121,52 @@ test('ordinary generated Top-N Bar has no per-series presentation and Combo mark
   assert.equal(bar.series[0]!.presentation, undefined);
   const combo = run({ ...minimal, widgets: [{ dimension: 'month', series: [{ metric: 'revenue' }, { metric: 'gross_profit' }, { metric: 'net_revenue' }], requestedPresentation: { type: 'combo' } }] }).widgets[0]!;
   assert.deepEqual(combo.series.map(series => series.presentation), [{ mark: 'bar' }, { mark: 'line' }, { mark: 'line' }]);
+});
+
+// Validate the exact portable dialect sent to the provider, not just the original plan.
+const providerPlanCheck = new Ajv2020({ allErrors: true }).compile(projectProviderSchema(dashboardGenerationPlanSchema));
+const withPresentation = (requestedPresentation: unknown) => ({ ...minimal, widgets: [{ ...minimal.widgets[0], requestedPresentation }] });
+for (const requestedPresentation of [
+  {}, { palette: 'blue' }, { type: 'bar', curve: 'smooth' }, { type: 'bar', dataLabels: 'show' },
+  { type: 'line', orientation: 'horizontal' }, { type: 'line', pieVariant: 'donut' },
+  { type: 'kpi', legend: 'show' }, { type: 'table', legend: 'hide' }, { type: 'pie', curve: 'straight' },
+]) test(`original and projected generation schemas reject incompatible presentation ${JSON.stringify(requestedPresentation)}`, () => {
+  const plan = withPresentation(requestedPresentation);
+  assert.throws(() => validateDashboardGenerationPlan(plan), /schema/);
+  assert.equal(providerPlanCheck(plan), false);
+});
+const supportedPresentations: RequestedPresentation[] = [
+  { type: 'bar', palette: 'blue', orientation: 'horizontal', legend: 'hide' },
+  { type: 'line', palette: 'blue', curve: 'smooth', legend: 'show' },
+  { type: 'area', curve: 'smooth' }, { type: 'pie', pieVariant: 'donut', dataLabels: 'show' },
+  { type: 'treemap', dataLabels: 'hide' }, { type: 'combo', curve: 'smooth' }, { type: 'kpi' }, { type: 'table' },
+];
+for (const options of supportedPresentations) test(`both schemas accept ${options.type} options and every governed palette; compiler preserves explicit intent`, () => {
+  for (const palette of governedPalettes) {
+    const requestedPresentation = { ...options, palette };
+    const widget: GenerationWidget = { requestedPresentation,
+      ...(options.type === 'kpi' ? {} : { dimension: ['line', 'area', 'combo'].includes(options.type) ? 'month' : 'branch' }),
+      series: [{ metric: 'revenue' }, ...(options.type === 'combo' ? [{ metric: 'gross_profit' as const }] : [])],
+    };
+    const plan = { ...minimal, widgets: [widget] };
+    validateDashboardGenerationPlan(plan); assert.equal(providerPlanCheck(plan), true);
+    const compiled = run(plan).widgets[0]!;
+    assert.equal(compiled.type, options.type);
+    for (const [key, value] of Object.entries(requestedPresentation))
+      if (key !== 'type') assert.equal((compiled.presentation as Record<string, unknown>)[key], value);
+  }
+});
+test('portable presentation variants use only existing supported keywords and require disjoint types', () => {
+  const original = dashboardGenerationPlanSchema.properties.widgets.items.properties.requestedPresentation;
+  const projected = projectProviderSchema(original);
+  assert.deepEqual(projected, original);
+  assert.equal(original.oneOf.length, 5);
+  assert.deepEqual(original.oneOf.flatMap(branch => branch.properties.type.enum).sort(), ['area', 'bar', 'combo', 'kpi', 'line', 'pie', 'table', 'treemap']);
+  for (const branch of original.oneOf) { assert.deepEqual(branch.required, ['type']); assert.equal(branch.additionalProperties, false); }
+  assert.ok(!JSON.stringify(projected).includes('"const"')); assert.ok(!JSON.stringify(projected).includes('"mark"'));
+  assert.equal(providerPlanCheck(minimal), true);
+  type MissingTypeAllowed = { palette: 'blue' } extends RequestedPresentation ? true : false;
+  type BarCurveAllowed = 'curve' extends keyof Extract<RequestedPresentation, { type: 'bar' }> ? true : false;
+  const missingTypeAllowed: MissingTypeAllowed = false; const barCurveAllowed: BarCurveAllowed = false;
+  assert.equal(missingTypeAllowed, false); assert.equal(barCurveAllowed, false);
 });

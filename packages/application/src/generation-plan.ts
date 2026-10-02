@@ -1,6 +1,6 @@
 import Ajv2020 from 'ajv/dist/2020.js';
-import { defaultDashboardLayout, dimensions, semanticCatalog, validateDashboardSpec, validDateRange, widgetTypes, governedPalettes, visualizationIssues } from '@el-dabboos/domain';
-import type { AnalysisSpec, DashboardSchemaIssue, DashboardSpec, DashboardWidget, DimensionId, Locale, MetricId, TenantProfile, WidgetPresentation, WidgetType } from '@el-dabboos/domain';
+import { defaultDashboardLayout, dimensions, semanticCatalog, validateDashboardSpec, validDateRange, governedPalettes, visualizationIssues } from '@el-dabboos/domain';
+import type { AnalysisSpec, DashboardSchemaIssue, DashboardSpec, DashboardWidget, DimensionId, Locale, MetricId, TenantProfile, WidgetPresentation } from '@el-dabboos/domain';
 import { resolveGenerationWidget } from './visualization-intent.ts';
 import { resolveDatePreset } from './templates.ts';
 import type { DatePreset } from './templates.ts';
@@ -12,11 +12,16 @@ export interface DashboardGenerationPlan {
   filters?: { dimension: DimensionId; values: string[] }[];
   widgets: GenerationWidget[];
 }
-export interface RequestedPresentation {
-  type?: WidgetType; palette?: NonNullable<WidgetPresentation['palette']>;
-  orientation?: NonNullable<WidgetPresentation['orientation']>; pieVariant?: NonNullable<WidgetPresentation['pieVariant']>;
-  legend?: 'show' | 'hide'; dataLabels?: 'show' | 'hide'; curve?: NonNullable<WidgetPresentation['curve']>;
-}
+type RequestedPalette = { palette?: NonNullable<WidgetPresentation['palette']> };
+type RequestedLegend = { legend?: 'show' | 'hide' };
+/** Explicit type selects a closed set of presentation options; defaults belong to code. */
+export type RequestedPresentation = RequestedPalette & (
+  | ({ type: 'bar'; orientation?: NonNullable<WidgetPresentation['orientation']> } & RequestedLegend)
+  | ({ type: 'line' | 'area' | 'combo'; curve?: NonNullable<WidgetPresentation['curve']> } & RequestedLegend)
+  | ({ type: 'pie'; pieVariant?: NonNullable<WidgetPresentation['pieVariant']>; dataLabels?: 'show' | 'hide' } & RequestedLegend)
+  | ({ type: 'treemap'; dataLabels?: 'show' | 'hide' } & RequestedLegend)
+  | { type: 'kpi' | 'table' }
+);
 export interface GenerationWidget {
   titleEn?: string; titleAr?: string; dimension?: DimensionId;
   series: GenerationSeries[]; requestedPresentation?: RequestedPresentation;
@@ -27,7 +32,7 @@ export interface GenerationSeries {
   topNDirection?: 'top' | 'bottom'; topNLimit?: number;
 }
 const text = { type: 'string', minLength: 1, maxLength: 160 };
-const choice = (values: readonly string[]) => ({ type: 'string', enum: values });
+const choice = (values: readonly string[]) => ({ enum: values });
 const object = <T extends object>(properties: T, required: string[]) => ({ type: 'object', additionalProperties: false, properties, required });
 const seriesSchema = object({
   metric: choice(Object.keys(semanticCatalog)), comparison: choice(['previous_period', 'month_over_month', 'year_over_year']),
@@ -35,21 +40,30 @@ const seriesSchema = object({
   runningTotal: { type: 'boolean' }, percentageContribution: { type: 'boolean' }, ranking: { type: 'boolean' },
   topNDirection: choice(['top', 'bottom']), topNLimit: { type: 'integer', minimum: 1, maximum: 100 },
 }, ['metric']);
-const widgetSchema = object({ titleEn: text, titleAr: text, dimension: choice(dimensions),
+const palette = { $ref: '#/$defs/palette' };
+const legend = choice(['show', 'hide']);
+const dataLabels = legend;
+// Identical option sets share a branch. Required disjoint type enums make oneOf
+// unambiguous without const or discriminator extensions.
+const requestedPresentationSchema = { oneOf: [
+  object({ type: choice(['bar']), palette, orientation: choice(['vertical', 'horizontal']), legend }, ['type']),
+  object({ type: choice(['line', 'area', 'combo']), palette, curve: choice(['straight', 'smooth']), legend }, ['type']),
+  object({ type: choice(['pie']), palette, pieVariant: choice(['pie', 'donut']), dataLabels, legend }, ['type']),
+  object({ type: choice(['treemap']), palette, dataLabels, legend }, ['type']),
+  object({ type: choice(['kpi', 'table']), palette }, ['type']),
+] };
+const widgetSchema = object({ titleEn: text, titleAr: text, dimension: { $ref: '#/$defs/dimension' },
   series: { type: 'array', minItems: 1, maxItems: 8, items: seriesSchema },
-  requestedPresentation: object({ type: choice(widgetTypes), palette: choice(governedPalettes),
-    orientation: choice(['vertical', 'horizontal']), pieVariant: choice(['pie', 'donut']),
-    legend: choice(['show', 'hide']), dataLabels: choice(['show', 'hide']), curve: choice(['straight', 'smooth']),
-  }, []),
+  requestedPresentation: requestedPresentationSchema,
 }, ['series']);
-export const dashboardGenerationPlanSchema = object({ titleEn: text, titleAr: text,
+export const dashboardGenerationPlanSchema = { $defs: { palette: choice(governedPalettes), dimension: choice(dimensions) }, ...object({ titleEn: text, titleAr: text,
   datePreset: choice(['current_year', 'last_12_months', 'last_6_months']),
   dateFrom: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' }, dateTo: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
-  filters: { type: 'array', maxItems: 14, items: object({ dimension: choice(dimensions),
+  filters: { type: 'array', maxItems: 14, items: object({ dimension: { $ref: '#/$defs/dimension' },
     values: { type: 'array', minItems: 1, maxItems: 100, items: { type: 'string', minLength: 1, maxLength: 160 } },
   }, ['dimension', 'values']) },
   widgets: { type: 'array', minItems: 1, maxItems: 24, items: widgetSchema },
-}, ['titleEn', 'titleAr', 'widgets']);
+}, ['titleEn', 'titleAr', 'widgets']) };
 type Validator = ((value: unknown) => boolean) & { errors?: readonly DashboardSchemaIssue[] | null };
 type Constructor = new (options: { allErrors: boolean }) => { compile(schema: object): Validator };
 const Ajv = ((Ajv2020 as unknown as { default?: Constructor }).default ?? Ajv2020) as Constructor;
