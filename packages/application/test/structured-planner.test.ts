@@ -213,7 +213,7 @@ test('generation prompt distinguishes explicit business/presentation intent from
   const prompt = provider.requests[0]!.messages[0]!.content;
   assert.match(prompt, /Omit requestedPresentation entirely when the user did not request presentation/);
   assert.match(prompt, /set its required type and only type-valid options from the schema/);
-  assert.match(prompt, /Preserve explicit palette, orientation and other requested options/);
+  assert.match(prompt, /visualization type, orientation, palette and governed presentation option as required intent/);
   assert.match(prompt, /Include analysis only when explicitly requested/);
   assert.match(prompt, /omit comparisons, moving averages, running totals, percentage contribution, ranking and top N/);
   assert.match(prompt, /Do not invent helpful analyses or decorations/);
