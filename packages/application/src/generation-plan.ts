@@ -1,5 +1,5 @@
 import Ajv2020 from 'ajv/dist/2020.js';
-import { defaultDashboardLayout, dimensions, semanticCatalog, validateDashboardSpec, validDateRange, widgetTypes, governedPalettes } from '@el-dabboos/domain';
+import { defaultDashboardLayout, dimensions, semanticCatalog, validateDashboardSpec, validDateRange, widgetTypes, governedPalettes, visualizationIssues } from '@el-dabboos/domain';
 import type { AnalysisSpec, DashboardSchemaIssue, DashboardSpec, DashboardWidget, DimensionId, Locale, MetricId, TenantProfile, WidgetPresentation, WidgetType } from '@el-dabboos/domain';
 import { resolveGenerationWidget } from './visualization-intent.ts';
 import { resolveDatePreset } from './templates.ts';
@@ -24,7 +24,7 @@ export interface GenerationWidget {
 export interface GenerationSeries {
   metric: MetricId; comparison?: AnalysisSpec['comparison']; movingAverageWindow?: number;
   runningTotal?: boolean; percentageContribution?: boolean; ranking?: boolean;
-  topNDirection?: 'top' | 'bottom'; topNLimit?: number; mark?: 'bar' | 'line';
+  topNDirection?: 'top' | 'bottom'; topNLimit?: number;
 }
 const text = { type: 'string', minLength: 1, maxLength: 160 };
 const choice = (values: readonly string[]) => ({ type: 'string', enum: values });
@@ -33,7 +33,7 @@ const seriesSchema = object({
   metric: choice(Object.keys(semanticCatalog)), comparison: choice(['previous_period', 'month_over_month', 'year_over_year']),
   movingAverageWindow: { type: 'integer', minimum: 2, maximum: 24 },
   runningTotal: { type: 'boolean' }, percentageContribution: { type: 'boolean' }, ranking: { type: 'boolean' },
-  topNDirection: choice(['top', 'bottom']), topNLimit: { type: 'integer', minimum: 1, maximum: 100 }, mark: choice(['bar', 'line']),
+  topNDirection: choice(['top', 'bottom']), topNLimit: { type: 'integer', minimum: 1, maximum: 100 },
 }, ['metric']);
 const widgetSchema = object({ titleEn: text, titleAr: text, dimension: choice(dimensions),
   series: { type: 'array', minItems: 1, maxItems: 8, items: seriesSchema },
@@ -72,6 +72,10 @@ export function validateDashboardGenerationPlan(value: unknown): asserts value i
       throw new Error('Invalid DashboardGenerationPlan topN pair.');
   }
 }
+/** Safe fixed vocabulary from the existing domain rules; never model/customer text. */
+export class GenerationVisualizationError extends Error {
+  constructor(readonly issues: readonly string[]) { super('Invalid dashboard widget or incompatible series'); }
+}
 /** Pure compilation; caller supplies the clock value. Canonical validation remains authoritative. */
 export function compileDashboardGenerationPlan(plan: DashboardGenerationPlan, profile: TenantProfile, locale: Locale, now: Date): DashboardSpec {
   validateDashboardGenerationPlan(plan);
@@ -86,7 +90,7 @@ export function compileDashboardGenerationPlan(plan: DashboardGenerationPlan, pr
         for (const key of ['runningTotal', 'percentageContribution', 'ranking'] as const) if (series[key]) analysis[key] = true;
         if (series.topNDirection && series.topNLimit !== undefined) analysis.topN = { direction: series.topNDirection, limit: series.topNLimit };
         return { id: `${id}-series-${seriesIndex + 1}`, metric: series.metric,
-          ...(Object.keys(analysis).length ? { analysis } : {}), ...(series.mark ? { presentation: { mark: series.mark } } : {}) };
+          ...(Object.keys(analysis).length ? { analysis } : {}) };
       }) }),
       ...(widget.titleEn !== undefined && widget.titleAr !== undefined ? { title: { en: widget.titleEn, ar: widget.titleAr } } : {}) };
   });
@@ -94,6 +98,15 @@ export function compileDashboardGenerationPlan(plan: DashboardGenerationPlan, pr
     filters: { dateRange: plan.dateFrom !== undefined && plan.dateTo !== undefined ? { from: plan.dateFrom, to: plan.dateTo }
       : resolveDatePreset(plan.datePreset ?? 'current_year', profile, now),
     ...(plan.filters?.length ? { dimensions: structuredClone(plan.filters) } : {}) }, widgets, layout: defaultDashboardLayout(widgets) };
-  validateDashboardSpec(spec);
+  try { validateDashboardSpec(spec); }
+  catch (error) {
+    // Canonical validation runs first and remains authoritative. Only enrich this
+    // existing generic semantic failure for terminal diagnostics and bounded repair.
+    if (error instanceof Error && error.message === 'Invalid dashboard widget or incompatible series') {
+      const issues = [...new Set(widgets.flatMap(widget => visualizationIssues(widget)))].slice(0, 4);
+      if (issues.length) throw new GenerationVisualizationError(issues);
+    }
+    throw error;
+  }
   return spec;
 }

@@ -49,3 +49,19 @@ test('API response stays generic while configured diagnostics remain bounded and
     assert.ok(records[0]!.length <= 6000);
   } finally { await app.close(); }
 });
+
+test('specific generation semantic repair diagnostics remain terminal-only with unchanged safe API errors', async () => {
+  const repository = new MockAnalyticsRepository([]); const records: string[] = [];
+  const planner = new StructuredDashboardPlanner({ async generateStructured() {
+    return { output: { titleEn: 'Private output title', titleAr: 'عنوان', widgets: [{ dimension: 'branch', series: [{ metric: 'revenue', topNDirection: 'top', topNLimit: 5 }], requestedPresentation: { type: 'bar', orientation: 'horizontal', palette: 'blue', dataLabels: 'show' } }] }, providerId: 'fake', latencyMs: 1, attempts: 1 };
+  } }, { maxRepairAttempts: 0, diagnostics: event => records.push(formatStructuredDiagnostic(event)) });
+  const app = await buildApi({ analyticsRepository: repository, dimensionValues: repository, planner });
+  try {
+    const response = await app.inject({ method: 'POST', url: '/api/dashboards/generate', payload: { prompt: 'private prompt' }, headers: { 'x-demo-user-id': 'demo-iq-analyst', 'x-tenant-id': 'demo-iq', 'x-locale': 'en' } });
+    assert.equal(response.statusCode, 422); assert.equal(response.json().error.code, 'INVALID_STRUCTURED_OUTPUT');
+    assert.ok(response.json().error.message.includes('Invalid dashboard widget or incompatible series'));
+    assert.ok(!response.body.includes('Data labels')); assert.ok(!response.body.includes('Private output title'));
+    assert.ok(!response.body.includes('private prompt')); assert.ok(!response.body.includes('details'));
+    assert.match(records[0]!, /Data labels are only supported for composition/); assert.ok(!records[0]!.includes('Private output title'));
+  } finally { await app.close(); }
+});

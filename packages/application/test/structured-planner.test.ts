@@ -16,7 +16,7 @@ const now = new Date('2026-10-01T00:00:00Z');
 const toPlan = (value: DashboardSpec): DashboardGenerationPlan => ({ titleEn: value.title.en, titleAr: value.title.ar,
   ...(value.filters.dateRange ? { dateFrom: value.filters.dateRange.from, dateTo: value.filters.dateRange.to } : {}),
   widgets: value.widgets.map(w => ({ requestedPresentation: { type: w.type, ...((({ legend, dataLabels, ...rest }) => ({ ...rest, ...(legend && legend !== 'auto' ? { legend } : {}), ...(dataLabels && dataLabels !== 'auto' ? { dataLabels } : {}) }))(w.presentation ?? {})) }, ...(w.dimension ? { dimension: w.dimension } : {}),
-    series: w.series.map(s => ({ metric: s.metric, ...s.presentation })) })) });
+    series: w.series.map(s => ({ metric: s.metric })) })) });
 const plan = toPlan(spec);
 const compiled = (p = plan) => compileDashboardGenerationPlan(p, profile, 'en', now);
 const expectedSchema = structuredClone(dashboardGenerationPlanSchema);
@@ -116,7 +116,7 @@ test('diagnostics identify semantic widget failures and patch schema failures', 
   const planner = new StructuredDashboardPlanner(new SequenceProvider([toPlan(incompatible)]), { maxRepairAttempts: 0, diagnostics: event => events.push(event) });
   await assert.rejects(planner.generate(request), { code: 'INVALID_STRUCTURED_OUTPUT' });
   assert.equal(events[0]!.stage, 'semantic');
-  assert.match(events[0]!.details[0]!.message, /incompatible series/);
+  assert.match(events[0]!.details[0]!.message, /Single axis requires matching metric type and unit/);
 
   const patch = { schemaVersion: 2, operations: [{ op: 'set_title', title: { en: '', ar: 'عنوان' } }] };
   const editor = new StructuredDashboardPlanner(new SequenceProvider([patch]), { maxRepairAttempts: 0, diagnostics: event => events.push(event) });
@@ -159,7 +159,7 @@ test('structured generation accepts governed chart types and rejects misleading 
   for (const type of ['area', 'pie', 'treemap', 'combo'] as const) {
     const next = structuredClone(spec);
     next.widgets = [{ id: 'chart', type, dimension: ['area', 'combo'].includes(type) ? 'month' : 'branch', series: [{ id: 'revenue', metric: 'revenue' }], ...(type === 'pie' ? { presentation: { pieVariant: 'donut' as const } } : {}) }];
-    if (type === 'combo') next.widgets[0]!.series.push({ id: 'revenue-2', metric: 'revenue', presentation: { mark: 'line' } });
+    if (type === 'combo') next.widgets[0]!.series.push({ id: 'revenue-2', metric: 'revenue' });
     const provider = new SequenceProvider([toPlan(next)]);
     assert.deepEqual(await new StructuredDashboardPlanner(provider, { clock: () => now }).generate(request), compiled(toPlan(next)));
     assert.ok(provider.requests[0]!.messages[0]!.content.includes('visualizations'));
@@ -256,4 +256,57 @@ test('AI palette editing stays on canonical patch replacement with unchanged lay
   const changed = applyDashboardPatch(current, returned);
   assert.equal(changed.widgets[0]!.presentation?.palette, 'blue'); assert.deepEqual(changed.filters, current.filters); assert.deepEqual(changed.layout, current.layout);
   assert.deepEqual(changed.widgets[0]!.series, current.widgets[0]!.series);
+});
+
+test('Top-N system guidance maps explicit selection to the anchor series and uses one bounded bar example', async () => {
+  const provider = new SequenceProvider([acceptanceCases[2]![1]]);
+  const result = await new StructuredDashboardPlanner(provider, { clock: () => now }).generate({ ...request, prompt: acceptanceCases[2]![0] });
+  const sent = provider.requests[0]!; const system = sent.messages[0]!.content;
+  assert.equal(sent.responseFormat.strict, true); assert.equal(sent.responseFormat.name, 'dashboard_generation_plan');
+  assert.ok(!JSON.stringify(sent.responseFormat.jsonSchema).includes('"mark"'));
+  assert.match(system, /top N request, set topNDirection='top' and topNLimit=N/);
+  assert.match(system, /bottom N set topNDirection='bottom' and topNLimit=N/);
+  assert.match(system, /apply Top-N only to that first relevant series/);
+  assert.match(system, /Never drop an explicit Top-N request/);
+  assert.match(system, /Do not emit a presentation field merely because it seems visually helpful/);
+  for (const rule of ['orientation is Bar only', 'pieVariant is Pie only', 'curve is Line/Area/Combo only', 'dataLabels is Pie/Treemap only', 'never KPI/Table']) assert.ok(system.includes(rule));
+  assert.ok(!system.includes('series mark')); assert.ok(!system.includes('"mark"'));
+  const fixture = acceptanceCases[2]![1].widgets[0]!;
+  assert.deepEqual(fixture.series, [{ metric: 'revenue', topNDirection: 'top', topNLimit: 5 }]);
+  assert.deepEqual(fixture.requestedPresentation, { type: 'bar', orientation: 'horizontal', palette: 'blue' });
+  const widget = result.widgets[0]!;
+  assert.equal(widget.dimension, 'branch'); assert.equal(widget.series[0]!.metric, 'revenue');
+  assert.deepEqual(widget.series[0]!.analysis?.topN, { direction: 'top', limit: 5 });
+  assert.equal(widget.series[0]!.presentation, undefined);
+  assert.equal(widget.presentation?.dataLabels, undefined); assert.equal(widget.presentation?.curve, undefined);
+  // A code-owned legend default is allowed; the intent fixture does not ask for it.
+  assert.equal(fixture.requestedPresentation?.legend, undefined);
+});
+test('safe specific visualization reasons reach bounded repair without copying private content', async () => {
+  const valid = acceptanceCases[2]![1]; const invalid = structuredClone(valid);
+  invalid.titleEn = 'private output title'; invalid.widgets[0]!.requestedPresentation!.dataLabels = 'show';
+  invalid.widgets[0]!.requestedPresentation!.curve = 'smooth';
+  invalid.filters = [{ dimension: 'branch', values: ['private customer filter'] }];
+  const provider = new SequenceProvider([invalid, valid]);
+  const events: import('../src/structured-diagnostics.ts').StructuredPlannerDiagnostic[] = [];
+  const planner = new StructuredDashboardPlanner(provider, { clock: () => now, maxRepairAttempts: 1, diagnostics: event => events.push(event) });
+  const result = await planner.generate({ ...request, prompt: 'private user prompt' });
+  assert.equal(result.widgets[0]!.type, 'bar'); assert.equal(provider.requests.length, 2);
+  const repair = provider.requests[1]!.messages.at(-1)!.content;
+  assert.match(repair, /Data labels are only supported for composition/); assert.match(repair, /Curve is only supported for trends/);
+  assert.equal(events[0]!.stage, 'semantic'); assert.match(events[0]!.details[0]!.message, /Data labels/);
+  assert.ok(repair.length < 1200); assert.ok(events[0]!.details[0]!.message.length <= 800);
+  for (const token of ['private output title', 'private customer filter', 'private user prompt']) {
+    assert.ok(!repair.includes(token)); assert.ok(!JSON.stringify(events).includes(token));
+  }
+});
+test('persistent incompatible explicit presentation still fails canonical validation after bounded repair', async () => {
+  const invalid = structuredClone(acceptanceCases[2]![1]); invalid.widgets[0]!.requestedPresentation!.dataLabels = 'show';
+  const provider = new SequenceProvider([invalid, invalid]);
+  await assert.rejects(new StructuredDashboardPlanner(provider, { maxRepairAttempts: 1 }).generate(request), error => {
+    assert.ok(error instanceof Error); assert.equal((error as { code?: string }).code, 'INVALID_STRUCTURED_OUTPUT');
+    assert.match(error.message, /Invalid dashboard widget or incompatible series/); assert.ok(!error.message.includes('Data labels'));
+    return true;
+  });
+  assert.equal(provider.requests.length, 2);
 });

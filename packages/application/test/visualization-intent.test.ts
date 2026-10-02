@@ -43,6 +43,6 @@ for (const [dimension, requestedPresentation, series] of [
   ['branch', { type: 'table', legend: 'hide' }, [revenue]],
   ['branch', { type: 'line' }, [{ ...revenue, mark: 'bar' }]],
   ['branch', { type: 'line' }, [revenue, margin]],
-] as const) test(`explicit incompatible intent is rejected instead of discarded: ${JSON.stringify(requestedPresentation)}`, () => {
+] as const) test(`invalid generation intent is rejected instead of discarded: ${JSON.stringify(requestedPresentation)}`, () => {
   assert.throws(() => compileDashboardGenerationPlan({ titleEn: 'Sales', titleAr: 'المبيعات', widgets: [{ ...(dimension ? { dimension: dimension as DimensionId } : {}), requestedPresentation, series: series.map(s => ({ metric: s.metric, ...('mark' in s ? { mark: s.mark } : {}) })) }] }, tenantProfiles['demo-iq'], 'en', new Date('2026-10-01T00:00:00Z')));
 });

@@ -225,3 +225,29 @@ test('rate limits bypass repair and return a safe distinct API code without chan
     assert.equal(diagnostics[0]!.message, 'Provider reported a rate or quota limit.');
   } finally { await app.close(); await new Promise<void>(resolve => server.close(() => resolve())); }
 });
+
+test('explicit Top-5 blue horizontal Bar survives strict fake HTTP generation and selects only the highest branches', async () => {
+  const intent = { titleEn: 'Top branches', titleAr: 'أعلى الفروع', widgets: [{ dimension: 'branch', series: [{ metric: 'revenue', topNDirection: 'top', topNLimit: 5 }], requestedPresentation: { type: 'bar', orientation: 'horizontal', palette: 'blue' } }] };
+  const fake = await fakeServer(body => {
+    const format = body.response_format as { type: string; json_schema: { strict: boolean; schema: unknown } };
+    assert.equal(format.type, 'json_schema'); assert.equal(format.json_schema.strict, true);
+    assert.ok(!JSON.stringify(format.json_schema.schema).includes('"mark"'));
+    return JSON.stringify(intent);
+  });
+  const repository = new MockAnalyticsRepository(Array.from({ length: 8 }, (_, index) => ({ tenantId: 'demo-iq', measureId: 'revenue' as const, date: '2026-01-15', value: (index + 1) * 100, dimensions: { branch: `branch-${index + 1}` } })));
+  const provider = new OpenAICompatibleLLMProvider({ baseUrl: fake.baseUrl, modelId: 'fake-model', timeoutMs: 1000 });
+  const app = await buildApi({ analyticsRepository: repository, dimensionValues: repository, planner: new StructuredDashboardPlanner(provider, { maxRepairAttempts: 1, clock: () => new Date('2026-01-31T00:00:00Z') }) });
+  try {
+    const response = await app.inject({ method: 'POST', url: '/api/dashboards/generate', headers: { 'x-demo-user-id': 'demo-iq-sales-analyst', 'x-tenant-id': 'demo-iq', 'x-locale': 'en' }, payload: { prompt: 'Show the top 5 branches by revenue as horizontal blue bars' } });
+    assert.equal(response.statusCode, 200); assert.equal(fake.requests.length, 1);
+    const widget = response.json().dashboard.widgets[0];
+    assert.equal(widget.type, 'bar'); assert.equal(widget.dimension, 'branch');
+    assert.equal(widget.presentation.orientation, 'horizontal'); assert.equal(widget.presentation.palette, 'blue');
+    assert.equal(widget.presentation.dataLabels, undefined); assert.equal(widget.presentation.curve, undefined);
+    assert.equal(widget.series[0].presentation, undefined);
+    assert.deepEqual(widget.series[0].analysis, { topN: { direction: 'top', limit: 5 } });
+    const rows = response.json().execution.widgetResults['widget-1'].alignedRows;
+    assert.deepEqual(rows.map((row: { key: string }) => row.key), ['branch-8', 'branch-7', 'branch-6', 'branch-5', 'branch-4']);
+    assert.deepEqual(rows.map((row: { series: Record<string, { value: number }> }) => row.series['widget-1-series-1']!.value), [800, 700, 600, 500, 400]);
+  } finally { await app.close(); await fake.close(); }
+});

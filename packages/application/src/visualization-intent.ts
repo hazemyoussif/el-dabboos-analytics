@@ -20,7 +20,7 @@ export function resolveGenerationWidget(input: { dimension?: DimensionId; series
     ...explicit,
   };
   const series = input.series.map((series, index) => ({ ...series,
-    ...(type === 'combo' ? { presentation: { mark: index === 0 ? 'bar' as const : 'line' as const, ...series.presentation } } : {}),
+    ...(type === 'combo' ? { presentation: { mark: index === 0 ? 'bar' as const : 'line' as const } } : {}),
   }));
   return { type, ...(dimension !== undefined ? { dimension } : {}), series,
     ...(Object.keys(presentation).length ? { presentation } : {}) };

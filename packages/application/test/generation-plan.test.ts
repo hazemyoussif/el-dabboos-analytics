@@ -58,7 +58,7 @@ for (const pair of [{ topNDirection: 'top' }, { topNLimit: 3 }, { topNDirection:
 for (const widget of [
   { requestedPresentation: { type: 'bar', orientation: 'horizontal', legend: 'hide' }, dimension: 'branch', series: [{ metric: 'revenue' }] },
   { requestedPresentation: { type: 'pie', pieVariant: 'donut', dataLabels: 'show' }, dimension: 'branch', series: [{ metric: 'revenue' }] },
-  { requestedPresentation: { type: 'combo', curve: 'smooth', legend: 'show' }, dimension: 'month', series: [{ metric: 'revenue', mark: 'bar' }, { metric: 'gross_profit', mark: 'line' }] },
+  { requestedPresentation: { type: 'combo', curve: 'smooth', legend: 'show' }, dimension: 'month', series: [{ metric: 'revenue' }, { metric: 'gross_profit' }] },
 ] as GenerationWidget[]) test(`${widget.requestedPresentation?.type} presentation is nested canonically`, () => {
   const result = run({ ...minimal, widgets: [widget] }).widgets[0]!;
   assert.ok(result.presentation);
@@ -102,4 +102,24 @@ for (const presentation of [{ type: 'scatter' }, { palette: '#2463eb' }, { palet
 });
 for (const field of [{ movingAverageWindow: 25 }, { topNDirection: 'first', topNLimit: 5 }, { comparison: 'last_week' }, { mark: 'scatter' }]) test(`analysis remains bounded ${JSON.stringify(field)}`, () => {
   assert.throws(() => validateDashboardGenerationPlan({ ...minimal, widgets: [{ series: [{ metric: 'revenue', ...field }] }] }));
+});
+
+test('generation contract and portable provider schema exclude model-supplied series marks', () => {
+  type HasMark = 'mark' extends keyof GenerationSeries ? true : false;
+  const hasMark: HasMark = false;
+  assert.equal(hasMark, false);
+  assert.ok(!JSON.stringify(projectProviderSchema(dashboardGenerationPlanSchema)).includes('"mark"'));
+  for (const type of ['bar', 'line', 'combo'] as const) {
+    const widget = { dimension: 'branch' as const, requestedPresentation: { type }, series: [
+      { metric: 'revenue' as const, mark: 'bar' }, ...(type === 'combo' ? [{ metric: 'gross_profit' as const }] : []),
+    ] };
+    assert.throws(() => validateDashboardGenerationPlan({ ...minimal, widgets: [widget] }), /schema/);
+    assert.throws(() => run({ ...minimal, widgets: [widget] }), /schema/);
+  }
+});
+test('ordinary generated Top-N Bar has no per-series presentation and Combo marks are code-owned', () => {
+  const bar = run({ ...minimal, widgets: [{ dimension: 'branch', series: [{ metric: 'revenue', topNDirection: 'top', topNLimit: 5 }], requestedPresentation: { type: 'bar', palette: 'blue', orientation: 'horizontal' } }] }).widgets[0]!;
+  assert.equal(bar.series[0]!.presentation, undefined);
+  const combo = run({ ...minimal, widgets: [{ dimension: 'month', series: [{ metric: 'revenue' }, { metric: 'gross_profit' }, { metric: 'net_revenue' }], requestedPresentation: { type: 'combo' } }] }).widgets[0]!;
+  assert.deepEqual(combo.series.map(series => series.presentation), [{ mark: 'bar' }, { mark: 'line' }, { mark: 'line' }]);
 });
