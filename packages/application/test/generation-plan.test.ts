@@ -125,7 +125,8 @@ test('ordinary generated Top-N Bar has no per-series presentation and Combo mark
 
 // Validate the exact portable dialect sent to the provider, not just the original plan.
 const providerPlanCheck = new Ajv2020({ allErrors: true }).compile(projectProviderSchema(dashboardGenerationPlanSchema));
-const withPresentation = (requestedPresentation: unknown) => ({ ...minimal, widgets: [{ ...minimal.widgets[0], requestedPresentation }] });
+const withPresentation = (requestedPresentation: unknown) => ({ ...minimal, widgets: [{ ...minimal.widgets[0],
+  ...((requestedPresentation as { type?: string }).type && (requestedPresentation as { type?: string }).type !== 'kpi' ? { dimension: 'branch' } : {}), requestedPresentation }] });
 for (const requestedPresentation of [
   {}, { palette: 'blue' }, { type: 'bar', curve: 'smooth' }, { type: 'bar', dataLabels: 'show' },
   { type: 'line', orientation: 'horizontal' }, { type: 'line', pieVariant: 'donut' },
@@ -173,7 +174,7 @@ test('portable presentation variants use only existing supported keywords and re
 
 for (const type of ['line', 'bar', 'area', 'pie', 'treemap', 'combo', 'table'] as const)
   test(`both generation schemas prevent dimensionless ${type}`, () => {
-    const invalid = withPresentation({ type });
+    const invalid = { ...minimal, widgets: [{ series: [{ metric: 'revenue' }], requestedPresentation: { type } }] };
     assert.equal(providerPlanCheck(invalid), false);
     assert.throws(() => validateDashboardGenerationPlan(invalid), /schema/);
   });
