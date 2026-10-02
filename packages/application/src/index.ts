@@ -13,3 +13,4 @@ export * from './dashboard-library.ts';
 export * from './query-execution.ts';
 export * from './generation-plan.ts';
 export * from './visualization-intent.ts';
+export * from './edit-plan.ts';

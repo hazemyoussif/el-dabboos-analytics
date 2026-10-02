@@ -10,9 +10,9 @@ export interface StructuredPlannerDiagnostic {
   outputPreview: string;
 }
 
-const visibleFields = new Set(['id', 'widgetId', 'metric', 'type', 'locale', 'dimension', 'comparison', 'direction', 'op', 'from', 'to']);
+const visibleFields = new Set(['id', 'widgetId', 'seriesId', 'metric', 'type', 'locale', 'dimension', 'comparison', 'direction', 'op', 'from', 'to']);
 const knownFields = new Set(['schemaVersion', 'id', 'title', 'locale', 'filters', 'dateRange', 'dimensions', 'layout', 'columns', 'items',
-  'widgets', 'widget', 'widgetId', 'series', 'metric', 'type', 'dimension', 'analysis', 'comparison', 'movingAverage', 'window',
+  'widgets', 'widget', 'widgetId', 'seriesId', 'changes', 'presentation', 'series', 'metric', 'type', 'dimension', 'analysis', 'comparison', 'movingAverage', 'window',
   'runningTotal', 'percentageContribution', 'ranking', 'topN', 'direction', 'limit', 'operations', 'op', 'en', 'ar', 'from', 'to',
   'titleEn', 'titleAr', 'datePreset', 'dateFrom', 'dateTo', 'movingAverageWindow', 'topNDirection', 'topNLimit', 'mark', 'requestedPresentation', 'palette', 'orientation', 'pieVariant', 'legend', 'dataLabels', 'curve', 'values', 'x', 'y', 'w', 'h', 'minW', 'minH']);
 function safeShape(value: unknown, field = '', depth = 0): unknown {

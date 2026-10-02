@@ -55,8 +55,8 @@ test('malformed model content remains unknown for bounded planner repair', async
   } finally { await fake.close(); }
 });
 test('structured planner runs through API with fake HTTP provider and authorized metadata', async () => {
-  const patch = { schemaVersion: 2, operations: [{ op: 'set_title', title: { en: 'Updated', ar: 'محدّث' } }] };
-  const fake = await fakeServer(body => JSON.stringify((body.response_format as { json_schema: { name: string } }).json_schema.name === 'dashboard_patch_v2' ? patch : plan));
+  const patch = { operations: [{ op: 'set_title', titleEn: 'Updated', titleAr: 'محدّث' }] };
+  const fake = await fakeServer(body => JSON.stringify((body.response_format as { json_schema: { name: string } }).json_schema.name === 'dashboard_edit_plan' ? patch : plan));
   const repository = new MockAnalyticsRepository([{ tenantId: 'demo-iq', measureId: 'revenue', date: '2026-01-15', value: 100, dimensions: { branch: 'baghdad' } }]);
   const provider = new OpenAICompatibleLLMProvider({ baseUrl: fake.baseUrl, modelId: 'bonsai-2', timeoutMs: 1000 });
   const app = await buildApi({ analyticsRepository: repository, dimensionValues: repository,
@@ -249,5 +249,32 @@ test('explicit Top-5 blue horizontal Bar survives strict fake HTTP generation an
     const rows = response.json().execution.widgetResults['widget-1'].alignedRows;
     assert.deepEqual(rows.map((row: { key: string }) => row.key), ['branch-8', 'branch-7', 'branch-6', 'branch-5', 'branch-4']);
     assert.deepEqual(rows.map((row: { series: Record<string, { value: number }> }) => row.series['widget-1-series-1']!.value), [800, 700, 600, 500, 400]);
+  } finally { await app.close(); await fake.close(); }
+});
+
+test('live edit regression: sparse blue intent through strict fake HTTP/API preserves branch revenue Top-5 and layout', async () => {
+  const current: DashboardSpec = { ...structuredClone(spec), id: 'manual-branches', widgets: [{ id: 'widget-1', type: 'bar', dimension: 'branch',
+    title: { en: 'Branches', ar: 'الفروع' }, series: [{ id: 'widget-1-series-1', metric: 'revenue', analysis: { topN: { direction: 'top', limit: 5 } } }],
+    presentation: { orientation: 'horizontal', palette: 'orange' } }], layout: { columns: 12, items: [{ widgetId: 'widget-1', x: 2, y: 3, w: 6, h: 4 }] } };
+  const before = structuredClone(current);
+  const intent = { operations: [{ op: 'update_widget', widgetId: 'widget-1', changes: { presentation: { palette: 'blue' } } }] };
+  const fake = await fakeServer(body => {
+    const format = body.response_format as { type: string; json_schema: { name: string; strict: boolean } };
+    assert.equal(format.type, 'json_schema'); assert.equal(format.json_schema.strict, true); assert.equal(format.json_schema.name, 'dashboard_edit_plan');
+    assert.equal(body.temperature, 0); assert.equal(body.max_tokens, 2048);
+    return JSON.stringify(intent);
+  });
+  const repository = new MockAnalyticsRepository(Array.from({ length: 8 }, (_, index) => ({ tenantId: 'demo-iq', measureId: 'revenue' as const, date: '2026-01-15', value: (index + 1) * 100, dimensions: { branch: `branch-${index + 1}` } })));
+  const app = await buildApi({ analyticsRepository: repository, dimensionValues: repository, planner: new StructuredDashboardPlanner(new OpenAICompatibleLLMProvider({ baseUrl: fake.baseUrl, modelId: 'fake-model', timeoutMs: 1000 }), { maxRepairAttempts: 0 }) });
+  try {
+    const response = await app.inject({ method: 'POST', url: '/api/dashboards/edit', headers: { 'x-demo-user-id': 'demo-iq-sales-analyst', 'x-tenant-id': 'demo-iq', 'x-locale': 'en' }, payload: { dashboard: current, instruction: 'Make the branch chart blue' } });
+    assert.equal(response.statusCode, 200); assert.equal(fake.requests.length, 1);
+    const next = response.json().dashboard; const expected = structuredClone(current); expected.widgets[0]!.presentation!.palette = 'blue';
+    assert.deepEqual(next, expected); assert.deepEqual(current, before);
+    assert.equal(response.json().patch.schemaVersion, 2); assert.equal(response.json().patch.operations[0].op, 'replace');
+    const rows = response.json().execution.widgetResults['widget-1'].alignedRows;
+    assert.deepEqual(rows.map((row: { key: string }) => row.key), ['branch-8', 'branch-7', 'branch-6', 'branch-5', 'branch-4']);
+    assert.deepEqual(rows.map((row: { series: Record<string, { value: number }> }) => row.series['widget-1-series-1']!.value), [800, 700, 600, 500, 400]);
+    assert.ok(!response.body.includes('DashboardEditPlan'));
   } finally { await app.close(); await fake.close(); }
 });

@@ -1,5 +1,6 @@
-import { applyDashboardPatch, dashboardPatchSchema, dashboardPatchSchemaIssues, isMetricId, widgetTypes, governedPalettes, semanticCatalog, validateDashboardPatch, validateDashboardSpec } from '@el-dabboos/domain';
+import { applyDashboardPatch, isMetricId, widgetTypes, governedPalettes, semanticCatalog, validateDashboardPatch, validateDashboardSpec } from '@el-dabboos/domain';
 import type { DashboardGenerationRequest, DashboardPatch, DashboardPlanner, DashboardSpec, LLMProvider, Locale, PlannerCapabilities, StructuredOutputRequest, TenantProfile } from '@el-dabboos/domain';
+import { compileDashboardEditPlan, dashboardEditPlanSchema, editPlanSchemaIssues, validateDashboardEditPlan } from './edit-plan.ts';
 import { compileDashboardGenerationPlan, GenerationVisualizationError, dashboardGenerationPlanSchema, generationPlanSchemaIssues, validateDashboardGenerationPlan } from './generation-plan.ts';
 import { dashboardTemplates } from './templates.ts';
 import { AuthorizationError } from './security.ts';
@@ -15,7 +16,7 @@ export interface StructuredPlannerOptions { maxRepairAttempts?: number; clock?: 
 const safeError = (error: unknown): string => {
   if (!(error instanceof Error)) return 'Output failed validation.';
   if (error.message.startsWith('Metric outside')) return error.message;
-  if (/^Invalid DashboardGenerationPlan|^Invalid DashboardSpec|^Invalid DashboardPatch|^Invalid dashboard widget|^Invalid dashboard date range|^Duplicate widget ID|^Unknown widget|^Duplicate widget|^Invalid replacement|^Unsupported patch operation/.test(error.message)) return error.message;
+  if (/^Invalid DashboardEditPlan|^Invalid DashboardGenerationPlan|^Invalid DashboardSpec|^Invalid DashboardPatch|^Invalid dashboard widget|^Invalid dashboard date range|^Duplicate widget ID|^Unknown widget|^Duplicate widget|^Invalid replacement|^Unsupported patch operation/.test(error.message)) return error.message;
   return 'Output failed schema, semantic, or authorization validation.';
 };
 const validationDetail = (error: unknown): string => error instanceof GenerationVisualizationError
@@ -75,7 +76,7 @@ export class StructuredDashboardPlanner implements DashboardPlanner {
       catch (error) {
         if (this.options.diagnostics) {
           try {
-            const issues = operation === 'generation' ? generationPlanSchemaIssues(response.output) : dashboardPatchSchemaIssues(response.output);
+            const issues = operation === 'generation' ? generationPlanSchemaIssues(response.output) : editPlanSchemaIssues(response.output);
             const stage = issues.length ? 'schema' : error instanceof AuthorizationError ? 'authorization' : 'semantic';
             this.options.diagnostics({ operation, attempt: attempt + 1, schemaName: request.responseFormat.name,
               providerId: response.providerId, stage, details: issues.length ? issues : [{ instancePath: '', keyword: stage, message: validationDetail(error) }],
@@ -86,7 +87,7 @@ export class StructuredDashboardPlanner implements DashboardPlanner {
           if (error instanceof AuthorizationError) throw error;
           throw new StructuredPlanningError(`Provider output remained invalid after ${attempt + 1} attempt(s): ${safeError(error)}`);
         }
-        messages.push({ role: 'user', content: `The prior JSON did not satisfy the required ${operation === 'generation' ? 'DashboardGenerationPlan' : 'DashboardPatch v2'} contract. ${validationDetail(error)} Return a corrected JSON object only, using the same authorized options.` });
+        messages.push({ role: 'user', content: `The prior JSON did not satisfy the required ${operation === 'generation' ? 'DashboardGenerationPlan' : 'DashboardEditPlan'} contract. ${validationDetail(error)} Return a corrected JSON object only, using the same authorized options.` });
       }
     }
     throw new StructuredPlanningError('Provider output remained invalid.');
@@ -115,14 +116,16 @@ export class StructuredDashboardPlanner implements DashboardPlanner {
     assertAllowed(current, capabilities);
     const context = authorizedContext(capabilities, tenantProfile, this.clock);
     const messages: StructuredOutputRequest['messages'] = [
-      { role: 'system', content: `Produce only a DashboardPatch v2 JSON object for the current dashboard. Use only authorized metrics and bounded patch operations. Preserve existing layout unless a layout change is explicitly requested. add/remove/replace operations manage layout automatically; do not reconstruct layout for semantic edits. Do not generate SQL, React, chart-library options, arbitrary expressions, or policy filters. Context: ${JSON.stringify(context)}` },
+      { role: 'system', content: `Produce only a DashboardEditPlan JSON object for the current dashboard. Express only explicitly requested changes; omitted fields preserve existing values. Never reconstruct unchanged widgets or series. Use existing widgetId/seriesId references for sparse update_widget/update_series changes. Merge presentation and analysis fields; null clears optional values and false clears analysis flags. If changing chart type, explicitly clear any now-incompatible presentation fields; update_series presentation:null clears an existing Combo mark without inventing marks. add_widget uses business intent with optional type/presentation and series analysis; code owns new IDs, defaults and placement. Analysis uses comparison, movingAverageWindow and topNDirection/topNLimit; omit unchanged analysis fields. Never generate IDs except references to existing widgets/series. Never generate layout for semantic/presentation edits; use the separate update_layout with an existing widget reference only for explicitly requested position/size edits. set_filters merges supplied dateRange/dimensions; null clears dateRange, an empty dimensions array clears business filters. Use only authorized metrics and bounded edit operations. Do not generate SQL, React, renderer configuration, raw colors, arbitrary expressions, or policy filters. Context: ${JSON.stringify(context)}` },
       { role: 'user', content: `Current DashboardSpec v2: ${JSON.stringify(current)}\nEdit instruction: ${instruction}` },
     ];
-    return this.validated({ messages, locale: current.locale as Locale, responseFormat: { name: 'dashboard_patch_v2', jsonSchema: projectProviderSchema(dashboardPatchSchema), strict: true } }, 'edit', output => {
-      validateDashboardPatch(output);
-      const next = applyDashboardPatch(current, output);
+    return this.validated({ messages, locale: current.locale as Locale, responseFormat: { name: 'dashboard_edit_plan', jsonSchema: projectProviderSchema(dashboardEditPlanSchema), strict: true } }, 'edit', output => {
+      validateDashboardEditPlan(output);
+      const patch = compileDashboardEditPlan(current, output);
+      validateDashboardPatch(patch);
+      const next = applyDashboardPatch(current, patch);
       assertAllowed(next, capabilities);
-      return output;
+      return patch;
     });
   }
 }

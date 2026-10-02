@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { applyDashboardPatch, dashboardPatchSchema, tenantProfiles, validateDashboardSpec } from '@el-dabboos/domain';
+import { applyDashboardPatch, tenantProfiles, validateDashboardSpec } from '@el-dabboos/domain';
 import type { DashboardSpec, LLMProvider, PlannerCapabilities, StructuredOutputRequest } from '@el-dabboos/domain';
 import { StructuredDashboardPlanner } from '../src/structured-planner.ts';
 import { compileDashboardGenerationPlan, dashboardGenerationPlanSchema } from '../src/generation-plan.ts';
 import type { DashboardGenerationPlan } from '../src/generation-plan.ts';
+import { dashboardEditPlanSchema } from '../src/edit-plan.ts';
+import type { DashboardEditPlan } from '../src/edit-plan.ts';
 import { projectProviderSchema } from '../src/provider-schema.ts';
 
 const profile = tenantProfiles['demo-iq'];
@@ -62,15 +64,16 @@ test('bounded repair rejects persistently malformed output and missing capabilit
   await assert.rejects(planner.generate(missingCapabilities), { code: 'INVALID_STRUCTURED_OUTPUT' });
   assert.equal(provider.requests.length, 2);
 });
-test('patch editing uses patch schema and validates the resulting dashboard authorization', async () => {
+test('sparse edit planning compiles canonical patch and validates the resulting dashboard authorization', async () => {
   const patch = { schemaVersion: 2 as const, operations: [{ op: 'set_title' as const, title: { en: 'Updated', ar: 'محدّث' } }] };
-  const provider = new SequenceProvider([patch]);
+  const intent = { operations: [{ op: 'set_title', titleEn: 'Updated', titleAr: 'محدّث' }] };
+  const provider = new SequenceProvider([intent]);
   const planner = new StructuredDashboardPlanner(provider);
   assert.deepEqual(await planner.edit(spec, 'Rename', profile, capabilities), patch);
   assert.equal(applyDashboardPatch(spec, patch).title.en, 'Updated');
-  assert.deepEqual(provider.requests[0]!.responseFormat.jsonSchema, projectProviderSchema(dashboardPatchSchema));
+  assert.deepEqual(provider.requests[0]!.responseFormat.jsonSchema, projectProviderSchema(dashboardEditPlanSchema));
   assert.ok(provider.requests[0]!.messages[1]!.content.includes('Current DashboardSpec v2'));
-  const forbiddenPatch = { schemaVersion: 2 as const, operations: [{ op: 'replace' as const, widgetId: 'revenue', widget: { id: 'revenue', type: 'kpi', series: [{ id: 'revenue', metric: 'outstanding_amount' }] } }] };
+  const forbiddenPatch = { operations: [{ op: 'update_series', widgetId: 'revenue', seriesId: 'revenue', changes: { metric: 'outstanding_amount' } }] };
   const badProvider = new SequenceProvider([forbiddenPatch]);
   const guarded = new StructuredDashboardPlanner(badProvider, { maxRepairAttempts: 0 });
   await assert.rejects(guarded.edit(spec, 'Show finance', profile, capabilities), { code: 'METRIC_FORBIDDEN' });
@@ -83,11 +86,11 @@ test('planner rejects projected-schema output that violates canonical string and
   await assert.rejects(planner.generate(request), { code: 'INVALID_STRUCTURED_OUTPUT' });
   assert.deepEqual(generationProvider.requests[0]!.responseFormat.jsonSchema, projectProviderSchema(expectedSchema));
 
-  const invalidPatch = { schemaVersion: 2, operations: [{ op: 'set_title', title: { en: '', ar: 'عنوان' } }] };
+  const invalidPatch = { operations: [{ op: 'set_title', titleEn: '', titleAr: 'عنوان' }] };
   const editProvider = new SequenceProvider([invalidPatch]);
   const editPlanner = new StructuredDashboardPlanner(editProvider, { maxRepairAttempts: 0 });
   await assert.rejects(editPlanner.edit(spec, 'Rename', profile, capabilities), { code: 'INVALID_STRUCTURED_OUTPUT' });
-  assert.deepEqual(editProvider.requests[0]!.responseFormat.jsonSchema, projectProviderSchema(dashboardPatchSchema));
+  assert.deepEqual(editProvider.requests[0]!.responseFormat.jsonSchema, projectProviderSchema(dashboardEditPlanSchema));
 });
 test('diagnostics report schema failures on each repair attempt without echoing prompt text', async () => {
   const invalid = structuredClone(spec);
@@ -107,7 +110,7 @@ test('diagnostics report schema failures on each repair attempt without echoing 
   assert.ok(!events[0]!.outputPreview.includes('prompt-secret-phrase'));
 });
 
-test('diagnostics identify semantic widget failures and patch schema failures', async () => {
+test('diagnostics identify semantic widget failures and edit plan schema failures', async () => {
   const incompatible = structuredClone(spec);
   incompatible.widgets[0] = { id: 'mixed', type: 'line', dimension: 'month', series: [
     { id: 'revenue', metric: 'revenue' }, { id: 'margin', metric: 'gross_margin' },
@@ -118,11 +121,11 @@ test('diagnostics identify semantic widget failures and patch schema failures', 
   assert.equal(events[0]!.stage, 'semantic');
   assert.match(events[0]!.details[0]!.message, /Single axis requires matching metric type and unit/);
 
-  const patch = { schemaVersion: 2, operations: [{ op: 'set_title', title: { en: '', ar: 'عنوان' } }] };
+  const patch = { operations: [{ op: 'set_title', titleEn: '', titleAr: 'عنوان' }] };
   const editor = new StructuredDashboardPlanner(new SequenceProvider([patch]), { maxRepairAttempts: 0, diagnostics: event => events.push(event) });
   await assert.rejects(editor.edit(spec, 'Rename', profile, capabilities), { code: 'INVALID_STRUCTURED_OUTPUT' });
   assert.equal(events[1]!.operation, 'edit');
-  assert.equal(events[1]!.schemaName, 'dashboard_patch_v2');
+  assert.equal(events[1]!.schemaName, 'dashboard_edit_plan');
   assert.equal(events[1]!.stage, 'schema');
   assert.ok(events[1]!.details.some(issue => issue.keyword === 'minLength'));
 });
@@ -132,25 +135,25 @@ test('structured editing of manual widget IDs preserves custom layout for replac
     { widgetId: 'widget-1', x: 3, y: 2, w: 5, h: 3 }, { widgetId: 'widget-2', x: 0, y: 7, w: 8, h: 5 },
   ] }, widgets: [ { id: 'widget-1', type: 'kpi', series: [{ id: 'series-1', metric: 'revenue' }] },
     { id: 'widget-2', type: 'table', dimension: 'customer', series: [{ id: 'series-1', metric: 'revenue' }] } ] };
-  const patches: import('@el-dabboos/domain').DashboardPatch[] = [
-    { schemaVersion: 2, operations: [{ op: 'replace', widgetId: 'widget-1', widget: { id: 'widget-1-renamed', type: 'kpi', series: [{ id: 'series-1', metric: 'gross_profit' }] } }] },
-    { schemaVersion: 2, operations: [{ op: 'remove', widgetId: 'widget-2' }] },
-    { schemaVersion: 2, operations: [{ op: 'add', widget: { id: 'widget-3', type: 'kpi', series: [{ id: 'series-1', metric: 'revenue' }] } }] },
-    { schemaVersion: 2, operations: [{ op: 'set_filters', filters: { dateRange: { from: '2026-01-01', to: '2026-02-28' } } }] },
+  const edits: DashboardEditPlan[] = [
+    { operations: [{ op: 'update_series', widgetId: 'widget-1', seriesId: 'series-1', changes: { metric: 'gross_profit' } }] },
+    { operations: [{ op: 'remove_widget', widgetId: 'widget-2' }] },
+    { operations: [{ op: 'add_widget', widget: { series: [{ metric: 'revenue' }] } }] },
+    { operations: [{ op: 'set_filters', changes: { dateRange: { from: '2026-01-01', to: '2026-02-28' } } }] },
   ];
-  const provider = new SequenceProvider(patches);
+  const provider = new SequenceProvider(edits);
   const planner = new StructuredDashboardPlanner(provider, { maxRepairAttempts: 0 });
   const allowed = { ...capabilities, metricIds: ['revenue', 'gross_profit'] as const };
   let current = custom;
-  for (let index = 0; index < patches.length; index++) {
+  for (let index = 0; index < edits.length; index++) {
     const prior = structuredClone(current.layout.items!);
     const patch = await planner.edit(current, ['Change KPI', 'Remove table', 'Add revenue', 'Change date filters'][index]!, profile, allowed);
     current = applyDashboardPatch(current, patch);
-    if (index === 0) assert.deepEqual(current.layout.items, [{ ...prior[0], widgetId: 'widget-1-renamed' }, prior[1]]);
+    if (index === 0) assert.deepEqual(current.layout.items, prior);
     else if (index === 1) assert.deepEqual(current.layout.items, [prior[0]]);
     else if (index === 2) {
       assert.deepEqual(current.layout.items![0], prior[0]);
-      assert.deepEqual(current.layout.items![1], { widgetId: 'widget-3', x: 0, y: 0, w: 4, h: 2 });
+      assert.deepEqual(current.layout.items![1], { widgetId: 'widget-2', x: 0, y: 0, w: 4, h: 2 });
     } else assert.deepEqual(current.layout.items, prior);
   }
   assert.ok(provider.requests[0]!.messages[1]!.content.includes('"x":3,"y":2,"w":5,"h":3'));
@@ -172,15 +175,14 @@ test('AI visualization patches preserve the latest layout and query intent; inva
   const current = structuredClone(spec); current.widgets = [{ id: 'chart', type: 'bar', dimension: 'branch', series: [{ id: 'revenue', metric: 'revenue' }] }];
   current.layout = { columns: 12, items: [{ widgetId: 'chart', x: 3, y: 4, w: 6, h: 4 }] };
   for (const presentation of [{ orientation: 'horizontal' as const }, { pieVariant: 'donut' as const }]) {
-    const widget = { ...current.widgets[0]!, type: ('pieVariant' in presentation ? 'pie' : 'bar') as 'pie' | 'bar', presentation };
-    const patch = { schemaVersion: 2, operations: [{ op: 'replace', widgetId: 'chart', widget }] };
+    const patch = { operations: [{ op: 'update_widget', widgetId: 'chart', changes: { type: ('pieVariant' in presentation ? 'pie' : 'bar') as 'pie' | 'bar', presentation } }] };
     const planner = new StructuredDashboardPlanner(new SequenceProvider([patch]));
     const returned = await planner.edit(current, 'Change visualization', profile, capabilities);
     const next = applyDashboardPatch(current, returned);
     assert.deepEqual(next.layout, current.layout); assert.deepEqual(next.filters, current.filters); assert.deepEqual(next.widgets[0]!.series, current.widgets[0]!.series);
   }
   const margin = { ...current, widgets: [{ ...current.widgets[0]!, series: [{ id: 'margin', metric: 'gross_margin' as const }] }] };
-  const invalidPatch = { schemaVersion: 2, operations: [{ op: 'replace', widgetId: 'chart', widget: { ...margin.widgets[0], type: 'pie' } }] };
+  const invalidPatch = { operations: [{ op: 'update_widget', widgetId: 'chart', changes: { type: 'pie' } }] };
   await assert.rejects(new StructuredDashboardPlanner(new SequenceProvider([invalidPatch]), { maxRepairAttempts: 0 }).edit(margin, 'Turn margin into a pie', profile, { ...capabilities, metricIds: ['gross_margin'] }), { code: 'INVALID_STRUCTURED_OUTPUT' });
 });
 test('Arabic sales, branch performance and profitability intent compiles governed metrics without a fixed arrangement', async () => {
@@ -252,7 +254,7 @@ for (const [prompt, intent, type] of acceptanceCases) test(`controlled intent ac
 });
 test('AI palette editing stays on canonical patch replacement with unchanged layout and business intent', async () => {
   const current = { ...spec, widgets: [{ id: 'chart', type: 'line' as const, dimension: 'branch' as const, series: [{ id: 'revenue', metric: 'revenue' as const }] }] };
-  const patch = { schemaVersion: 2 as const, operations: [{ op: 'replace' as const, widgetId: 'chart', widget: { ...current.widgets[0]!, presentation: { palette: 'blue' as const } } }] };
+  const patch = { operations: [{ op: 'update_widget', widgetId: 'chart', changes: { presentation: { palette: 'blue' } } }] };
   const returned = await new StructuredDashboardPlanner(new SequenceProvider([patch])).edit(current, 'Make this chart blue', profile, capabilities);
   const changed = applyDashboardPatch(current, returned);
   assert.equal(changed.widgets[0]!.presentation?.palette, 'blue'); assert.deepEqual(changed.filters, current.filters); assert.deepEqual(changed.layout, current.layout);
@@ -309,4 +311,40 @@ test('persistent incompatible explicit presentation still fails canonical valida
     return true;
   });
   assert.equal(provider.requests.length, 2);
+});
+
+for (const maxRepairAttempts of [0, 1, 2]) test(`edit plan repair remains bounded to ${maxRepairAttempts} repairs and names the intent contract`, async () => {
+  const provider = new SequenceProvider(Array(3).fill({ operations: [{ op: 'replace' }] }));
+  const events: import('../src/structured-diagnostics.ts').StructuredPlannerDiagnostic[] = [];
+  await assert.rejects(new StructuredDashboardPlanner(provider, { maxRepairAttempts, diagnostics: event => events.push(event) }).edit(spec, 'Make it blue', profile, capabilities), { code: 'INVALID_STRUCTURED_OUTPUT' });
+  assert.equal(provider.requests.length, maxRepairAttempts + 1);
+  assert.deepEqual(events.map(event => event.attempt), Array.from({ length: maxRepairAttempts + 1 }, (_, index) => index + 1));
+  for (const sent of provider.requests) {
+    assert.equal(sent.responseFormat.strict, true); assert.equal(sent.responseFormat.name, 'dashboard_edit_plan');
+    assert.deepEqual(sent.responseFormat.jsonSchema, projectProviderSchema(dashboardEditPlanSchema));
+  }
+  for (const repair of provider.requests.slice(1)) {
+    assert.match(repair.messages.at(-1)!.content, /DashboardEditPlan/);
+    assert.ok(!repair.messages.at(-1)!.content.includes('DashboardPatch v2'));
+  }
+});
+test('edit prompt requests sparse intent with current context; schema errors repair into canonical patch', async () => {
+  const provider = new SequenceProvider([{ operations: [{ op: 'update_widget', widgetId: 'revenue', changes: { presentation: { palette: '#123456' } } }] },
+    { operations: [{ op: 'update_widget', widgetId: 'revenue', changes: { presentation: { palette: 'blue' } } }] }]);
+  const returned = await new StructuredDashboardPlanner(provider, { maxRepairAttempts: 1 }).edit(spec, 'Make it blue', profile, capabilities);
+  assert.equal(returned.schemaVersion, 2); assert.equal(returned.operations[0]!.op, 'replace');
+  const system = provider.requests[0]!.messages[0]!.content;
+  for (const phrase of ['DashboardEditPlan', 'omitted fields preserve', 'Never reconstruct unchanged widgets or series', 'existing widgetId/seriesId', 'Never generate layout for semantic/presentation edits', 'only authorized metrics', 'raw colors']) assert.ok(system.includes(phrase));
+  assert.ok(!system.includes('Produce only a DashboardPatch'));
+  assert.equal(provider.requests.length, 2);
+  assert.equal(applyDashboardPatch(spec, returned).widgets[0]!.presentation!.palette, 'blue');
+});
+test('edit authorization checks current dashboard before invoking provider and rejects unauthorized added metrics afterward', async () => {
+  const unauthorized = structuredClone(spec); unauthorized.widgets[0]!.series[0]!.metric = 'outstanding_amount';
+  const provider = new SequenceProvider([{ operations: [{ op: 'add_widget', widget: { series: [{ metric: 'outstanding_amount' }] } }] }]);
+  const planner = new StructuredDashboardPlanner(provider, { maxRepairAttempts: 0 });
+  await assert.rejects(planner.edit(unauthorized, 'Make it blue', profile, capabilities), { code: 'METRIC_FORBIDDEN' });
+  assert.equal(provider.requests.length, 0);
+  await assert.rejects(planner.edit(spec, 'Add finance', profile, capabilities), { code: 'METRIC_FORBIDDEN' });
+  assert.equal(provider.requests.length, 1);
 });
