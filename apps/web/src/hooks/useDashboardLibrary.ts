@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { DashboardFolder, DashboardLibraryPreference } from '@el-dabbous/domain';
+import type { DashboardFolder, DashboardLibraryPreference } from '@el-dabboos/domain';
 import { createDashboardFolder, deleteDashboardFolder, getDashboardLibrary, renameDashboardFolder, setDashboardPreference } from '../api/client.ts';
 import type { WorkspaceController } from './useWorkspace.ts';
 import type { LibrarySort, LibraryView } from '../library-model.ts';

@@ -1,10 +1,10 @@
-import { widgetTypes } from '@el-dabbous/domain';
-import type { MetricId, ProductMetric, WidgetType } from '@el-dabbous/domain';
+import { widgetTypes } from '@el-dabboos/domain';
+import type { MetricId, ProductMetric, WidgetType } from '@el-dabboos/domain';
 import { metricAvailable } from './metric-drop.ts';
 import type { MetricCatalog } from './metric-drop.ts';
 export type BuilderDragItem = { kind: 'widget'; widgetType: WidgetType } | { kind: 'metric'; metricId: MetricId };
-export const BUILDER_DRAG_MIME = 'application/x-el-dabbous-builder';
-const prefix = 'el-dabbous-builder:';
+export const BUILDER_DRAG_MIME = 'application/x-el-dabboos-builder';
+const prefix = 'el-dabboos-builder:';
 export function parseBuilderDragItem(raw: string, catalog: MetricCatalog, registry: readonly ProductMetric[]): BuilderDragItem | null {
   if (raw.length > 384) return null;
   try {

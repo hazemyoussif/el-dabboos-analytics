@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
-import { authorizedCatalog, dashboardTemplates } from '@el-dabbous/application';
-import { applyDashboardPatch } from '@el-dabbous/domain';
-import type { RequestContext } from '@el-dabbous/domain';
+import { authorizedCatalog, dashboardTemplates } from '@el-dabboos/application';
+import { applyDashboardPatch } from '@el-dabboos/domain';
+import type { RequestContext } from '@el-dabboos/domain';
 import { analyticsContext } from '../context.ts';
 import type { RouteContext } from '../context.ts';
 import { ApiError, object } from '../errors.ts';

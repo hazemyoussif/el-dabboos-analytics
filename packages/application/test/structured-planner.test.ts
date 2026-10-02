@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { applyDashboardPatch, dashboardPatchSchema, dashboardSpecSchema, tenantProfiles } from '@el-dabbous/domain';
-import type { DashboardSpec, LLMProvider, PlannerCapabilities, StructuredOutputRequest } from '@el-dabbous/domain';
+import { applyDashboardPatch, dashboardPatchSchema, dashboardSpecSchema, tenantProfiles } from '@el-dabboos/domain';
+import type { DashboardSpec, LLMProvider, PlannerCapabilities, StructuredOutputRequest } from '@el-dabboos/domain';
 import { StructuredDashboardPlanner } from '../src/structured-planner.ts';
 import { projectProviderSchema } from '../src/provider-schema.ts';
 
@@ -121,7 +121,7 @@ test('structured editing of manual widget IDs preserves custom layout for replac
     { widgetId: 'widget-1', x: 3, y: 2, w: 5, h: 3 }, { widgetId: 'widget-2', x: 0, y: 7, w: 8, h: 5 },
   ] }, widgets: [ { id: 'widget-1', type: 'kpi', series: [{ id: 'series-1', metric: 'revenue' }] },
     { id: 'widget-2', type: 'table', dimension: 'customer', series: [{ id: 'series-1', metric: 'revenue' }] } ] };
-  const patches: import('@el-dabbous/domain').DashboardPatch[] = [
+  const patches: import('@el-dabboos/domain').DashboardPatch[] = [
     { schemaVersion: 2, operations: [{ op: 'replace', widgetId: 'widget-1', widget: { id: 'widget-1-renamed', type: 'kpi', series: [{ id: 'series-1', metric: 'gross_profit' }] } }] },
     { schemaVersion: 2, operations: [{ op: 'remove', widgetId: 'widget-2' }] },
     { schemaVersion: 2, operations: [{ op: 'add', widget: { id: 'widget-3', type: 'kpi', series: [{ id: 'series-1', metric: 'revenue' }] } }] },

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { dashboardPatchSchema, dashboardSpecSchema, validateDashboardPatch, validateDashboardSpec } from '@el-dabbous/domain';
-import type { DashboardSpec } from '@el-dabbous/domain';
+import { dashboardPatchSchema, dashboardSpecSchema, validateDashboardPatch, validateDashboardSpec } from '@el-dabboos/domain';
+import type { DashboardSpec } from '@el-dabboos/domain';
 import { projectProviderSchema } from '../src/provider-schema.ts';
 
 const forbidden = new Set(['$schema', '$id', 'const', 'pattern', 'minLength', 'maxLength', 'format']);

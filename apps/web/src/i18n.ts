@@ -1,4 +1,4 @@
-import type { DimensionId, Locale, MetricType, TenantProfile } from '@el-dabbous/domain';
+import type { DimensionId, Locale, MetricType, TenantProfile } from '@el-dabboos/domain';
 export const copy = {
   en: {
     studio: 'Analytics Studio', product: 'El Dabboos', metricCatalog: 'Metric catalog', available: 'available', planned: 'planned', tagline: 'Ask your business. See the answer.',

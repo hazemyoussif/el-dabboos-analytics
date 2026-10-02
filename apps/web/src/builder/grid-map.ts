@@ -1,5 +1,5 @@
 import type { Layout } from 'react-grid-layout';
-import type { DashboardGridItem, DashboardLayout } from '@el-dabbous/domain';
+import type { DashboardGridItem, DashboardLayout } from '@el-dabboos/domain';
 
 export function toGridItems(items: readonly DashboardGridItem[]): Layout {
   return items.map(({ widgetId, x, y, w, h, minW, minH }) => ({ i: widgetId, x, y, w, h,

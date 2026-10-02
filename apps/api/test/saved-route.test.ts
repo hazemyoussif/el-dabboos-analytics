@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import test from 'node:test';
-import { MockAnalyticsRepository, SqliteDashboardRepository, createDashboardPersistenceSchema } from '@el-dabbous/data';
-import type { DashboardSpec, TenantProfile } from '@el-dabbous/domain';
+import { MockAnalyticsRepository, SqliteDashboardRepository, createDashboardPersistenceSchema } from '@el-dabboos/data';
+import type { DashboardSpec, TenantProfile } from '@el-dabboos/domain';
 import { buildApi } from '../src/app.ts';
 import { resolveSavedRoute } from '../../web/src/saved-route.ts';
 

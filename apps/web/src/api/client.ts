@@ -1,5 +1,5 @@
-import type { DashboardExecutionResult, DashboardTemplate } from '@el-dabbous/application';
-import type { DashboardRecord, DashboardSpec, DimensionId, Locale, ProductMetric, SemanticMetric, TenantProfile } from '@el-dabbous/domain';
+import type { DashboardExecutionResult, DashboardTemplate } from '@el-dabboos/application';
+import type { DashboardRecord, DashboardSpec, DimensionId, Locale, ProductMetric, SemanticMetric, TenantProfile } from '@el-dabboos/domain';
 import type { FilterOptions } from '../builder/BuilderWorkspace.tsx';
 
 export type DemoUser = { id: string; displayName: string };
@@ -37,8 +37,8 @@ export async function getFilterOptions(session: ApiSession): Promise<FilterOptio
   }));
   return Object.fromEntries(values);
 }
-export const getDashboardLibrary = (session: ApiSession) => request<{ folders: import('@el-dabbous/domain').DashboardFolder[]; preferences: import('@el-dabbous/domain').DashboardLibraryPreference[] }>(session, '/api/dashboard-library', 'GET');
-export const createDashboardFolder = (session: ApiSession, name: string) => request<import('@el-dabbous/domain').DashboardFolder>(session, '/api/dashboard-library/folders', 'POST', { name });
-export const renameDashboardFolder = (session: ApiSession, id: string, name: string) => request<import('@el-dabbous/domain').DashboardFolder>(session, `/api/dashboard-library/folders/${encodeURIComponent(id)}`, 'PUT', { name });
+export const getDashboardLibrary = (session: ApiSession) => request<{ folders: import('@el-dabboos/domain').DashboardFolder[]; preferences: import('@el-dabboos/domain').DashboardLibraryPreference[] }>(session, '/api/dashboard-library', 'GET');
+export const createDashboardFolder = (session: ApiSession, name: string) => request<import('@el-dabboos/domain').DashboardFolder>(session, '/api/dashboard-library/folders', 'POST', { name });
+export const renameDashboardFolder = (session: ApiSession, id: string, name: string) => request<import('@el-dabboos/domain').DashboardFolder>(session, `/api/dashboard-library/folders/${encodeURIComponent(id)}`, 'PUT', { name });
 export const deleteDashboardFolder = (session: ApiSession, id: string) => request(session, `/api/dashboard-library/folders/${encodeURIComponent(id)}`, 'DELETE');
-export const setDashboardPreference = (session: ApiSession, id: string, value: { favorite: boolean; folderId?: string }) => request<import('@el-dabbous/domain').DashboardLibraryPreference>(session, `/api/dashboard-library/dashboards/${encodeURIComponent(id)}`, 'PUT', value);
+export const setDashboardPreference = (session: ApiSession, id: string, value: { favorite: boolean; folderId?: string }) => request<import('@el-dabboos/domain').DashboardLibraryPreference>(session, `/api/dashboard-library/dashboards/${encodeURIComponent(id)}`, 'PUT', value);

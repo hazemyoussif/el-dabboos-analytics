@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { applyDashboardPatch, tenantProfiles, validateDashboardSpec } from '@el-dabbous/domain';
-import type { AnalyticsQuery, AnalyticsRepository, AnalyticsResult } from '@el-dabbous/domain';
+import { applyDashboardPatch, tenantProfiles, validateDashboardSpec } from '@el-dabboos/domain';
+import type { AnalyticsQuery, AnalyticsRepository, AnalyticsResult } from '@el-dabboos/domain';
 import { DashboardExecutor, MockDashboardPlanner, dashboardTemplates, getDashboardTemplate, instantiateDashboardTemplate, resolveDatePreset } from '../src/index.ts';
 
 const fixed = () => new Date('2026-09-30T12:00:00.000Z');

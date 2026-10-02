@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { DashboardSpec, Locale } from '@el-dabbous/domain';
+import type { DashboardSpec, Locale } from '@el-dabboos/domain';
 import { libraryCopy } from '../library-copy.ts';
 import { namedSpec } from '../library-model.ts';
 export function DashboardNameDialog({ spec, locale, busy, onConfirm, onClose }: { spec: DashboardSpec; locale: Locale; busy: boolean; onConfirm: (spec: DashboardSpec) => void; onClose: () => void }) {

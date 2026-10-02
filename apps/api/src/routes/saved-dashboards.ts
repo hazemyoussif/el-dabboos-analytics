@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import type { DashboardScope } from '@el-dabbous/domain';
+import type { DashboardScope } from '@el-dabboos/domain';
 import type { RouteContext } from '../context.ts';
 import { ApiError, object } from '../errors.ts';
 

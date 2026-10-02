@@ -1,5 +1,5 @@
-import type { DashboardSeries, DashboardSpec, DashboardWidget, DateRange, Locale, LocalizedText, MetricId, TenantProfile, AnalysisSpec, DimensionId } from '@el-dabbous/domain';
-import { validateDashboardSpec } from '@el-dabbous/domain';
+import type { DashboardSeries, DashboardSpec, DashboardWidget, DateRange, Locale, LocalizedText, MetricId, TenantProfile, AnalysisSpec, DimensionId } from '@el-dabboos/domain';
+import { validateDashboardSpec } from '@el-dabboos/domain';
 
 export type DatePreset = 'current_year' | 'last_12_months' | 'last_6_months';
 export interface DashboardTemplate {

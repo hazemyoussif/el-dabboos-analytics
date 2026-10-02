@@ -1,5 +1,5 @@
-import { defaultDashboardLayout, resolveDashboardLayout, validateDashboardLayout, validateDashboardSpec } from '@el-dabbous/domain';
-import type { DashboardGridItem, DashboardLayout, DashboardSpec, DashboardWidget, WidgetType } from '@el-dabbous/domain';
+import { defaultDashboardLayout, resolveDashboardLayout, validateDashboardLayout, validateDashboardSpec } from '@el-dabboos/domain';
+import type { DashboardGridItem, DashboardLayout, DashboardSpec, DashboardWidget, WidgetType } from '@el-dabboos/domain';
 import type { BuilderCommand } from './model.ts';
 
 export const widgetSizes: Record<WidgetType, { w: number; h: number }> = {

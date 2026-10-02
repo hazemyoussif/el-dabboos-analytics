@@ -1,8 +1,8 @@
 import { ArrowUp, ArrowDown, X, Undo2, Redo2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { resolveDashboardLayout, widgetTypes } from '@el-dabbous/domain';
-import type { AnalysisSpec, DashboardPatch, DashboardSeries, DashboardSpec, DashboardWidget, DimensionId, Locale, MetricId, ProductMetric, SemanticMetric, TenantProfile, WidgetType } from '@el-dabbous/domain';
-import type { DashboardExecutionResult } from '@el-dabbous/application';
+import { resolveDashboardLayout, widgetTypes } from '@el-dabboos/domain';
+import type { AnalysisSpec, DashboardPatch, DashboardSeries, DashboardSpec, DashboardWidget, DimensionId, Locale, MetricId, ProductMetric, SemanticMetric, TenantProfile, WidgetType } from '@el-dabboos/domain';
+import type { DashboardExecutionResult } from '@el-dabboos/application';
 import { WidgetCard } from '../Renderer.tsx';
 import { DashboardGrid } from './DashboardGrid.tsx';
 import { WidgetLayoutInspector } from './WidgetLayoutInspector.tsx';

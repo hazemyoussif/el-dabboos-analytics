@@ -1,5 +1,5 @@
-import { semanticCatalog } from '@el-dabbous/domain';
-import type { AnalyticsContext, AnalyticsFilter, AnalyticsQuery } from '@el-dabbous/domain';
+import { semanticCatalog } from '@el-dabboos/domain';
+import type { AnalyticsContext, AnalyticsFilter, AnalyticsQuery } from '@el-dabboos/domain';
 const filters = (items: readonly AnalyticsFilter[] = []): AnalyticsFilter[] => items.map(item => ({ dimension: item.dimension, values: [...new Set(item.values)].sort() }))
   .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
 /** Normalize validated queries without weakening validation or changing policy intersection. */

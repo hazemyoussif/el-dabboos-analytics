@@ -1,11 +1,11 @@
 {
-  "name": "@el-dabbous/web",
+  "name": "@el-dabboos/web",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "dependencies": {
-    "@el-dabbous/application": "workspace:*",
-    "@el-dabbous/domain": "workspace:*",
+    "@el-dabboos/application": "workspace:*",
+    "@el-dabboos/domain": "workspace:*",
     "lucide-react": "^1.49.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

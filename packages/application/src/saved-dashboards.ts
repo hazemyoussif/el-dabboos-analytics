@@ -1,6 +1,6 @@
-import { validateDashboardSpec } from '@el-dabbous/domain';
+import { validateDashboardSpec } from '@el-dabboos/domain';
 import { AuthorizationError } from './security.ts';
-import type { AuthorizationPolicy, DashboardRecord, DashboardRepository, DashboardScope, RequestContext } from '@el-dabbous/domain';
+import type { AuthorizationPolicy, DashboardRecord, DashboardRepository, DashboardScope, RequestContext } from '@el-dabboos/domain';
 
 export class DashboardPersistenceError extends Error {
   constructor(readonly code: 'DASHBOARD_NOT_FOUND' | 'DASHBOARD_VERSION_CONFLICT', message: string) { super(message); }

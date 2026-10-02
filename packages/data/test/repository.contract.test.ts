@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { DatabaseSync } from 'node:sqlite';
-import type { AnalyticsRepository, DimensionValueRepository } from '@el-dabbous/domain';
-import { factMeasureIds } from '@el-dabbous/domain';
+import type { AnalyticsRepository, DimensionValueRepository } from '@el-dabboos/domain';
+import { factMeasureIds } from '@el-dabboos/domain';
 import { MockAnalyticsRepository } from '../src/mock.ts';
 import { SqliteAnalyticsRepository, createSqliteSchema, insertFacts } from '../src/sqlite.ts';
 import { generateSeedFacts } from '../src/seed.ts';

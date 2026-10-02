@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { LayoutTemplate, LockKeyhole, Search } from 'lucide-react';
-import type { Locale } from '@el-dabbous/domain';
+import type { Locale } from '@el-dabboos/domain';
 import type { AccessibleTemplate } from '../api/client.ts';
 import { filterTemplates } from '../library-model.ts';
 import { libraryCopy } from '../library-copy.ts';

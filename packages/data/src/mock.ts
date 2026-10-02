@@ -1,4 +1,4 @@
-import type { AnalyticsContext, AnalyticsQuery, AnalyticsRepository, AnalyticsResult, DimensionId } from '@el-dabbous/domain';
+import type { AnalyticsContext, AnalyticsQuery, AnalyticsRepository, AnalyticsResult, DimensionId } from '@el-dabboos/domain';
 import { executeFacts } from './engine.ts';
 import type { AnalyticsFact } from './facts.ts';
 

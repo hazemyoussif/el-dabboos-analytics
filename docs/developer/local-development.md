@@ -16,6 +16,6 @@ For SQLite analytics, create a **new** fixture file with `pnpm run seed /absolut
 
 API scripts load root .env then .env.local; shell values override both. Copy only safe placeholders, never commit credentials. Tests do not load either file. See [configuration](configuration.md) and [provider deployment example](../architecture/openai-compatible-provider.md).
 
-Build with `pnpm run build`; built API starts via `pnpm --filter @el-dabbous/api start`. Build artifact needs workspace dependencies and Node SQLite support. Keep developer servers separate from disposable manual verification instances; choose a separate port and explicit web proxy if needed. Stop the disposable API before replacing its metadata DB.
+Build with `pnpm run build`; built API starts via `pnpm --filter @el-dabboos/api start`. Build artifact needs workspace dependencies and Node SQLite support. Keep developer servers separate from disposable manual verification instances; choose a separate port and explicit web proxy if needed. Stop the disposable API before replacing its metadata DB.
 
 Use [personas](../product/personas-and-roles.md) for IDs. Demo headers are x-demo-user-id and x-tenant-id; they are validated against the demo directory, not production authentication. Do not publish this demo identity mechanism as a customer login.

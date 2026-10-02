@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { DatabaseSync } from 'node:sqlite';
-import { MockAnalyticsRepository, SqliteDashboardRepository, createDashboardPersistenceSchema } from '@el-dabbous/data';
+import { MockAnalyticsRepository, SqliteDashboardRepository, createDashboardPersistenceSchema } from '@el-dabboos/data';
 import { buildApi } from '../src/app.ts';
 test('liveness aliases stay available; required persistence and optional analytics probes determine readiness without business queries or LLM calls', async () => {
   const db = new DatabaseSync(':memory:'); createDashboardPersistenceSchema(db); const repository = new MockAnalyticsRepository([]);

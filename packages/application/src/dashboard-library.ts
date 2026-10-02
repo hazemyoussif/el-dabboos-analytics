@@ -1,4 +1,4 @@
-import type { DashboardLibraryRepository, DashboardLibraryScope, RequestContext } from '@el-dabbous/domain';
+import type { DashboardLibraryRepository, DashboardLibraryScope, RequestContext } from '@el-dabboos/domain';
 import type { SavedDashboardService } from './saved-dashboards.ts';
 export class DashboardLibraryError extends Error {
   constructor(readonly code: 'FOLDER_NOT_FOUND' | 'INVALID_LIBRARY_INPUT', message: string) { super(message); }

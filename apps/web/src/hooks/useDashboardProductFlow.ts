@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { DashboardSpec, Locale, TenantProfile } from '@el-dabbous/domain';
+import type { DashboardSpec, Locale, TenantProfile } from '@el-dabboos/domain';
 import type { WorkspaceController } from './useWorkspace.ts';
 import type { ReturnTypeBuilder } from './useDashboardBuilder.ts';
 import type { ReturnTypePlanner } from './useDashboardPlanner.ts';

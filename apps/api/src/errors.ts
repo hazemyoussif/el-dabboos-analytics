@@ -1,7 +1,7 @@
-import { DashboardLibraryError } from '@el-dabbous/application';
+import { DashboardLibraryError } from '@el-dabboos/application';
 import type { FastifyInstance } from 'fastify';
 import { ProviderTransportError } from './providers/openai-compatible.ts';
-import { AuthorizationError, DashboardPersistenceError, StructuredPlanningError, UnsupportedDemoIntentError } from '@el-dabbous/application';
+import { AuthorizationError, DashboardPersistenceError, StructuredPlanningError, UnsupportedDemoIntentError } from '@el-dabboos/application';
 
 export class ApiError extends Error {
   constructor(readonly statusCode: number, readonly code: string, message: string) { super(message); }

@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { semanticCatalog, tenantProfiles, validateDashboardSpec, widgetTypes } from '@el-dabbous/domain';
-import { generateSeedFacts, MockAnalyticsRepository } from '@el-dabbous/data';
-import { dashboardTemplates, DashboardExecutor, DemoIdentityProvider, DefaultAuthorizationPolicy, instantiateDashboardTemplate } from '@el-dabbous/application';
+import { semanticCatalog, tenantProfiles, validateDashboardSpec, widgetTypes } from '@el-dabboos/domain';
+import { generateSeedFacts, MockAnalyticsRepository } from '@el-dabboos/data';
+import { dashboardTemplates, DashboardExecutor, DemoIdentityProvider, DefaultAuthorizationPolicy, instantiateDashboardTemplate } from '@el-dabboos/application';
 test('all 19 governed templates validate and execute in EN/AR for both demo markets with authorized metrics', async () => {
   assert.equal(dashboardTemplates.length,19);
   const repository = new MockAnalyticsRepository([...generateSeedFacts('demo-iq'),...generateSeedFacts('demo-eg')]);

@@ -1,4 +1,4 @@
-import type { DashboardWidget, Locale, SemanticMetric, TenantProfile } from '@el-dabbous/domain';
+import type { DashboardWidget, Locale, SemanticMetric, TenantProfile } from '@el-dabboos/domain';
 import type { ChartTheme } from './chart-theme.ts';
 import { formatValue, localeTag } from '../i18n.ts';
 

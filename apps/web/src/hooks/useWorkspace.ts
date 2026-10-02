@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import type { DashboardExecutionResult } from '@el-dabbous/application';
-import type { DashboardRecord, DashboardSpec, Locale, ProductMetric, SemanticMetric, TenantProfile } from '@el-dabbous/domain';
+import type { DashboardExecutionResult } from '@el-dabboos/application';
+import type { DashboardRecord, DashboardSpec, Locale, ProductMetric, SemanticMetric, TenantProfile } from '@el-dabboos/domain';
 import { ApiClientError, createSavedDashboard, executeDashboard, getCapabilities, getDemoUsers, getFilterOptions, getSavedDashboard, getSemanticCatalog,
   getTemplates, getTenantProfiles, instantiateTemplate, listSavedDashboards, updateSavedDashboard } from '../api/client.ts';
 import type { AccessibleTemplate, ApiSession, DemoUser } from '../api/client.ts';

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { setImmediate } from 'node:timers/promises';
-import type { AnalyticsContext, AnalyticsQuery, AnalyticsRepository, AnalyticsResult, DashboardSpec, DashboardWidget } from '@el-dabbous/domain';
+import type { AnalyticsContext, AnalyticsQuery, AnalyticsRepository, AnalyticsResult, DashboardSpec, DashboardWidget } from '@el-dabboos/domain';
 import { DashboardExecutor, analyticsQueryIdentity, normalizeAnalyticsQuery } from '../src/index.ts';
 const context: AnalyticsContext = { tenantId: 'demo-iq', locale: 'en', enforcedFilters: [{ dimension: 'branch', values: ['baghdad'] }] };
 const spec = (widgets: DashboardWidget[]): DashboardSpec => ({ schemaVersion: 2, id: 'bounded', title: { en: 'Bounded', ar: 'محدود' }, locale: 'en', filters: { dateRange: { from: '2026-01-01', to: '2026-06-30' } }, layout: { columns: 12 }, widgets });

@@ -5,7 +5,7 @@ import { DashboardLibrary } from './library/DashboardLibrary.tsx';
 import { DashboardNameDialog } from './library/DashboardNameDialog.tsx';
 import { useDashboardLibrary } from './hooks/useDashboardLibrary.ts';
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
-import type { Locale } from '@el-dabbous/domain';
+import type { Locale } from '@el-dabboos/domain';
 import { DashboardRenderer } from './Renderer.tsx';
 import { useWorkspace } from './hooks/useWorkspace.ts';
 import { useDashboardBuilder } from './hooks/useDashboardBuilder.ts';

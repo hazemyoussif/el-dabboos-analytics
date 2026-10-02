@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { tenantProfiles } from '@el-dabbous/domain';
+import { tenantProfiles } from '@el-dabboos/domain';
 import { conversationalCopy, copy, formatDate, formatKey, formatTimestamp, formatValue, localeTag } from '../src/i18n.ts';
 const iq = tenantProfiles['demo-iq'];
 const eg = tenantProfiles['demo-eg'];

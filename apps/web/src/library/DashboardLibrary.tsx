@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { DashboardRecord, Locale } from '@el-dabbous/domain';
+import type { DashboardRecord, Locale } from '@el-dabboos/domain';
 import { LayoutDashboard, Star, UserRound, UsersRound, Folder, FolderPlus, MoreHorizontal, Search, SlidersHorizontal, Pencil, Trash2 } from 'lucide-react';
 import type { DashboardLibraryController } from '../hooks/useDashboardLibrary.ts';
 import { filterLibrary } from '../library-model.ts';

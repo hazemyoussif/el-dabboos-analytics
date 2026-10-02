@@ -1,4 +1,4 @@
-import type { DashboardRecord, DashboardSpec } from '@el-dabbous/domain';
+import type { DashboardRecord, DashboardSpec } from '@el-dabboos/domain';
 
 export type DashboardDocument =
   | { kind: 'template'; templateId: string; spec: DashboardSpec }
