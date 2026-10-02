@@ -16,7 +16,7 @@ export function registerErrorHandler(app: FastifyInstance): void {
       : error instanceof AuthorizationError ? 403
         : error instanceof DashboardPersistenceError ? error.code === 'DASHBOARD_NOT_FOUND' ? 404 : 409
           : error instanceof StructuredPlanningError || error instanceof UnsupportedDemoIntentError ? 422
-            : error instanceof ProviderTransportError ? error.code === 'LLM_TIMEOUT' ? 504 : 502
+            : error instanceof ProviderTransportError ? error.code === 'LLM_RATE_LIMITED' ? 429 : error.code === 'LLM_TIMEOUT' ? 504 : 502
               : parserStatus ?? (error instanceof Error && /Invalid|Unknown|Unsupported|requires|Duplicate|Incompatible/i.test(error.message) ? 400 : 500);
     const code = error instanceof DashboardLibraryError || error instanceof ApiError || error instanceof AuthorizationError || error instanceof DashboardPersistenceError
       ? error.code : error instanceof StructuredPlanningError || error instanceof UnsupportedDemoIntentError || error instanceof ProviderTransportError

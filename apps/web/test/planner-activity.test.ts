@@ -19,7 +19,7 @@ for (const operation of ['generating', 'editing'] as const) test(`${operation} s
   assert.deepEqual(f.states.at(-1), { operation: 'idle', elapsedMs: 0 }); assert.equal(f.ticking(), false);
   f.advance(10000); assert.equal(f.states.at(-1)!.elapsedMs, 0);
 });
-for (const code of ['LLM_TIMEOUT', 'LLM_HTTP_ERROR', 'LLM_UNAVAILABLE', 'INVALID_STRUCTURED_OUTPUT']) test(`${code} stops progress without modifying the working dashboard`, async () => {
+for (const code of ['LLM_RATE_LIMITED', 'LLM_TIMEOUT', 'LLM_HTTP_ERROR', 'LLM_UNAVAILABLE', 'INVALID_STRUCTURED_OUTPUT']) test(`${code} stops progress without modifying the working dashboard`, async () => {
   const f = fixture(); const dashboard = { title: 'Working draft' }; const original = structuredClone(dashboard); let error: ApiClientError | undefined; let loading = false;
   const succeeded = await runPlannerOperation(f.activity, 'editing', { current: () => true, start: () => { loading = true; }, request: async () => { f.advance(3000); throw new ApiClientError(502, code, 'upstream secret body'); }, apply: () => { dashboard.title = 'Wrong'; }, fail: cause => { error = cause as ApiClientError; }, settle: () => { loading = false; } });
   assert.equal(succeeded, false); assert.deepEqual(dashboard, original); assert.equal(error?.code, code); assert.equal(loading, false); assert.equal(f.ticking(), false);

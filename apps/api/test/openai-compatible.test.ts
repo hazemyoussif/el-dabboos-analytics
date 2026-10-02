@@ -21,7 +21,7 @@ async function fakeServer(handler: (body: Record<string, unknown>, headers: Reco
     requests.push(body);
     const result = handler(body, request.headers);
     response.writeHead(200, { 'content-type': 'application/json' });
-    response.end(JSON.stringify({ choices: [{ message: { content: result } }] }));
+    response.end(JSON.stringify({ choices: [{ message: { reasoning_content: 'private reasoning is not the structured result', content: result } }] }));
   });
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
   const port = (server.address() as AddressInfo).port;
@@ -41,6 +41,8 @@ test('HTTP adapter sends OpenAI-compatible schema request and parses JSON conten
     assert.equal(authorization, 'Bearer test-key');
     assert.deepEqual(fake.requests[0]?.response_format, { type: 'json_schema', json_schema: { name: 'dashboard_spec_v2', strict: true, schema: { type: 'object' } } });
     assert.equal(fake.requests[0]?.model, 'bonsai-2');
+    assert.equal(fake.requests[0]?.temperature, 0); assert.equal(fake.requests[0]?.max_tokens, 2048);
+    assert.ok(!Object.hasOwn(fake.requests[0]!, 'seed')); assert.ok(!Object.hasOwn(fake.requests[0]!, 'thinking_budget_tokens'));
     assert.deepEqual(fake.requests[0]?.messages, input.messages);
   } finally { await fake.close(); }
 });
@@ -117,7 +119,7 @@ test('HTTP adapter reports status failures without returning provider body', asy
     const port = (server.address() as AddressInfo).port;
     const provider = new OpenAICompatibleLLMProvider({ baseUrl: `http://127.0.0.1:${port}/v1`, modelId: 'bonsai-2', timeoutMs: 1000 });
     await assert.rejects(provider.generateStructured(input), (error: unknown) =>
-      error instanceof ProviderTransportError && error.code === 'LLM_HTTP_ERROR' && !error.message.includes('sensitive'));
+      error instanceof ProviderTransportError && error.code === 'LLM_RATE_LIMITED' && !error.message.includes('sensitive'));
   } finally { await new Promise<void>(resolve => server.close(() => resolve())); }
 });
 
@@ -178,4 +180,48 @@ test('provider diagnostics default to disabled and ignore oversized/arbitrary up
     await assert.rejects(new OpenAICompatibleLLMProvider({ baseUrl: 'http://example.invalid/v1', modelId: 'model', timeoutMs: 1000 }).generateStructured(request), { code: 'LLM_HTTP_ERROR' });
     assert.equal(reads, 0);
   } finally { globalThis.fetch = originalFetch; }
+});
+
+test('configured inference controls are sent generically without altering strict schema or parsing reasoning', async () => {
+  const fake = await fakeServer(() => JSON.stringify(plan));
+  try {
+    for (const config of [{ temperature: 0, maxTokens: 2048, reasoningBudgetTokens: 1024, seed: 42 }, { temperature: 0.5, maxTokens: 4096, reasoningBudgetTokens: 0, seed: 0 }]) {
+      const result = await new OpenAICompatibleLLMProvider({ baseUrl: fake.baseUrl, modelId: 'company-model', timeoutMs: 1000, ...config }).generateStructured(input);
+      assert.deepEqual(result.output, plan);
+      const sent = fake.requests.at(-1)!;
+      assert.equal(sent.temperature, config.temperature); assert.equal(sent.max_tokens, config.maxTokens);
+      assert.equal(sent.thinking_budget_tokens, config.reasoningBudgetTokens); assert.equal(sent.seed, config.seed);
+      assert.deepEqual(sent.response_format, { type: 'json_schema', json_schema: { name: input.responseFormat.name, strict: true, schema: input.responseFormat.jsonSchema } });
+    }
+  } finally { await fake.close(); }
+});
+test('direct transport configuration also rejects invalid inference controls', () => {
+  for (const config of [{ temperature: NaN }, { temperature: 2.1 }, { maxTokens: 0 }, { maxTokens: 65537 }, { reasoningBudgetTokens: -1 }, { reasoningBudgetTokens: 1.5 }, { seed: -1 }, { seed: 2147483648 }])
+    assert.throws(() => new OpenAICompatibleLLMProvider({ baseUrl: 'http://company.example/v1', modelId: 'company-model', timeoutMs: 1000, ...config }), /Invalid OpenAI-compatible inference configuration/);
+});
+test('array and object provider error envelopes produce the same bounded sanitized diagnostics', async () => {
+  const { providerHttpDiagnostic } = await import('../src/providers/transport-diagnostics.ts');
+  const envelope = { error: { code: 400, status: 'INVALID_ARGUMENT', type: 'invalid_request_error', message: 'schema failed secret-key private prompt', headers: { authorization: 'Bearer secret-key' } } };
+  const single = await providerHttpDiagnostic(new Response(JSON.stringify(envelope), { status: 400 }), input, 'model', 'secret-key');
+  const array = await providerHttpDiagnostic(new Response(JSON.stringify([envelope]), { status: 400 }), input, 'model', 'secret-key');
+  assert.deepEqual(single, array); assert.equal(array.message, 'Provider rejected the structured-output schema.');
+  assert.ok(!JSON.stringify(array).includes('secret-key')); assert.ok(!JSON.stringify(array).includes('private prompt')); assert.ok(!JSON.stringify(array).includes('authorization'));
+  const oversized = await providerHttpDiagnostic(new Response(JSON.stringify([{ error: { message: 'schema ' + 'secret-key'.repeat(3000) } }]), { status: 400 }), input, 'model');
+  assert.equal(oversized.message, undefined); assert.ok(JSON.stringify(oversized).length < 1000);
+});
+test('rate limits bypass repair and return a safe distinct API code without changing the submitted dashboard', async () => {
+  let calls = 0;
+  const server = createServer((_request, response) => { calls++; response.writeHead(429); response.end(JSON.stringify([{ error: { code: 'RESOURCE_EXHAUSTED', message: 'schema quota private upstream' } }])); });
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+  const diagnostics: import('../src/providers/transport-diagnostics.ts').ProviderHttpDiagnostic[] = [];
+  const provider = new OpenAICompatibleLLMProvider({ baseUrl: `http://127.0.0.1:${(server.address() as AddressInfo).port}/v1`, modelId: 'model', timeoutMs: 1000, diagnostics: event => diagnostics.push(event) });
+  const repository = new MockAnalyticsRepository([]);
+  const app = await buildApi({ analyticsRepository: repository, dimensionValues: repository, planner: new StructuredDashboardPlanner(provider, { maxRepairAttempts: 2 }) });
+  const original = structuredClone(spec);
+  try {
+    const response = await app.inject({ method: 'POST', url: '/api/dashboards/edit', headers: { 'x-demo-user-id': 'demo-iq-sales-analyst', 'x-tenant-id': 'demo-iq', 'x-locale': 'en' }, payload: { dashboard: spec, instruction: 'Make this chart blue' } });
+    assert.equal(response.statusCode, 429); assert.equal(response.json().error.code, 'LLM_RATE_LIMITED'); assert.equal(calls, 1);
+    assert.deepEqual(spec, original); assert.ok(!response.body.includes('private')); assert.ok(!response.body.includes('schema')); assert.ok(!response.body.includes('RESOURCE_EXHAUSTED'));
+    assert.equal(diagnostics[0]!.message, 'Provider reported a rate or quota limit.');
+  } finally { await app.close(); await new Promise<void>(resolve => server.close(() => resolve())); }
 });

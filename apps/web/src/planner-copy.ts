@@ -2,6 +2,7 @@ import type { Locale } from '@el-dabboos/domain';
 export const plannerCopy = {
   en: { generating: 'Generating…', editing: 'Applying…', generationTitle: 'Creating dashboard with AI', editTitle: 'Editing dashboard with AI', waiting: 'Waiting for AI provider…', elapsed: 'elapsed',
     errors: {
+      LLM_RATE_LIMITED: 'The AI provider is temporarily rate-limited. Please try again shortly. Your dashboard was not changed.',
       LLM_TIMEOUT: 'The AI provider did not respond in time. Your dashboard was not changed.',
       LLM_HTTP_ERROR: 'The AI provider rejected the structured request. Your dashboard was not changed.',
       LLM_UNAVAILABLE: 'The AI provider is unavailable. Your dashboard was not changed.',
@@ -10,6 +11,7 @@ export const plannerCopy = {
     } },
   ar: { generating: 'جارٍ الإنشاء…', editing: 'جارٍ التطبيق…', generationTitle: 'جارٍ إنشاء لوحة المعلومات بالذكاء الاصطناعي', editTitle: 'جارٍ تعديل لوحة المعلومات بالذكاء الاصطناعي', waiting: 'في انتظار استجابة نموذج الذكاء الاصطناعي…', elapsed: 'الوقت المنقضي',
     errors: {
+      LLM_RATE_LIMITED: 'بلغ مزود الذكاء الاصطناعي حد الطلبات مؤقتًا. يرجى المحاولة مجددًا بعد قليل. لم تتغير لوحة المعلومات.',
       LLM_TIMEOUT: 'لم يستجب نموذج الذكاء الاصطناعي في الوقت المحدد. لم تتغير لوحة المعلومات.',
       LLM_HTTP_ERROR: 'رفض نموذج الذكاء الاصطناعي الطلب المنظم. لم تتغير لوحة المعلومات.',
       LLM_UNAVAILABLE: 'نموذج الذكاء الاصطناعي غير متاح حاليًا. لم تتغير لوحة المعلومات.',

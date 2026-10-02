@@ -24,7 +24,8 @@ export async function providerHttpDiagnostic(response: Response, request: Struct
       chunks.push(value);
     }
     const payload: unknown = JSON.parse(Buffer.concat(chunks).toString());
-    const error = record(payload) && record(payload.error) ? payload.error : undefined;
+    const envelope = Array.isArray(payload) ? payload[0] : payload;
+    const error = record(envelope) && record(envelope.error) ? envelope.error : undefined;
     if (!error) return event;
     if (typeof error.code === 'number' && Number.isInteger(error.code) && error.code >= 100 && error.code <= 599) event.upstreamCode = error.code;
     else if (typeof error.code === 'string' && codes.has(error.code)) event.upstreamCode = error.code;
@@ -33,7 +34,8 @@ export async function providerHttpDiagnostic(response: Response, request: Struct
     // Classify known failure categories into fixed messages: never repeat provider text,
     // which may contain prompts, secrets, filter values, or customer data.
     if (typeof error.message === 'string') {
-      if (/schema|structured.output/iu.test(error.message)) event.message = 'Provider rejected the structured-output schema.';
+      if (response.status === 429) event.message = 'Provider reported a rate or quota limit.';
+      else if (/schema|structured.output/iu.test(error.message)) event.message = 'Provider rejected the structured-output schema.';
       else if (/rate.limit|quota/iu.test(error.message)) event.message = 'Provider reported a rate or quota limit.';
       else if (/credential|api.key|authentication/iu.test(error.message)) event.message = 'Provider reported an authentication failure.';
       else event.message = 'Provider error message withheld.';
