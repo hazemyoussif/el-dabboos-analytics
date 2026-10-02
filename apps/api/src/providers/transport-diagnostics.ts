@@ -12,7 +12,7 @@ export async function providerHttpDiagnostic(response: Response, request: Struct
   const schemaName = request.responseFormat.name;
   const event: ProviderHttpDiagnostic = { event: 'llm_provider_http_failed', httpStatus: response.status,
     providerId: `openai-compatible:${safe(modelId)}`, modelId: safe(modelId), schemaName: safe(schemaName),
-    operation: schemaName === 'dashboard_generation_plan' ? 'generation' : schemaName === 'dashboard_patch_v2' ? 'edit' : 'structured' };
+    operation: schemaName === 'dashboard_generation_plan' ? 'generation' : schemaName === 'dashboard_edit_plan' ? 'edit' : 'structured' };
   const reader = response.body?.getReader();
   if (!reader) return event;
   try {

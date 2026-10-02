@@ -162,6 +162,22 @@ test('HTTP errors bypass repair and keep sensitive upstream details out of API a
   } finally { await app.close(); await new Promise<void>(resolve => server.close(() => resolve())); }
 });
 
+test('HTTP failure for dashboard_edit_plan records the edit operation', async () => {
+  const originalFetch = globalThis.fetch;
+  const records: import('../src/providers/transport-diagnostics.ts').ProviderHttpDiagnostic[] = [];
+  globalThis.fetch = async () => new Response(JSON.stringify({ error: { status: 'INVALID_ARGUMENT' } }), { status: 400 });
+  try {
+    const provider = new OpenAICompatibleLLMProvider({ baseUrl: 'http://company.example/v1', modelId: 'fake-model', timeoutMs: 1000,
+      diagnostics: event => records.push(event) });
+    await assert.rejects(provider.generateStructured({ ...input, responseFormat: { ...input.responseFormat, name: 'dashboard_edit_plan' } }),
+      error => error instanceof ProviderTransportError && error.code === 'LLM_HTTP_ERROR');
+    assert.equal(records.length, 1);
+    assert.equal(records[0]!.httpStatus, 400);
+    assert.equal(records[0]!.schemaName, 'dashboard_edit_plan');
+    assert.equal(records[0]!.operation, 'edit');
+  } finally { globalThis.fetch = originalFetch; }
+});
+
 test('provider diagnostics default to disabled and ignore oversized/arbitrary upstream fields', async () => {
   const { providerHttpDiagnostic } = await import('../src/providers/transport-diagnostics.ts');
   const request = { ...input, responseFormat: { ...input.responseFormat, name: 'dashboard_generation_plan' } };
