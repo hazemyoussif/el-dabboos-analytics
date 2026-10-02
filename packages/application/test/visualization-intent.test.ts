@@ -29,8 +29,8 @@ for (const palette of governedPalettes) test(`explicit ${palette} palette and ca
   assert.equal(result.type, 'line'); assert.equal(result.presentation?.palette, palette); assert.equal(result.presentation?.orientation, undefined);
 });
 test('explicit pie and combo get code-owned variants and series marks', () => {
-  assert.equal(resolveGenerationWidget({ dimension: 'branch', series: [revenue], requestedPresentation: { type: 'pie' } }).presentation?.pieVariant, 'pie');
-  const combo = resolveGenerationWidget({ dimension: 'month', series: [revenue, profit], requestedPresentation: { type: 'combo', curve: 'smooth', legend: 'hide' } });
+  assert.equal(resolveGenerationWidget({ dimension: 'branch', series: [revenue], requestedPresentation: { palette: 'default', type: 'pie' } }).presentation?.pieVariant, 'pie');
+  const combo = resolveGenerationWidget({ dimension: 'month', series: [revenue, profit], requestedPresentation: { palette: 'default', type: 'combo', curve: 'smooth', legend: 'hide' } });
   assert.deepEqual(combo.series.map(s => s.presentation), [{ mark: 'bar' }, { mark: 'line' }]);
   assert.equal(combo.presentation?.curve, 'smooth'); assert.equal(combo.presentation?.legend, 'hide');
 });

@@ -10,8 +10,8 @@ const now = new Date('2026-10-02T00:00:00Z');
 const capabilities: PlannerCapabilities = { metricIds: ['revenue', 'gross_profit'], templateIds: [], actions: ['ai:generate', 'ai:edit'] };
 const prompt = 'Create a sales performance dashboard with three widgets: total revenue as a KPI; monthly revenue with a 3-month moving average as a line chart; top 5 branches by gross profit as horizontal blue bars';
 const plan: DashboardGenerationPlan = { titleEn: 'Sales performance', titleAr: 'أداء المبيعات', widgets: [
-  { series: [{ metric: 'revenue' }], requestedPresentation: { type: 'kpi' } },
-  { dimension: 'month', series: [{ metric: 'revenue', movingAverageWindow: 3 }], requestedPresentation: { type: 'line' } },
+  { series: [{ metric: 'revenue' }], requestedPresentation: { palette: 'default', type: 'kpi' } },
+  { dimension: 'month', series: [{ metric: 'revenue', movingAverageWindow: 3 }], requestedPresentation: { palette: 'default', type: 'line' } },
   { dimension: 'branch', series: [{ metric: 'gross_profit', topNDirection: 'top', topNLimit: 5 }], requestedPresentation: { type: 'bar', orientation: 'horizontal', palette: 'blue' } },
 ] };
 const generated = () => compileDashboardGenerationPlan(plan, profile, 'en', now);
@@ -55,30 +55,32 @@ test('hard multi-widget generation preserves explicit provider blue on only the 
   assert.equal(bar.series[0]!.metric, 'gross_profit');
   assert.deepEqual(bar.series[0]!.analysis, { topN: { direction: 'top', limit: 5 } });
   assert.deepEqual(spec.widgets[1]!.series[0]!.analysis, { movingAverage: { window: 3 } });
-  assert.equal(spec.widgets[0]!.presentation?.palette, undefined);
-  assert.equal(spec.widgets[1]!.presentation?.palette, undefined);
+  assert.equal(spec.widgets[0]!.presentation?.palette, 'default');
+  assert.equal(spec.widgets[1]!.presentation?.palette, 'default');
 });
-test('blue in raw user prompt cannot reconstruct palette omitted by the provider', async () => {
-  const omitted = structuredClone(plan); delete omitted.widgets[2]!.requestedPresentation!.palette;
+test('blue in raw user prompt cannot replace the provider default palette', async () => {
+  const omitted = structuredClone(plan); omitted.widgets[2]!.requestedPresentation!.palette = 'default';
   const provider = new FixtureProvider(omitted);
   const result = await planner(provider).generate(request);
   assert.equal(provider.requests[0]!.messages[1]!.content, prompt);
-  assert.equal(result.widgets[2]!.presentation?.palette, undefined);
+  assert.equal(result.widgets[2]!.presentation?.palette, 'default');
   assert.equal(result.widgets[2]!.presentation?.orientation, 'horizontal');
   assert.deepEqual(result, compileDashboardGenerationPlan(omitted, profile, 'en', now));
 });
-test('edit target index is deterministic, canonical and excludes titles, values, layout and analysis', () => {
+test('edit target index uses bilingual canonical labels and excludes business values, layout and analysis', () => {
   const spec = current(); const before = structuredClone(spec);
+  const revenue = { id: 'revenue', labelEn: 'Revenue', labelAr: 'الإيرادات' };
+  const profit = { id: 'gross_profit', labelEn: 'Gross profit', labelAr: 'إجمالي الربح' };
   const expected = [
-    { widgetId: 'widget-1', type: 'kpi', metrics: ['revenue'], series: [{ seriesId: 'widget-1-series-1', metric: 'revenue' }] },
-    { widgetId: 'widget-2', type: 'line', dimension: 'month', metrics: ['revenue'], series: [{ seriesId: 'widget-2-series-1', metric: 'revenue' }] },
-    { widgetId: 'widget-3', type: 'bar', dimension: 'branch', metrics: ['gross_profit'], series: [{ seriesId: 'widget-3-series-1', metric: 'gross_profit' }] },
+    { widgetId: 'widget-1', type: 'kpi', metrics: [revenue], series: [{ seriesId: 'widget-1-series-1', metric: revenue }] },
+    { widgetId: 'widget-2', type: 'line', dimension: { id: 'month', labelEn: 'Month', labelAr: 'الشهر' }, metrics: [revenue], series: [{ seriesId: 'widget-2-series-1', metric: revenue }] },
+    { widgetId: 'widget-3', type: 'bar', dimension: { id: 'branch', labelEn: 'Branch', labelAr: 'الفرع' }, metrics: [profit], series: [{ seriesId: 'widget-3-series-1', metric: profit }] },
   ];
   assert.deepEqual(dashboardEditTargetIndex(spec), expected);
   assert.deepEqual(dashboardEditTargetIndex(spec), expected); assert.deepEqual(spec, before);
   assert.ok(!JSON.stringify(expected).includes('synthetic-filter-value'));
   assert.ok(!JSON.stringify(expected).includes('Sales performance'));
-  const index = dashboardEditTargetIndex(spec); index[0]!.series[0]!.seriesId = 'changed'; index[0]!.metrics.push('gross_profit');
+  const index = dashboardEditTargetIndex(spec); index[0]!.series[0]!.seriesId = 'changed'; index[0]!.metrics[0]!.labelEn = 'changed';
   assert.deepEqual(spec, before);
 });
 test('edit prompt puts both Revenue identities first while retaining the full current spec for broader edits', async () => {
@@ -87,6 +89,8 @@ test('edit prompt puts both Revenue identities first while retaining the full cu
   await planner(provider).edit(spec, 'change the Revenue line to blue', profile, capabilities);
   const sent = provider.requests[0]!; const system = sent.messages[0]!.content;
   for (const phrase of ['all supplied descriptors: type, metric, dimension and title', 'not the first widget sharing a metric', '"Revenue line" means the Line containing revenue, not a Revenue KPI', '"branch gross profit chart" means gross_profit grouped by branch', 'only the sparse operation for that widgetId']) assert.ok(system.includes(phrase));
+  assert.match(system, /user-facing labels to canonical IDs/);
+  assert.match(system, /"gross profit" → gross_profit/);
   const [index, full, instruction] = sent.messages[1]!.content.split('\n');
   assert.ok(index!.startsWith('Editable widget index: '));
   assert.deepEqual(JSON.parse(index!.slice('Editable widget index: '.length)), dashboardEditTargetIndex(spec));
@@ -96,6 +100,7 @@ test('edit prompt puts both Revenue identities first while retaining the full cu
 });
 for (const [instruction, widgetId, palette] of [
   ['change the Revenue line to blue', 'widget-2', 'blue'],
+  ['Change the Revenue line to purple', 'widget-2', 'purple'],
   ['make the branch gross profit chart green', 'widget-3', 'green'],
 ] as const) test(`fake provider canonical reference targets exactly ${widgetId}: ${instruction}`, async () => {
   const spec = current(); const before = structuredClone(spec);
@@ -116,5 +121,20 @@ test('compact target context preserves existing one-widget palette edits', async
   const patch = await planner(provider).edit(spec, 'Make it blue', profile, capabilities);
   assert.equal(applyDashboardPatch(spec, patch).widgets[0]!.presentation!.palette, 'blue');
   assert.equal(dashboardEditTargetIndex(spec).length, 1);
+  assert.equal(provider.requests.length, 1);
+});
+
+test('edit target index includes only existing explicit widget titles without aliasing', () => {
+  const spec = current(); spec.widgets[2]!.title = { en: 'Profit overview', ar: 'نظرة على الربح' };
+  const index = dashboardEditTargetIndex(spec);
+  assert.equal(Object.hasOwn(index[0]!, 'title'), false);
+  assert.equal(Object.hasOwn(index[1]!, 'title'), false);
+  assert.deepEqual(index[2]!.title, spec.widgets[2]!.title);
+  index[2]!.title!.en = 'changed'; assert.equal(spec.widgets[2]!.title.en, 'Profit overview');
+});
+test('provider omitting required palette fails rather than inventing Blue from the request', async () => {
+  const invalid = JSON.parse(JSON.stringify(plan)); delete invalid.widgets[2].requestedPresentation.palette;
+  const provider = new FixtureProvider(invalid);
+  await assert.rejects(planner(provider).generate(request), /Provider output remained invalid/);
   assert.equal(provider.requests.length, 1);
 });

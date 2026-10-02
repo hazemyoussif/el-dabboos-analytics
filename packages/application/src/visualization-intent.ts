@@ -2,8 +2,9 @@ import { semanticCatalog, timeDimensions } from '@el-dabboos/domain';
 import type { DashboardSeries, DimensionId, WidgetPresentation, WidgetType } from '@el-dabboos/domain';
 import type { RequestedPresentation } from './generation-plan.ts';
 
-/** Deterministic defaults only. Explicit intent is retained for canonical semantic validation. */
-export function resolveGenerationWidget(input: { dimension?: DimensionId; series: DashboardSeries[]; requestedPresentation?: RequestedPresentation }):
+/** Internal sparse add-widget edits may supply type only; generation validates required palette first.
+ * Deterministic defaults only. Explicit intent is retained for canonical semantic validation. */
+export function resolveGenerationWidget(input: { dimension?: DimensionId; series: DashboardSeries[]; requestedPresentation?: RequestedPresentation | Pick<RequestedPresentation, 'type'> }):
   { type: WidgetType; dimension?: DimensionId; series: DashboardSeries[]; presentation?: WidgetPresentation } {
   const { dimension, requestedPresentation } = input;
   const time = dimension !== undefined && timeDimensions.includes(dimension);

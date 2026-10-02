@@ -17,7 +17,7 @@ const spec: DashboardSpec = { schemaVersion: 2, id: 'generated-sales', title: { 
 const now = new Date('2026-10-01T00:00:00Z');
 const toPlan = (value: DashboardSpec): DashboardGenerationPlan => ({ titleEn: value.title.en, titleAr: value.title.ar,
   ...(value.filters.dateRange ? { dateFrom: value.filters.dateRange.from, dateTo: value.filters.dateRange.to } : {}),
-  widgets: value.widgets.map(w => ({ requestedPresentation: { type: w.type, ...((({ legend, dataLabels, ...rest }) => ({ ...rest, ...(legend && legend !== 'auto' ? { legend } : {}), ...(dataLabels && dataLabels !== 'auto' ? { dataLabels } : {}) }))(w.presentation ?? {})) }, ...(w.dimension ? { dimension: w.dimension } : {}),
+  widgets: value.widgets.map(w => ({ requestedPresentation: { palette: 'default', type: w.type, ...((({ legend, dataLabels, ...rest }) => ({ ...rest, ...(legend && legend !== 'auto' ? { legend } : {}), ...(dataLabels && dataLabels !== 'auto' ? { dataLabels } : {}) }))(w.presentation ?? {})) }, ...(w.dimension ? { dimension: w.dimension } : {}),
     series: w.series.map(s => ({ metric: s.metric })) })) } as DashboardGenerationPlan);
 const plan = toPlan(spec);
 const compiled = (p = plan) => compileDashboardGenerationPlan(p, profile, 'en', now);
@@ -287,7 +287,7 @@ test('Top-N system guidance maps explicit selection to the anchor series and use
 });
 test('safe specific visualization reasons reach bounded repair without copying private content', async () => {
   const valid = acceptanceCases[2]![1]; const invalid = structuredClone(valid);
-  invalid.titleEn = 'private output title'; invalid.widgets[0]!.requestedPresentation = { type: 'combo', curve: 'smooth' };
+  invalid.titleEn = 'private output title'; invalid.widgets[0]!.requestedPresentation = { palette: 'default', type: 'combo', curve: 'smooth' };
   invalid.filters = [{ dimension: 'branch', values: ['private customer filter'] }];
   const provider = new SequenceProvider([invalid, valid]);
   const events: import('../src/structured-diagnostics.ts').StructuredPlannerDiagnostic[] = [];
@@ -303,7 +303,7 @@ test('safe specific visualization reasons reach bounded repair without copying p
   }
 });
 test('persistent incompatible explicit presentation still fails canonical validation after bounded repair', async () => {
-  const invalid = structuredClone(acceptanceCases[2]![1]); invalid.widgets[0]!.requestedPresentation = { type: 'combo' };
+  const invalid = structuredClone(acceptanceCases[2]![1]); invalid.widgets[0]!.requestedPresentation = { palette: 'default', type: 'combo' };
   const provider = new SequenceProvider([invalid, invalid]);
   await assert.rejects(new StructuredDashboardPlanner(provider, { maxRepairAttempts: 1 }).generate(request), error => {
     assert.ok(error instanceof Error); assert.equal((error as { code?: string }).code, 'INVALID_STRUCTURED_OUTPUT');

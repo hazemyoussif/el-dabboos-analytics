@@ -34,7 +34,7 @@ for (const dates of [{ dateFrom: '2024-02-29' }, { dateTo: '2024-02-29' }, { dat
   { dateFrom: '2024-03-31', dateTo: '2024-02-29' }, { datePreset: 'current_year' as const, dateFrom: '2024-01-01', dateTo: '2024-12-31' }])
   test(`generation rejects invalid date selection ${JSON.stringify(dates)}`, () => assert.throws(() => run({ ...minimal, ...dates })));
 test('multiple widgets and series have stable unique IDs, bilingual titles and nonoverlapping layout', () => {
-  const result = run({ ...minimal, widgets: [...minimal.widgets, { requestedPresentation: { type: 'table' }, dimension: 'branch', titleEn: 'Branches', titleAr: 'الفروع', series: [{ metric: 'revenue' }, { metric: 'gross_margin' }] }] });
+  const result = run({ ...minimal, widgets: [...minimal.widgets, { requestedPresentation: { palette: 'default', type: 'table' }, dimension: 'branch', titleEn: 'Branches', titleAr: 'الفروع', series: [{ metric: 'revenue' }, { metric: 'gross_margin' }] }] });
   assert.deepEqual(result.widgets[1]!.title, { en: 'Branches', ar: 'الفروع' });
   assert.equal(result.widgets[1]!.series[1]!.id, 'widget-2-series-2'); validateDashboardSpec(result);
   assert.equal(result.layout.items![1]!.y, 2);
@@ -46,7 +46,7 @@ const analyses: [GenerationSeries, object][] = [
   [{ metric: 'revenue', ranking: true, topNDirection: 'bottom', topNLimit: 10 }, { ranking: true, topN: { direction: 'bottom', limit: 10 } }],
 ];
 for (const [series, expected] of analyses) test(`flat analysis compiles ${JSON.stringify(expected)}`, () => {
-  const widget = run({ ...minimal, widgets: [{ requestedPresentation: { type: 'table' }, dimension: 'month', series: [series] }] }).widgets[0]!;
+  const widget = run({ ...minimal, widgets: [{ requestedPresentation: { palette: 'default', type: 'table' }, dimension: 'month', series: [series] }] }).widgets[0]!;
   assert.deepEqual(widget.series[0]!.analysis, expected);
 });
 test('false flags and absent presentation are omitted from the canonical result', () => {
@@ -55,11 +55,11 @@ test('false flags and absent presentation are omitted from the canonical result'
   assert.ok(!Object.hasOwn(widget.series[0]!, 'analysis')); assert.ok(!Object.hasOwn(widget, 'presentation'));
 });
 for (const pair of [{ topNDirection: 'top' }, { topNLimit: 3 }, { topNDirection: 'bottom', topNLimit: 0 }, { topNDirection: 'top', topNLimit: 101 }, { topNDirection: 'top', topNLimit: 2.5 }])
-  test(`invalid topN pair is rejected ${JSON.stringify(pair)}`, () => assert.throws(() => run({ ...minimal, widgets: [{ requestedPresentation: { type: 'bar' }, dimension: 'branch', series: [{ metric: 'revenue', ...pair } as GenerationSeries] }] })));
+  test(`invalid topN pair is rejected ${JSON.stringify(pair)}`, () => assert.throws(() => run({ ...minimal, widgets: [{ requestedPresentation: { palette: 'default', type: 'bar' }, dimension: 'branch', series: [{ metric: 'revenue', ...pair } as GenerationSeries] }] })));
 for (const widget of [
-  { requestedPresentation: { type: 'bar', orientation: 'horizontal', legend: 'hide' }, dimension: 'branch', series: [{ metric: 'revenue' }] },
-  { requestedPresentation: { type: 'pie', pieVariant: 'donut', dataLabels: 'show' }, dimension: 'branch', series: [{ metric: 'revenue' }] },
-  { requestedPresentation: { type: 'combo', curve: 'smooth', legend: 'show' }, dimension: 'month', series: [{ metric: 'revenue' }, { metric: 'gross_profit' }] },
+  { requestedPresentation: { palette: 'default', type: 'bar', orientation: 'horizontal', legend: 'hide' }, dimension: 'branch', series: [{ metric: 'revenue' }] },
+  { requestedPresentation: { palette: 'default', type: 'pie', pieVariant: 'donut', dataLabels: 'show' }, dimension: 'branch', series: [{ metric: 'revenue' }] },
+  { requestedPresentation: { palette: 'default', type: 'combo', curve: 'smooth', legend: 'show' }, dimension: 'month', series: [{ metric: 'revenue' }, { metric: 'gross_profit' }] },
 ] as GenerationWidget[]) test(`${widget.requestedPresentation?.type} presentation is nested canonically`, () => {
   const result = run({ ...minimal, widgets: [widget] }).widgets[0]!;
   assert.ok(result.presentation);
@@ -67,13 +67,13 @@ for (const widget of [
 });
 for (const invalid of [null, {}, { ...minimal, titleEn: '' }, { ...minimal, widgets: [] }, { ...minimal, layout: {} },
   { ...minimal, widgets: [{ series: [{ metric: 'imaginary' }] }] },
-  { ...minimal, widgets: [{ requestedPresentation: { type: 'kpi' }, titleEn: 'Only English', series: [{ metric: 'revenue' }] }] },
+  { ...minimal, widgets: [{ requestedPresentation: { palette: 'default', type: 'kpi' }, titleEn: 'Only English', series: [{ metric: 'revenue' }] }] },
   { ...minimal, filters: [{ dimension: 'branch', values: ['a'] }, { dimension: 'branch', values: ['b'] }] }])
   test(`malformed intent rejected (${JSON.stringify(invalid).slice(0, 75)})`, () => assert.throws(() => validateDashboardGenerationPlan(invalid)));
 for (const widget of [
-  { requestedPresentation: { type: 'pie' }, dimension: 'branch', series: [{ metric: 'gross_margin' }] },
-  { requestedPresentation: { type: 'line' }, dimension: 'branch', series: [{ metric: 'revenue', movingAverageWindow: 3 }] },
-  { requestedPresentation: { type: 'bar' }, dimension: 'branch', series: [{ metric: 'revenue' }, { metric: 'gross_profit', topNDirection: 'top', topNLimit: 5 }] },
+  { requestedPresentation: { palette: 'default', type: 'pie' }, dimension: 'branch', series: [{ metric: 'gross_margin' }] },
+  { requestedPresentation: { palette: 'default', type: 'line' }, dimension: 'branch', series: [{ metric: 'revenue', movingAverageWindow: 3 }] },
+  { requestedPresentation: { palette: 'default', type: 'bar' }, dimension: 'branch', series: [{ metric: 'revenue' }, { metric: 'gross_profit', topNDirection: 'top', topNLimit: 5 }] },
 ] as GenerationWidget[]) test(`canonical semantics rejects incompatible intent ${JSON.stringify(widget).slice(0, 80)}`, () => assert.throws(() => run({ ...minimal, widgets: [widget] })));
 test('portable plan remains compact and shallower than canonical DashboardSpec with no infrastructure properties', () => {
   const portable = projectProviderSchema(dashboardGenerationPlanSchema);
@@ -109,7 +109,7 @@ test('generation contract and portable provider schema exclude model-supplied se
   assert.equal(hasMark, false);
   assert.ok(!JSON.stringify(projectProviderSchema(dashboardGenerationPlanSchema)).includes('"mark"'));
   for (const type of ['bar', 'line', 'combo'] as const) {
-    const widget = { dimension: 'branch' as const, requestedPresentation: { type }, series: [
+    const widget = { dimension: 'branch' as const, requestedPresentation: { palette: 'default', type }, series: [
       { metric: 'revenue' as const, mark: 'bar' }, ...(type === 'combo' ? [{ metric: 'gross_profit' as const }] : []),
     ] };
     assert.throws(() => validateDashboardGenerationPlan({ ...minimal, widgets: [widget as GenerationWidget] }), /schema/);
@@ -119,7 +119,7 @@ test('generation contract and portable provider schema exclude model-supplied se
 test('ordinary generated Top-N Bar has no per-series presentation and Combo marks are code-owned', () => {
   const bar = run({ ...minimal, widgets: [{ dimension: 'branch', series: [{ metric: 'revenue', topNDirection: 'top', topNLimit: 5 }], requestedPresentation: { type: 'bar', palette: 'blue', orientation: 'horizontal' } }] }).widgets[0]!;
   assert.equal(bar.series[0]!.presentation, undefined);
-  const combo = run({ ...minimal, widgets: [{ dimension: 'month', series: [{ metric: 'revenue' }, { metric: 'gross_profit' }, { metric: 'net_revenue' }], requestedPresentation: { type: 'combo' } }] }).widgets[0]!;
+  const combo = run({ ...minimal, widgets: [{ dimension: 'month', series: [{ metric: 'revenue' }, { metric: 'gross_profit' }, { metric: 'net_revenue' }], requestedPresentation: { palette: 'default', type: 'combo' } }] }).widgets[0]!;
   assert.deepEqual(combo.series.map(series => series.presentation), [{ mark: 'bar' }, { mark: 'line' }, { mark: 'line' }]);
 });
 
@@ -128,9 +128,9 @@ const providerPlanCheck = new Ajv2020({ allErrors: true }).compile(projectProvid
 const withPresentation = (requestedPresentation: unknown) => ({ ...minimal, widgets: [{ ...minimal.widgets[0],
   ...((requestedPresentation as { type?: string }).type && (requestedPresentation as { type?: string }).type !== 'kpi' ? { dimension: 'branch' } : {}), requestedPresentation }] });
 for (const requestedPresentation of [
-  {}, { palette: 'blue' }, { type: 'bar', curve: 'smooth' }, { type: 'bar', dataLabels: 'show' },
-  { type: 'line', orientation: 'horizontal' }, { type: 'line', pieVariant: 'donut' },
-  { type: 'kpi', legend: 'show' }, { type: 'table', legend: 'hide' }, { type: 'pie', curve: 'straight' },
+  {}, { palette: 'blue' }, { palette: 'default', type: 'bar', curve: 'smooth' }, { palette: 'default', type: 'bar', dataLabels: 'show' },
+  { palette: 'default', type: 'line', orientation: 'horizontal' }, { palette: 'default', type: 'line', pieVariant: 'donut' },
+  { palette: 'default', type: 'kpi', legend: 'show' }, { palette: 'default', type: 'table', legend: 'hide' }, { palette: 'default', type: 'pie', curve: 'straight' },
 ]) test(`original and projected generation schemas reject incompatible presentation ${JSON.stringify(requestedPresentation)}`, () => {
   const plan = withPresentation(requestedPresentation);
   assert.throws(() => validateDashboardGenerationPlan(plan), /schema/);
@@ -139,8 +139,8 @@ for (const requestedPresentation of [
 const supportedPresentations: RequestedPresentation[] = [
   { type: 'bar', palette: 'blue', orientation: 'horizontal', legend: 'hide' },
   { type: 'line', palette: 'blue', curve: 'smooth', legend: 'show' },
-  { type: 'area', curve: 'smooth' }, { type: 'pie', pieVariant: 'donut', dataLabels: 'show' },
-  { type: 'treemap', dataLabels: 'hide' }, { type: 'combo', curve: 'smooth' }, { type: 'kpi' }, { type: 'table' },
+  { palette: 'default', type: 'area', curve: 'smooth' }, { palette: 'default', type: 'pie', pieVariant: 'donut', dataLabels: 'show' },
+  { palette: 'default', type: 'treemap', dataLabels: 'hide' }, { palette: 'default', type: 'combo', curve: 'smooth' }, { palette: 'default', type: 'kpi' }, { palette: 'default', type: 'table' },
 ];
 for (const options of supportedPresentations) test(`both schemas accept ${options.type} options and every governed palette; compiler preserves explicit intent`, () => {
   for (const palette of governedPalettes) {
@@ -163,7 +163,7 @@ test('portable presentation variants use only existing supported keywords and re
   assert.deepEqual(projected, original);
   assert.equal(original.oneOf.length, 5);
   assert.deepEqual(original.oneOf.flatMap(branch => branch.properties.type.enum).sort(), ['area', 'bar', 'combo', 'line', 'pie', 'table', 'treemap']);
-  for (const branch of original.oneOf) { assert.deepEqual(branch.required, ['type']); assert.equal(branch.additionalProperties, false); }
+  for (const branch of original.oneOf) { assert.deepEqual(branch.required, ['type', 'palette']); assert.equal(branch.additionalProperties, false); }
   assert.ok(!JSON.stringify(projected).includes('"const"')); assert.ok(!JSON.stringify(projected).includes('"mark"'));
   assert.equal(providerPlanCheck(minimal), true);
   type MissingTypeAllowed = { palette: 'blue' } extends RequestedPresentation ? true : false;
@@ -174,12 +174,12 @@ test('portable presentation variants use only existing supported keywords and re
 
 for (const type of ['line', 'bar', 'area', 'pie', 'treemap', 'combo', 'table'] as const)
   test(`both generation schemas prevent dimensionless ${type}`, () => {
-    const invalid = { ...minimal, widgets: [{ series: [{ metric: 'revenue' }], requestedPresentation: { type } }] };
+    const invalid = { ...minimal, widgets: [{ series: [{ metric: 'revenue' }], requestedPresentation: { palette: 'default', type } }] };
     assert.equal(providerPlanCheck(invalid), false);
     assert.throws(() => validateDashboardGenerationPlan(invalid), /schema/);
   });
 for (const widget of [
-  { dimension: 'branch', requestedPresentation: { type: 'kpi' }, series: [{ metric: 'revenue' }] },
+  { dimension: 'branch', requestedPresentation: { palette: 'default', type: 'kpi' }, series: [{ metric: 'revenue' }] },
   { series: [{ metric: 'revenue' }, { metric: 'gross_profit' }] },
 ]) test(`both generation schemas prevent impossible summary ${JSON.stringify(widget)}`, () => {
   const invalid = { ...minimal, widgets: [widget] };
@@ -199,14 +199,14 @@ test('summary/grouped contract preserves all code-owned defaults and explicit KP
   assert.deepEqual(result.widgets.map(widget => widget.type), ['kpi', 'kpi', 'line', 'bar', 'table']);
   assert.equal(result.widgets[1]!.presentation!.palette, 'blue');
   type InvalidSummaryAllowed = { series: [GenerationSeries, GenerationSeries] } extends GenerationWidget ? true : false;
-  type GroupedKpiAllowed = { dimension: 'month'; series: [GenerationSeries]; requestedPresentation: { type: 'kpi' } } extends GenerationWidget ? true : false;
+  type GroupedKpiAllowed = { dimension: 'month'; series: [GenerationSeries]; requestedPresentation: { palette: 'default', type: 'kpi' } } extends GenerationWidget ? true : false;
   const invalidSummaryAllowed: InvalidSummaryAllowed = false; const groupedKpiAllowed: GroupedKpiAllowed = false;
   assert.equal(invalidSummaryAllowed, false); assert.equal(groupedKpiAllowed, false);
 });
 test('hard three-widget fixture retains revenue KPI, monthly moving average and gross profit Top-5 blue horizontal bars', () => {
   const plan: DashboardGenerationPlan = { ...minimal, widgets: [
-    { series: [{ metric: 'revenue' }], requestedPresentation: { type: 'kpi' } },
-    { dimension: 'month', series: [{ metric: 'revenue', movingAverageWindow: 3 }], requestedPresentation: { type: 'line' } },
+    { series: [{ metric: 'revenue' }], requestedPresentation: { palette: 'default', type: 'kpi' } },
+    { dimension: 'month', series: [{ metric: 'revenue', movingAverageWindow: 3 }], requestedPresentation: { palette: 'default', type: 'line' } },
     { dimension: 'branch', series: [{ metric: 'gross_profit', topNDirection: 'top', topNLimit: 5 }], requestedPresentation: { type: 'bar', orientation: 'horizontal', palette: 'blue' } },
   ] };
   assert.equal(providerPlanCheck(plan), true); validateDashboardGenerationPlan(plan);
@@ -216,4 +216,19 @@ test('hard three-widget fixture retains revenue KPI, monthly moving average and 
   assert.deepEqual(result.widgets[2]!.series[0]!.analysis, { topN: { direction: 'top', limit: 5 } });
   assert.equal(result.widgets[2]!.presentation!.palette, 'blue');
   assert.equal(result.widgets[2]!.presentation!.orientation, 'horizontal');
+});
+
+for (const type of ['kpi', 'bar', 'line', 'area', 'combo', 'pie', 'treemap', 'table'] as const)
+  test(`original and projected ${type} presentation require palette`, () => {
+    const intent = withPresentation({ type });
+    assert.throws(() => validateDashboardGenerationPlan(intent), /schema/);
+    assert.equal(providerPlanCheck(intent), false);
+  });
+test('explicit Line accepts required default palette while omitted presentation remains optional', () => {
+  const intent = { ...minimal, widgets: [{ dimension: 'month' as const, series: [{ metric: 'revenue' as const }], requestedPresentation: { type: 'line' as const, palette: 'default' as const } }] };
+  validateDashboardGenerationPlan(intent); assert.equal(providerPlanCheck(intent), true);
+  assert.equal(run(intent).widgets[0]!.presentation!.palette, 'default');
+  assert.equal(providerPlanCheck(minimal), true); assert.equal(run().widgets[0]!.presentation, undefined);
+  type MissingPaletteAllowed = { type: 'line' } extends RequestedPresentation ? true : false;
+  const missingPaletteAllowed: MissingPaletteAllowed = false; assert.equal(missingPaletteAllowed, false);
 });

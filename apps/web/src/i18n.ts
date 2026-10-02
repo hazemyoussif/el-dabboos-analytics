@@ -1,3 +1,4 @@
+import { dimensionLabels } from '@el-dabboos/domain';
 import type { DimensionId, Locale, MetricType, TenantProfile } from '@el-dabboos/domain';
 export const copy = {
   en: {
@@ -11,7 +12,7 @@ export const copy = {
     results: 'Results', value: 'Value', change: 'Change', rank: 'Rank', manual: 'Template dashboard', generated: 'Generated dashboard',
     select: 'Choose a dashboard', noDashboard: 'Choose a template or describe a dashboard to begin.',
     examples: ['Replace order count with average order value', 'Show only Cairo and Alexandria', 'Change top customers from revenue to gross profit', 'Add a three-month moving average', 'Remove outstanding receivables'],
-    dimensions: { date: 'Date', month: 'Month', quarter: 'Quarter', year: 'Year', customer: 'Customer', branch: 'Branch', region: 'Region', salesperson: 'Salesperson', product: 'Product', product_category: 'Category', warehouse: 'Warehouse', equipment: 'Equipment', equipment_category: 'Equipment category', technician: 'Technician' },
+    dimensions: dimensionLabels.en,
   },
   ar: {
     studio: 'استوديو التحليلات', product: 'El Dabboos', metricCatalog: 'دليل المؤشرات', available: 'متاح', planned: 'قيد التخطيط', tagline: 'اسأل عن أعمالك. وشاهد الإجابة.',
@@ -24,7 +25,7 @@ export const copy = {
     results: 'النتائج', value: 'القيمة', change: 'التغير', rank: 'الترتيب', manual: 'لوحة من القوالب', generated: 'لوحة مُنشأة',
     select: 'اختر لوحة', noDashboard: 'اختر قالب لوحة أو صف لوحة جديدة للبدء.',
     examples: ['استبدل عدد الطلبات بمتوسط قيمة الطلب', 'اعرض فرعين فقط', 'غيّر أعلى العملاء إلى إجمالي الربح', 'أضف متوسط متحرك لثلاثة أشهر', 'أزل المديونيات'],
-    dimensions: { date: 'التاريخ', month: 'الشهر', quarter: 'الربع', year: 'السنة', customer: 'العميل', branch: 'الفرع', region: 'المنطقة', salesperson: 'مندوب المبيعات', product: 'المنتج', product_category: 'الفئة', warehouse: 'المخزن', equipment: 'المعدة', equipment_category: 'فئة المعدات', technician: 'الفني' },
+    dimensions: dimensionLabels.ar,
   },
 } as const;
 /** Dialect appears only in conversational guidance; application labels stay in Modern Standard Arabic. */

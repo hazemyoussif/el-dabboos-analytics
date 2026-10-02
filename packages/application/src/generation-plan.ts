@@ -12,7 +12,7 @@ export interface DashboardGenerationPlan {
   filters?: { dimension: DimensionId; values: string[] }[];
   widgets: GenerationWidget[];
 }
-type RequestedPalette = { palette?: NonNullable<WidgetPresentation['palette']> };
+type RequestedPalette = { palette: NonNullable<WidgetPresentation['palette']> };
 type RequestedLegend = { legend?: 'show' | 'hide' };
 /** Explicit type selects a closed set of presentation options; defaults belong to code. */
 export type RequestedPresentation = RequestedPalette & (
@@ -54,17 +54,17 @@ const dataLabels = legend;
 // Identical option sets share a branch. Required disjoint type enums make oneOf
 // unambiguous without const or discriminator extensions.
 const requestedPresentationSchema = { oneOf: [
-  object({ type: choice(['bar']), palette, orientation: choice(['vertical', 'horizontal']), legend }, ['type']),
-  object({ type: choice(['line', 'area', 'combo']), palette, curve: choice(['straight', 'smooth']), legend }, ['type']),
-  object({ type: choice(['pie']), palette, pieVariant: choice(['pie', 'donut']), dataLabels, legend }, ['type']),
-  object({ type: choice(['treemap']), palette, dataLabels, legend }, ['type']),
-  object({ type: choice(['table']), palette }, ['type']),
+  object({ type: choice(['bar']), palette, orientation: choice(['vertical', 'horizontal']), legend }, ['type', 'palette']),
+  object({ type: choice(['line', 'area', 'combo']), palette, curve: choice(['straight', 'smooth']), legend }, ['type', 'palette']),
+  object({ type: choice(['pie']), palette, pieVariant: choice(['pie', 'donut']), dataLabels, legend }, ['type', 'palette']),
+  object({ type: choice(['treemap']), palette, dataLabels, legend }, ['type', 'palette']),
+  object({ type: choice(['table']), palette }, ['type', 'palette']),
 ] };
 // Presence of dimension selects grouping; closed objects prevent summary charts.
 const widgetSchema = { oneOf: [
   object({ titleEn: text, titleAr: text,
     series: { type: 'array', minItems: 1, maxItems: 1, items: { $ref: '#/$defs/series' } },
-    requestedPresentation: object({ type: choice(['kpi']), palette }, ['type']),
+    requestedPresentation: object({ type: choice(['kpi']), palette }, ['type', 'palette']),
   }, ['series']),
   object({ titleEn: text, titleAr: text, dimension: { $ref: '#/$defs/dimension' },
     series: { type: 'array', minItems: 1, maxItems: 8, items: { $ref: '#/$defs/series' } },
