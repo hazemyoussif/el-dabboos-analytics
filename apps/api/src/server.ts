@@ -44,7 +44,7 @@ if (plannerMode === 'structured') {
       process.stderr.write(`${formatStructuredDiagnostic(event, apiKey)}\n`);
     } : undefined;
   planner = new StructuredDashboardPlanner(new OpenAICompatibleLLMProvider({ baseUrl, modelId,
-    ...(apiKey ? { apiKey } : {}), timeoutMs }), { maxRepairAttempts, ...(diagnostics ? { diagnostics } : {}) });
+    ...(apiKey ? { apiKey } : {}), timeoutMs, ...(config.llm.diagnostics ? { diagnostics: event => process.stderr.write(`${JSON.stringify(event)}\n`) } : {}) }), { maxRepairAttempts, ...(diagnostics ? { diagnostics } : {}) });
 } else if (plannerMode === 'disabled') planner = null;
 else if (plannerMode !== 'mock') throw new Error('DASHBOARD_PLANNER must be mock, structured, or disabled.');
 const app = await buildApi({ analyticsRepository: repository, dimensionValues: repository, executionConcurrency: config.executionConcurrency,
@@ -53,7 +53,7 @@ const app = await buildApi({ analyticsRepository: repository, dimensionValues: r
 const port = config.port;
 try {
   const address = await app.listen({ port, host: '127.0.0.1' });
-  process.stdout.write(`${startupSummary({ analyticsProvider: provider, dashboardPath: config.dashboardPath, plannerMode, modelId: config.llm.modelId, baseUrl: config.llm.baseUrl, diagnostics: config.llm.diagnostics, port, executionConcurrency: config.executionConcurrency }, config.llm.apiKey)}\n`);
+  process.stdout.write(`${startupSummary({ analyticsProvider: provider, dashboardPath: config.dashboardPath, plannerMode, modelId: config.llm.modelId, baseUrl: config.llm.baseUrl, diagnostics: config.llm.diagnostics, llmTimeoutMs: config.llm.timeoutMs, llmRepairAttempts: config.llm.repairAttempts, port, executionConcurrency: config.executionConcurrency }, config.llm.apiKey)}\n`);
   process.stdout.write(`El Dabboos API listening at ${address}\n`);
 } catch (error) {
   close(); dashboardDb.close();

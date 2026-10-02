@@ -1,6 +1,6 @@
 /** Explicit startup allowlist: never serialize process.env or provider requests. */
 export function startupSummary(config: { analyticsProvider: string; dashboardPath: string; plannerMode: string;
-  modelId?: string | undefined; baseUrl?: string | undefined; diagnostics: boolean; port: number; executionConcurrency?: number }, apiKey?: string): string {
+  modelId?: string | undefined; baseUrl?: string | undefined; diagnostics: boolean; port: number; executionConcurrency?: number; llmTimeoutMs?: number; llmRepairAttempts?: number }, apiKey?: string): string {
   const safe = (value: string) => {
     let result = value.replace(/[\r\n\t]/gu, ' ');
     if (apiKey) result = result.split(apiKey).join('[redacted]');
@@ -13,7 +13,7 @@ export function startupSummary(config: { analyticsProvider: string; dashboardPat
   };
   return `API configuration ${JSON.stringify({ analyticsProvider: safe(config.analyticsProvider),
     dashboardDatabase: safe(config.dashboardPath), plannerMode: safe(config.plannerMode),
-    ...(config.plannerMode === 'structured' ? { modelId: safe(config.modelId ?? ''), endpoint: endpoint(config.baseUrl) } : {}),
+    ...(config.plannerMode === 'structured' ? { modelId: safe(config.modelId ?? ''), endpoint: endpoint(config.baseUrl), llmTimeoutMs: config.llmTimeoutMs ?? 120000, llmRepairAttempts: config.llmRepairAttempts ?? 1 } : {}),
     structuredDiagnostics: config.diagnostics, port: config.port, ...(config.executionConcurrency === undefined ? {} : { executionConcurrency: config.executionConcurrency }) })}`;
 }
 

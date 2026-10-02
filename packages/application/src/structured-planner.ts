@@ -1,5 +1,6 @@
-import { applyDashboardPatch, dashboardPatchSchema, dashboardSpecSchema, dashboardPatchSchemaIssues, dashboardSpecSchemaIssues, isMetricId, widgetTypes, semanticCatalog, validateDashboardPatch, validateDashboardSpec } from '@el-dabboos/domain';
+import { applyDashboardPatch, dashboardPatchSchema, dashboardPatchSchemaIssues, isMetricId, widgetTypes, semanticCatalog, validateDashboardPatch, validateDashboardSpec } from '@el-dabboos/domain';
 import type { DashboardGenerationRequest, DashboardPatch, DashboardPlanner, DashboardSpec, LLMProvider, Locale, PlannerCapabilities, StructuredOutputRequest, TenantProfile } from '@el-dabboos/domain';
+import { compileDashboardGenerationPlan, dashboardGenerationPlanSchema, generationPlanSchemaIssues, validateDashboardGenerationPlan } from './generation-plan.ts';
 import { dashboardTemplates } from './templates.ts';
 import { AuthorizationError } from './security.ts';
 import { projectProviderSchema } from './provider-schema.ts';
@@ -14,7 +15,7 @@ export interface StructuredPlannerOptions { maxRepairAttempts?: number; clock?: 
 const safeError = (error: unknown): string => {
   if (!(error instanceof Error)) return 'Output failed validation.';
   if (error.message.startsWith('Metric outside')) return error.message;
-  if (/^Invalid DashboardSpec|^Invalid DashboardPatch|^Invalid dashboard widget|^Invalid dashboard date range|^Duplicate widget ID|^Unknown widget|^Duplicate widget|^Invalid replacement|^Unsupported patch operation/.test(error.message)) return error.message;
+  if (/^Invalid DashboardGenerationPlan|^Invalid DashboardSpec|^Invalid DashboardPatch|^Invalid dashboard widget|^Invalid dashboard date range|^Duplicate widget ID|^Unknown widget|^Duplicate widget|^Invalid replacement|^Unsupported patch operation/.test(error.message)) return error.message;
   return 'Output failed schema, semantic, or authorization validation.';
 };
 function requireCapabilities(capabilities: PlannerCapabilities | undefined, action: 'ai:generate' | 'ai:edit'): PlannerCapabilities {
@@ -72,7 +73,7 @@ export class StructuredDashboardPlanner implements DashboardPlanner {
       catch (error) {
         if (this.options.diagnostics) {
           try {
-            const issues = operation === 'generation' ? dashboardSpecSchemaIssues(response.output) : dashboardPatchSchemaIssues(response.output);
+            const issues = operation === 'generation' ? generationPlanSchemaIssues(response.output) : dashboardPatchSchemaIssues(response.output);
             const stage = issues.length ? 'schema' : error instanceof AuthorizationError ? 'authorization' : 'semantic';
             this.options.diagnostics({ operation, attempt: attempt + 1, schemaName: request.responseFormat.name,
               providerId: response.providerId, stage, details: issues.length ? issues : [{ instancePath: '', keyword: stage, message: safeError(error) }],
@@ -83,7 +84,7 @@ export class StructuredDashboardPlanner implements DashboardPlanner {
           if (error instanceof AuthorizationError) throw error;
           throw new StructuredPlanningError(`Provider output remained invalid after ${attempt + 1} attempt(s): ${safeError(error)}`);
         }
-        messages.push({ role: 'user', content: `The prior JSON did not satisfy the required v2 contract. ${safeError(error)} Return a corrected JSON object only, using the same authorized options.` });
+        messages.push({ role: 'user', content: `The prior JSON did not satisfy the required ${operation === 'generation' ? 'DashboardGenerationPlan' : 'DashboardPatch v2'} contract. ${safeError(error)} Return a corrected JSON object only, using the same authorized options.` });
       }
     }
     throw new StructuredPlanningError('Provider output remained invalid.');
@@ -91,15 +92,19 @@ export class StructuredDashboardPlanner implements DashboardPlanner {
   async generate(request: DashboardGenerationRequest): Promise<DashboardSpec> {
     const capabilities = requireCapabilities(request.capabilities, 'ai:generate');
     if (request.context.tenantId !== request.tenantProfile.id || request.locale !== request.context.locale) throw new StructuredPlanningError('Invalid planner context.');
-    const context = authorizedContext(capabilities, request.tenantProfile, this.clock);
+    const now = this.clock();
+    const context = authorizedContext(capabilities, request.tenantProfile, () => now);
     const messages: StructuredOutputRequest['messages'] = [
-      { role: 'system', content: `Produce only a DashboardSpec v2 JSON object. Use only authorized metrics and templates. Keep calculations in the deterministic analytics engine. Do not generate SQL, React, chart-library options, arbitrary expressions, or policy filters. Context: ${JSON.stringify(context)}` },
+      { role: 'system', content: `Produce only a DashboardGenerationPlan JSON object. Choose metrics, dimensions, analyses and visualization intent only from the authorized context. Supply bilingual titles. Omit optional fields when unused. Use a datePreset or a complete dateFrom/dateTo pair, never both; default current_year. Do not generate IDs, grid positions, layout, persistence metadata or tenant/security information. Use only authorized metrics and templates. Keep calculations in the deterministic analytics engine. Do not generate SQL, React, chart-library options, arbitrary expressions, or policy filters. Context: ${JSON.stringify(context)}` },
       { role: 'user', content: request.prompt },
     ];
-    return this.validated({ messages, locale: request.locale, responseFormat: { name: 'dashboard_spec_v2', jsonSchema: projectProviderSchema(dashboardSpecSchema), strict: true } }, 'generation', output => {
-      validateDashboardSpec(output);
-      assertAllowed(output, capabilities);
-      return output;
+    const schema = structuredClone(dashboardGenerationPlanSchema);
+    schema.properties.widgets.items.properties.series.items.properties.metric.enum = [...capabilities.metricIds];
+    return this.validated({ messages, locale: request.locale, responseFormat: { name: 'dashboard_generation_plan', jsonSchema: projectProviderSchema(schema), strict: true } }, 'generation', output => {
+      validateDashboardGenerationPlan(output);
+      const spec = compileDashboardGenerationPlan(output, request.tenantProfile, request.locale, now);
+      assertAllowed(spec, capabilities);
+      return spec;
     });
   }
   async edit(current: DashboardSpec, instruction: string, tenantProfile: TenantProfile, capabilitiesInput?: PlannerCapabilities): Promise<DashboardPatch> {

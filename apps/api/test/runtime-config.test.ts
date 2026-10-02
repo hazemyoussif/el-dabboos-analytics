@@ -14,3 +14,14 @@ test('invalid startup settings fail safely without echoing secrets or supplied v
     assert.throws(() => parseRuntimeConfig({ ...env, LLM_API_KEY: 'top-secret' }, defaults), error => { assert.ok(error instanceof Error); assert.match(error.message, /^Invalid API configuration:/); assert.ok(!error.message.includes('secret')); return true; });
   }
 });
+test('structured startup summary includes actual timeout and repair bounds without secrets', async () => {
+  const { startupSummary } = await import('../src/startup-config.ts');
+  const config = parseRuntimeConfig({ DASHBOARD_PLANNER: 'structured', LLM_BASE_URL: 'https://company.example/v1', LLM_MODEL_ID: 'configured-model', LLM_TIMEOUT_MS: '45000', LLM_REPAIR_ATTEMPTS: '2', LLM_API_KEY: 'secret' }, defaults);
+  const summary = startupSummary({ analyticsProvider: config.analyticsProvider, dashboardPath: config.dashboardPath, plannerMode: config.plannerMode,
+    modelId: config.llm.modelId, baseUrl: config.llm.baseUrl, diagnostics: config.llm.diagnostics, port: config.port,
+    llmTimeoutMs: config.llm.timeoutMs, llmRepairAttempts: config.llm.repairAttempts }, config.llm.apiKey);
+  assert.ok(summary.includes('"llmTimeoutMs":45000')); assert.ok(summary.includes('"llmRepairAttempts":2'));
+  assert.ok(!summary.includes('secret')); assert.ok(!summary.includes('LLM_API_KEY'));
+  const mock = startupSummary({ analyticsProvider: 'mock', dashboardPath: defaults.dashboardPath, plannerMode: 'mock', diagnostics: false, port: 3001 });
+  assert.ok(!mock.includes('llmTimeoutMs'));
+});

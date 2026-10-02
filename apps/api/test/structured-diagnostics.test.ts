@@ -2,18 +2,14 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { MockAnalyticsRepository } from '@el-dabboos/data';
 import { StructuredDashboardPlanner } from '@el-dabboos/application';
-import type { DashboardSpec, LLMProvider } from '@el-dabboos/domain';
+import type { LLMProvider } from '@el-dabboos/domain';
 import { buildApi } from '../src/app.ts';
 import { formatStructuredDiagnostic, structuredDiagnosticsEnabled } from '../src/structured-diagnostics.ts';
 
-const valid: DashboardSpec = { schemaVersion: 2, id: 'sales', title: { en: 'Sales', ar: 'المبيعات' }, locale: 'en', filters: {},
-  layout: { columns: 1 }, widgets: [{ id: 'revenue', type: 'kpi', series: [{ id: 'revenue', metric: 'revenue' }] }] };
 const credentials = 'test-provider-credential';
 class InvalidProvider implements LLMProvider {
   async generateStructured() {
-    const invalid = structuredClone(valid);
-    invalid.id = 'Invalid ID';
-    invalid.title.en = `private prompt ${credentials}`;
+    const invalid = { titleEn: `private prompt ${credentials}`, titleAr: '', widgets: [] };
     return { output: invalid, providerId: `provider:${credentials}`, latencyMs: 1, attempts: 1 };
   }
 }
@@ -47,7 +43,7 @@ test('API response stays generic while configured diagnostics remain bounded and
     assert.ok(!response.body.includes('instancePath'));
     assert.ok(!response.body.includes('outputPreview'));
     assert.equal(records.length, 1);
-    assert.ok(records[0]!.includes('"instancePath":"/id"'));
+    assert.ok(records[0]!.includes('"instancePath":"/titleAr"'));
     assert.ok(!records[0]!.includes(credentials));
     assert.ok(!records[0]!.includes('private prompt'));
     assert.ok(records[0]!.length <= 6000);

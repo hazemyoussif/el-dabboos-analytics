@@ -3,7 +3,7 @@ import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import test from 'node:test';
 import { MockAnalyticsRepository } from '@el-dabboos/data';
-import { StructuredDashboardPlanner } from '@el-dabboos/application';
+import { compileDashboardGenerationPlan, StructuredDashboardPlanner } from '@el-dabboos/application';
 import type { DashboardSpec, StructuredOutputRequest } from '@el-dabboos/domain';
 import { buildApi } from '../src/app.ts';
 import { OpenAICompatibleLLMProvider, ProviderTransportError } from '../src/providers/openai-compatible.ts';
@@ -11,6 +11,7 @@ import { OpenAICompatibleLLMProvider, ProviderTransportError } from '../src/prov
 const spec: DashboardSpec = { schemaVersion: 2, id: 'generated-sales', title: { en: 'Sales', ar: 'المبيعات' }, locale: 'en',
   filters: { dateRange: { from: '2026-01-01', to: '2026-01-31' } }, layout: { columns: 1 },
   widgets: [{ id: 'revenue', type: 'kpi', series: [{ id: 'revenue', metric: 'revenue' }] }] };
+const plan = { titleEn: 'Sales', titleAr: 'المبيعات', dateFrom: '2026-01-01', dateTo: '2026-01-31', widgets: [{ type: 'kpi' as const, series: [{ metric: 'revenue' as const }] }] };
 async function fakeServer(handler: (body: Record<string, unknown>, headers: Record<string, string | string[] | undefined>) => unknown) {
   const requests: Record<string, unknown>[] = [];
   const server = createServer(async (request, response) => {
@@ -53,7 +54,7 @@ test('malformed model content remains unknown for bounded planner repair', async
 });
 test('structured planner runs through API with fake HTTP provider and authorized metadata', async () => {
   const patch = { schemaVersion: 2, operations: [{ op: 'set_title', title: { en: 'Updated', ar: 'محدّث' } }] };
-  const fake = await fakeServer(body => JSON.stringify((body.response_format as { json_schema: { name: string } }).json_schema.name === 'dashboard_patch_v2' ? patch : spec));
+  const fake = await fakeServer(body => JSON.stringify((body.response_format as { json_schema: { name: string } }).json_schema.name === 'dashboard_patch_v2' ? patch : plan));
   const repository = new MockAnalyticsRepository([{ tenantId: 'demo-iq', measureId: 'revenue', date: '2026-01-15', value: 100, dimensions: { branch: 'baghdad' } }]);
   const provider = new OpenAICompatibleLLMProvider({ baseUrl: fake.baseUrl, modelId: 'bonsai-2', timeoutMs: 1000 });
   const app = await buildApi({ analyticsRepository: repository, dimensionValues: repository,
@@ -62,7 +63,11 @@ test('structured planner runs through API with fake HTTP provider and authorized
   try {
     const generated = await app.inject({ method: 'POST', url: '/api/dashboards/generate', headers, payload: { prompt: 'Show revenue' } });
     assert.equal(generated.statusCode, 200);
-    assert.equal(generated.json().execution.widgetResults.revenue.seriesResults.revenue.result.rows[0].value, 100);
+    const sentFormat = fake.requests[0]!.response_format as { json_schema: { name: string; schema: { properties: Record<string, unknown> } } };
+    assert.equal(sentFormat.json_schema.name, 'dashboard_generation_plan');
+    assert.ok(sentFormat.json_schema.schema.properties.widgets);
+    for (const key of ['schemaVersion', 'id', 'layout']) assert.ok(!Object.hasOwn(sentFormat.json_schema.schema.properties, key));
+    assert.equal(generated.json().execution.widgetResults['widget-1'].seriesResults['widget-1-series-1'].result.rows[0].value, 100);
     const system = (fake.requests[0]?.messages as Array<{ content: string }>)[0]!.content;
     assert.ok(system.includes('"id":"revenue"'));
     assert.ok(!system.includes('outstanding_amount'));
@@ -75,20 +80,20 @@ test('structured planner runs through API with fake HTTP provider and authorized
 
 test('HTTP adapter and planner repair malformed content with one bounded retry', async () => {
   let calls = 0;
-  const fake = await fakeServer(() => ++calls === 1 ? 'not JSON' : JSON.stringify(spec));
+  const fake = await fakeServer(() => ++calls === 1 ? 'not JSON' : JSON.stringify(plan));
   try {
     const provider = new OpenAICompatibleLLMProvider({ baseUrl: fake.baseUrl, modelId: 'bonsai-2', timeoutMs: 1000 });
     const planner = new StructuredDashboardPlanner(provider, { maxRepairAttempts: 1 });
     const result = await planner.generate({ prompt: 'Show revenue', locale: 'en', context: { tenantId: 'demo-iq', locale: 'en' },
       tenantProfile: (await import('@el-dabboos/domain')).tenantProfiles['demo-iq'],
       capabilities: { metricIds: ['revenue'], templateIds: [], actions: ['ai:generate'] } });
-    assert.deepEqual(result, spec);
+    assert.deepEqual(result, compileDashboardGenerationPlan(plan, (await import('@el-dabboos/domain')).tenantProfiles['demo-iq'], 'en', new Date()));
     assert.equal(fake.requests.length, 2);
     assert.equal((fake.requests[1]?.messages as unknown[]).length, 3);
   } finally { await fake.close(); }
 });
 test('API rejects authorized-shape output containing an unauthorized metric', async () => {
-  const forbidden = structuredClone(spec); forbidden.widgets[0]!.series[0]!.metric = 'outstanding_amount';
+  const forbidden = structuredClone(plan) as import("@el-dabboos/application").DashboardGenerationPlan; forbidden.widgets[0]!.series[0]!.metric = 'outstanding_amount';
   const fake = await fakeServer(() => JSON.stringify(forbidden));
   const repository = new MockAnalyticsRepository([]);
   const provider = new OpenAICompatibleLLMProvider({ baseUrl: fake.baseUrl, modelId: 'bonsai-2', timeoutMs: 1000 });
@@ -126,4 +131,51 @@ test('HTTP adapter enforces its timeout', async () => {
     const provider = new OpenAICompatibleLLMProvider({ baseUrl: `http://127.0.0.1:${port}/v1`, modelId: 'bonsai-2', timeoutMs: 10 });
     await assert.rejects(provider.generateStructured(input), (error: unknown) => error instanceof ProviderTransportError && error.code === 'LLM_TIMEOUT');
   } finally { await new Promise<void>(resolve => server.close(() => resolve())); }
+});
+
+test('HTTP errors bypass repair and keep sensitive upstream details out of API and diagnostics', async () => {
+  let calls = 0;
+  const secret = 'private-key-value'; const customer = 'customer-private-filter'; const prompt = 'private prompt contents';
+  const server = createServer((_request, response) => {
+    calls++; response.writeHead(400, { 'content-type': 'application/json' });
+    response.end(JSON.stringify({ error: { code: 400, status: 'INVALID_ARGUMENT', type: 'invalid_request_error',
+      message: `Invalid schema: ${secret} Authorization: Bearer ${secret} ${customer} ${prompt}`, body: { secret }, customer } }));
+  });
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+  const records: import('../src/providers/transport-diagnostics.ts').ProviderHttpDiagnostic[] = [];
+  const baseUrl = `http://127.0.0.1:${(server.address() as AddressInfo).port}/v1`;
+  const repository = new MockAnalyticsRepository([]);
+  const app = await buildApi({ analyticsRepository: repository, dimensionValues: repository, planner: new StructuredDashboardPlanner(
+    new OpenAICompatibleLLMProvider({ baseUrl, modelId: 'fake-model', apiKey: secret, timeoutMs: 1000, diagnostics: event => records.push(event) }), { maxRepairAttempts: 2 }) });
+  try {
+    const result = await app.inject({ method: 'POST', url: '/api/dashboards/generate', payload: { prompt },
+      headers: { 'x-demo-user-id': 'demo-iq-analyst', 'x-tenant-id': 'demo-iq', 'x-locale': 'en' } });
+    assert.equal(result.statusCode, 502); assert.equal(result.json().error.code, 'LLM_HTTP_ERROR'); assert.equal(calls, 1);
+    assert.equal(records.length, 1); assert.equal(records[0]!.upstreamStatus, 'INVALID_ARGUMENT');
+    assert.equal(records[0]!.operation, 'generation'); assert.equal(records[0]!.schemaName, 'dashboard_generation_plan');
+    assert.equal(records[0]!.message, 'Provider rejected the structured-output schema.');
+    for (const token of [secret, customer, prompt, 'Authorization', 'Bearer']) {
+      assert.ok(!result.body.includes(token)); assert.ok(!JSON.stringify(records).includes(token));
+    }
+  } finally { await app.close(); await new Promise<void>(resolve => server.close(() => resolve())); }
+});
+
+test('provider diagnostics default to disabled and ignore oversized/arbitrary upstream fields', async () => {
+  const { providerHttpDiagnostic } = await import('../src/providers/transport-diagnostics.ts');
+  const request = { ...input, responseFormat: { ...input.responseFormat, name: 'dashboard_generation_plan' } };
+  const normal = await providerHttpDiagnostic(new Response(JSON.stringify({ error: { code: 'CUSTOMER_SECRET', status: 'secret', type: 'sensitive', message: 'private customer data' } }), { status: 400 }), request, 'model');
+  assert.equal(normal.upstreamCode, undefined); assert.equal(normal.upstreamStatus, undefined); assert.equal(normal.upstreamType, undefined);
+  assert.equal(normal.message, 'Provider error message withheld.');
+  const huge = await providerHttpDiagnostic(new Response('sensitive'.repeat(10000), { status: 400 }), request, 'model-' + 'x'.repeat(10000));
+  assert.ok(JSON.stringify(huge).length < 1000); assert.equal(huge.message, undefined);
+  const broken = await providerHttpDiagnostic(new Response('not json', { status: 503 }), request, 'model');
+  assert.equal(broken.httpStatus, 503); assert.equal(broken.message, undefined);
+  // With no callback even an error body's reader is never inspected.
+  const originalFetch = globalThis.fetch;
+  let reads = 0;
+  globalThis.fetch = async () => ({ ok: false, status: 400, get body() { reads++; throw new Error('must not read'); } }) as unknown as Response;
+  try {
+    await assert.rejects(new OpenAICompatibleLLMProvider({ baseUrl: 'http://example.invalid/v1', modelId: 'model', timeoutMs: 1000 }).generateStructured(request), { code: 'LLM_HTTP_ERROR' });
+    assert.equal(reads, 0);
+  } finally { globalThis.fetch = originalFetch; }
 });

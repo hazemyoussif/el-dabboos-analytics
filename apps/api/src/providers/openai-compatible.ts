@@ -1,6 +1,8 @@
+import { providerHttpDiagnostic } from './transport-diagnostics.ts';
+import type { ProviderHttpDiagnostic } from './transport-diagnostics.ts';
 import type { LLMProvider, StructuredOutputRequest, StructuredOutputResponse } from '@el-dabboos/domain';
 
-export interface OpenAICompatibleConfig { baseUrl: string; modelId: string; apiKey?: string; timeoutMs: number }
+export interface OpenAICompatibleConfig { baseUrl: string; modelId: string; apiKey?: string; timeoutMs: number; diagnostics?: (event: ProviderHttpDiagnostic) => void }
 export class ProviderTransportError extends Error {
   constructor(readonly code: 'LLM_TIMEOUT' | 'LLM_HTTP_ERROR' | 'LLM_PROTOCOL_ERROR' | 'LLM_UNAVAILABLE', message: string) { super(message); }
 }
@@ -25,7 +27,13 @@ export class OpenAICompatibleLLMProvider implements LLMProvider {
           response_format: { type: 'json_schema', json_schema: { name: request.responseFormat.name, strict: request.responseFormat.strict,
             schema: request.responseFormat.jsonSchema } } }),
       });
-      if (!response.ok) throw new ProviderTransportError('LLM_HTTP_ERROR', `Structured provider returned HTTP ${response.status}.`);
+      if (!response.ok) {
+        if (this.config.diagnostics) {
+          try { this.config.diagnostics(await providerHttpDiagnostic(response, request, this.config.modelId, this.config.apiKey)); }
+          catch { /* Diagnostics never change safe API behavior. */ }
+        }
+        throw new ProviderTransportError('LLM_HTTP_ERROR', `Structured provider returned HTTP ${response.status}.`);
+      }
       const body = await response.text();
       if (body.length > 2_000_000) throw new ProviderTransportError('LLM_PROTOCOL_ERROR', 'Structured provider response exceeded the size limit.');
       let payload: unknown;
