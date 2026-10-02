@@ -133,3 +133,20 @@ Current synthetic-demo regression cases. Use the setup and evidence rules in [ma
 **Cleanup:** Discard unsaved changes; restore identity, tenant, filters and preferences; remove test folders/associations. Saved QA records may remain because record deletion is not implemented; use a disposable metadata DB.
 **Automation coverage:** [packages/application/test/structured-planner.test.ts](../../packages/application/test/structured-planner.test.ts) covers the related contract; human interaction and appearance still require this case.
 **Story / acceptance:** [US-AI-007](../product/user-stories.md#us-ai-007) / [AC-AI-007](../product/acceptance-criteria.md#ac-ai-007).
+
+## TC-AI-008
+
+**ID:** TC-AI-008
+**Title:** Preserve explicit presentation and target the described widget
+**Priority:** P1
+**Area:** AI
+**Persona:** Analyst
+**Tenant:** Authorized demo-iq identity; repeat demo-eg where permitted
+**Locale:** EN; repeat Arabic equivalent
+**Theme:** Light; repeat Dark to inspect palette intent
+**Preconditions:** Synthetic facts and disposable dashboard records; configured structured endpoint for live acceptance, or fake provider for deterministic boundary rehearsal.
+**Test data:** Revenue KPI, monthly Revenue MA3 Line, and Top-5 branch gross-profit horizontal blue Bar.
+**Steps:** Generate the explicit three-widget request. Inspect that Bar palette is Blue and orientation horizontal. Edit “change the Revenue line to blue”; check the Line rather than KPI changes. Edit “make the branch gross profit chart green”; check the branch Bar changes. Verify metric/dimension/analysis/filter/layout preservation. With a fake provider omitting Blue, verify the compiler does not invent it. Recheck a one-widget palette edit.
+**Expected result:** Model-selected canonical references target the described widget; sparse edits preserve everything else and remain unsaved. Explicit presentation should survive live generation; an omitted provider palette remains omitted in deterministic compilation. The target index precedes full current spec, distinguishing both Revenue widgets without analytics/customer values.
+**Cleanup:** Discard drafts; retain disposable saved records only until the test metadata DB is replaced; restore preferences.
+**Automation coverage:** [planner adherence tests](../../packages/application/test/planner-adherence.test.ts) exercise deterministic/fake-provider boundaries, not live model understanding. Live acceptance of this follow-up is pending the user's final endpoint run.

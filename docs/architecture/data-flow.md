@@ -17,3 +17,7 @@
 - AI edit: instruction + current spec → sparse DashboardEditPlan → plan validation → deterministic compiler → canonical DashboardPatch v2 → applied canonical DashboardSpec → validation/authorization → preview.
 - Manual edit: builder → bounded BuilderCommand/canonical DashboardPatch → same working DashboardSpec and validation/history. Palette-only edits reuse analytics results.
 - Presentation: AI/manual governed palette token → centralized web theme → actual Light/Dark renderer colors. Only explicit Save persists the draft.
+
+## Provider reference context
+
+Generation attaches explicitly requested governed presentation to the exact described widget; the compiler preserves emitted values without reading raw natural language to infer omissions. Before edit invocation, canonical validation and allowed-metric checks precede a compact widget identity index, sent before the full current spec and instruction. The provider resolves descriptors to existing widgetId/seriesId; sparse compilation and canonical patch/spec validation remain the mutation path. The index contains no analytics rows, customer filter values or security data and is never persisted.
