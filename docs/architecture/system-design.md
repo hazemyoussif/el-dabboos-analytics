@@ -27,6 +27,7 @@ Runtime flow is Web → HTTP API → Application → domain ports/contracts → 
 | MetricSemantics | Additive, ratio, snapshot, comparison-derived and duration-derived aggregation meaning |
 | AnalyticsQuery | Bounded metric, grouping, date, filters and compatible analysis request |
 | AnalyticsResult | Nullable rows with comparison/rank plus sourceId, executedAt, dataThrough and optional sourceAsOf/type/unit |
+| DashboardGenerationPlan | Transient application-owned model intent; deterministic compilation into DashboardSpec, never persistence/execution |
 | DashboardSpec | Portable v2 titles, widgets/series, user filters and canonical layout; no policy/theme/folder/SQL |
 | DashboardPatch | Bounded add/remove/replace/title/filter/layout edit operations, not an expression language |
 | DashboardRecord | Persisted spec plus record ID, tenant, owner, scope, optimistic version and timestamps |
@@ -46,6 +47,10 @@ See [domain contracts](../../packages/domain/src/contracts.ts), [security](../..
 API validates identity membership and route permission; canonical validators enforce full JSON Schema, semantic analysis, visualization and layout rules; metric authorization runs before execution and again after planning/editing. Policy filters travel through RequestContext → AnalyticsContext and are ANDed with user filters; they are not editable spec state. Saved record access is tenant/owner/scope-aware, with metric authorization even for shared records.
 
 Executor validates, normalizes and deduplicates queries **within one execute call**, then runs unique repository calls with a configurable bound (default 8). Identity includes metric/aggregation/group/date/filters/analysis and tenant/locale/enforced policy. No global cache exists. Result clones preserve independent series behavior and deterministic widget order. Failure isolation and required top-N anchor semantics are unchanged. [ADR 023](adr/023-execution-and-runtime-readiness.md).
+
+## Structured planning
+
+Generation uses prompt → compact application-owned DashboardGenerationPlan → plan validation → deterministic compiler → full canonical DashboardSpec v2/semantic validation → authorization → execution. The model chooses governed business intent; code owns IDs, tenant-timezone dates and canonical 12-column layout. Provider schema constraints must not weaken domain contracts. Editing continues through canonical DashboardPatch v2 and full validation of the applied draft. Repair is bounded; HTTP failures do not trigger semantic repair. [ADR 024](adr/024-compact-generation-plan.md), [provider contract and diagnostics](openai-compatible-provider.md).
 
 ## Semantics and representation
 
