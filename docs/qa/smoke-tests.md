@@ -540,3 +540,7 @@ Run these 30 cases before demos, releases, adapter changes and deployments. P0 b
 **Expected result:** Stacked cards and reachable controls; direct grid drag disabled on narrow view. No horizontal loss of essential controls.
 **Cleanup:** Discard drafts, clear filters and restore default identity/preferences; use disposable metadata DB for saved test records.
 **Automation coverage:** [API](../../apps/api/test/), [web](../../apps/web/test/), [application](../../packages/application/test/) cover contracts; execute this human smoke case for end-to-end evidence.
+
+## Palette smoke extension
+
+Include [TC-BUILD-016](builder-tests.md#tc-build-016): Blue → Green previews immediately; Undo/Redo, explicit Save and refresh restore the correct palette. Check Arabic labels and Dark mode without changed metrics/filters/layout or additional analytics execution. The extension is a documented gate, not evidence of all manual cases having been run.

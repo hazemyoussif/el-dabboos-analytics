@@ -32,3 +32,9 @@ Verify with the allowlisted startup summary and safe field names; do not dump pr
 ## Health and model mode
 
 [Health semantics](../architecture/runtime-and-deployment.md#health) distinguish process responsiveness from required storage readiness. Structured planner construction validates config but does not ping a model server at startup. A correctly configured unavailable model starts the API and only planning fails safely; analytics remains available. Mock and disabled are explicit modes, not automatic fallbacks on provider failure.
+
+## Local evaluation / tested profile — user-supplied Bonsai observations
+
+For the user's evaluated Bonsai deployment: temperature 0, max_tokens 2048, thinking_budget_tokens 512, seed 42, strict json_schema. The hard three-widget case (revenue KPI; monthly revenue with 3-month moving average Line; Top-5 branches by gross profit as horizontal blue Bars) succeeded first pass around 23 seconds in three repeated runs. Prior budget 1024 output omitted month/branch grouping and canonical validation correctly rejected it; repair repeated the omission. This evidence motivated structural summary/grouped tightening.
+
+These are user-supplied local observations, not new runs by this implementation, a benchmark or a production guarantee. Larger reasoning budgets are not presumed better for this constrained task; there is no universal inverse relationship between budget and quality. Generic defaults remain temperature 0/max_tokens 2048, with reasoning budget and seed optional and omitted when unset. Endpoint support and revised schema acceptance still require deployment verification. For this evaluation only, configure `LLM_REASONING_BUDGET_TOKENS=512` and `LLM_SEED=42`; neither becomes an application default.

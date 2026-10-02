@@ -23,3 +23,7 @@ A future tenant branding configuration may supply validated, controlled token va
 The chart bundle remains substantial; Lucide tree shaking adds a small increment without a component framework. Native selects/details retain their keyboard semantics beneath the visual styling. Very large category sets repeat the bounded palette and retain labels/legends; no categories are silently dropped. Desktop grid sizing remains authoritative, so intentional space between differently sized widgets can remain.
 
 Brand assets and backward-compatible browser preference migration are documented in [branding](../../developer/branding.md).
+
+## AI/manual palette convergence
+
+Manual and sparse AI palette edits converge on `WidgetPresentation.palette`; generation can supply the same governed token. The centralized web ChartTheme resolves actual Light/Dark colors. Builder and provider plans never store resolved colors, CSS or chart-library options. Global theme/locale remain preferences outside saved content. Explicit Default persists as the governed default token; absent intent in existing records also resolves to the original default. Palette changes are presentation-only history entries and require explicit Save, unlike global UI theme changes.

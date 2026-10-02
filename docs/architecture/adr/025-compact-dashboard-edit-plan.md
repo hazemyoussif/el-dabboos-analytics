@@ -29,3 +29,7 @@ The provider schema uses existing portable object/enum/oneOf/$defs/$ref and null
 Repair limits stay 0–2; edit repairs name DashboardEditPlan. Development diagnostics identify its schema/stage and retain bounded/redacted previews; browser errors remain safe and generic. Transport failures bypass repair. Fake-provider/HTTP/compiler tests verify preservation and rejection, without live model services or developer environment files. Live edit adherence remains a separate endpoint verification gate.
 
 This supersedes ADR-024's initial provider-facing direct-patch edit decision. DashboardPatch v2 and its canonical schemas/validators remain unchanged internally, including manual builder and MockDashboardPlanner use.
+
+## Manual palette parity
+
+Manual and sparse AI palette edits converge on `WidgetPresentation.palette`; generation can supply the same governed token. The centralized web ChartTheme resolves actual Light/Dark colors. Builder and provider plans never store resolved colors, CSS or chart-library options. Global theme/locale remain preferences outside saved content. Palette-only sparse edits preserve business intent and layout. This follow-up does not change the edit schema: projected 4,165 bytes/depth 16 versus canonical patch 4,196 bytes/depth 18.

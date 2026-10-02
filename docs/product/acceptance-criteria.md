@@ -338,7 +338,7 @@ Trace: [US-AI-005](user-stories.md#us-ai-005); [TC-AI-005](../qa/ai-tests.md#tc-
 ## AC-AI-006
 
 Given api and web started with fresh synthetic fixtures; validated demo membership; fake provider/repository harness enabled,
-when use fake provider returning invalid spec/patch after bounded repair attempts,
+when use fake provider returning invalid generation/edit plans (or canonically incompatible compiled intent) after bounded repair attempts,
 then browser receives INVALID_STRUCTURED_OUTPUT without raw provider output.
 And opt-in API diagnostics identify stage safely; default diagnostics stay off.
 Trace: [US-AI-006](user-stories.md#us-ai-006); [TC-AI-006](../qa/ai-tests.md#tc-ai-006); automation area [packages/application/test/structured-planner.test.ts](../../packages/application/test/structured-planner.test.ts).
@@ -567,3 +567,12 @@ when configure adapter sourceAsOf explicitly; compare default synthetic metadata
 then source updated appears only when known; default mock/SQLite omits it.
 And no fabricated synchronization timestamp.
 Trace: [US-DATA-002](user-stories.md#us-data-002); [TC-VIS-202](../qa/visualization-tests.md#tc-vis-202); automation area [data engine tests](../../packages/data/test/engine.test.ts).
+
+## AC-BUILD-016
+
+Given an editable dashboard with a selected chart,
+when the analyst selects Blue then Green,
+then only its palette changes, preview updates immediately, and metrics, grouping, analyses, filters, layout and unrelated presentation are preserved.
+And Undo restores Blue, Redo restores Green, the draft remains unsaved until Save, and reopening restores the saved palette.
+And EN/Arabic labels and Light/Dark presentation remain usable; Default restores the governed default; AI and manual choices agree without exposing arbitrary colors.
+Trace: [US-BUILD-016](user-stories.md#us-build-016); [TC-BUILD-016](../qa/builder-tests.md#tc-build-016); automation [builder tests](../../apps/web/test/builder.test.ts), [saved API tests](../../apps/api/test/saved-dashboards.test.ts).

@@ -285,3 +285,21 @@ Current synthetic-demo regression cases. Use the setup and evidence rules in [ma
 **Cleanup:** Discard unsaved changes; restore identity, tenant, filters and preferences; remove test folders/associations. Saved QA records may remain because record deletion is not implemented; use a disposable metadata DB.
 **Automation coverage:** [apps/web/test/builder.test.ts](../../apps/web/test/builder.test.ts) covers the related contract; human interaction and appearance still require this case.
 **Story / acceptance:** [US-BUILD-015](../product/user-stories.md#us-build-015) / [AC-BUILD-015](../product/acceptance-criteria.md#ac-build-015).
+
+## TC-BUILD-016
+
+**ID:** TC-BUILD-016
+**Title:** Governed palette preview, history and saved reopening
+**Priority:** P1
+**Area:** BUILD
+**Persona:** Analyst
+**Tenant:** demo-iq; repeat with authorized demo-eg identity
+**Locale:** EN and AR/RTL
+**Theme:** Light and Dark
+**Preconditions:** Disposable synthetic API/web and editable chart; record initial metric, dimension, analysis, filters, layout and unrelated presentation.
+**Test data:** Branch gross-profit Top-5 horizontal Bar; Blue/Green/Default choices.
+**Steps:** Create/edit chart; choose Blue then Green. Verify preview after each selection without Apply. Inspect Network for no analytics execution or save. Undo to Blue; Redo to Green. Save explicitly, refresh and reopen from library. Verify persisted palette. Repeat themes/locales at 1280/1024/390; use keyboard on native select. Also select a palette before applying a new widget.
+**Expected result:** Only governed palette changes; business/query intent and layout remain identical. Preview is immediate, Undo/Redo work, and unsaved choices do not persist before Save. Saved palette survives reopening; Light/Dark centrally resolves colors. No raw color input exists.
+**Cleanup:** Discard remaining unsaved changes; use disposable metadata DB for records; restore preferences.
+**Automation coverage:** [builder tests](../../apps/web/test/builder.test.ts), [native control rendering](../../apps/web/test/presentation-ui.test.ts), [theme tests](../../apps/web/test/chart-palette.test.ts), [saved API tests](../../apps/api/test/saved-dashboards.test.ts). Human steps here are a plan, not a claim all were performed; performed evidence is in [planner closeout](ai-planner-provider-ux-verification.md).
+**Story / acceptance:** [US-BUILD-016](../product/user-stories.md#us-build-016) / [AC-BUILD-016](../product/acceptance-criteria.md#ac-build-016).

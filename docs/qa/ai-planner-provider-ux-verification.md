@@ -1,6 +1,6 @@
 # AI planner provider compatibility and progress verification
 
-## Scope and automated evidence
+## Historical initial scope and automated evidence
 
 Base main: `2ead49d4ec7a787656d23147ac5329350745963e`; feature branch `fix/ai-planner-provider-ux`. Generation alone moves to an application-owned compact plan and deterministic compiler. Domain DashboardSpec/Patch v2 schemas, analytics/security contracts and edit architecture are unchanged.
 
@@ -12,7 +12,7 @@ The unrestricted portable plan schema is approximately 2,518 characters versus 3
 
 Web tests exercise request ownership, truthful elapsed clock, success/failure cleanup, reset/stale/duplicate requests, no draft application after failure, localized provider codes, preservation of existing non-provider API explanations, relocalization on language changes, rendered generation/edit states, instructions, quiet timer, polite live region and reduced-motion CSS.
 
-## Performed live preview checks
+## Historical performed controlled preview checks
 
 A disposable API used synthetic mock facts, a temporary dashboard DB, structured planner, and a delayed fake OpenAI-compatible HTTP endpoint. No developer env files were loaded; no external model/key was used. The actual API startup showed structured mode, configured fake model/endpoint, 120000 ms timeout, one repair and enabled diagnostics.
 
@@ -30,7 +30,7 @@ AFTER findings:
 
 1. No visual blocker or high-severity issue was found in the inspected progress/error layouts. Arabic status text wraps; timer digits retain LTR isolation; no page-level overflow was found.
 2. Live interaction coverage remains limited as described above. Re-run AI edit success/failure, keyboard traversal and reduced-motion preference checks after clearing the browser dialog.
-3. Real configured-endpoint generation remains the user's post-push manual gate. This branch does not claim live Gemini schema acceptance or model output quality. Canonical DashboardPatch compatibility is intentionally a separate follow-up if actual endpoint evidence requires it.
+3. Real configured-endpoint generation remains the user's post-push manual gate. This branch does not claim live Gemini schema acceptance or model output quality. At that closeout canonical DashboardPatch compatibility was a separate follow-up; ADR-025 and the sparse edit follow-up below now supersede the direct provider-patch path.
 
 Temporary preview servers/files are outside the repository and are not product/demo fixtures. No plan is persisted or returned as a domain dashboard; generated/edited specs still require explicit Save.
 
@@ -70,7 +70,7 @@ This pass does not contact Bonsai or read developer environment files. The user'
 
 Starting feature HEAD: `e052dddfc6d566375cf7bcdd7e02ccc163e3d818`; baseline 332 tests. Final suite: **348 passing tests**. Eighteen focused cases were added; two older semantic-only presentation cases were replaced by schema-stage coverage. Frozen install, lint, typecheck, API/web builds and diff whitespace checks pass. The existing Vite chunk-size advisory remains.
 
-Live evidence supplied by the user showed correct top/5 selection but repeated Bar+curve/dataLabels combinations. Generation requestedPresentation now requires type when present, rejects additional fields, and uses five disjoint oneOf branches for eight types. Matching option sets share branches; palette/dimension enums share portable definitions. The projected schema uses existing oneOf/enum/$defs/$ref support without const, custom discriminators, conditional keywords or new provider logic. Serialized projected plan: 3,088 bytes versus 3,458 for projected DashboardSpec (10.7% smaller); reference-expanded depth: 11 versus 14. Automated thresholds require below 90% of canonical serialized size and at least two fewer depth levels.
+Live evidence supplied by the user showed correct top/5 selection but repeated Bar+curve/dataLabels combinations. Generation requestedPresentation now requires type when present, rejects additional fields, and uses five disjoint oneOf branches for eight types. Matching option sets share branches; palette/dimension enums share portable definitions. The projected schema uses existing oneOf/enum/$defs/$ref support without const, custom discriminators, conditional keywords or new provider logic. Serialized projected plan: 3,088 bytes versus 3,458 for projected DashboardSpec (10.7% smaller); reference-expanded depth: 11 versus 14. Those historical thresholds applied to that presentation-only revision; current summary/grouped schema measurements and bounded thresholds are recorded below.
 
 Original and projected schema tests reject Bar+curve, Bar+dataLabels, Line+orientation, Line+pieVariant, KPI+legend, Table+legend, Pie+curve and absent required type. Positive tests cover all eight types, every governed palette, horizontal blue Bar, smooth blue Line, donut Pie with dataLabels, and Combo curve. They check compilation preserves explicit type/options. Existing Top-5 fake HTTP/API/execution acceptance and no-presentation Arabic acceptance remain intact. Diagnostic regressions now exercise a schema-valid but semantically invalid one-series Combo, proving deeper canonical rejection, bounded repair and terminal-only safe details remain unchanged.
 
@@ -89,3 +89,45 @@ Projected edit schema: 4,165 serialized bytes/depth 16 versus canonical patch 4,
 Added coverage includes palette-only live-failure preservation, type/dimension/metric/analysis/title changes, YoY with existing moving average, filter merging/clearing, Top-N merging and invalid/contradictory pairs, removal, default/explicit additions, stable IDs/layout, sequential and atomic compound changes, unknown widget/series references, invalid final visualization/layout/date combinations, forbidden raw color/renderer/arbitrary fields, relaxed-provider string rejection, clear-only Combo marks, strict schema, bounded repair, current/result authorization and terminal-only diagnostics. A fake HTTP/API edit changes orange to blue while preserving branch revenue Top-5, horizontal orientation, title, dates and custom layout, selecting exactly the same highest five branches in one call. Canonical patch/domain regression tests and the existing generation Top-5/no-presentation Arabic fixtures continue to pass.
 
 No live model call, developer environment-file access, credential read or new browser/manual review was performed. This does not claim deployed endpoint acceptance or edit intent adherence; rerun "Make the branch chart blue" against the configured endpoint separately. Generation contract/compiler/schema/prompt, inference controls, provider modes/transport, authorization, canonical validation and renderer/theme architecture remain unchanged. MockDashboardPlanner continues returning canonical patches directly. No persistence/lifecycle/product changes were made.
+
+## Final planner/customization polish — current state
+
+Starting HEAD: `c652b2b95a343ee5667a800d9b5c512f99f64e12`, branch `fix/ai-planner-provider-ux`, baseline **394 tests**. Earlier sections retain historical test counts, schema measurements and verification limitations; they are not current provider contracts. Final full checks, count and CI are reported against the pushed closeout HEAD.
+
+Summary generation widgets forbid dimension, require exactly one series and allow only optional explicit KPI presentation (palette only). Grouped widgets require dimension and 1–8 series; their optional type-specific presentation excludes KPI. Two closed, disjoint oneOf branches enforce this in the original and projected schemas; TypeScript mirrors the categories. Dimensionless Line/Bar/Area/Pie/Treemap/Combo/Table and grouped KPI cannot be represented. Deeper metric/dimension, unit, analysis, composition, Combo count and Top-N anchor rules remain canonical. Defaults remain code-owned: implicit summary KPI, compatible time Line, compatible category Bar, mixed units Table. No model/provider conditional or new schema keyword was introduced.
+
+The current unrestricted projected generation schema is 3,534 serialized bytes with reference-expanded depth 13, versus projected DashboardSpec at 3,458 bytes/depth 14. This is a modest increase from the prior 3,088 bytes/depth 11 to prevent impossible grouping states; it is 2.2% larger than canonical in bytes and one level shallower. Tests bound size to at most 105% of canonical and depth to at least one fewer level, alongside infrastructure exclusion. Actual requests restrict the shared metric enum to authorized capabilities. Compact model output and code-owned infrastructure remain the purpose; this revision does not claim a serialized size saving.
+
+Edit projection remains 4,165 bytes/depth 16 vs canonical patch 4,196/depth 18. AI now always uses sparse DashboardEditPlan; manual builder and MockDashboardPlanner still use canonical patch internally.
+
+The manual builder offers a native localized Palette / لوحة الألوان selector for the domain governed palette vocabulary. Existing widgets preview a palette change immediately through normal BuilderCommand/canonical replacement, without another analytics request. Metrics, dimension, analyses, filters, layout and unrelated presentation remain unchanged; pending editor settings are retained. Undo/Redo participates in normal bounded history. Changes remain unsaved until explicit Save and survive record reopening. A new widget retains its chosen palette in the editor until Apply adds it. Selecting Default writes `palette: "default"`; omission from older specs or unrequested AI intent resolves to the same default colors. No raw color picker is exposed.
+
+Manual and sparse AI palette edits converge on `WidgetPresentation.palette`; generation can supply the same governed token. The centralized web ChartTheme resolves actual Light/Dark colors. Builder and provider plans never store resolved colors, CSS or chart-library options. Global theme/locale remain preferences outside saved content.
+
+## Local evaluation / tested profile — user-supplied Bonsai observations
+
+For the user's evaluated Bonsai deployment: temperature 0, max_tokens 2048, thinking_budget_tokens 512, seed 42, strict json_schema. The hard three-widget case (revenue KPI; monthly revenue with 3-month moving average Line; Top-5 branches by gross profit as horizontal blue Bars) succeeded first pass around 23 seconds in three repeated runs. Prior budget 1024 output omitted month/branch grouping and canonical validation correctly rejected it; repair repeated the omission. This evidence motivated structural summary/grouped tightening.
+
+These are user-supplied local observations, not new runs by this implementation, a benchmark or a production guarantee. Larger reasoning budgets are not presumed better for this constrained task; there is no universal inverse relationship between budget and quality. Generic defaults remain temperature 0/max_tokens 2048, with reasoning budget and seed optional and omitted when unset. Endpoint support and revised schema acceptance still require deployment verification.
+
+### User-supplied live endpoint evidence
+
+The user reports successful Bonsai generation for Arabic sales/branch/profit intent, Top-5 branch revenue as horizontal blue bars, multiple explicit three-widget dashboards, and the hard three-widget fixture above. Successful sparse AI edits were also reported. These observations come from the user's endpoint evaluation; this closeout did not contact Bonsai or another real model. The prior 1024 missing-dimension failure is motivating historical evidence, not a claim about the tightened schema or all models.
+
+### New automated and controlled browser evidence
+
+Automated additions cover original/projected summary-group schema rejection and acceptance, unchanged resolver defaults, the hard explicit three-widget fixture, native localized palette options, Blue → Green preservation/history, AI/manual sparse-edit parity, explicit Default, raw-color rejection and SQLite record save/update/reopening through a fresh API composition. Existing Arabic no-presentation, revenue Top-5 horizontal-blue, strict output, authorization, theme and sparse-edit fixtures remain passing.
+
+A new disposable loopback preview used existing synthetic IQ/EG facts, in-memory SQLite dashboard/library repositories and a fake structured provider. No developer environment file or credential was read. The actual Create with AI flow opened an unsaved hard three-widget dashboard; manual palette Green immediately changed the five Bar fills, Undo restored Blue and Redo restored Green. A pending Legend choice survived a palette change. Explicit Save created a record, refresh and Edit restored Blue with branch/gross-profit/Top-5 intact. Default selection and native select keyboard navigation/Tab were exercised; a visible 2px focus outline was inspected. A controlled sparse AI edit returned the branch chart to Blue; no real model understanding or latency claim follows from this fixture.
+
+DOM checks exercised palette selection in all 12 EN/Arabic × Light/Dark × 1280/1024/390 combinations. All showed no page-level horizontal overflow; Arabic used RTL; five unchanged category marks retained centralized Light/Dark Green colors. Settled screenshots were reviewed for desktop English Light, tablet Arabic Light and mobile Arabic Dark. Temporary screenshot evidence is under `/tmp/planner-polish-ui/`, outside the repository.
+
+AFTER findings:
+
+1. **No new blocker/high finding** in the inspected control/preview states. Native labels, theme tokens, focus ring, option vocabulary, RTL and bounded control widths remained coherent; palette actions did not require Apply for an existing widget.
+2. **Existing limitation:** narrow builder presentation is stacked and vertically long; direct mobile grid authoring remains deferred. No unrelated layout redesign was made.
+3. **Verification limits:** the controlled browser path used Iraq admin; Egypt palette behavior is covered by shared contracts, not a new full manual Egypt lifecycle rehearsal. Full manual suites, OS System-theme changes and real endpoint acceptance of the revised schema were not executed. Historical and user-reported evidence remain separately attributed.
+
+Documentation reconciliation covered ADRs 009/020/022/024/025, planner and data-flow diagrams, visualization/system/AI architecture, provider/configuration/debugging guides, README, provider change guide, product stories/criteria/flows and AI/builder/manual/visualization/smoke QA. Stale direct-provider patch descriptions, old current size/depth thresholds, “no DashboardEditPlan” wording and the recommended 1024 evaluation example were corrected. Prior closeouts/test counts remain explicitly historical. No assertion that all documented manual cases were executed is made.
+
+Final automated suite: **408 passing tests (14 added over 394)**. Frozen install, lint, typecheck, API build, web build and `git diff --check` pass. The existing >500 kB web chunk advisory remains; final pushed HEAD/CI are reported separately. Strict json_schema, canonical DashboardSpec/Patch v2 schemas and semantic validators, authorization, deterministic generation compilation, inference defaults/optional controls and provider output modes are unchanged. DashboardEditPlan remains transient; no raw colors, provider-specific application conditionals, credential/env-file changes or merge/history rewrite are introduced.

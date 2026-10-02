@@ -602,7 +602,7 @@ Current behavior, checked against domain, application, API and web implementatio
 **Business value:** Browser receives INVALID_STRUCTURED_OUTPUT without raw provider output.
 **Preconditions:** API and web started with fresh synthetic fixtures; validated demo membership; fake provider/repository harness enabled.
 **Permissions:** ai:generate/edit plus dashboard:create/edit and analytics:query.
-**Main flow:** Use fake provider returning invalid spec/patch after bounded repair attempts.
+**Main flow:** Use fake provider returning invalid generation/edit plans (or canonically incompatible compiled intent) after bounded repair attempts.
 **Alternative flows:** Repeat with Arabic labels and the other authorized market where applicable; keyboard/click controls can replace supported drag interactions.
 **Failure/error flows:** Opt-in API diagnostics identify stage safely; default diagnostics stay off.
 **Acceptance criteria:** [AC-AI-006](acceptance-criteria.md#ac-ai-006): Browser receives INVALID_STRUCTURED_OUTPUT without raw provider output.
@@ -1008,3 +1008,18 @@ Current behavior, checked against domain, application, API and web implementatio
 **Acceptance criteria:** [AC-DATA-002](acceptance-criteria.md#ac-data-002): Source updated appears only when known; default mock/SQLite omits it.
 **Related human tests:** [TC-VIS-202](../qa/visualization-tests.md#tc-vis-202).
 **Related automated tests or test area:** [data engine tests](../../packages/data/test/engine.test.ts).
+
+## US-BUILD-016
+
+**Title:** Choose a governed widget palette
+**Persona:** Analyst
+**Goal:** Change a widget's color theme manually without changing its business meaning.
+**Business value:** Manual and AI presentation choices are consistent, previewable and recoverable.
+**Preconditions:** An editable working dashboard with a selected chart.
+**Permissions:** dashboard:edit; dashboard:create for first Save.
+**Main flow:** Choose Blue, then Green; inspect immediate preview; Undo/Redo; Save and reopen.
+**Alternative flows:** Select Default; repeat Arabic and Light/Dark. Choose a palette before applying a new widget.
+**Failure/error flows:** Raw colors are unavailable; failed Save preserves the draft; version conflict cannot overwrite silently.
+**Acceptance criteria:** [AC-BUILD-016](acceptance-criteria.md#ac-build-016): Palette preview/history/save preserve metrics, grouping, analyses, filters and layout.
+**Related human tests:** [TC-BUILD-016](../qa/builder-tests.md#tc-build-016).
+**Related automated tests or test area:** [builder tests](../../apps/web/test/builder.test.ts), [rendering tests](../../apps/web/test/presentation-ui.test.ts), [saved API tests](../../apps/api/test/saved-dashboards.test.ts).

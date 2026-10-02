@@ -36,11 +36,11 @@ Check required entityId and measure/date uniqueness; latest eligible entity/meas
 
 ## AI generated invalid dashboard
 
-Provider unknown output → portable schema → full canonical schema → semantic/layout/chart validation → authorization. Projection is only provider guidance. Use LLM_DEBUG_STRUCTURED_OUTPUT=true for bounded redacted API diagnostics; browser stays generic. Never weaken canonical validation to fit a model.
+Provider unknown output → compact generation/edit plan validation → deterministic compiler → full canonical schema → semantic/layout/chart validation → authorization. Projection is only provider guidance. Use LLM_DEBUG_STRUCTURED_OUTPUT=true for bounded redacted API diagnostics; browser stays generic. Never weaken canonical validation to fit a model.
 
 ## AI edit fails
 
-Validate canonical patch first, atomically apply allowed operations, validate completed spec and authorization. Check widget/series IDs and limits. Repair attempts are bounded and do not retry transport indefinitely. Working spec may contain sensitive identifiers: review privacy before external endpoints.
+Validate sparse DashboardEditPlan first, compile against current spec preserving omitted fields, then validate canonical patch, atomically apply allowed operations, and validate completed spec and authorization. Check widget/series IDs and limits. Repair attempts are bounded and do not retry transport indefinitely. Working spec may contain sensitive identifiers: review privacy before external endpoints.
 
 ## Dashboard does not save
 
@@ -73,3 +73,15 @@ Check shell > .env.local > .env > defaults, API cwd, Node flags and restart. Ver
 ## API live but not ready
 
 Required persistence probe must exist and required dashboard/library tables be available; root analytics SQLite probes analytics_facts shape. Model outage does not affect readiness. Custom buildApi without persistence probe is not ready. Probe deadline cannot interrupt synchronous DatabaseSync work.
+
+## Vite optimized-dependency cache during development
+
+An observed `504 Outdated Optimize Dep` and “Failed to fetch dynamically imported BuilderWorkspace.tsx” involved stale `react-grid-layout` optimized dependencies. This is a development tooling/cache issue, not an application defect. Stop the web dev server, clear only generated Vite caches, restart with forced optimization, then hard reload:
+
+```bash
+rm -rf apps/web/node_modules/.vite
+rm -rf node_modules/.vite
+pnpm --filter @el-dabboos/web exec vite --host 127.0.0.1 --force
+```
+
+Do not delete source, lockfiles or saved dashboards to resolve this cache condition.

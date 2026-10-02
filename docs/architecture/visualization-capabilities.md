@@ -48,3 +48,13 @@ These require governed product contracts rather than renderer-only workarounds. 
 <!-- widget-types: kpi,line,area,bar,pie,treemap,combo,table -->
 
 Current WidgetType vocabulary: `kpi`, `line`, `area`, `bar`, `pie`, `treemap`, `combo`, `table`. Donut and horizontal bar are variants, not new domain types. Recharts remains behind web rendering. See [system design](system-design.md) and [add visualization](../developer/change-guides/add-visualization.md).
+
+## Governed palette selection
+
+All eight supported types accept the governed palette token (`default`, `blue`, `green`, `orange`, `purple`, `red`, `neutral`). Charts resolve it centrally; KPI/Table retain the intent without promising chart marks where none exist. Bar orientation, trend curve, composition labels/variant and legend remain type bounded.
+
+The manual builder offers a native localized Palette / لوحة الألوان selector for the domain governed palette vocabulary. Existing widgets preview a palette change immediately through normal BuilderCommand/canonical replacement, without another analytics request. Metrics, dimension, analyses, filters, layout and unrelated presentation remain unchanged; pending editor settings are retained. Undo/Redo participates in normal bounded history. Changes remain unsaved until explicit Save and survive record reopening. A new widget retains its chosen palette in the editor until Apply adds it. Selecting Default writes `palette: "default"`; omission from older specs or unrequested AI intent resolves to the same default colors. No raw color picker is exposed.
+
+Manual and sparse AI palette edits converge on `WidgetPresentation.palette`; generation can supply the same governed token. The centralized web ChartTheme resolves actual Light/Dark colors. Builder and provider plans never store resolved colors, CSS or chart-library options. Global theme/locale remain preferences outside saved content.
+
+Generation uses the summary/grouped structural contract in [ADR-024](adr/024-compact-generation-plan.md). AI edits use sparse DashboardEditPlan in [ADR-025](adr/025-compact-dashboard-edit-plan.md), then canonical patch/spec validation and authorization.

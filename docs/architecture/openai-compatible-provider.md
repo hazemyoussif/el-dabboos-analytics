@@ -32,7 +32,7 @@ Repair remains bounded by `LLM_REPAIR_ATTEMPTS` (0–2; default 1); generation r
 
 [API configuration](../developer/configuration.md) is the owning reference for exact variables, defaults, bounds and safe startup behavior. Structured mode requires LLM_BASE_URL and LLM_MODEL_ID; analytics and saved-dashboard persistence are independent of planner mode.
 
-## Evaluated development example: Bonsai 2 27B via llama.cpp
+## Local evaluation / tested profile: Bonsai 2 27B via llama.cpp
 
 Bonsai 2 27B (`Ternary-Bonsai-2-27B-PTQ1_0.gguf`) is the project's currently preferred evaluated local/development model. This is deployment guidance only; application and transport contain no model-name or server-specific branches. Obtain a compatible GGUF and llama.cpp build separately; supply your own model file to `llama-server`. Read `/v1/models` for the exact model ID and configure:
 
@@ -42,15 +42,15 @@ LLM_BASE_URL=http://<llama-server-host>:8080/v1
 LLM_MODEL_ID=<exact model id returned by /v1/models>
 LLM_TEMPERATURE=0
 LLM_MAX_TOKENS=2048
-LLM_REASONING_BUDGET_TOKENS=1024
+LLM_REASONING_BUDGET_TOKENS=512
 LLM_TIMEOUT_MS=120000
 LLM_REPAIR_ATTEMPTS=1
 LLM_DEBUG_STRUCTURED_OUTPUT=false
-# Optional reproducible evaluation, normally unset:
-# LLM_SEED=42
+# Tested reproducible evaluation only; normally unset:
+LLM_SEED=42
 ```
 
-User-reported controlled runs with temperature 0, thinking budget 1024 and maximum output 2048 completed around 42–43 seconds at approximately 33 tokens/sec. Three seed-42 runs were effectively identical; a seed-43 run produced the same high-level result with similar timing. These are reported endpoint observations, not a repository benchmark, CI guarantee or new live verification of this plan revision.
+Earlier user-reported simple runs at budget 1024 took around 42–43 seconds. The current useful local evaluation profile is budget 512/seed 42 with temperature 0/max_tokens 2048/strict json_schema: the hard three-widget case succeeded first pass around 23 seconds across three repeats. Prior 1024 hard-case output omitted required month/branch dimensions and failed canonical validation, including repair. Higher budgets are not assumed to improve this constrained planner; these are user observations, not a universal inverse-quality claim, repository benchmark or production guarantee. No new live run of the tightened schema is claimed here. Reasoning budget and seed remain optional, unset generic defaults.
 
 The adapter sends `temperature` and `max_tokens` on every request. It sends `thinking_budget_tokens` and `seed` only when explicitly configured; endpoints may not support the optional fields. `response_format.type=json_schema`, `strict=true` remains the only path: no JSON text/object fallback. Only `message.content` supplies the structured result; `reasoning_content` is ignored. Seed is normally unset. Start the web app with `pnpm run dev:web`; seed synthetic analytics if needed. For an authenticated endpoint supply `LLM_API_KEY` in the API process environment. Never append `/chat/completions` to `LLM_BASE_URL`.
 
@@ -58,7 +58,7 @@ Repository/CI fake HTTP tests require no model/key. Live schema adherence, outpu
 
 ## Governed presentation
 
-`requestedPresentation` represents explicit user intent only and requires `type` when present. Its five disjoint `oneOf` branches cover eight types, each with `additionalProperties: false`:
+`requestedPresentation` represents explicit user intent only and requires `type` when present. Summary permits only KPI; grouped presentation uses five disjoint `oneOf` branches for the other seven types. Each object has `additionalProperties: false`:
 
 | Required type | Optional fields |
 | --- | --- |
@@ -68,7 +68,7 @@ Repository/CI fake HTTP tests require no model/key. Live schema adherence, outpu
 | treemap | palette, dataLabels, legend |
 | kpi / table | palette |
 
-Type choices use disjoint enums, with shared palette/dimension definitions through existing `$defs`/`$ref` support. No `const`, custom discriminator, conditional schema or new provider-specific keyword is needed. The portable plan remains smaller and shallower than projected DashboardSpec; tests enforce serialized size below 90% and reference-expanded depth at least two levels shallower. Canonical compatibility and authorization still run after compilation.
+Type choices use disjoint enums, with shared palette/dimension definitions through existing `$defs`/`$ref` support. No `const`, custom discriminator, conditional schema or new provider-specific keyword is needed. The current unrestricted projected generation schema is 3,534 serialized bytes with reference-expanded depth 13, versus projected DashboardSpec at 3,458 bytes/depth 14. This is a modest increase from the prior 3,088 bytes/depth 11 to prevent impossible grouping states; it is 2.2% larger than canonical in bytes and one level shallower. Tests bound size to at most 105% of canonical and depth to at least one fewer level, alongside infrastructure exclusion. Actual requests restrict the shared metric enum to authorized capabilities. Compact model output and code-owned infrastructure remain the purpose; this revision does not claim a serialized size saving. Canonical compatibility and authorization still run after compilation.
 
 Canonical WidgetPresentation supports the finite `default|blue|green|orange|purple|red|neutral` palette vocabulary through generation and normal patch widget replacement. Actual Light/Dark colors, hover/selection styling and deterministic series assignment remain in web `chart-theme.ts`; no raw hex/RGB, CSS, fill/stroke, axis, animation or renderer properties are accepted. Global UI theme preference stays outside saved content. Named palette intent may be saved as a bounded widget preference, without changing analytics queries.
 
@@ -102,3 +102,9 @@ Reference: [Node CLI env-file support](https://nodejs.org/docs/latest-v24.x/api/
 Structured startup summary includes actual temperature, max tokens, timeout and repair limits, optional reasoning budget/seed only when configured, model ID and sanitized endpoint, never credentials. No application code reads environment variables.
 
 The web planner owns idle/generating/editing state and a real elapsed timer independent of workspace loading. Create/edit retain the instruction and show a polite status, a quiet elapsed timer, and Lucide loading icon respecting reduced motion. They expose one truthful waiting state, not fabricated backend phases. Success/failure/reset/stale requests stop the timer; failures do not apply a draft or persist anything. Known provider codes receive safe English/MSA copy. There is no streaming progress or server-side cancellation contract.
+
+## Summary/grouped generation and manual parity
+
+Summary generation widgets forbid dimension, require exactly one series and allow only optional explicit KPI presentation (palette only). Grouped widgets require dimension and 1–8 series; their optional type-specific presentation excludes KPI. Two closed, disjoint oneOf branches enforce this in the original and projected schemas; TypeScript mirrors the categories. Dimensionless Line/Bar/Area/Pie/Treemap/Combo/Table and grouped KPI cannot be represented. Deeper metric/dimension, unit, analysis, composition, Combo count and Top-N anchor rules remain canonical. Defaults remain code-owned: implicit summary KPI, compatible time Line, compatible category Bar, mixed units Table. No model/provider conditional or new schema keyword was introduced.
+
+Manual and sparse AI palette edits converge on `WidgetPresentation.palette`; generation can supply the same governed token. The centralized web ChartTheme resolves actual Light/Dark colors. Builder and provider plans never store resolved colors, CSS or chart-library options. Global theme/locale remain preferences outside saved content. The manual builder offers a native localized Palette / لوحة الألوان selector for the domain governed palette vocabulary. Existing widgets preview a palette change immediately through normal BuilderCommand/canonical replacement, without another analytics request. Metrics, dimension, analyses, filters, layout and unrelated presentation remain unchanged; pending editor settings are retained. Undo/Redo participates in normal bounded history. Changes remain unsaved until explicit Save and survive record reopening. A new widget retains its chosen palette in the editor until Apply adds it. Selecting Default writes `palette: "default"`; omission from older specs or unrequested AI intent resolves to the same default colors. No raw color picker is exposed.

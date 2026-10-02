@@ -109,7 +109,7 @@ Current synthetic-demo regression cases. Use the setup and evidence rules in [ma
 **Theme:** Light, repeat Dark for visual steps; System for preference checks
 **Preconditions:** API and web started with fresh synthetic fixtures; validated demo membership; fake provider/repository harness enabled.
 **Test data:** Synthetic sales fixture; use uniquely named QA records/folders; no customer data.
-**Steps:** Use fake provider returning invalid spec/patch after bounded repair attempts.
+**Steps:** Use fake provider returning invalid generation/edit plans (or canonically incompatible compiled intent) after bounded repair attempts.
 **Expected result:** Browser receives INVALID_STRUCTURED_OUTPUT without raw provider output. Opt-in API diagnostics identify stage safely; default diagnostics stay off.
 **Cleanup:** Discard unsaved changes; restore identity, tenant, filters and preferences; remove test folders/associations. Saved QA records may remain because record deletion is not implemented; use a disposable metadata DB.
 **Automation coverage:** [packages/application/test/structured-planner.test.ts](../../packages/application/test/structured-planner.test.ts) covers the related contract; human interaction and appearance still require this case.
