@@ -11,3 +11,4 @@ export * from './saved-dashboards.ts';
 export * from './dashboard-library.ts';
 
 export * from './query-execution.ts';
+export * from './generation-plan.ts';

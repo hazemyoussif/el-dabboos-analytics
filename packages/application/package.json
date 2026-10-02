@@ -3,6 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "dependencies": { "@el-dabboos/domain": "workspace:*" },
-  "exports": { ".": "./src/index.ts" }
+  "dependencies": {
+    "@el-dabboos/domain": "workspace:*",
+    "ajv": "^8.20.0"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  }
 }
