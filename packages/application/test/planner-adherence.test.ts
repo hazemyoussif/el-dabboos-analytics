@@ -138,3 +138,21 @@ test('provider omitting required palette fails rather than inventing Blue from t
   await assert.rejects(planner(provider).generate(request), /Provider output remained invalid/);
   assert.equal(provider.requests.length, 1);
 });
+
+test('generation guidance prefers minimal non-redundant intent and preserves only supplied metrics', async () => {
+  const intent: DashboardGenerationPlan = { titleEn: 'Branch performance', titleAr: 'أداء الفروع', widgets: [
+    { dimension: 'branch', series: [{ metric: 'revenue' }, { metric: 'gross_profit' }] },
+  ] };
+  const provider = new FixtureProvider(intent);
+  const arabicPrompt = 'اريد ان ارى المبيعات و اداء الفروع مع الارباح';
+  const spec = await planner(provider).generate({ ...request, prompt: arabicPrompt, locale: 'ar',
+    context: { tenantId: profile.id, locale: 'ar' },
+    capabilities: { ...capabilities, metricIds: ['revenue', 'gross_profit', 'net_revenue'] },
+  });
+  assert.ok(provider.requests[0]!.messages[0]!.content.includes(
+    'Prefer the smallest non-redundant set of widgets and metrics that satisfies the request. Do not add closely related metrics or near-duplicate widgets unless the user explicitly requests them.'
+  ));
+  assert.equal(provider.requests[0]!.messages[1]!.content, arabicPrompt);
+  assert.equal(spec.widgets.length, 1);
+  assert.deepEqual(spec.widgets[0]!.series.map(series => series.metric), ['revenue', 'gross_profit']);
+});

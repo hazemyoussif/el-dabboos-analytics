@@ -27,3 +27,7 @@ The current unrestricted projected generation schema is 3,594 serialized bytes w
 ## Multi-widget presentation adherence
 
 Explicit governed presentation intent remains model-owned. The generation instruction treats requested type/orientation/palette/options as required, attaches each only to its corresponding widget in a multi-widget request, and asks the model to check for dropped presentation adjectives before returning JSON. The existing horizontal-blue Top-5 example remains the single compact example. The deterministic compiler preserves emitted intent but never parses the raw request or reconstructs an omitted palette. requestedPresentation remains optional as a whole. When present, every type-specific branch requires palette from default/blue/green/orange/purple/red/neutral. Use default for an explicit type without a requested color. Missing palette fails the original and projected plan schemas; an emitted default remains default even when the request says Blue. The compiler never parses or reconstructs palette intent. Correct token selection remains a live model acceptance concern.
+
+## Minimal generation guidance
+
+Generation guidance prefers the smallest non-redundant set of widgets and metrics satisfying the request, discouraging unrequested closely related metrics and near-duplicate widgets. This is prompt guidance only; schemas, deterministic compilation and canonical validation are unchanged. No duplicate detection, prompt parsing or post-processing is introduced.

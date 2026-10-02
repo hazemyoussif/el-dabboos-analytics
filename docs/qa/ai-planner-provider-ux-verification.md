@@ -162,3 +162,9 @@ Twelve additional tests over 416 cover all eight missing-palette original/projec
 **New live verification is pending.** No new endpoint or browser run is claimed. Strict json_schema, inference/output modes, Top-N logic, canonical DashboardSpec/Patch v2, sparse/transient DashboardEditPlan, authorization, repair limits, rendering/theme architecture and environment/credentials remain unchanged. No keyword/palette parser, hidden palette inference, application fuzzy matching, provider-specific condition or raw colors were added.
 
 Automated closeout: **428 passing tests (12 added over 416)**. Frozen install, lint, typecheck, API/web build and git diff --check pass. The existing >500 kB web chunk advisory remains. Final commit/CI status is reported separately; these checks do not establish deployed-model adherence.
+
+## Minimal non-redundant generation guidance
+
+User-reported live evidence: “اريد ان ارى المبيعات و اداء الفروع مع الارباح” produced two similar branch charts: Revenue + Gross profit and Net revenue + Gross profit. Net revenue was not explicitly requested. The generation instruction now asks for the smallest non-redundant widget/metric set and discourages unrequested related metrics and near-duplicate widgets. This correction is prompt-only, with no schema/compiler/provider/edit-target changes or application duplicate detection.
+
+One deterministic fake-provider regression checks the instruction and that a supplied single branch widget preserves only Revenue + Gross profit, even when Net revenue is authorized. It does not certify live model adherence; new live verification remains pending. Automated closeout: **429 passing tests (1 added over 428)**; lint, typecheck, API/web builds and git diff --check pass. The existing web chunk-size advisory remains. Final HEAD/CI status is reported separately.
