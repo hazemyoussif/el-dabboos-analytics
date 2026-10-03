@@ -18,7 +18,7 @@ export function registerTemplateRoutes(app: FastifyInstance, services: RouteCont
       if (!template) throw new ApiError(404, 'TEMPLATE_NOT_FOUND', 'Unknown dashboard template.');
       if (!services.templateAllowed(template, context)) throw new AuthorizationError('TEMPLATE_FORBIDDEN', 'Template contains unavailable metrics.');
       const dashboard = services.ensureDashboard(instantiateDashboardTemplate(template, profile, services.clock(), context.locale), context);
-      return { dashboard, execution: await services.executor.execute(dashboard, analyticsContext(context)) };
+      return { dashboard, execution: await services.executor.execute(dashboard, analyticsContext(context), { timeZone: profile.timeZone }) };
     }, request.params.id);
   });
 }

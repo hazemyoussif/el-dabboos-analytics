@@ -38,7 +38,7 @@ test('dimension value discovery is tenant scoped and market labeled', async () =
   assert.deepEqual(iraq, [{ id: 'baghdad', label: 'بغداد' }]);
   assert.deepEqual(egypt, [{ id: 'cairo', label: 'Cairo' }]);
   assert.equal((await app.inject({ method: 'GET', url: '/api/dimensions/branch/values' })).statusCode, 401);
-  assert.equal((await app.inject({ method: 'GET', url: '/api/dimensions/customer/values', headers: iq })).statusCode, 400);
+  assert.equal((await app.inject({ method: 'GET', url: '/api/dimensions/date/values', headers: iq })).statusCode, 400);
 });
 test('query endpoint rejects SQL, planned metrics and malformed JSON', async () => {
   assert.equal((await app.inject({ method: 'POST', url: '/api/analytics/query', headers: iq, payload: { metric: 'revenue', sql: 'SELECT *' } })).statusCode, 400);

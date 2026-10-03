@@ -14,8 +14,7 @@ export class MockDashboardPlanner implements DashboardPlanner {
     if (request.capabilities && !request.capabilities.templateIds.includes('sales-performance')) throw new UnsupportedDemoIntentError('The sales demo template is unavailable to this user.');
     const template = getDashboardTemplate('sales-performance')!;
     const dashboard = instantiateDashboardTemplate(template, request.tenantProfile, this.clock(), request.locale);
-    if (/(this month|هذا الشهر|الشهر ده)/iu.test(prompt) && dashboard.filters.dateRange)
-      dashboard.filters.dateRange.from = `${dashboard.filters.dateRange.to.slice(0, 7)}-01`;
+    if (/(this month|هذا الشهر|الشهر ده)/iu.test(prompt)) dashboard.filters.datePreset = 'current_month';
     return dashboard;
   }
   async edit(current: DashboardSpec, instruction: string, profile: TenantProfile, _capabilities?: PlannerCapabilities): Promise<DashboardPatch> {

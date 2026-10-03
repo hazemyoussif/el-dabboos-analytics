@@ -124,6 +124,9 @@ export interface DashboardWidget {
   dimension?: DimensionId;
 }
 /** v2 replaces v1 widget.metric with stable, independently executable series. */
+export const relativeDatePresets = ['today', 'yesterday', 'current_month', 'previous_month', 'last_30_days', 'current_quarter', 'previous_quarter', 'current_year', 'previous_year', 'last_6_months', 'last_12_months'] as const;
+export type RelativeDatePreset = typeof relativeDatePresets[number];
+
 export interface DashboardSpec {
   schemaVersion: 2;
   id: string;
@@ -131,7 +134,7 @@ export interface DashboardSpec {
   locale: Locale;
   presentation?: DashboardPresentation;
   /** User-requested filters. Future policy-enforced filters belong outside DashboardSpec. */
-  filters: { dateRange?: DateRange; dimensions?: AnalyticsFilter[] };
+  filters: { dateRange?: DateRange; datePreset?: RelativeDatePreset; dimensions?: AnalyticsFilter[] };
   layout: DashboardLayout;
   widgets: DashboardWidget[];
 }

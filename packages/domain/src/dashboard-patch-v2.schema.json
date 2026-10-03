@@ -219,7 +219,28 @@
           "items": {
             "$ref": "#/$defs/filter"
           }
+        },
+        "datePreset": {
+          "enum": [
+            "today",
+            "yesterday",
+            "current_month",
+            "previous_month",
+            "last_30_days",
+            "current_quarter",
+            "previous_quarter",
+            "current_year",
+            "previous_year",
+            "last_6_months",
+            "last_12_months"
+          ]
         }
+      },
+      "not": {
+        "required": [
+          "dateRange",
+          "datePreset"
+        ]
       }
     },
     "widget": {

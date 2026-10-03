@@ -10,7 +10,7 @@ const eg = tenantProfiles['demo-eg'];
 const context = { tenantId: 'demo-iq', locale: 'en' } as const;
 const result = (query: AnalyticsQuery, rows: AnalyticsResult['rows']): AnalyticsResult => ({ metric: query.metric, groupBy: query.groupBy ?? null, rows,
   metadata: { sourceId: 'spy', executedAt: fixed().toISOString(), metricType: 'currency', semantics: 'additive' } });
-test('nineteen reusable templates instantiate identically for both markets with concrete dates', () => {
+test('nineteen reusable templates instantiate identically for both markets with symbolic dates', () => {
   assert.equal(dashboardTemplates.length, 19);
   assert.equal(new Set(dashboardTemplates.map(t => t.id)).size, 19);
   for (const template of dashboardTemplates) {
@@ -19,7 +19,8 @@ test('nineteen reusable templates instantiate identically for both markets with 
     assert.equal(a.id, b.id);
     assert.deepEqual(a.widgets, b.widgets);
     assert.equal(a.schemaVersion, 2);
-    assert.ok(a.filters.dateRange?.from && a.filters.dateRange?.to);
+    assert.equal(a.filters.datePreset, template.datePreset);
+    assert.equal(a.filters.dateRange, undefined);
     assert.doesNotThrow(() => validateDashboardSpec(a));
     assert.doesNotThrow(() => validateDashboardSpec(b));
   }
@@ -40,12 +41,12 @@ test('executor maps every v2 series and dashboard filter to tenant-scoped querie
   const repository: AnalyticsRepository = { async execute(query, ctx) { queries.push({ query, tenantId: ctx.tenantId }); return result(query, [{ key: query.groupBy ? '2026-01' : null, value: 1 }]); } };
   const spec = instantiateDashboardTemplate(getDashboardTemplate('sales-performance')!, iq, fixed(), 'en');
   spec.filters.dimensions = [{ dimension: 'branch', values: ['baghdad'] }];
-  const execution = await new DashboardExecutor(repository, fixed).execute(spec, context);
+  const execution = await new DashboardExecutor(repository, fixed).execute(spec, context, { timeZone: iq.timeZone });
   assert.equal(execution.metadata.failedSeries, 0);
   assert.equal(queries.length, spec.widgets.reduce((sum, widget) => sum + widget.series.length, 0));
   assert.ok(queries.every(item => item.tenantId === 'demo-iq'));
   assert.deepEqual(queries.find(item => item.query.metric === 'revenue' && item.query.groupBy === 'month')?.query, {
-    metric: 'revenue', groupBy: 'month', analysis: { comparison: 'year_over_year' }, dateRange: spec.filters.dateRange,
+    metric: 'revenue', groupBy: 'month', analysis: { comparison: 'year_over_year' }, dateRange: resolveDatePreset(spec.filters.datePreset!, iq, fixed()),
     filters: [{ dimension: 'branch', values: ['baghdad'] }],
   });
 });
@@ -55,7 +56,7 @@ test('multi-series grouped results align by key without inventing zero', async (
     [{ key: '2026-02', value: 5 }, { key: '2026-03', value: 8 }]); } };
   const spec = instantiateDashboardTemplate(getDashboardTemplate('sales-performance')!, iq, fixed(), 'en');
   spec.widgets = [spec.widgets.find(w => w.id === 'revenue-profit')!];
-  const execution = await new DashboardExecutor(repository, fixed).execute(spec, context);
+  const execution = await new DashboardExecutor(repository, fixed).execute(spec, context, { timeZone: iq.timeZone });
   assert.deepEqual(execution.widgetResults['revenue-profit']?.alignedRows.map(row => [row.key, row.series.revenue?.value ?? null, row.series['gross-profit']?.value ?? null]), [
     ['2026-01', 10, null], ['2026-02', 20, 5], ['2026-03', null, 8],
   ]);
@@ -67,7 +68,7 @@ test('one failed series is isolated and other series still render', async () => 
   } };
   const spec = instantiateDashboardTemplate(getDashboardTemplate('sales-performance')!, iq, fixed(), 'en');
   spec.widgets = [spec.widgets.find(w => w.id === 'revenue-profit')!];
-  const execution = await new DashboardExecutor(repository, fixed).execute(spec, context);
+  const execution = await new DashboardExecutor(repository, fixed).execute(spec, context, { timeZone: iq.timeZone });
   assert.equal(execution.metadata.failedSeries, 1);
   assert.equal(execution.metadata.failed, 0);
   assert.equal(execution.widgetResults['revenue-profit']?.status, 'partial');
@@ -80,7 +81,7 @@ test('multi-metric table aligns selected customers and preserves each metric val
     [{ key: 'customer_002', value: query.metric === 'gross_profit' ? 30 : 40 }]); } };
   const spec = instantiateDashboardTemplate(getDashboardTemplate('customer-analytics')!, iq, fixed(), 'en');
   spec.widgets = [spec.widgets.find(w => w.id === 'customer-performance')!];
-  const rows = (await new DashboardExecutor(repository, fixed).execute(spec, context)).widgetResults['customer-performance']?.alignedRows;
+  const rows = (await new DashboardExecutor(repository, fixed).execute(spec, context, { timeZone: iq.timeZone })).widgetResults['customer-performance']?.alignedRows;
   assert.deepEqual(rows?.map(row => [row.key, row.series.revenue?.value ?? null, row.series['gross-profit']?.value ?? null, row.series.outstanding?.value ?? null]), [
     ['customer_001', 100, null, null], ['customer_002', 80, 30, 40],
   ]);
@@ -92,7 +93,7 @@ test('alignment retains ranking and comparison metadata for every series', async
     [{ key: 'customer_001', value: 30, rank: 7, comparisonValue: 20, absoluteChange: 10, percentageChange: 50 }]); } };
   const spec = instantiateDashboardTemplate(getDashboardTemplate('customer-analytics')!, iq, fixed(), 'en');
   spec.widgets = [spec.widgets.find(w => w.id === 'customer-performance')!];
-  const rows = (await new DashboardExecutor(repository, fixed).execute(spec, context)).widgetResults['customer-performance']?.alignedRows;
+  const rows = (await new DashboardExecutor(repository, fixed).execute(spec, context, { timeZone: iq.timeZone })).widgetResults['customer-performance']?.alignedRows;
   assert.deepEqual(rows?.map(row => row.key), ['customer_002', 'customer_001']);
   assert.deepEqual(rows?.[0]?.series.revenue, { value: 120, rank: 1, comparisonValue: 100, absoluteChange: 20, percentageChange: 20 });
   assert.equal(rows?.[0]?.series['gross-profit'], null);
@@ -106,7 +107,7 @@ test('failed top N anchor makes widget error and never aligns an unrestricted un
   } };
   const spec = instantiateDashboardTemplate(getDashboardTemplate('customer-analytics')!, iq, fixed(), 'en');
   spec.widgets = [spec.widgets.find(w => w.id === 'customer-performance')!];
-  const execution = await new DashboardExecutor(repository, fixed).execute(spec, context);
+  const execution = await new DashboardExecutor(repository, fixed).execute(spec, context, { timeZone: iq.timeZone });
   const widget = execution.widgetResults['customer-performance'];
   assert.equal(widget?.status, 'error');
   assert.deepEqual(widget?.alignedRows, []);
@@ -128,7 +129,7 @@ test('mock planner generates Iraqi, Egyptian, MSA and English v2 specs and edits
     assert.equal(generated.locale, locale);
   }
   const month = await planner.generate({ prompt: 'شكد المبيعات هذا الشهر وشنو أكثر فرع بايع؟', locale: 'ar', context: { ...context, locale: 'ar' }, tenantProfile: iq });
-  assert.equal(month.filters.dateRange?.from, '2026-09-01');
+  assert.equal(month.filters.datePreset, 'current_month');
   let current = await planner.generate({ prompt: 'Create a sales dashboard', locale: 'en', context, tenantProfile: iq });
   for (const [instruction, check] of [
     ['Replace order count with average order value', (s: typeof current) => s.widgets.find(w => w.id === 'order-count')?.series[0]?.metric === 'average_order_value'],
