@@ -13,7 +13,7 @@ import { readBuilderDragItem, writeBuilderDragItem } from './drag-item.ts';
 import type { BuilderDragItem } from './drag-item.ts';
 import { applyMetricDrop, createMetricCommand, metricAvailable, metricDropActions, metricDropCopy, metricVisualizationOptions, nextSeriesId } from './metric-drop.ts';
 import type { MetricDropAction } from './metric-drop.ts';
-import { copy } from '../i18n.ts';
+import { copy, paletteLabels } from '../i18n.ts';
 import { analysisAllowed, canAddSeries, commonDimensions, selectableMetric, validWidgetDraft, widgetPaletteCommand, withWidgetMetric } from './model.ts';
 import type { BuilderCommand, BuilderDocument, BuilderHistory } from './model.ts';
 
@@ -288,14 +288,12 @@ export function BuilderWorkspace({ history, execution, catalog, registry, profil
   </div>;
 }
 
-/** Labels are localized here; the selectable vocabulary belongs to domain. */
+/** Labels use centralized i18n; the selectable vocabulary belongs to domain. */
 export function PaletteSelect({ locale, value, onChange }: {
   locale: Locale; value: GovernedPalette;
   onChange: (palette: GovernedPalette) => void;
 }) {
-  const names = locale === 'ar'
-    ? { default: 'افتراضية', blue: 'أزرق', green: 'أخضر', orange: 'برتقالي', purple: 'بنفسجي', red: 'أحمر', neutral: 'محايدة' }
-    : { default: 'Default', blue: 'Blue', green: 'Green', orange: 'Orange', purple: 'Purple', red: 'Red', neutral: 'Neutral' };
+  const names = paletteLabels[locale];
   return <label>{locale === 'ar' ? 'لوحة الألوان' : 'Palette'}<select value={value} onChange={event => {
     const palette = governedPalettes.find(palette => palette === event.target.value);
     if (palette) onChange(palette);

@@ -9,7 +9,7 @@ import type { AnalyticsRepository, DashboardSpec, DashboardWidget } from '@el-da
 import { DashboardExecutor } from '@el-dabboos/application';
 import { blankDashboardDraft } from '../src/builder/model.ts';
 import { chartTheme, seriesColor } from '../src/rendering/chart-theme.ts';
-import { formatValue } from '../src/i18n.ts';
+import { formatValue, paletteLabels } from '../src/i18n.ts';
 import { savedDocument, documentIsDirty } from '../src/dashboard-lifecycle.ts';
 const widgets: DashboardWidget[] = widgetTypes.map((type,index)=>({ id:`w${index}`,type,series:[{ id:`s${index}`,metric:'revenue' },...(type==='combo'?[{ id:'profit',metric:'gross_profit' as const }]:[])],...(type==='kpi'?{}:{ dimension: ['line','area','combo'].includes(type)?'month' as const:'branch' as const }) }));
 const spec:DashboardSpec={...blankDashboardDraft(tenantProfiles['demo-iq'],'en').base,layout:{columns:12},widgets};
@@ -125,9 +125,26 @@ test('builder palette select exposes the domain vocabulary with localized native
       const html = renderToStaticMarkup(createElement(ThemeContext.Provider, { value: { preference: mode, theme: chartTheme(mode), setPreference() {} } }, createElement(PaletteSelect, { locale, value: 'blue', onChange() {} })));
       assert.ok(html.startsWith(`<label>${locale === 'ar' ? 'لوحة الألوان' : 'Palette'}<select>`));
       assert.equal((html.match(/<option/g) ?? []).length, governedPalettes.length);
-      for (const palette of governedPalettes) assert.ok(html.includes(`value="${palette}"`));
+      for (const palette of governedPalettes) assert.ok(html.includes(`value="${palette}"${palette === 'blue' ? ' selected=""' : ''}>${paletteLabels[locale][palette]}</option>`));
       assert.ok(html.includes('value="blue" selected=""')); assert.ok(!html.includes('#'));
-      assert.ok(html.includes(locale === 'ar' ? 'محايدة' : 'Neutral'));
+      assert.ok(html.includes(locale === 'ar' ? 'أردواز' : 'Slate'));
+    }
+  } finally { await server.close(); }
+});
+
+test('Pie and Treemap retain eight named category colors including distinct first and fifth categories', async () => {
+  const { governedPalettes } = await import('@el-dabboos/domain');
+  const server = await createServer({ root: fileURLToPath(new URL('../', import.meta.url)), server: { middlewareMode: true }, optimizeDeps: { noDiscovery: true }, appType: 'custom' });
+  try {
+    const { WidgetCard } = await server.ssrLoadModule('/src/Renderer.tsx');
+    const { ThemeContext } = await server.ssrLoadModule('/src/presentation/ThemeProvider.tsx');
+    for (const mode of ['light', 'dark'] as const) for (const locale of ['en', 'ar'] as const) for (const palette of governedPalettes) for (const type of ['pie', 'treemap'] as const) {
+      const widget: DashboardWidget = { id: type, type, dimension: 'customer', presentation: { palette }, series: [{ id: 'revenue', metric: 'revenue' }] };
+      const entry = { status: 'success', seriesResults: {}, alignedRows: Array.from({ length: 8 }, (_, index) => ({ key: `customer_${index + 1}`, series: { revenue: { value: (index + 1) * 100 } } })) };
+      const theme = chartTheme(mode);
+      const html = renderToStaticMarkup(createElement(ThemeContext.Provider, { value: { preference: mode, theme, setPreference() {} } }, createElement(WidgetCard, { widget, entry, locale, catalog: semanticCatalog, profile: tenantProfiles['demo-iq'] })));
+      const marks = [...html.matchAll(/class="legend-mark " style="color:([^;]+);/gu)].map(match => match[1]);
+      assert.equal(marks.length, 8); assert.equal(new Set(marks).size, 8); assert.notEqual(marks[0], marks[4]);
     }
   } finally { await server.close(); }
 });
