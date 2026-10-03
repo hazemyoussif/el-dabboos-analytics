@@ -53,3 +53,13 @@ test('safe startup summary includes inference values and omits unset optional se
   for (const text of ['"llmTemperature":0.25', '"llmMaxTokens":3000', '"llmReasoningBudgetTokens":1024', '"llmSeed":42']) assert.ok(configured.includes(text));
   assert.ok(!configured.includes('test-key'));
 });
+
+test('PostgreSQL runtime is explicit, bounded, fail-fast and credential-safe in summaries', async () => {
+  assert.throws(() => parseRuntimeConfig({ ANALYTICS_PROVIDER: 'postgres' }, defaults), /MART_RUNTIME_URL/);
+  for (const url of ['secret','file:///secret','postgres://localhost/']) assert.throws(() => parseRuntimeConfig({ ANALYTICS_PROVIDER: 'postgres',MART_RUNTIME_URL: url },defaults), /MART_RUNTIME_URL/);
+  const config = parseRuntimeConfig({ ANALYTICS_PROVIDER: 'postgres',MART_RUNTIME_URL: 'postgres://runtime:private-password@localhost/mart',MART_POOL_MAX: '3',MART_STATEMENT_TIMEOUT_MS: '2000' },defaults);
+  assert.equal(config.analyticsProvider,'postgres'); assert.equal(config.postgres?.poolMax,3); assert.equal(config.postgres?.statementTimeoutMs,2000);
+  for (const env of [{ MART_POOL_MAX: '65' },{ MART_MAX_GROUPS: '0' },{ MART_STATEMENT_TIMEOUT_MS: '120001' }]) assert.throws(() => parseRuntimeConfig({ ANALYTICS_PROVIDER: 'postgres',MART_RUNTIME_URL: 'postgres://localhost/mart',...env },defaults));
+  const { startupSummary } = await import('../src/startup-config.ts');
+  assert.ok(!startupSummary({ analyticsProvider: config.analyticsProvider,dashboardPath: config.dashboardPath,plannerMode: config.plannerMode,diagnostics: false,port: config.port }).includes('private-password'));
+});
