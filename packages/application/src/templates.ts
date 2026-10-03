@@ -1,7 +1,8 @@
-import type { DashboardSeries, DashboardSpec, DashboardWidget, DateRange, Locale, LocalizedText, MetricId, TenantProfile, AnalysisSpec, DimensionId } from '@el-dabboos/domain';
+import type { DashboardSeries, DashboardSpec, DashboardWidget, DateRange, RelativeDatePreset, Locale, LocalizedText, MetricId, TenantProfile, AnalysisSpec, DimensionId } from '@el-dabboos/domain';
 import { validateDashboardSpec } from '@el-dabboos/domain';
 
-export type DatePreset = 'current_year' | 'last_12_months' | 'last_6_months';
+import { resolveRelativeDatePreset } from './relative-date.ts';
+export type DatePreset = RelativeDatePreset;
 export interface DashboardTemplate {
   id: string;
   name: LocalizedText;
@@ -155,21 +156,13 @@ export const dashboardTemplates: readonly DashboardTemplate[] = [
   ] },
 ];
 export function getDashboardTemplate(id: string): DashboardTemplate | undefined { return dashboardTemplates.find(template => template.id === id); }
-function localDate(now: Date, zone: TenantProfile['timeZone']): { year: number; month: number; day: number } {
-  const parts = new Intl.DateTimeFormat('en-US', { timeZone: zone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(now);
-  const part = (type: string) => Number(parts.find(p => p.type === type)?.value);
-  return { year: part('year'), month: part('month'), day: part('day') };
-}
+/** Compatibility export; all calendar arithmetic belongs to the shared resolver. */
 export function resolveDatePreset(preset: DatePreset, profile: TenantProfile, now: Date): DateRange {
-  const { year, month, day } = localDate(now, profile.timeZone);
-  const to = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-  if (preset === 'current_year') return { from: `${year}-01-01`, to };
-  const firstMonth = new Date(Date.UTC(year, month - (preset === 'last_12_months' ? 12 : 6), 1));
-  return { from: firstMonth.toISOString().slice(0, 10), to };
+  return resolveRelativeDatePreset(preset, profile.timeZone, now);
 }
-export function instantiateDashboardTemplate(template: DashboardTemplate, profile: TenantProfile, now: Date, locale: Locale = profile.defaultLocale): DashboardSpec {
+export function instantiateDashboardTemplate(template: DashboardTemplate, profile: TenantProfile, _now: Date, locale: Locale = profile.defaultLocale): DashboardSpec {
   const spec: DashboardSpec = { schemaVersion: 2, id: template.id, title: template.name, locale,
-    filters: { dateRange: resolveDatePreset(template.datePreset, profile, now) }, layout: template.layout,
+    filters: { datePreset: template.datePreset }, layout: template.layout,
     widgets: structuredClone(template.widgets) };
   validateDashboardSpec(spec);
   return spec;

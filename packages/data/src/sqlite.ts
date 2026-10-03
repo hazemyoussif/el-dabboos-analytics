@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
 import type { AnalyticsContext, AnalyticsQuery, AnalyticsRepository, AnalyticsResult, DimensionId, FactMeasureId } from '@el-dabboos/domain';
-import { isFactMeasureId, requiredMeasures, semanticCatalog, validDateRange, validateQuery } from '@el-dabboos/domain';
+import { categoricalDimensions, isFactMeasureId, requiredMeasures, semanticCatalog, validDateRange, validateQuery } from '@el-dabboos/domain';
 import { executeFacts } from './engine.ts';
 import type { AnalyticsFact } from './facts.ts';
 import type { RepositoryMetadataOptions } from './mock.ts';
@@ -27,8 +27,8 @@ export function insertFacts(db: DatabaseSync, facts: readonly AnalyticsFact[]): 
 export class SqliteAnalyticsRepository implements AnalyticsRepository {
   constructor(private readonly db: DatabaseSync, private readonly options: RepositoryMetadataOptions = {}) {}
   async listDimensionValues(dimension: DimensionId, context: AnalyticsContext): Promise<string[]> {
-    if (!context.tenantId.trim() || !['branch', 'region', 'salesperson', 'product_category', 'warehouse'].includes(dimension)) throw new Error('Unsupported dimension');
-    const clauses = (context.enforcedFilters ?? []).map(filter => { if (!['branch', 'region', 'salesperson', 'product_category', 'warehouse'].includes(filter.dimension)) throw new Error('Unsupported policy dimension'); return `json_extract(dimensions_json, '$.${filter.dimension}') IN (${filter.values.map(() => '?').join(', ') || 'NULL'})`; });
+    if (!context.tenantId.trim() || !categoricalDimensions.includes(dimension)) throw new Error('Unsupported dimension');
+    const clauses = (context.enforcedFilters ?? []).map(filter => { if (!categoricalDimensions.includes(filter.dimension)) throw new Error('Unsupported policy dimension'); return `json_extract(dimensions_json, '$.${filter.dimension}') IN (${filter.values.map(() => '?').join(', ') || 'NULL'})`; });
     const sql = `SELECT DISTINCT json_extract(dimensions_json, ?) AS value FROM analytics_facts WHERE tenant_id = ? AND json_extract(dimensions_json, ?) IS NOT NULL ${clauses.map(clause => `AND ${clause}`).join(' ')} ORDER BY value`;
     const rows = this.db.prepare(sql).all(`$.${dimension}`, context.tenantId, `$.${dimension}`, ...(context.enforcedFilters ?? []).flatMap(filter => filter.values));
     return rows.map(row => String(row.value));

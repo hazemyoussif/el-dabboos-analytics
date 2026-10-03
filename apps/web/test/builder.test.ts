@@ -142,3 +142,19 @@ test('dashboard appearance and inherited widget overrides participate in history
   assert.equal(first.history.present.kind === 'dashboard' && first.history.present.spec.presentation?.palette, 'blue');
   assert.equal(first.history.present.kind === 'dashboard' && first.history.present.spec.widgets[0]!.presentation?.palette, undefined);
 });
+
+test('date defaults and mode switches are semantic, undoable changes that preserve appearance', () => {
+  const draft = blankDashboardDraft(profile, 'en');
+  assert.deepEqual(draft.base.filters, { datePreset: 'current_year' });
+  const original: DashboardSpec = { ...spec, presentation: { palette: 'blue' }, filters: { datePreset: 'previous_month' } };
+  const history = startBuilder({ kind: 'dashboard', spec: original });
+  const fixed = { dateRange: { from: '2026-09-01', to: '2026-09-30' } };
+  const changed = commitBuilderCommand(history, { type: 'patch', patch: { schemaVersion: 2, operations: [{ op: 'set_filters', filters: fixed }] } });
+  assert.equal(changed.execute, true);
+  assert.equal(changed.history.present.kind, 'dashboard');
+  if (changed.history.present.kind === 'dashboard') { assert.deepEqual(changed.history.present.spec.filters, fixed); assert.deepEqual(changed.history.present.spec.presentation, original.presentation); }
+  const undo = undoBuilder(changed.history); assert.equal(undo.execute, true); assert.deepEqual(undo.history.present, history.present);
+  const redo = redoBuilder(undo.history); assert.equal(redo.execute, true); assert.deepEqual(redo.history.present, changed.history.present);
+  const all = commitBuilderCommand(redo.history, { type: 'patch', patch: { schemaVersion: 2, operations: [{ op: 'set_filters', filters: {} }] } });
+  assert.equal(all.execute, true);
+});

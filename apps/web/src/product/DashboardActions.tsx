@@ -13,7 +13,7 @@ export function DashboardActions(props: Props) {
   const t = copy[locale];
   return <div className="dashboard-actions">
     {!status && <button type="button" onClick={onNew}><Plus aria-hidden="true" />{t.newDashboard}</button>}
-    {editing && <button type="button" onClick={onView}><Eye aria-hidden="true" />{t.view}</button>}
+    {editing && <button type="button" disabled={loading} onClick={onView}><Eye aria-hidden="true" />{t.view}</button>}
     {actions.useTemplate && <button type="button" className="primary-button" disabled={!canCreate || loading} onClick={onUseTemplate}><LayoutTemplate aria-hidden="true" />{t.useTemplate}</button>}
     {actions.editManual && <button type="button" className={status === 'saved' ? 'primary-button' : undefined} disabled={loading || !(canEdit || status === 'unsaved')} onClick={onEdit}><Pencil aria-hidden="true" />{t.edit}</button>}
     {actions.editAi && <button type="button" disabled={loading} onClick={onEditAi}><Sparkles aria-hidden="true" />{t.editWithAi}</button>}

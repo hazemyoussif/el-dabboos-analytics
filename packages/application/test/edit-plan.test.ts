@@ -205,3 +205,16 @@ test('empty sparse updates preserve existing optional-object shapes without inve
     { op: 'update_series', widgetId: 'widget-1', seriesId: 'widget-1-series-1', changes: { analysis: {} } },
   ] })), absent);
 });
+
+test('sparse date edits switch modes, preserve unrelated state and distinguish omission from explicit null', () => {
+  const relative = apply({ op: 'set_filters', changes: { datePreset: 'previous_month' } });
+  assert.deepEqual(relative.filters, { datePreset: 'previous_month', dimensions: current.filters.dimensions });
+  assert.deepEqual(relative.widgets, current.widgets); assert.deepEqual(relative.layout, current.layout);
+  const change = (changes: import('../src/edit-plan.ts').FilterIntentChanges) => applyDashboardPatch(relative, compileDashboardEditPlan(relative, { operations: [{ op: 'set_filters', changes }] }));
+  assert.deepEqual(change({ dimensions: [] }).filters, { datePreset: 'previous_month', dimensions: [] });
+  assert.deepEqual(change({ dateRange: null }).filters, relative.filters);
+  assert.deepEqual(change({ dateRange: { from: '2026-09-01', to: '2026-09-30' } }).filters, { dateRange: { from: '2026-09-01', to: '2026-09-30' }, dimensions: current.filters.dimensions });
+  assert.deepEqual(change({ datePreset: null, dateRange: null }).filters, { dimensions: current.filters.dimensions });
+  assert.throws(() => change({ datePreset: 'current_year', dateRange: { from: '2026-09-01', to: '2026-09-30' } }));
+  assert.throws(() => validateDashboardEditPlan({ operations: [{ op: 'set_filters', changes: { datePreset: 'last_week' } }] }));
+});

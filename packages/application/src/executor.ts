@@ -1,3 +1,5 @@
+import { dashboardFilterDimensions, resolveDashboardFilters } from './dashboard-filters.ts';
+import type { DashboardExecutionScope, EffectiveDashboardFilters } from './dashboard-filters.ts';
 import { analyticsQueryIdentity, executionConcurrency, normalizeAnalyticsQuery, runBounded } from './query-execution.ts';
 import type { DashboardExecutionOptions } from './query-execution.ts';
 import { validateDashboardSpec, validateQuery } from '@el-dabboos/domain';
@@ -14,7 +16,7 @@ export interface WidgetExecution {
 export interface DashboardExecutionResult {
   dashboard: DashboardSpec;
   widgetResults: Record<string, WidgetExecution>;
-  metadata: { executedAt: string; succeeded: number; failed: number; succeededSeries: number; failedSeries: number };
+  metadata: { effectiveFilters?: EffectiveDashboardFilters; executedAt: string; succeeded: number; failed: number; succeededSeries: number; failedSeries: number };
 }
 function align(widget: DashboardWidget, results: Record<string, SeriesExecution>): AlignedWidgetRow[] {
   const selected = widget.series[0];
@@ -47,9 +49,12 @@ function align(widget: DashboardWidget, results: Record<string, SeriesExecution>
 export class DashboardExecutor {
   private readonly concurrency: number;
   constructor(private readonly repository: AnalyticsRepository, private readonly clock: () => Date = () => new Date(), options: DashboardExecutionOptions = {}) { this.concurrency = executionConcurrency(options.maxConcurrency); }
-  async execute(spec: DashboardSpec, context: AnalyticsContext): Promise<DashboardExecutionResult> {
+  async execute(spec: DashboardSpec, context: AnalyticsContext, scope?: DashboardExecutionScope): Promise<DashboardExecutionResult> {
     validateDashboardSpec(spec);
     if (!context.tenantId.trim() || !['en', 'ar'].includes(context.locale)) throw new Error('Invalid analytics context');
+    const now = this.clock();
+    const effectiveFilters = resolveDashboardFilters(spec.filters, scope, now);
+    if (scope?.overrides?.dimensions?.some(filter => !dashboardFilterDimensions(spec).includes(filter.dimension))) throw new Error('Unsupported dashboard filter dimension');
     // All normalized requests are planned before any repository call starts.
     const jobs = new Map<string, { query: AnalyticsQuery; result?: SeriesExecution }>();
     const failure = (error: unknown): SeriesExecution => ({ status: 'error', error: { code: 'SERIES_EXECUTION_FAILED', message: error instanceof Error ? error.message : 'Series failed' } });
@@ -57,8 +62,8 @@ export class DashboardExecutor {
       const query: AnalyticsQuery = { metric: series.metric,
         ...(widget.dimension ? { groupBy: widget.dimension } : {}),
         ...(series.analysis ? { analysis: series.analysis } : {}),
-        ...(spec.filters.dateRange ? { dateRange: spec.filters.dateRange } : {}),
-        ...(spec.filters.dimensions ? { filters: spec.filters.dimensions } : {}),
+        ...(effectiveFilters.dateRange ? { dateRange: effectiveFilters.dateRange } : {}),
+        ...(effectiveFilters.dimensions ? { filters: effectiveFilters.dimensions } : {}),
       };
       try {
         validateQuery(query, context);
@@ -86,7 +91,7 @@ export class DashboardExecutor {
     const succeeded = entries.filter(([, value]) => value.status !== 'error').length;
     const succeededSeries = entries.reduce((sum, [, value]) => sum + Object.values(value.seriesResults).filter(result => result.status === 'success').length, 0);
     const totalSeries = spec.widgets.reduce((sum, widget) => sum + widget.series.length, 0);
-    return { dashboard: spec, widgetResults, metadata: { executedAt: this.clock().toISOString(), succeeded, failed: entries.length - succeeded,
+    return { dashboard: spec, widgetResults, metadata: { effectiveFilters, executedAt: now.toISOString(), succeeded, failed: entries.length - succeeded,
       succeededSeries, failedSeries: totalSeries - succeededSeries } };
   }
 }

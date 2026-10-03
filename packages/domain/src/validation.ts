@@ -1,4 +1,4 @@
-import type { AnalyticsContext, AnalyticsQuery, DashboardPatch, DashboardSpec, DashboardWidget, DateRange, DimensionId, MetricId } from './contracts.ts';
+import type { AnalyticsContext, AnalyticsQuery, DashboardPatch, DashboardSpec, DashboardWidget, DateRange, RelativeDatePreset, DimensionId, MetricId } from './contracts.ts';
 import { visualizationIssues } from './visualization.ts';
 import { widgetTypes } from './contracts.ts';
 import { validateDashboardLayout } from './layout.ts';
@@ -37,7 +37,7 @@ const validFilter = (v: unknown): boolean => record(v) && exactKeys(v, ['dimensi
   typeof v.dimension === 'string' && isDimensionId(v.dimension) && Array.isArray(v.values) && v.values.length > 0 &&
   v.values.every(x => typeof x === 'string' && x.length > 0);
 const comparisons = ['previous_period', 'month_over_month', 'year_over_year'];
-export function validateAnalysis(analysis: unknown, metricId: MetricId, groupBy?: DimensionId, dateRange?: DateRange): void {
+export function validateAnalysis(analysis: unknown, metricId: MetricId, groupBy?: DimensionId, dateRange?: DateRange | RelativeDatePreset): void {
   const semantics = semanticCatalog[metricId].semantics;
   if (analysis === undefined) {
     if (semantics.kind === 'comparison_derived' && !dateRange) throw new Error('Comparison-derived metric requires a date range');
@@ -62,14 +62,14 @@ export function validateAnalysis(analysis: unknown, metricId: MetricId, groupBy?
   if (analysis.runningTotal && (analysis.topN || analysis.percentageContribution)) throw new Error('Incompatible analysis combination');
   if (analysis.percentageContribution && analysis.comparison) throw new Error('Incompatible analysis combination');
 }
-function validateMetricUse(metric: unknown, groupBy: unknown, analysis: unknown, dateRange: DateRange | undefined, filters: unknown): asserts metric is MetricId {
+function validateMetricUse(metric: unknown, groupBy: unknown, analysis: unknown, dateRange: DateRange | RelativeDatePreset | undefined, filters: unknown): asserts metric is MetricId {
   if (typeof metric !== 'string' || !isMetricId(metric)) throw new Error('Unknown metric');
   if (groupBy !== undefined && (typeof groupBy !== 'string' || !isDimensionId(groupBy) || !semanticCatalog[metric].dimensions.includes(groupBy))) throw new Error('Unsupported dimension');
   if (filters !== undefined && (!Array.isArray(filters) || filters.some(f => !validFilter(f) || !semanticCatalog[metric].dimensions.includes(f.dimension)))) throw new Error('Unsupported filter');
   if (semanticCatalog[metric].semantics.kind === 'snapshot' && Array.isArray(filters) && filters.some(f => timeDimensions.includes(f.dimension))) throw new Error('Snapshot time scope must use dateRange');
   validateAnalysis(analysis, metric, groupBy as DimensionId | undefined, dateRange);
 }
-export function validWidget(v: unknown, dateRange?: DateRange, filters?: unknown): v is DashboardWidget {
+export function validWidget(v: unknown, dateRange?: DateRange | RelativeDatePreset, filters?: unknown): v is DashboardWidget {
   if (!record(v) || !widgetTypes.includes(v.type as DashboardWidget['type']) || typeof v.id !== 'string' ||
     !/^[a-z0-9][a-z0-9_-]*$/.test(v.id) || v.id.length > 80 || !Array.isArray(v.series) ||
     v.series.length < 1 || v.series.length > 8 || (v.type === 'kpi' && v.series.length !== 1) ||
@@ -92,7 +92,7 @@ export function validateDashboardSpec(v: unknown): asserts v is DashboardSpec {
   if (new Set(v.widgets.map(w => record(w) ? w.id : undefined)).size !== v.widgets.length) throw new Error('Duplicate widget ID');
   validateDashboardLayout(v.layout as DashboardSpec['layout'], v.widgets as DashboardWidget[]);
   for (const widget of v.widgets) {
-    if (!validWidget(widget, range as DateRange | undefined, v.filters.dimensions)) throw new Error('Invalid dashboard widget or incompatible series');
+    if (!validWidget(widget, (range ?? v.filters.datePreset) as DateRange | RelativeDatePreset | undefined, v.filters.dimensions)) throw new Error('Invalid dashboard widget or incompatible series');
   }
 }
 export function validateQuery(query: AnalyticsQuery, context: AnalyticsContext): void {

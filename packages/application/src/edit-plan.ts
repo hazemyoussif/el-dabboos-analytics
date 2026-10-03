@@ -1,5 +1,5 @@
 import { Ajv2020 } from 'ajv/dist/2020.js';
-import { applyDashboardPatch, governedPalettes, placeDashboardWidget, resolveDashboardLayout, validateDashboardPatch, validateDashboardSpec, widgetTypes } from '@el-dabboos/domain';
+import { applyDashboardPatch, governedPalettes, relativeDatePresets, placeDashboardWidget, resolveDashboardLayout, validateDashboardPatch, validateDashboardSpec, widgetTypes } from '@el-dabboos/domain';
 import type { AnalysisSpec, DashboardPatch, DashboardSchemaIssue, DashboardSpec, DashboardWidget, DimensionId, LocalizedText, MetricId, WidgetPresentation, WidgetType } from '@el-dabboos/domain';
 import { validateDashboardGenerationPlan } from './generation-plan.ts';
 import type { GenerationWidget } from './generation-plan.ts';
@@ -16,7 +16,7 @@ export interface AnalysisChanges {
   topNDirection?: 'top' | 'bottom' | null; topNLimit?: number | null;
 }
 export interface SeriesIntentChanges { metric?: MetricId; analysis?: AnalysisChanges | null; presentation?: null }
-export interface FilterIntentChanges { dateRange?: DashboardSpec['filters']['dateRange'] | null; dimensions?: NonNullable<DashboardSpec['filters']['dimensions']> }
+export interface FilterIntentChanges { datePreset?: DashboardSpec['filters']['datePreset'] | null; dateRange?: DashboardSpec['filters']['dateRange'] | null; dimensions?: NonNullable<DashboardSpec['filters']['dimensions']> }
 // Additions share generation business intent and resolver defaults, with sparse
 // edit options rather than a second copy of the generation presentation union.
 export type AddedWidgetIntent = Pick<GenerationWidget, 'dimension' | 'titleEn' | 'titleAr'> & Pick<WidgetIntentChanges, 'type' | 'presentation'> & {
@@ -45,7 +45,7 @@ export const dashboardEditPlanSchema = { ...object({ operations: { type: 'array'
   object({ op: choice(['add_widget']), widget: addWidget }, ['op', 'widget']),
   object({ op: choice(['remove_widget']), widgetId: { type: 'string', minLength: 1, maxLength: 80 } }, ['op', 'widgetId']),
   object({ op: choice(['set_title']), titleEn: text, titleAr: text }, ['op', 'titleEn', 'titleAr']),
-  object({ op: choice(['set_filters']), changes: object({ dateRange: ref('dateRange'), dimensions: { type: 'array', maxItems: 14, items: ref('filter') } }) }, ['op', 'changes']),
+  object({ op: choice(['set_filters']), changes: object({ datePreset: choice([...relativeDatePresets, null]), dateRange: ref('dateRange'), dimensions: { type: 'array', maxItems: 14, items: ref('filter') } }) }, ['op', 'changes']),
   object({ op: choice(['update_layout']), widgetId: { type: 'string', minLength: 1, maxLength: 80 }, changes: object({ x: { type: 'integer', minimum: 0, maximum: 11 }, y: { type: 'integer', minimum: 0, maximum: 200 }, w: { type: 'integer', minimum: 1, maximum: 12 }, h: { type: 'integer', minimum: 1, maximum: 20 } }) }, ['op', 'widgetId', 'changes']),
 ] } } }, ['operations']), $defs: {
   widgetChanges: object({ type: choice(widgetTypes), dimension: { type: ['string', 'null'] }, title: nullableObject({ en: text, ar: text }, ['en', 'ar']), presentation: ref('presentation') }),
@@ -67,6 +67,7 @@ export function editPlanSchemaIssues(value: unknown): DashboardSchemaIssue[] {
 export function validateDashboardEditPlan(value: unknown): asserts value is DashboardEditPlan {
   if (!check(value)) throw new Error('Invalid DashboardEditPlan schema.');
   for (const operation of (value as unknown as DashboardEditPlan).operations) {
+    if (operation.op === 'set_filters' && operation.changes.datePreset != null && operation.changes.dateRange != null) throw new Error('Invalid DashboardEditPlan ambiguous date selection.');
     if (operation.op === 'add_widget') {
       const { series, ...business } = operation.widget;
       delete business.type; delete business.presentation;
@@ -173,8 +174,10 @@ export function compileDashboardEditPlan(current: DashboardSpec, plan: Dashboard
         patch.operations.push({ op: 'remove', widgetId: operation.widgetId }); break;
       case 'set_title': patch.operations.push({ op: 'set_title', title: { en: operation.titleEn, ar: operation.titleAr } }); break;
       case 'set_filters':
+        if (operation.changes.datePreset === null) delete draft.filters.datePreset;
+        else if (operation.changes.datePreset !== undefined) { draft.filters.datePreset = operation.changes.datePreset; delete draft.filters.dateRange; }
         if (operation.changes.dateRange === null) delete draft.filters.dateRange;
-        else if (operation.changes.dateRange !== undefined) draft.filters.dateRange = structuredClone(operation.changes.dateRange);
+        else if (operation.changes.dateRange !== undefined) { draft.filters.dateRange = structuredClone(operation.changes.dateRange); delete draft.filters.datePreset; }
         if (operation.changes.dimensions !== undefined) draft.filters.dimensions = structuredClone(operation.changes.dimensions);
         patch.operations.push({ op: 'set_filters', filters: structuredClone(draft.filters) }); break;
       case 'update_layout': {

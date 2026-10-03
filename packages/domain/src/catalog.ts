@@ -6,6 +6,7 @@ export const dimensions: readonly DimensionId[] = [
   'equipment_category', 'technician',
 ];
 export const timeDimensions: readonly DimensionId[] = ['date', 'month', 'quarter', 'year'];
+export const categoricalDimensions: readonly DimensionId[] = dimensions.filter(dimension => !timeDimensions.includes(dimension));
 const time: DimensionId[] = [...timeDimensions];
 const sales: DimensionId[] = [...time, 'customer', 'branch', 'region', 'salesperson', 'product', 'product_category'];
 const crm: DimensionId[] = [...time, 'customer', 'branch', 'region', 'salesperson'];

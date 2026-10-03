@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { Ajv2020 } from 'ajv/dist/2020.js';
-import { dashboardSpecSchema, governedPalettes, tenantProfiles, validateDashboardSpec } from '@el-dabboos/domain';
+import { dashboardSpecSchema, governedPalettes, relativeDatePresets, tenantProfiles, validateDashboardSpec } from '@el-dabboos/domain';
 import { compileDashboardGenerationPlan as compile, dashboardGenerationPlanSchema, validateDashboardGenerationPlan } from '../src/generation-plan.ts';
 import type { DashboardGenerationPlan, GenerationSeries, GenerationWidget, RequestedPresentation } from '../src/generation-plan.ts';
 import { projectProviderSchema } from '../src/provider-schema.ts';
@@ -17,13 +17,13 @@ test('minimal bilingual KPI compiles into a deterministic canonical 12-column da
   assert.deepEqual(result.layout, { columns: 12, items: [{ widgetId: 'widget-1', x: 0, y: 0, w: 4, h: 2 }] });
   assert.deepEqual(run(), result); assert.deepEqual(minimal.widgets[0], { series: [{ metric: 'revenue' }] });
 });
-for (const [preset, from] of [['current_year', '2026-01-01'], ['last_12_months', '2025-11-01'], ['last_6_months', '2026-05-01']] as const)
-  test(`generation resolves ${preset} using existing calendar semantics`, () => {
-    assert.deepEqual(run({ ...minimal, datePreset: preset }).filters.dateRange, { from, to: '2026-10-01' });
+for (const preset of relativeDatePresets)
+  test(`generation preserves ${preset} symbolically`, () => {
+    assert.deepEqual(run({ ...minimal, datePreset: preset }).filters, { datePreset: preset });
   });
-test('tenant timezone sets the local day and year at a UTC boundary', () => {
+test('generation does not freeze the clock into the saved period', () => {
   const result = compile(minimal, profile, 'en', new Date('2025-12-31T22:00:00Z'));
-  assert.deepEqual(result.filters.dateRange, { from: '2026-01-01', to: '2026-01-01' });
+  assert.deepEqual(result.filters, { datePreset: 'current_year' });
 });
 test('explicit leap-year range and business filters are preserved without aliasing', () => {
   const plan = { ...minimal, dateFrom: '2024-02-29', dateTo: '2024-03-31', filters: [{ dimension: 'branch' as const, values: ['baghdad'] }] };

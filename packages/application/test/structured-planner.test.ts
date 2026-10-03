@@ -368,3 +368,29 @@ test('manual dashboard appearance adds no provider context or schema and survive
   assert.ok(!Object.hasOwn(provider.requests[2]!.responseFormat.jsonSchema.properties as object, 'presentation'));
   assert.ok(!Object.hasOwn(provider.requests[2]!.responseFormat.jsonSchema.$defs as object, 'dashboardPresentation'));
 });
+
+test('relative and historical generation/edit use one compact provider request and never receive viewer state', async () => {
+  for (const [prompt, dates, expected] of [
+    ['top five customers last month', { datePreset: 'previous_month' }, { datePreset: 'previous_month' }],
+    ['أعلى خمسة عملاء آخر ٣٠ يومًا', { datePreset: 'last_30_days' }, { datePreset: 'last_30_days' }],
+    ['revenue September 2026', { dateFrom: '2026-09-01', dateTo: '2026-09-30' }, { dateRange: { from: '2026-09-01', to: '2026-09-30' } }],
+  ] as const) {
+    const provider = new SequenceProvider([{ titleEn: 'Sales', titleAr: 'المبيعات', ...dates, widgets: [{ dimension: 'customer', series: [{ metric: 'revenue', topNDirection: 'top', topNLimit: 5 }] }] }]);
+    const generated = await new StructuredDashboardPlanner(provider, { clock: () => now }).generate({ ...request, prompt });
+    assert.deepEqual(generated.filters, expected); assert.equal(provider.requests.length, 1);
+    assert.equal(generated.widgets[0]!.series[0]!.analysis!.topN!.limit, 5);
+    assert.ok(provider.requests[0]!.messages[0]!.content.includes('never calculate dates'));
+    assert.ok(!JSON.stringify(provider.requests).match(/effectiveFilters|sourceAsOf|dataThrough|filterOptions|enforcedFilters/));
+  }
+  const outputs: DashboardEditPlan[] = [
+    { operations: [{ op: 'set_filters', changes: { datePreset: 'previous_month' } }] },
+    { operations: [{ op: 'set_filters', changes: { dateRange: { from: '2026-09-01', to: '2026-09-30' } } }] },
+    { operations: [{ op: 'set_filters', changes: { datePreset: 'last_30_days' } }] },
+  ];
+  const provider = new SequenceProvider(outputs); const planner = new StructuredDashboardPlanner(provider, { clock: () => now });
+  let current = spec;
+  for (const instruction of ['last month', 'September 2026', 'آخر ٣٠ يومًا']) current = applyDashboardPatch(current, await planner.edit(current, instruction, profile, capabilities));
+  assert.deepEqual(current.filters, { datePreset: 'last_30_days' }); assert.equal(provider.requests.length, 3);
+  assert.deepEqual(current.widgets, spec.widgets); assert.deepEqual(current.layout, spec.layout);
+  assert.ok(!JSON.stringify(provider.requests).match(/effectiveFilters|sourceAsOf|dataThrough|filterOptions|enforcedFilters/));
+});

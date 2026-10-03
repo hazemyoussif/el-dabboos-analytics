@@ -1,3 +1,6 @@
+import { useDashboardViewFilters } from './hooks/useDashboardViewFilters.ts';
+import { DashboardViewFilters } from './DashboardViewFilters.tsx';
+import { periodCopy, periodLabels } from './DatePeriodControl.tsx';
 import { plannerDisplayError } from './planner-copy.ts';
 import { AlertCircle, X } from 'lucide-react';
 import { WorkspaceNavigation, NavigationTrigger } from './shell/WorkspaceNavigation.tsx';
@@ -26,7 +29,8 @@ export default function App() {
   const library = useDashboardLibrary(workspace);
   const builder = useDashboardBuilder(workspace);
   const planner = useDashboardPlanner(workspace, builder.reset);
-  const flow = useDashboardProductFlow(workspace, builder, planner);
+  const viewFilters = useDashboardViewFilters(workspace);
+  const flow = useDashboardProductFlow(workspace, builder, planner, viewFilters.clearForEdit);
   const { locale, userId, demoUsers, permissions, profiles, profile, catalog, metricRegistry, templates,
     dashboard, document: dashboardDocument, savedDashboards, execution, loading, error, filterOptions, setError } = workspace;
   const t = copy[locale];
@@ -46,6 +50,8 @@ export default function App() {
       if (series.status === 'success') return series.result.metadata;
     return null;
   }, [execution]);
+  const period = execution?.metadata.effectiveFilters?.dateRange;
+  const periodSelection = builder.history || showAiEditor(flow.panel) ? activeDashboard?.filters : viewFilters.selection;
   return <div className="app-shell">
     <WorkspaceNavigation locale={locale} onNew={flow.launchNew} onTemplates={() => flow.enterCreation('choose-template')} drawerOpen={drawerOpen} onDrawerClose={() => setDrawerOpen(false)}>
       <DashboardLibrary key={`${userId}-${profile?.id}`} records={savedDashboards} userId={userId} locale={locale} controller={library} loading={loading} activeId={dashboardDocument?.kind === 'saved' ? dashboardDocument.record.id : undefined} onOpen={id => { flow.openSaved(id); setDrawerOpen(false); }} />
@@ -63,18 +69,19 @@ export default function App() {
         {!isCreating && <details className="catalog-panel"><summary>{t.metricCatalog} · {metricRegistry.filter(item => item.availability === 'available').length} {t.available} · {metricRegistry.filter(item => item.availability === 'planned').length} {t.planned}</summary><div className="catalog-list">{metricRegistry.map(item => <div key={item.id} className="catalog-metric"><span>{item.labels[locale]}</span><span className={item.availability === 'available' ? 'metric-available' : 'metric-planned'}>{item.availability === 'available' ? t.available : t.planned}</span></div>)}</div></details>}
         {displayError && <div className="global-error" role="alert"><AlertCircle aria-hidden="true" />{displayError}<button onClick={() => setError(null)} aria-label={locale === 'ar' ? 'إغلاق' : 'Dismiss'}><X aria-hidden="true" /></button></div>}
         {!isCreating && <DashboardSection header={<div className="dashboard-title-row"><div><div className="eyebrow eyebrow-light">{breadcrumb}</div><h2>{activeTitle}</h2>{flow.status && <span className={`save-status ${flow.status === 'modified' || flow.status === 'unsaved' ? 'dirty' : ''}`}>{statusText}</span>}</div>
-          <DashboardActions locale={locale} status={flow.status} actions={flow.actions} editing={!!builderHistory} loading={loading}
+          <DashboardActions locale={locale} status={flow.status} actions={flow.actions} editing={!!builderHistory} loading={loading || builder.busy || viewFilters.busy}
             canCreate={permissions.includes('dashboard:create')} canEdit={permissions.includes('dashboard:edit')}
             onNew={flow.launchNew} onUseTemplate={flow.useTemplate} onEdit={flow.editManual} onEditAi={flow.editAi} onView={flow.view}
             onRename={activeDashboard ? flow.rename : undefined} onSave={() => void flow.save()} onSaveAs={() => void flow.save(true)} onDiscard={flow.discard} /></div>}
           aiEditor={showAiEditor(flow.panel) && dashboard && profile && <DashboardAiEditor locale={locale} profile={profile} activity={planner} instruction={planner.instruction} onInstruction={planner.setInstruction} loading={loading} onApply={() => void flow.applyAiEdit()} onClose={flow.close} />}
           metadata={<>
-          {activeDashboard && profile && <div className="meta-strip"><div><span>{t.period}</span><strong>{activeDashboard.filters.dateRange ? `${formatDate(activeDashboard.filters.dateRange.from, locale, profile)} — ${formatDate(activeDashboard.filters.dateRange.to, locale, profile)}` : '—'}</strong></div><div><span>{t.source}</span><strong>{metadata?.sourceId ?? '—'}</strong></div><div><span>{t.dataThrough}</span><strong>{metadata?.dataThrough ? formatDate(metadata.dataThrough, locale, profile) : '—'}</strong></div>{metadata?.sourceAsOf && <div><span>{t.sourceUpdated}</span><strong>{formatTimestamp(metadata.sourceAsOf, locale, profile)}</strong></div>}</div>}
+          {activeDashboard && profile && <div className="meta-strip"><div><span>{t.period}</span><strong>{(loading || builder.busy || viewFilters.busy) ? t.loading : !execution ? '—' : <>{periodSelection?.datePreset ? `${periodLabels[locale][periodSelection.datePreset]} · ` : ''}{period ? `${formatDate(period.from, locale, profile)} — ${formatDate(period.to, locale, profile)}` : periodCopy[locale].all}</>}</strong></div><div><span>{t.source}</span><strong>{metadata?.sourceId ?? '—'}</strong></div><div><span>{t.dataThrough}</span><strong>{metadata?.dataThrough ? formatDate(metadata.dataThrough, locale, profile) : '—'}</strong></div>{metadata?.sourceAsOf && <div><span>{t.sourceUpdated}</span><strong>{formatTimestamp(metadata.sourceAsOf, locale, profile)}</strong></div>}</div>}
+          {!builderHistory && !showAiEditor(flow.panel) && activeDashboard && profile && !loading && <DashboardViewFilters dashboard={activeDashboard} selection={viewFilters.selection} effectiveRange={period} catalog={catalog} profile={profile} locale={locale} options={filterOptions} active={viewFilters.active} busy={viewFilters.busy} onChange={viewFilters.change} onReset={viewFilters.reset} />}
           {execution?.metadata.failedSeries ? <div className="partial-note">{t.partial}: {execution.metadata.failedSeries}</div> : null}
           </>} canvas={<>
-          {loading && <DashboardSkeleton label={t.loading} />}
-          {!loading && builderHistory && profile && <Suspense fallback={<DashboardSkeleton label={t.loading} />}><BuilderWorkspace history={builderHistory} execution={execution} catalog={catalog} registry={metricRegistry} profile={profile} locale={locale} filterOptions={filterOptions} busy={builder.busy} onCommand={builder.command} onUndo={builder.undo} onRedo={builder.redo} /></Suspense>}
-          {!loading && !builderHistory && execution && profile && <DashboardRenderer execution={execution} dashboardOverride={dashboard ?? undefined} catalog={catalog} locale={locale} profile={profile} />}
+          {(loading || viewFilters.busy && !builderHistory) && <DashboardSkeleton label={t.loading} />}
+          {!loading && builderHistory && profile && <Suspense fallback={<DashboardSkeleton label={t.loading} />}><BuilderWorkspace history={builderHistory} execution={execution} catalog={catalog} registry={metricRegistry} profile={profile} locale={locale} filterOptions={filterOptions} busy={builder.busy || viewFilters.busy} onCommand={builder.command} onUndo={builder.undo} onRedo={builder.redo} /></Suspense>}
+          {!loading && !viewFilters.busy && !builderHistory && execution && profile && <DashboardRenderer execution={execution} dashboardOverride={dashboard ?? undefined} catalog={catalog} locale={locale} profile={profile} />}
           {!loading && !builderHistory && !execution && !error && <EmptyState action={<button onClick={flow.launchNew}>{t.newDashboard}</button>}>{t.noDashboard}</EmptyState>}
         </>} />}
 

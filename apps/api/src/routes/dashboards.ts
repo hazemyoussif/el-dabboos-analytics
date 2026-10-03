@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { authorizedCatalog, dashboardTemplates } from '@el-dabboos/application';
+import { authorizedCatalog, dashboardTemplates, validateDashboardFilterOverrides } from '@el-dabboos/application';
 import { applyDashboardPatch } from '@el-dabboos/domain';
 import type { RequestContext } from '@el-dabboos/domain';
 import { analyticsContext } from '../context.ts';
@@ -11,12 +11,14 @@ export function registerDashboardRoutes(app: FastifyInstance, services: RouteCon
     templateIds: dashboardTemplates.filter(template => services.templateAllowed(template, context)).map(template => template.id),
     actions: context.authorization.permissions });
   app.post('/api/dashboards/execute', async request => {
-    const { context } = services.session(request.headers);
+    const { context, profile } = services.session(request.headers);
     return services.checked(context, 'dashboard.execute', async () => {
       services.authorize(context, 'dashboard:view', 'analytics:query');
       if (!object(request.body) || !object(request.body.dashboard)) throw new ApiError(400, 'INVALID_BODY', 'dashboard is required.');
       const dashboard = services.ensureDashboard(request.body.dashboard, context);
-      return services.executor.execute(dashboard, analyticsContext(context));
+      if (Object.keys(request.body).some(key => !['dashboard', 'overrides'].includes(key))) throw new ApiError(400, 'INVALID_BODY', 'Unknown execution field.');
+      if (request.body.overrides !== undefined) validateDashboardFilterOverrides(request.body.overrides);
+      return services.executor.execute(dashboard, analyticsContext(context), { timeZone: profile.timeZone, ...(request.body.overrides !== undefined ? { overrides: request.body.overrides } : {}) });
     });
   });
   app.post('/api/dashboards/generate', async request => {
@@ -27,7 +29,7 @@ export function registerDashboardRoutes(app: FastifyInstance, services: RouteCon
       if (!services.planner) throw new ApiError(503, 'PLANNER_UNAVAILABLE', 'Dashboard planning is disabled.');
       const dashboard = services.ensureDashboard(await services.planner.generate({ prompt: request.body.prompt, locale: context.locale, context: analyticsContext(context), tenantProfile: profile,
         capabilities: capabilities(context) }), context);
-      return { dashboard, execution: await services.executor.execute(dashboard, analyticsContext(context)) };
+      return { dashboard, execution: await services.executor.execute(dashboard, analyticsContext(context), { timeZone: profile.timeZone }) };
     });
   });
   app.post('/api/dashboards/edit', async request => {
@@ -39,7 +41,7 @@ export function registerDashboardRoutes(app: FastifyInstance, services: RouteCon
       if (!services.planner) throw new ApiError(503, 'PLANNER_UNAVAILABLE', 'Dashboard planning is disabled.');
       const patch = await services.planner.edit(current, request.body.instruction, profile, capabilities(context));
       const dashboard = services.ensureDashboard(applyDashboardPatch(current, patch), context);
-      return { patch, dashboard, execution: await services.executor.execute(dashboard, analyticsContext(context)) };
+      return { patch, dashboard, execution: await services.executor.execute(dashboard, analyticsContext(context), { timeZone: profile.timeZone }) };
     });
   });
 }

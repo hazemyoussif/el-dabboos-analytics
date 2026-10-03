@@ -66,3 +66,11 @@ test('optional dashboard appearance is strict governed V2 presentation and legac
     assert.throws(() => validateDashboardSpec({ ...spec, presentation }), /Invalid DashboardSpec/);
   }
 });
+
+test('relative, fixed and all-time V2 filters are exclusive and comparison validation stays bounded', () => {
+  for (const filters of [{}, { datePreset: 'previous_month' }, { dateRange: { from: '2026-09-01', to: '2026-09-30' } }]) assert.doesNotThrow(() => validateDashboardSpec({ ...spec, filters }));
+  for (const filters of [{ datePreset: 'last_month' }, { datePreset: 'previous_month', dateRange: { from: '2026-09-01', to: '2026-09-30' } }, { dateRange: { from: '2026-02-30', to: '2026-03-01' } }]) assert.throws(() => validateDashboardSpec({ ...spec, filters }));
+  const widgets = [{ id: 'growth', type: 'kpi', series: [{ id: 'growth', metric: 'sales_growth' }] }];
+  assert.doesNotThrow(() => validateDashboardSpec({ ...spec, filters: { datePreset: 'previous_month' }, widgets }));
+  assert.throws(() => validateDashboardSpec({ ...spec, filters: {}, widgets }));
+});

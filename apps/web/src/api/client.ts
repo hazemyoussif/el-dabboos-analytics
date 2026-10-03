@@ -1,4 +1,5 @@
-import type { DashboardExecutionResult, DashboardTemplate } from '@el-dabboos/application';
+import type { DashboardExecutionResult, DashboardTemplate, DashboardFilterOverrides } from '@el-dabboos/application';
+import { categoricalDimensions } from '@el-dabboos/domain';
 import type { DashboardRecord, DashboardSpec, DimensionId, Locale, ProductMetric, SemanticMetric, TenantProfile } from '@el-dabboos/domain';
 import type { FilterOptions } from '../builder/BuilderWorkspace.tsx';
 
@@ -28,10 +29,9 @@ export const listSavedDashboards = (session: ApiSession) => request<{ dashboards
 export const getSavedDashboard = (session: ApiSession, id: string) => request<DashboardRecord>(session, `/api/saved-dashboards/${encodeURIComponent(id)}`, 'GET');
 export const createSavedDashboard = (session: ApiSession, dashboard: DashboardSpec) => request<DashboardRecord>(session, '/api/saved-dashboards', 'POST', { dashboard });
 export const updateSavedDashboard = (session: ApiSession, id: string, dashboard: DashboardSpec, expectedVersion: number) => request<DashboardRecord>(session, `/api/saved-dashboards/${encodeURIComponent(id)}`, 'PUT', { dashboard, expectedVersion });
-export const executeDashboard = (session: ApiSession, dashboard: DashboardSpec) => request<DashboardExecutionResult>(session, '/api/dashboards/execute', 'POST', { dashboard });
-const builderFilterDimensions: DimensionId[] = ['branch', 'region', 'salesperson', 'product_category', 'warehouse'];
+export const executeDashboard = (session: ApiSession, dashboard: DashboardSpec, overrides?: DashboardFilterOverrides) => request<DashboardExecutionResult>(session, '/api/dashboards/execute', 'POST', { dashboard, ...(overrides ? { overrides } : {}) });
 export async function getFilterOptions(session: ApiSession): Promise<FilterOptions> {
-  const values = await Promise.all(builderFilterDimensions.map(async dimension => {
+  const values = await Promise.all(categoricalDimensions.map(async dimension => {
     const response = await request<{ dimension: DimensionId; values: Array<{ id: string; label: string }> }>(session, `/api/dimensions/${dimension}/values`, 'GET');
     return [dimension, response.values] as const;
   }));

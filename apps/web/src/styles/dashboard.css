@@ -80,3 +80,15 @@ html[dir=rtl] .viewer-item { direction: rtl; }
 .ai-loading-icon { animation: ai-loading-spin 1.2s linear infinite; }
 @keyframes ai-loading-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .ai-loading-icon { animation: none; } }
+
+/* Date semantics share controls between authoring and temporary viewing. */
+.date-period { border: 0; padding: 0; margin: 0; min-inline-size: 0; display: grid; gap: 8px; }
+.date-period label, .view-filter-controls > label { display: grid; gap: 6px; min-inline-size: 0; }
+.date-period select, .date-period input, .view-filter-controls select { max-inline-size: 100%; min-inline-size: 0; }
+.view-filters { margin-block: 12px; }
+.view-filters summary { cursor: pointer; padding-block: 10px; }
+.view-filter-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 16px; padding-block: 12px; }
+.view-filter-controls > * { flex: 1 1 180px; }
+.view-filter-controls .date-period { display: flex; flex-wrap: wrap; flex: 2 1 360px; gap: 16px; }
+.view-filter-controls .date-period > label { flex: 1 1 160px; }
+.view-filter-controls .builder-dates { flex-basis: 100%; }

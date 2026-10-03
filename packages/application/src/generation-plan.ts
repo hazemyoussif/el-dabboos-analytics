@@ -1,8 +1,7 @@
 import Ajv2020 from 'ajv/dist/2020.js';
-import { defaultDashboardLayout, dimensions, semanticCatalog, validateDashboardSpec, validDateRange, governedPalettes, visualizationIssues } from '@el-dabboos/domain';
+import { defaultDashboardLayout, dimensions, relativeDatePresets, semanticCatalog, validateDashboardSpec, validDateRange, governedPalettes, visualizationIssues } from '@el-dabboos/domain';
 import type { AnalysisSpec, DashboardSchemaIssue, DashboardSpec, DashboardWidget, DimensionId, Locale, MetricId, TenantProfile, WidgetPresentation } from '@el-dabboos/domain';
 import { resolveGenerationWidget } from './visualization-intent.ts';
-import { resolveDatePreset } from './templates.ts';
 import type { DatePreset } from './templates.ts';
 
 /** Transient business intent only. Never persisted or used as an execution contract. */
@@ -72,7 +71,7 @@ const widgetSchema = { oneOf: [
   }, ['dimension', 'series']),
 ] as const };
 export const dashboardGenerationPlanSchema = { $defs: { series: seriesSchema, palette: choice(governedPalettes), dimension: choice(dimensions) }, ...object({ titleEn: text, titleAr: text,
-  datePreset: choice(['current_year', 'last_12_months', 'last_6_months']),
+  datePreset: choice(relativeDatePresets),
   dateFrom: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' }, dateTo: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
   filters: { type: 'array', maxItems: 14, items: object({ dimension: { $ref: '#/$defs/dimension' },
     values: { type: 'array', minItems: 1, maxItems: 100, items: { type: 'string', minLength: 1, maxLength: 160 } },
@@ -106,7 +105,8 @@ export class GenerationVisualizationError extends Error {
   constructor(readonly issues: readonly string[]) { super('Invalid dashboard widget or incompatible series'); }
 }
 /** Pure compilation; caller supplies the clock value. Canonical validation remains authoritative. */
-export function compileDashboardGenerationPlan(plan: DashboardGenerationPlan, profile: TenantProfile, locale: Locale, now: Date): DashboardSpec {
+export function compileDashboardGenerationPlan(plan: DashboardGenerationPlan, _profile: TenantProfile, locale: Locale, _now: Date): DashboardSpec {
+  void _now; // Compatibility argument; relative intent is deliberately not resolved here.
   validateDashboardGenerationPlan(plan);
   const widgets: DashboardWidget[] = plan.widgets.map((widget, index) => {
     const id = `widget-${index + 1}`;
@@ -124,8 +124,8 @@ export function compileDashboardGenerationPlan(plan: DashboardGenerationPlan, pr
       ...(widget.titleEn !== undefined && widget.titleAr !== undefined ? { title: { en: widget.titleEn, ar: widget.titleAr } } : {}) };
   });
   const spec: DashboardSpec = { schemaVersion: 2, id: 'generated-dashboard', title: { en: plan.titleEn, ar: plan.titleAr }, locale,
-    filters: { dateRange: plan.dateFrom !== undefined && plan.dateTo !== undefined ? { from: plan.dateFrom, to: plan.dateTo }
-      : resolveDatePreset(plan.datePreset ?? 'current_year', profile, now),
+    filters: { ...(plan.dateFrom !== undefined && plan.dateTo !== undefined ? { dateRange: { from: plan.dateFrom, to: plan.dateTo } }
+      : { datePreset: plan.datePreset ?? 'current_year' }),
     ...(plan.filters?.length ? { dimensions: structuredClone(plan.filters) } : {}) }, widgets, layout: defaultDashboardLayout(widgets) };
   try { validateDashboardSpec(spec); }
   catch (error) {
