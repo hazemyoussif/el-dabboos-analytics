@@ -10,7 +10,7 @@ export function DashboardViewFilters({ dashboard, selection, effectiveRange, cat
   onChange: (change: DashboardFilterOverrides) => void; onReset: () => void;
 }) {
   const t = periodCopy[locale];
-  return <details className="view-filters"><summary>{t.filters} · {selection.datePreset ? periodLabels[locale][selection.datePreset] : selection.dateRange ? `${selection.dateRange.from} — ${selection.dateRange.to}` : t.all}{active ? ` · ${t.temporary}` : ''}</summary>
+  return <details className="view-filters"><summary>{t.filters} · {selection.datePreset ? periodLabels[locale][selection.datePreset] : selection.dateRange ? <bdi dir="ltr">{selection.dateRange.from} — {selection.dateRange.to}</bdi> : t.all}{active ? ` · ${t.temporary}` : ''}</summary>
     <div className="view-filter-controls"><DatePeriodControl filters={selection} effectiveRange={effectiveRange} timeZone={profile.timeZone} locale={locale} disabled={busy} onChange={date => onChange({ date })} />
       {dashboardFilterDimensions(dashboard, catalog).map(dimension => {
         const selected = selection.dimensions?.find(filter => filter.dimension === dimension)?.values ?? [];
