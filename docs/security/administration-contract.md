@@ -1,6 +1,6 @@
 # Administration application, API and page contract
 
-Design for Sol implementation, not currently registered endpoints. [ADR 028](../architecture/adr/028-customer-tenant-access-control.md) and [storage design](administration-storage.md) are normative. React displays server decisions; no permission or scope in a request body establishes actor authority. No security mutations are exposed to the LLM.
+Implemented deterministic services and strict endpoints; see [local operations](administration-operations.md) and [verification status](access-control-implementation-status.md). [ADR 028](../architecture/adr/028-customer-tenant-access-control.md) and [storage design](administration-storage.md) are normative. React displays server decisions; no permission or scope in a request body establishes actor authority. No security mutations are exposed to the LLM.
 
 ## Request and mutation protocol
 

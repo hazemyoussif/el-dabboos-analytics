@@ -1,6 +1,6 @@
 # ADR 028: Customer, tenant and access-control administration
 
-Status: architecture accepted for implementation; production IAM readiness remains pending.
+Status: architecture accepted; implementation uses the separate versioned metadata store. Production IAM readiness remains pending. [Operations](../../security/administration-operations.md).
 
 Scope: pure contracts, authorization rules and synthetic invariant tests. This phase does not enable persistent administration, restricted sharing routes, admin UI, email or authentication. The existing demo API remains on ADR 018 until the atomic cutover below. [Implementation contract](../../security/administration-contract.md), [metadata design](../../security/administration-storage.md), [Sol handoff](../../security/access-control-sol-handoff.md).
 
@@ -67,6 +67,8 @@ Serialize validation and mutation in one metadata unit of work, with optimistic 
 Platform recovery similarly refuses loss of the last active protected platform_admin identity assignment. Initial production bootstrap is a one-time offline operational command taking a trusted configured issuer+subject and audit reference, binding an already verified external identity; no password/default secret/public bootstrap endpoint. Persist completion marker atomically, refuse normal replay, and require a separately approved audited recovery procedure. Demo bootstrap remains synthetic and explicitly enabled only in demo mode.
 
 ## Lifecycle and readiness
+
+Approved implementation correction: `TenantProfile.exampleBranchIds` is a required readonly zero-or-more list. `[]` means no trusted presentation/planner examples are available; it never means unrestricted branches or source certification. Demo examples remain unchanged. Planner/presentation consumers omit branch examples when empty. Authorization scopes remain independent.
 
 Customer: active/suspended. Tenant: provisioning/active/suspended. User: invited/active/suspended. Membership and platform assignment: active/suspended. Identity binding: active/disabled. Invited does not imply an email was sent. Invitations are optional one-use hashed-secret records with tenant, target, roles/scopes, inviter, expiry and status; acceptance must revalidate current inviter authority, target binding and tenant status atomically. No secret is logged or persisted in plaintext, and resending revokes the old token.
 

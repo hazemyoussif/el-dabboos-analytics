@@ -1,6 +1,6 @@
 # Administration metadata storage and migration contract
 
-Architecture design only; no SQLite runner or adapter is implemented in this phase. [ADR 028](../architecture/adr/028-customer-tenant-access-control.md) governs the security semantics. Ports: [administration-repository.ts](../../packages/domain/src/administration-repository.ts).
+Implemented in the separate versioned SQLite metadata adapter; see [local operations](administration-operations.md) for migrations/bootstrap and [verification status](access-control-implementation-status.md). [ADR 028](../architecture/adr/028-customer-tenant-access-control.md) governs the security semantics. Ports: [administration-repository.ts](../../packages/domain/src/administration-repository.ts).
 
 ## Store and transaction boundaries
 
@@ -49,7 +49,8 @@ Runner holds an exclusive migration/write lock on one connection, checks contigu
 1. **Baseline recognition:** empty store creates current metadata baseline; existing unversioned store must match the known dashboard/folder/preference shape before recording baseline. Unknown variants fail with actionable schema error. Never mark an arbitrary existing DB migrated based only on table names.
 2. **IAM schema:** create customer/tenant/user/identity/roles/assignments/membership/scope/audit tables and constraints. Explicit demo seed in demo mode only, preserving known IDs, permissions, domains and filters. Foreign tenant/owner IDs in legacy dashboard records must be reconciled to approved metadata or migration fails without data loss; no invented customer ownership or new identity bindings to make FKs pass.
 3. **Sharing rebuild:** transactionally create dashboard_records_new with private/tenant/restricted CHECK; copy every existing value/spec/version/timestamp verbatim; verify row counts/IDs/content, recreate indexes and restore dependent FKs using SQLite's table-rebuild procedure. Add dashboard_grants empty. Existing private/tenant rows keep the exact values and no grants. Preserve folders, favorites and deep links.
-4. **Cutover:** version check + capability-gated composition enables GovernedDashboardRepository and its application policy before HTTP accepts restricted. Retire CREATE IF NOT EXISTS initialization for versioned stores. Old binary must refuse new schema. Keep backups for operational rollback; never downgrade by erasing restricted audiences.
+4. **Operational candidates:** explicit tenant-local assignment eligibility is stored separately from invitations. No global directory, email delivery or automatic membership.
+5. **Cutover:** version check + capability-gated composition enables GovernedDashboardRepository and its application policy before HTTP accepts restricted. Retire CREATE IF NOT EXISTS initialization for versioned stores. Old binary must refuse new schema. Keep backups for operational rollback; never downgrade by erasing restricted audiences.
 
 ## Required adapter tests for Sol
 

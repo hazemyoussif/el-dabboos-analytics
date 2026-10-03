@@ -2,6 +2,8 @@
 
 Architecture phase complete, 2026-10-04. This is a bounded implementation handoff, not production IAM readiness or completed administration functionality.
 
+Implementation continuation: the reviewed empty-example correction and persistent cutover are implemented; see [implementation status](access-control-implementation-status.md) and [local operations](administration-operations.md). The architecture work is now committed at `d84b577355412513b1bcfd352ab7528738b535e0`; the original uncommitted-state notes below describe the architecture phase, not the continuation checkout.
+
 ## Repository state
 
 - Branch: `feat/access-control-admin`.
