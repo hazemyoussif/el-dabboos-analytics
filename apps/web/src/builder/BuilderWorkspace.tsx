@@ -39,14 +39,14 @@ const domainNames = {
   ar: { sales: 'المبيعات', crm: 'فرص المبيعات', finance: 'المالية', inventory: 'المخزون', maintenance: 'الصيانة', customers: 'العملاء', purchasing: 'المشتريات' },
 };
 const labels = {
-  en: { view: 'View', edit: 'Edit', unsaved: 'Press Save to keep your changes', widgets: 'Widgets', properties: 'Widget properties', filters: 'Dashboard filters',
+  en: { view: 'View', edit: 'Edit', unsaved: 'Press Save to keep your changes', widgets: 'Widgets', properties: 'Widget properties', filters: 'Dashboard filters', dashboardSettings: 'Dashboard settings', selectedWidget: 'Selected widget',
     newWidget: 'Add widget', apply: 'Apply widget', addSeries: 'Add series', metric: 'Metric', primary: 'Primary / selection metric', dimension: 'Dimension', type: 'Visualization', remove: 'Remove widget',
     comparison: 'Comparison', moving: 'Moving average', running: 'Running total', contribution: 'Percentage contribution', ranking: 'Ranking', top: 'Top / bottom N',
     dateFrom: 'From', dateTo: 'To', applyDates: 'Apply dates', all: 'All', planned: 'Planned', none: 'None', selectWidget: 'Select a widget or add one',
     moveUp: 'Move series up', moveDown: 'Move series down', removeSeries: 'Remove series', topName: 'Top', bottomName: 'Bottom',
     preview: 'Live preview', drag: 'Drag the handle to reorder. Resize from the edges or corners. Focus the handle: arrows move, Shift + arrows resize.', chooseDimension: 'Choose a dimension', validation: 'Complete a valid widget before applying.',
   },
-  ar: { view: 'عرض', edit: 'تحرير', unsaved: 'اضغط حفظ للاحتفاظ بتغييراتك', widgets: 'البطاقات', properties: 'خصائص البطاقة', filters: 'مرشحات اللوحة',
+  ar: { view: 'عرض', edit: 'تحرير', unsaved: 'اضغط حفظ للاحتفاظ بتغييراتك', widgets: 'البطاقات', properties: 'خصائص البطاقة', filters: 'مرشحات لوحة المعلومات', dashboardSettings: 'إعدادات لوحة المعلومات', selectedWidget: 'البطاقة المحددة',
     newWidget: 'إضافة بطاقة', apply: 'تطبيق البطاقة', addSeries: 'إضافة سلسلة', metric: 'المؤشر', primary: 'المؤشر الأساسي / اختيار النتائج', dimension: 'البعد', type: 'نوع العرض', remove: 'إزالة البطاقة',
     comparison: 'المقارنة', moving: 'المتوسط المتحرك', running: 'المجموع التراكمي', contribution: 'نسبة المساهمة', ranking: 'الترتيب', top: 'أعلى / أدنى عدد',
     dateFrom: 'من', dateTo: 'إلى', applyDates: 'تطبيق التواريخ', all: 'الكل', planned: 'قيد التخطيط', none: 'بلا', selectWidget: 'اختر بطاقة أو أضف واحدة',
@@ -123,7 +123,7 @@ function WidgetEditor({ initial, adding, base, registry, catalog, locale, onAppl
     setDraft(current => ({ ...current, series }));
   };
   return <div className="builder-editor">
-    <h3>{adding ? t.newWidget : t.properties}</h3>
+    <h4>{adding ? t.newWidget : t.properties}</h4>
     <label>{t.type}<select value={choiceId} onChange={event => typeChanged(event.target.value)}>{(['summary', 'trend', 'comparison', 'composition', 'detail'] as const).map(group => <optgroup key={group} label={visualizationNames[locale][group]}>{choices.filter(option => option.group === group).map(option => <option key={option.id} value={option.id}>{visualizationLabel(option, locale)}</option>)}</optgroup>)}</select></label>
     {recommendation && <p className="builder-hint">{locale === 'ar' ? 'العرض المقترح: ' : 'Suggested visualization: '}{visualizationLabel(recommendation, locale)}</p>}
     <PaletteSelect locale={locale} value={draft.presentation?.palette ?? 'inherit'} dashboardPalette={base.presentation?.palette} onChange={value => {
@@ -282,10 +282,20 @@ export function BuilderWorkspace({ history, execution, catalog, registry, profil
         renderWidget={widget => busy || !execution?.widgetResults[widget.id] ? <article className="widget"><p role="status">{copy[locale].loading}</p></article> : <WidgetCard widget={widget} dashboardPalette={spec?.presentation?.palette} entry={execution?.widgetResults[widget.id]} catalog={catalog} locale={locale} profile={profile} />} />}
       {!spec && <p className="builder-hint">{t.selectWidget}</p>}
     </div>
-    <aside className="builder-properties">{spec && <DashboardAppearance locale={locale} palette={spec.presentation?.palette ?? 'default'} disabled={busy} onChange={palette => onCommand(dashboardPaletteCommand(palette))} />}{spec && selected && <WidgetLayoutInspector key={`layout-${selected.id}`} spec={spec} id={selected.id} locale={locale} onChange={layout => onCommand({ type: 'layout', layout })} />}{base && (selected || newWidget) ? <WidgetEditor key={selected?.id ?? `${newWidget?.id}-${addingType}`} initial={(selected ?? newWidget)!} adding={!!newWidget} base={base} registry={registry} catalog={catalog} locale={locale} onApply={applyWidget} onPalette={value => { if (selected) onCommand(widgetPaletteCommand(selected, value)); }} onRemove={() => removeWidget()} /> : <p>{t.selectWidget}</p>}
-      <div className="builder-filters"><h3>{t.filters}</h3><div className="builder-dates"><label>{t.dateFrom}<input type="date" value={dateFrom} onChange={event => setDateFrom(event.target.value)} /></label><label>{t.dateTo}<input type="date" value={dateTo} onChange={event => setDateTo(event.target.value)} /></label><button disabled={!spec || !dateFrom || !dateTo || dateFrom > dateTo} onClick={applyDates}>{t.applyDates}</button></div>
-      {filterDimensions.map(dimension => <label key={dimension}>{copy[locale].dimensions[dimension]}<select value={requestedFilters.find(filter => filter.dimension === dimension)?.values[0] ?? ''} disabled={!spec || !spec.widgets.every(widget => widget.series.every(series => catalog[series.metric]?.dimensions.includes(dimension)))} onChange={event => setRequestedFilter(dimension, event.target.value)}><option value="">{t.all}</option>{(filterOptions[dimension] ?? []).map(option => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label>)}
-      </div></aside>
+    <aside className="builder-properties">
+      <section className="dashboard-settings"><h3>{t.dashboardSettings}</h3>
+        {spec && <DashboardAppearance locale={locale} palette={spec.presentation?.palette ?? 'default'} disabled={busy} onChange={palette => onCommand(dashboardPaletteCommand(palette))} />}
+        <details className="dashboard-filters"><summary>{t.filters}</summary>
+          <div className="builder-filters"><div className="builder-dates"><label>{t.dateFrom}<input type="date" value={dateFrom} onChange={event => setDateFrom(event.target.value)} /></label><label>{t.dateTo}<input type="date" value={dateTo} onChange={event => setDateTo(event.target.value)} /></label><button disabled={!spec || !dateFrom || !dateTo || dateFrom > dateTo} onClick={applyDates}>{t.applyDates}</button></div>
+            {filterDimensions.map(dimension => <label key={dimension}>{copy[locale].dimensions[dimension]}<select value={requestedFilters.find(filter => filter.dimension === dimension)?.values[0] ?? ''} disabled={!spec || !spec.widgets.every(widget => widget.series.every(series => catalog[series.metric]?.dimensions.includes(dimension)))} onChange={event => setRequestedFilter(dimension, event.target.value)}><option value="">{t.all}</option>{(filterOptions[dimension] ?? []).map(option => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label>)}
+          </div>
+        </details>
+      </section>
+      {base && (selected || newWidget) ? <section className="widget-settings"><h3>{t.selectedWidget}</h3>
+        {spec && selected && <WidgetLayoutInspector key={`layout-${selected.id}`} spec={spec} id={selected.id} locale={locale} onChange={layout => onCommand({ type: 'layout', layout })} />}
+        <WidgetEditor key={selected?.id ?? `${newWidget?.id}-${addingType}`} initial={(selected ?? newWidget)!} adding={!!newWidget} base={base} registry={registry} catalog={catalog} locale={locale} onApply={applyWidget} onPalette={value => { if (selected) onCommand(widgetPaletteCommand(selected, value)); }} onRemove={() => removeWidget()} />
+      </section> : <p>{t.selectWidget}</p>}
+    </aside>
   </div>;
 }
 

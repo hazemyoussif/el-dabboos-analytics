@@ -228,3 +228,35 @@ test('viewer and live builder previews inherit current dashboard palette while o
     }
   } finally { await server.close(); }
 });
+
+
+test('builder inspector groups dashboard disclosures above selected widget controls in EN/AR and preserves empty guidance', async () => {
+  const server = await createServer({ root: fileURLToPath(new URL('../', import.meta.url)), server: { middlewareMode: true }, optimizeDeps: { noDiscovery: true }, appType: 'custom' });
+  try {
+    const { BuilderWorkspace } = await server.ssrLoadModule('/src/builder/BuilderWorkspace.tsx');
+    const { startBuilder } = await import('../src/builder/model.ts');
+    const { productMetricCatalog } = await import('@el-dabboos/domain');
+    for (const locale of ['en','ar'] as const) {
+      const props = { execution: null, locale, catalog: semanticCatalog, registry: productMetricCatalog, profile: tenantProfiles['demo-iq'], filterOptions: {}, busy: false, onCommand() {}, onUndo() {}, onRedo() {} };
+      const html = renderToStaticMarkup(createElement(BuilderWorkspace, { ...props, history: startBuilder({ kind: 'dashboard', spec }) }));
+      const dashboardStart = html.indexOf('<section class="dashboard-settings">');
+      const widgetStart = html.indexOf('<section class="widget-settings">');
+      assert.ok(dashboardStart >= 0); assert.ok(widgetStart > dashboardStart);
+      const dashboard = html.slice(dashboardStart, widgetStart);
+      const widget = html.slice(widgetStart, html.indexOf('</aside>', widgetStart));
+      assert.ok(dashboard.includes(`<h3>${locale === 'en' ? 'Dashboard settings' : 'إعدادات لوحة المعلومات'}</h3>`));
+      assert.match(dashboard, /<details class="dashboard-appearance">/u);
+      assert.match(dashboard, /<details class="dashboard-filters"><summary>/u);
+      assert.ok(dashboard.includes(locale === 'en' ? 'Dashboard filters' : 'مرشحات لوحة المعلومات'));
+      assert.ok(!dashboard.includes('builder-editor')); assert.ok(!dashboard.includes('layout-inspector'));
+      assert.ok(widget.includes(`<h3>${locale === 'en' ? 'Selected widget' : 'البطاقة المحددة'}</h3>`));
+      assert.ok(widget.indexOf('layout-inspector') < widget.indexOf('builder-editor'));
+      assert.ok(widget.includes(`<h4>${locale === 'en' ? 'Widget properties' : 'خصائص البطاقة'}</h4>`));
+      assert.ok(widget.includes('value="inherit" selected=""')); assert.ok(!widget.includes('dashboard-filters'));
+      const empty = renderToStaticMarkup(createElement(BuilderWorkspace, { ...props, history: startBuilder(blankDashboardDraft(tenantProfiles['demo-iq'], locale)) }));
+      assert.ok(empty.includes('class="dashboard-settings"')); assert.ok(empty.includes('class="dashboard-filters"'));
+      assert.ok(!empty.includes('class="dashboard-appearance"')); assert.ok(!empty.includes('class="widget-settings"'));
+      assert.ok(empty.includes(locale === 'en' ? 'Select a widget or add one' : 'اختر بطاقة أو أضف واحدة'));
+    }
+  } finally { await server.close(); }
+});

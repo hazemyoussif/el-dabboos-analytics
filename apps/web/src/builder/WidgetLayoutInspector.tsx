@@ -14,7 +14,7 @@ export function WidgetLayoutInspector({ spec, id, locale, onChange }: { spec: Da
     try { onChange(updateWidgetLayout(spec, id, value, reflow)); setMessage(''); }
     catch { setMessage(ar ? 'الموضع يتداخل مع بطاقة أو يتجاوز حدود الشبكة.' : 'Position overlaps a widget or exceeds grid limits.'); }
   };
-  return <section className="layout-inspector"><h3>{ar ? 'الحجم والموضع' : 'Size & position'}</h3>
+  return <section className="layout-inspector"><h4>{ar ? 'الحجم والموضع' : 'Size & position'}</h4>
     <div className="layout-fields">{(['x', 'y', 'w', 'h'] as const).map(field => <label key={field}>{({ x: 'X', y: 'Y', w: ar ? 'العرض' : 'Width', h: ar ? 'الارتفاع' : 'Height' })[field]}
       <input aria-label={`Layout ${field}`} type="number" value={item[field]} min={field === 'w' ? minima.minW : field === 'h' ? minima.minH : 0} max={field === 'x' ? 12 - item.w : field === 'y' ? 200 : field === 'w' ? 12 - item.x : 20}
         onChange={event => { if (event.target.value !== '') change({ [field]: Number(event.target.value) }); }} /></label>)}</div>
