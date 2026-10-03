@@ -38,3 +38,7 @@ Snapshots represent an entity/measure balance at an effective point in time. Sel
 ## Required adapter evidence
 
 Tenant and enforced filter isolation; canonical mock-equivalent contract tests; supported dimensions/value lookup under policy; calendar/leap/month-end comparisons; ratio nulls; source metadata truth; duplicate/missing/correction handling; source-native resource limits. Reconcile approved reports before pilot. No arbitrary tolerances or SQL generation. [Reconciliation plan](reconciliation-plan.md), [future acceptance cases](../qa/real-data-acceptance-tests.md).
+
+## Executable offline boundary
+
+The separate [production contracts](../../packages/domain/src/production-data.ts) and [ADR 027](../architecture/adr/027-production-data-foundation.md) define exact decimal text, required currency evidence, versioned business-basis releases, event/snapshot identities, ordered corrections, strict certification and batch lineage. These are not extensions to demo AnalyticsFact and do not select an Odoo source. A new mapping basis/version requires a separate reconciled release; queries cannot mix releases. PostgreSQL writer/serving and frozen reconciliation are implemented and integration-tested with synthetic data; approved source mapping and protocol evidence remain prerequisites. [Operations](postgres-mart-operations.md).

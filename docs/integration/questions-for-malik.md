@@ -2,6 +2,26 @@
 
 All answers are pending. Original questions Q01–Q18 remain unresolved and are retained below; added questions extend discovery without assuming source architecture. Record answer, owner, evidence/date and status alongside each ID.
 
+## First decision: approved integration boundary
+
+Which production source integration is approved for the new El-Dabboos Analytics platform?
+
+- A. dedicated read-only Odoo access
+- B. existing Odoo Engine with a **new dedicated read-only key**
+- C. dedicated n8n/integration endpoint
+- D. existing Python/backend/PostgreSQL interface
+- E. another approved source
+
+Approve the boundary first; credentials come later. The new platform owns its analytics mart ([ADR 027](../architecture/adr/027-production-data-foundation.md)); Q03 below now concerns the ingestion source, not reuse of a legacy database as the platform store. No passwords, keys or credential exports are requested in this phase.
+
+If Engine is approved later: ENGINE_URL, new dedicated read-only ENGINE_API_KEY, company scope, allowed models/fields, search_read/read_group, pagination/rate limits and freshness contract. Never default to the product-sync key.
+
+If direct Odoo is approved later: ODOO_URL/database/version, dedicated integration user, approved secret mechanism, company/model permissions and resource limits.
+
+If backend/Postgres is approved later: documented endpoint/schema, dedicated read-only identity, tenant/company mapping, stable identity, watermark, correction/deletion and freshness contract. Do not assume table access when an API is preferred. First live activity must be an approved bounded read; no sync triggers, updates or legacy workflow changes.
+
+All choices, sales basis/report, certified organizational dimension and tolerance approvals remain pending.
+
 ## Source architecture
 
 **Q02 (original 2):** **Python processing:** Where would Python jobs run, and which transformations must happen before analytics?
@@ -86,4 +106,4 @@ All answers are pending. Original questions Q01–Q18 remain unresolved and are 
 
 **Q30:** Which tenant, closed-month report and first metric family constitute the pilot vertical slice? Who signs reconciliation, approved tolerances, latency and privacy go/no-go?
 
-Do not start real-data ingestion until the [P0 gates](production-readiness.md) have assigned approvals. Recommended first slice: approved revenue/net revenue/order count for one tenant, monthly/branch grouping and a frozen source watermark, plus isolation controls.
+Do not start real-data ingestion until the [P0 gates](production-readiness.md) have assigned approvals. Recommended first slice: approved revenue/net revenue/order count for one tenant, monthly grouping and one certified organizational dimension (branch only if supported) and a frozen source watermark, plus isolation controls.

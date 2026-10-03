@@ -16,3 +16,7 @@
 ## Unresolved / proposed
 
 Business states/formulas, tenant/company mapping, transaction/base/reporting currency rules, IdP and policy ownership, real source shape, deletes/backfills, watermark, expected scale, privacy, latency, backups and migrations need confirmation. Do not infer real Odoo tables, ingestion freshness, permission mappings or tolerances from synthetic examples. [Malik questions](../integration/questions-for-malik.md), [production readiness](../integration/production-readiness.md).
+
+## Offline foundation added
+
+Separate production contracts, a checksummed migration runner, transactional writer, frozen reconciliation and SQL-based PostgreSQL serving now exist and are tested with synthetic data on PostgreSQL 18.6. Roles/forced RLS, pooling, bounds and CI service are implemented. Demo AnalyticsFact retains its lightweight execution representation. No source integration or mapping is approved and no real data was accessed. [ADR 027](adr/027-production-data-foundation.md).
