@@ -1,6 +1,6 @@
 import type { TenantProfile } from './contracts.ts';
 
-export const tenantProfiles: Readonly<Record<TenantProfile['id'], TenantProfile>> = {
+export const tenantProfiles: Readonly<Record<string, TenantProfile> & Record<'demo-iq' | 'demo-eg', TenantProfile>> = {
   'demo-iq': {
     id: 'demo-iq', countryCode: 'IQ', defaultLocale: 'ar', arabicDialect: 'iq', reportingCurrency: 'IQD', timeZone: 'Asia/Baghdad',
     labels: { en: 'Iraq demo', ar: 'العراق التجريبي' }, exampleBranchIds: ['baghdad', 'basra'],

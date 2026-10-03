@@ -19,3 +19,4 @@ export * from './edit-target-index.ts';
 export * from "./relative-date.ts";
 
 export * from "./dashboard-filters.ts";
+export * from './access-control.ts';

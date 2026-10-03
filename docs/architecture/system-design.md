@@ -80,3 +80,7 @@ DashboardSpec v2 business filters persist a symbolic datePreset, fixed dateRange
 ## Offline production foundation
 
 [ADR 027](adr/027-production-data-foundation.md) establishes an El Dabboos-owned PostgreSQL mart, separate ingestion envelope, source reader, versioned mapping certification and reconciliation contracts. Domain validators, five transactional SQL migrations, role/RLS enforcement, a mart writer, frozen reconciliation and bounded SQL-based serving are implemented and tested on PostgreSQL 18.6. [Operations](../integration/postgres-mart-operations.md) documents provisioning and limits. Existing mock/SQLite execution is unchanged. Production sources and mappings are unapproved.
+
+## Administration architecture checkpoint
+
+[ADR 028](adr/028-customer-tenant-access-control.md) defines the next customer/tenant, identity/membership and role/scope/grant model with separate platform authority. Pure contracts and guards are implemented; persistent administration, restricted saved-record wiring and admin pages remain deferred. TenantProfile IDs are data-driven while the demo market/profile adapter remains static. Analytics contracts and the PostgreSQL mart are unchanged. [Implementation handoff](../security/access-control-sol-handoff.md).

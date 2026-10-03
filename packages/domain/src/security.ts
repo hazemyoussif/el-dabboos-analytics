@@ -1,7 +1,12 @@
 import type { AnalyticsFilter, DashboardSpec, Locale, MetricId, TenantProfile } from './contracts.ts';
 import type { MetricDomain } from './metric-registry.ts';
 
-export type Permission = 'dashboard:view' | 'dashboard:create' | 'dashboard:edit' | 'dashboard:share' | 'analytics:query' | 'ai:generate' | 'ai:edit' | 'tenant:manage' | 'users:manage';
+/** Tenant vocabulary only. Platform capabilities never enter RequestContext. */
+export const tenantPermissions = ['dashboard:view', 'dashboard:create', 'dashboard:edit', 'dashboard:share',
+  'analytics:query', 'ai:generate', 'ai:edit', 'tenant:view', 'tenant:manage', 'users:view', 'users:manage',
+  'users:invite', 'roles:view', 'roles:manage', 'data_scopes:view', 'data_scopes:manage',
+  'dashboard_access:view', 'dashboard_access:manage'] as const;
+export type Permission = typeof tenantPermissions[number];
 export interface User { id: string; displayName: string; email?: string }
 export interface Tenant { id: string; profile?: TenantProfile }
 export interface Role { id: string; permissions: readonly Permission[] }

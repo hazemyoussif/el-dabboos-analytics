@@ -34,7 +34,7 @@ export interface SemanticMetric {
   presentation: { decimals: number; unit?: string };
 }
 export interface TenantProfile {
-  id: 'demo-iq' | 'demo-eg';
+  id: string;
   countryCode: 'IQ' | 'EG';
   defaultLocale: Locale;
   arabicDialect: 'iq' | 'eg';

@@ -114,3 +114,7 @@ Current synthetic-demo regression cases. Use the setup and evidence rules in [ma
 **Cleanup:** Discard unsaved changes; restore identity, tenant, filters and preferences; remove test folders/associations. Saved QA records may remain because record deletion is not implemented; use a disposable metadata DB.
 **Automation coverage:** [API authorization integration tests](../../apps/api/test/api.test.ts) covers the related contract; human interaction and appearance still require this case.
 **Story / acceptance:** [US-AUTH-006](../product/user-stories.md#us-auth-006) / [AC-AUTH-006](../product/acceptance-criteria.md#ac-auth-006).
+
+## Administration architecture evidence and implementation gate
+
+Pure resolver/delegation/lifecycle/resource checks are covered by [application access-control tests](../../packages/application/test/access-control.test.ts); composed scopes and latest-snapshot isolation by [data access-control tests](../../packages/data/test/access-control.test.ts) on mock/SQLite. Existing API tests continue exercising the unchanged demo composition. These are not persistent admin route or browser evidence. [Sol handoff](../security/access-control-sol-handoff.md) requires migration/CAS/concurrent lockout, actual admin HTTP bypass tests and PostgreSQL compiled-scope parity before delivery.

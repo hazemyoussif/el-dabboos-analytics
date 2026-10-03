@@ -11,6 +11,7 @@ const monetaryMeasures = new Set<AnalyticsFact['measureId']>(['revenue', 'net_re
 /** Two years of canonical source measures with fixed, discoverable business patterns. */
 export function generateSeedFacts(tenantId: TenantProfile['id'] = 'demo-iq', seed = 20261003): AnalyticsFact[] {
   const profile = tenantProfiles[tenantId];
+  if (!profile) throw new Error('Synthetic seed requires a known demo tenant profile.');
   const branches = Object.keys(profile.branchLabels);
   const warehouses = branches.slice(0, 5).map(branch => `${branch}-main`);
   const customersPerBranch = tenantId === 'demo-iq' ? 70 : 60;

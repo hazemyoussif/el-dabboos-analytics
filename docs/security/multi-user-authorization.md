@@ -27,3 +27,7 @@ flowchart LR
 ```
 
 Production authentication, Odoo group mapping, user lifecycle, and company/branch policy ownership remain open pending Malik's answers. The eventual identity adapter should resolve the same `RequestContext` contract; the demo headers must be removed or isolated before deployment.
+
+## Administration architecture continuation
+
+[ADR 028](../architecture/adr/028-customer-tenant-access-control.md) settles separate customer/tenant and user/identity entities, platform versus tenant planes, role-owned domains, membership scopes, view grants and lifecycle/recovery rules. Pure contracts/resolvers/guards and focused synthetic tests exist; the current HTTP demo still uses the foundation above. Persistent adapter/API/UI cutover is specified in the [Sol handoff](access-control-sol-handoff.md), not claimed implemented.
