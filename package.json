@@ -16,7 +16,9 @@
     "dev:api": "pnpm --filter @el-dabboos/api dev",
     "dev:web": "pnpm --filter @el-dabboos/web dev",
     "test:postgres": "node --experimental-transform-types --disable-warning=ExperimentalWarning --test packages/data/test/postgres/*.test.ts",
-    "mart:migrate": "node --experimental-transform-types --disable-warning=ExperimentalWarning packages/data/src/postgres/migrate-cli.ts"
+    "mart:migrate": "node --experimental-transform-types --disable-warning=ExperimentalWarning packages/data/src/postgres/migrate-cli.ts",
+    "metadata:migrate": "node --experimental-transform-types --disable-warning=ExperimentalWarning packages/data/src/metadata/migrate-cli.ts",
+    "metadata:bootstrap": "node --experimental-transform-types --disable-warning=ExperimentalWarning packages/data/src/metadata/bootstrap-cli.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

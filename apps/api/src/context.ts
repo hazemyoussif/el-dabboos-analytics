@@ -1,9 +1,17 @@
+import { AdministrationService, GovernedSavedDashboardService, resolveTenantAccess } from '@el-dabboos/application';
+import type { AdministrationActor } from '@el-dabboos/application';
+import type { AdministrationUnitOfWork, AccessDirectory, TenantProfileProvider } from '@el-dabboos/domain';
 import { DashboardLibraryService, AuthorizedAnalyticsService, AuthorizationError, DefaultAuthorizationPolicy, DemoIdentityProvider, DashboardExecutor, InMemoryAuditSink, MockDashboardPlanner, SavedDashboardService, analyticsContext, dashboardTemplates } from '@el-dabboos/application';
 import { getTenantProfile, validateDashboardSpec } from '@el-dabboos/domain';
 import type { AnalyticsRepository, AuditAction, AuditSink, AuthorizationPolicy, DashboardPlanner, DashboardLibraryRepository, DashboardRepository, DashboardSpec, DemoIdentityDirectory, DimensionValueRepository, IdentityProvider, Locale, Permission, RequestContext, TenantProfile } from '@el-dabboos/domain';
 import { ApiError } from './errors.ts';
 
 export interface ApiDependencies {
+  administration?: { unitOfWork: AdministrationUnitOfWork; directory: AccessDirectory; profiles: TenantProfileProvider;
+    /** Explicit synthetic adapter or configured trusted IdP boundary; headers never directly become binding IDs. */
+    authenticate: (headers: Record<string, unknown>) => Promise<string>;
+    principals?: () => Promise<readonly { id: string; displayName: string }[]>;
+    dataReady: (tenantId: string) => Promise<boolean> };
   analyticsRepository: AnalyticsRepository;
   dimensionValues: DimensionValueRepository;
   libraryRepository?: DashboardLibraryRepository;
@@ -22,12 +30,15 @@ export interface RouteContext {
   clock: () => Date;
   planner: DashboardPlanner | null;
   library: DashboardLibraryService | null;
-  savedDashboards: SavedDashboardService | null;
+  savedDashboards: SavedDashboardService | GovernedSavedDashboardService | null;
+  administration: AdministrationService | null;
+  identityId(headers: Record<string, unknown>): Promise<string>;
+  requireData(tenantId: string): Promise<void>;
   executor: DashboardExecutor;
   analytics: AuthorizedAnalyticsService;
   directory: DemoIdentityDirectory;
   userId(headers: Record<string, unknown>): string;
-  session(headers: Record<string, unknown>): { context: RequestContext; profile: TenantProfile };
+  session(headers: Record<string, unknown>): Promise<{ context: RequestContext; profile: TenantProfile }>;
   authorize(context: RequestContext, ...permissions: Permission[]): void;
   ensureDashboard(spec: unknown, context: RequestContext): DashboardSpec;
   checked<T>(context: RequestContext, action: AuditAction, operation: () => Promise<T>, dashboardId?: string): Promise<T>;
@@ -43,7 +54,11 @@ export function createRouteContext(deps: ApiDependencies): RouteContext {
   const audit = deps.auditSink ?? new InMemoryAuditSink();
   const executor = new DashboardExecutor(deps.analyticsRepository, clock, deps.executionConcurrency === undefined ? {} : { maxConcurrency: deps.executionConcurrency });
   const analytics = new AuthorizedAnalyticsService(deps.analyticsRepository, policy);
-  const savedDashboards = deps.dashboardRepository ? new SavedDashboardService(deps.dashboardRepository, policy, clock) : null;
+  const actors = new WeakMap<RequestContext, AdministrationActor>();
+  const administration = deps.administration ? new AdministrationService(deps.administration.unitOfWork, policy, clock) : null;
+  const savedDashboards = deps.administration ? new GovernedSavedDashboardService(deps.administration.unitOfWork, policy, context => {
+    const actor = actors.get(context); if (!actor) throw new ApiError(403, 'ACCESS_DENIED', 'Access unavailable.'); return actor;
+  }, clock) : deps.dashboardRepository ? new SavedDashboardService(deps.dashboardRepository, policy, clock) : null;
   const library = deps.libraryRepository && savedDashboards ? new DashboardLibraryService(deps.libraryRepository, savedDashboards, clock) : null;
   const userId = (headers: Record<string, unknown>) => {
     const value = headers['x-demo-user-id'];
@@ -51,7 +66,29 @@ export function createRouteContext(deps: ApiDependencies): RouteContext {
     if (!directory.listUsers().some(user => user.id === value)) throw new ApiError(401, 'UNKNOWN_USER', 'Unknown demo user.');
     return value;
   };
-  const session = (headers: Record<string, unknown>): { context: RequestContext; profile: TenantProfile } => {
+  const identityId = async (headers: Record<string, unknown>) => {
+    if (!deps.administration) throw new ApiError(503, 'ADMIN_UNAVAILABLE', 'Administration is unavailable.');
+    return deps.administration.authenticate(headers);
+  };
+  const requireData = async (tenantId: string) => {
+    if (!deps.administration) return;
+    const ready = await deps.administration.dataReady(tenantId).catch(() => false);
+    if (!ready) throw new ApiError(503, 'DATA_NOT_READY', 'Approved analytics data is not ready for this workspace.');
+  };
+  const session = async (headers: Record<string, unknown>): Promise<{ context: RequestContext; profile: TenantProfile }> => {
+    if (deps.administration) {
+      const binding = await identityId(headers), tenant = headers['x-tenant-id'];
+      if (typeof tenant !== 'string' || !tenant) throw new ApiError(401, 'TENANT_REQUIRED', 'Select a workspace.');
+      const profile = await deps.administration.profiles.get(tenant, 'en').catch(() => { throw new ApiError(503, 'ADMIN_UNAVAILABLE', 'Metadata unavailable.'); });
+      if (!profile) throw new ApiError(403, 'ACCESS_DENIED', 'Workspace unavailable.');
+      const locale = headers['x-locale'] ?? profile.defaultLocale;
+      if (locale !== 'en' && locale !== 'ar') throw new ApiError(400, 'INVALID_LOCALE', 'Locale must be en or ar.');
+      const snapshot = await deps.administration.directory.tenantAccess(binding, tenant).catch(() => { throw new ApiError(503, 'ADMIN_UNAVAILABLE', 'Metadata unavailable.'); });
+      if (!snapshot) throw new ApiError(403, 'ACCESS_DENIED', 'Workspace unavailable.');
+      const resolved = resolveTenantAccess(snapshot, binding, tenant, locale);
+      actors.set(resolved.context, { identityId: binding, tenantId: tenant, locale });
+      return { context: resolved.context, profile };
+    }
     const user = userId(headers);
     const tenant = headers['x-tenant-id'];
     if (typeof tenant !== 'string' || !tenant) throw new ApiError(401, 'TENANT_REQUIRED', 'A controlled demo tenant header is required.');
@@ -79,6 +116,6 @@ export function createRouteContext(deps: ApiDependencies): RouteContext {
       filters: {}, layout: template.layout, widgets: template.widgets }, context); return true; }
     catch (error) { if (error instanceof AuthorizationError) return false; throw error; }
   };
-  return { library, deps, clock, planner, savedDashboards, executor, analytics, directory, userId, session, authorize, ensureDashboard, checked, templateAllowed };
+  return { administration, identityId, requireData, library, deps, clock, planner, savedDashboards, executor, analytics, directory, userId, session, authorize, ensureDashboard, checked, templateAllowed };
 }
 export { analyticsContext };

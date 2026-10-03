@@ -6,7 +6,9 @@ import { tenantTransaction } from './session.ts';
 import { bind, dimensionSql, filterSql, numericOutput } from './sql.ts';
 
 export interface PostgresRepositoryOptions {
-  reportingCurrencies: Readonly<Record<string,string>>; clock?: () => Date;
+  reportingCurrencies: Readonly<Record<string,string>>;
+  /** Trusted metadata configuration, resolved freshly; never a query/client currency. */
+  reportingCurrency?: (tenantId: string) => Promise<string | null>; clock?: () => Date;
   maxGroups?: number; maxDateSpanDays?: number; statementTimeoutMs?: number;
 }
 interface Slot { key: string | null; from: string | null; to: string | null; match_key: string | null }
@@ -23,8 +25,15 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository, Dimensi
     const row = (await client.query(`SELECT m.* FROM mart.serving_bindings b JOIN mart.mapping_releases m USING (tenant_id,dataset_id) WHERE b.tenant_id=$1 AND m.approval_status='approved'`, [context.tenantId])).rows[0];
     if (!row) throw new Error('No approved serving binding');
     const m = row.specification as SourceMapping; validateSourceMapping(m);
-    if (m.approval.status !== 'approved' || m.tenantId !== context.tenantId || m.datasetId !== row.dataset_id || m.sourceId !== row.source_id || m.mappingVersion !== row.mapping_version || m.mappingId !== row.mapping_id || m.reportingCurrency !== row.reporting_currency || m.reportingCurrency !== this.options.reportingCurrencies[context.tenantId]) throw new Error('Uncertified binding/reporting currency mismatch');
+    const trustedCurrency = this.options.reportingCurrency ? await this.options.reportingCurrency(context.tenantId) : this.options.reportingCurrencies[context.tenantId];
+    if (m.approval.status !== 'approved' || m.tenantId !== context.tenantId || m.datasetId !== row.dataset_id || m.sourceId !== row.source_id || m.mappingVersion !== row.mapping_version || m.mappingId !== row.mapping_id || m.reportingCurrency !== row.reporting_currency || m.reportingCurrency !== trustedCurrency) throw new Error('Uncertified binding/reporting currency mismatch');
     return m;
+  }
+  async isDataReady(tenantId: string): Promise<boolean> {
+    return tenantTransaction(this.pool, tenantId, async client => {
+      if (!(await client.query("SELECT 1 FROM mart.serving_bindings b JOIN mart.mapping_releases m USING (tenant_id,dataset_id) WHERE b.tenant_id=$1 AND m.approval_status='approved'", [tenantId])).rowCount) return false;
+      await this.release(client, { tenantId, locale: 'en' }); return true;
+    });
   }
   async execute(query: AnalyticsQuery, context: AnalyticsContext): Promise<AnalyticsResult> {
     validateQuery(query,context);

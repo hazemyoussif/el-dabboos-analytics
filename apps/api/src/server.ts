@@ -1,7 +1,9 @@
 import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
-import { SqliteDashboardLibraryRepository, createDashboardLibrarySchema, MockAnalyticsRepository, SqliteAnalyticsRepository, SqliteDashboardRepository, createSqliteSchema, createDashboardPersistenceSchema, generateSeedFacts, PostgresAnalyticsRepository, createMartPool, verifyMartRuntimeRole } from '@el-dabboos/data';
-import { tenantProfiles } from '@el-dabboos/domain';
+import { SqliteAdministrationStore, assertMetadataReady,  MockAnalyticsRepository, SqliteAnalyticsRepository,  createSqliteSchema,  generateSeedFacts, PostgresAnalyticsRepository, createMartPool, verifyMartRuntimeRole } from '@el-dabboos/data';
+import { resolve, } from 'node:path';
+import { realpathSync, existsSync } from 'node:fs';
+import { ApiError } from './errors.ts';
 import type { AnalyticsRepository, DimensionValueRepository } from '@el-dabboos/domain';
 import { StructuredDashboardPlanner } from '@el-dabboos/application';
 import type { StructuredPlannerDiagnostic } from '@el-dabboos/application';
@@ -12,7 +14,15 @@ import { parseRuntimeConfig, startupSummary } from './startup-config.ts';
 import { buildApi } from './app.ts';
 
 const config = parseRuntimeConfig(process.env, { analyticsPath: fileURLToPath(new URL('../../../demo.db', import.meta.url)), dashboardPath: fileURLToPath(new URL('../../../dashboards.db', import.meta.url)) });
+// Metadata is independent of analytics: explicit migration command is required before startup.
+const canonicalPath = (path: string) => existsSync(path) ? realpathSync(path) : resolve(path);
+if (canonicalPath(config.analyticsPath) === canonicalPath(config.dashboardPath)) throw new Error('Analytics and metadata database paths must be separate. Copy approved dashboard/library tables explicitly to a dedicated metadata file before migration.');
+const dashboardDb = new DatabaseSync(config.dashboardPath);
+const administration = new SqliteAdministrationStore(dashboardDb);
+const syntheticIdentity = (process.env.ACCESS_IDENTITY_MODE ?? 'synthetic') === 'synthetic';
+if (!['synthetic','disabled'].includes(process.env.ACCESS_IDENTITY_MODE ?? 'synthetic')) throw new Error('Unsupported identity mode. Production IdP integration is not implemented.');
 const provider = config.analyticsProvider;
+let dataReady: (tenantId: string) => Promise<boolean> = async id => id === 'demo-iq' || id === 'demo-eg';
 let analyticsReady: () => Promise<boolean>;
 let repository: AnalyticsRepository & DimensionValueRepository;
 let close: () => void | Promise<void> = () => {};
@@ -29,14 +39,14 @@ if (provider === 'sqlite') {
   if (!config.postgres) throw new Error('Missing PostgreSQL runtime configuration');
   const pool = createMartPool(config.postgres.runtimeUrl,config.postgres.poolMax);
   pool.on('error', () => { process.stderr.write('PostgreSQL pool connection failed\n'); });
-  repository = new PostgresAnalyticsRepository(pool,{ reportingCurrencies: Object.fromEntries(Object.values(tenantProfiles).map(t => [t.id,t.reportingCurrency])),statementTimeoutMs: config.postgres.statementTimeoutMs,maxGroups: config.postgres.maxGroups,maxDateSpanDays: config.postgres.maxDateSpanDays });
+  repository = new PostgresAnalyticsRepository(pool,{ reportingCurrencies: {}, reportingCurrency: async id => (await administration.profiles.get(id, 'en'))?.reportingCurrency ?? null,statementTimeoutMs: config.postgres.statementTimeoutMs,maxGroups: config.postgres.maxGroups,maxDateSpanDays: config.postgres.maxDateSpanDays });
+  const postgresRepository = repository as PostgresAnalyticsRepository;
+  dataReady = id => postgresRepository.isDataReady(id);
   close = () => pool.end();
   try { await verifyMartRuntimeRole(pool); } catch { await pool.end(); throw new Error('PostgreSQL runtime identity/provisioning check failed'); }
   analyticsReady = async () => { await pool.query('SELECT 1 FROM mart.canonical_facts LIMIT 0'); return true; };
 }
-const dashboardDb = new DatabaseSync(config.dashboardPath);
-createDashboardPersistenceSchema(dashboardDb);
-createDashboardLibrarySchema(dashboardDb);
+
 const plannerMode = config.plannerMode;
 let planner: DashboardPlanner | null | undefined;
 if (plannerMode === 'structured') {
@@ -55,8 +65,20 @@ if (plannerMode === 'structured') {
 } else if (plannerMode === 'disabled') planner = null;
 else if (plannerMode !== 'mock') throw new Error('DASHBOARD_PLANNER must be mock, structured, or disabled.');
 const app = await buildApi({ analyticsRepository: repository, dimensionValues: repository, executionConcurrency: config.executionConcurrency,
-  readiness: { persistence: async () => { for (const table of ['dashboard_records', 'dashboard_folders', 'dashboard_library_preferences']) dashboardDb.prepare(`SELECT 1 FROM ${table} LIMIT 0`).all(); return true; }, analytics: analyticsReady },
-  dashboardRepository: new SqliteDashboardRepository(dashboardDb), libraryRepository: new SqliteDashboardLibraryRepository(dashboardDb), ...(planner !== undefined ? { planner } : {}) });
+  readiness: { persistence: async () => { assertMetadataReady(dashboardDb); return true; }, analytics: analyticsReady },
+  administration: { unitOfWork: administration, directory: administration.directory, profiles: administration.profiles, dataReady,
+    authenticate: async headers => {
+      if (!syntheticIdentity) throw new ApiError(401, 'IDENTITY_REQUIRED', 'Trusted authentication is not configured.');
+      const id = headers['x-demo-user-id']; if (typeof id !== 'string' || !id) throw new ApiError(401, 'IDENTITY_REQUIRED', 'Select a synthetic identity.');
+      const binding = await administration.read(tx => tx.users.findIdentity('synthetic', id));
+      if (!binding) throw new ApiError(401, 'IDENTITY_REQUIRED', 'Unknown synthetic identity.'); return binding.id;
+    },
+    ...(syntheticIdentity ? { principals: () => administration.read(async tx => {
+      const users = await tx.users.listUsers({ limit: 100 }); const result = [];
+      for (const u of users.items) if (await tx.users.findIdentity('synthetic', u.id)) result.push({ id: u.id, displayName: u.displayName });
+      return result;
+    }) } : {}),
+  }, libraryRepository: administration.library, ...(planner !== undefined ? { planner } : {}) });
 const port = config.port;
 try {
   const address = await app.listen({ port, host: '127.0.0.1' });

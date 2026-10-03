@@ -37,6 +37,8 @@ export interface UserIdentityRepository {
   getUser(id: string): Promise<ProductUser | null>;
   createUser(record: ProductUser): Promise<ProductUser>;
   updateUser(record: ProductUser, expectedVersion: number): Promise<MetadataWriteResult<ProductUser>>;
+  getIdentity(id: string): Promise<IdentityBinding | null>;
+  listIdentities(userId: string): Promise<readonly IdentityBinding[]>;
   findIdentity(provider: string, providerSubject: string): Promise<IdentityBinding | null>;
   /** Only trusted bootstrap/IdP integration may bind; no tenant-admin rebind endpoint. */
   bindIdentity(record: IdentityBinding): Promise<IdentityBinding>;
@@ -49,6 +51,7 @@ export interface UserIdentityRepository {
   activePlatformAdministratorUserIds(): Promise<readonly string[]>;
 }
 export interface TenantAdministrationRepository {
+  listAssignmentCandidates(tenantId: string): Promise<readonly ProductUser[]>;
   listMemberships(tenantId: string, page: PageRequest): Promise<MetadataPage<ManagedMembership>>;
   getMembership(tenantId: string, id: string): Promise<ManagedMembership | null>;
   createMembership(record: ManagedMembership): Promise<ManagedMembership>;

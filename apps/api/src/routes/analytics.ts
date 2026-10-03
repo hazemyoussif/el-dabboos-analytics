@@ -6,7 +6,9 @@ import type { RouteContext } from '../context.ts';
 
 export function registerAnalyticsRoutes(app: FastifyInstance, services: RouteContext): void {
   app.post('/api/analytics/query', async request => {
-    const { context } = services.session(request.headers);
+    const { context } = await services.session(request.headers);
+    services.authorize(context, 'analytics:query');
+    await services.requireData(context.tenant.tenantId);
     return services.checked(context, 'analytics.query', async () => {
       const query = request.body as AnalyticsQuery;
       validateQuery(query, analyticsContext(context));

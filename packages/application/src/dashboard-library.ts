@@ -1,5 +1,6 @@
 import type { DashboardLibraryRepository, DashboardLibraryScope, RequestContext } from '@el-dabboos/domain';
 import type { SavedDashboardService } from './saved-dashboards.ts';
+import type { GovernedSavedDashboardService } from './governed-saved-dashboards.ts';
 export class DashboardLibraryError extends Error {
   constructor(readonly code: 'FOLDER_NOT_FOUND' | 'INVALID_LIBRARY_INPUT', message: string) { super(message); }
 }
@@ -9,7 +10,7 @@ function nameInput(name: unknown): string {
   return name.trim();
 }
 export class DashboardLibraryService {
-  constructor(private readonly repository: DashboardLibraryRepository, private readonly dashboards: SavedDashboardService,
+  constructor(private readonly repository: DashboardLibraryRepository, private readonly dashboards: SavedDashboardService | GovernedSavedDashboardService,
     private readonly clock: () => Date = () => new Date(), private readonly createId: () => string = () => crypto.randomUUID()) {}
   async list(context: RequestContext) {
     const records = await this.dashboards.list(context);

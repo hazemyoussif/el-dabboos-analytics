@@ -115,3 +115,16 @@ test('repository parity: every executable catalog family, inventory/finance snap
     });
   } finally { await db.close(); }
 });
+test('compiled membership scopes: same-dimension OR, compound AND and latest snapshot before policy', {skip:!enabled},async()=>{
+ const {compileMembershipScopes}=await import('@el-dabboos/domain');const db=await database();
+ try{
+  const m=mapping();m.measures=m.measures.map(measure=>({...measure,dimensionMappings:measure.measureId==='outstanding_amount'?{branch:'trusted',region:'trusted'}:{branch:'trusted',region:'trusted',salesperson:'trusted'}}));m.capabilities=m.capabilities.map(capability=>({...capability,dimensions:capability.metric==='outstanding_amount'?['branch','region','date','month','quarter','year']:['branch','region','salesperson','date','month','quarter','year']}));await deploy(db.migrator,m);
+  const canonical=[fact('baghdad-1',{value:'10.000000',dimensions:{branch:'baghdad',region:'central',salesperson:'agent-1'}}),fact('baghdad-2',{value:'20.000000',dimensions:{branch:'baghdad',region:'central',salesperson:'agent-2'}}),fact('baghdad-unassigned',{value:'30.000000',dimensions:{branch:'baghdad',region:'central',salesperson:'agent-3'}}),fact('basra-1',{value:'99.000000',dimensions:{branch:'basra',region:'south',salesperson:'agent-1'}}),fact('balance-old',{measureId:'outstanding_amount',entityId:'moved-balance',businessDate:'2026-01-15',value:'5.000000',dimensions:{branch:'baghdad',region:'central'}}),fact('balance-latest',{measureId:'outstanding_amount',entityId:'moved-balance',value:'9.000000',dimensions:{branch:'basra',region:'south'}})];
+  await new PostgresMartWriter(db.ingestor,{a:['fixture-company']},clock).commit(batch('batch-1',canonical.length),canonical.map(f=>({facts:[f]})),evidence);
+  const repo=new PostgresAnalyticsRepository(db.runtime,{reportingCurrencies:{},reportingCurrency:async id=>id==='a'?'IQD':null,clock});const ctx={tenantId:'a',locale:'en' as const,enforcedFilters:compileMembershipScopes([{dimension:'branch',values:['baghdad']},{dimension:'salesperson',values:['agent-1','agent-2']}])};
+  assert.deepEqual((await repo.execute({metric:'revenue'},ctx)).rows,[{key:null,value:30}]);assert.deepEqual(await repo.listDimensionValues('salesperson',ctx),['agent-1','agent-2']);assert.deepEqual((await repo.execute({metric:'revenue',filters:[{dimension:'branch',values:['basra']}]},ctx)).rows,[{key:null,value:0}]);
+  const snapshot={...ctx,enforcedFilters:compileMembershipScopes([{dimension:'branch',values:['baghdad']},{dimension:'region',values:['central','north']}])};assert.deepEqual((await repo.execute({metric:'outstanding_amount'},snapshot)).rows,[{key:null,value:null}]);
+  assert.equal(await repo.isDataReady('a'),true);assert.equal(await repo.isDataReady('no-binding'),false);
+  await assert.rejects(new PostgresAnalyticsRepository(db.runtime,{reportingCurrencies:{},reportingCurrency:async()=> 'EGP'}).isDataReady('a'),/currency/);
+ }finally{await db.close();}
+});
