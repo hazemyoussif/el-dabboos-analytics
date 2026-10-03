@@ -4,9 +4,13 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@el-dabboos/domain": "workspace:*"
+    "@el-dabboos/domain": "workspace:*",
+    "pg": "^8.23.1"
   },
   "exports": {
     ".": "./src/index.ts"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.23.1"
   }
 }
