@@ -10,12 +10,12 @@ Status is evidence-based, not a claim that the prototype is production-ready. Ow
 | Currency policy | Tenant IQD/EGP display; no FX and no fact currency field | Transaction/base/reporting currency and approved conversion before aggregation; finance |
 | Tenant/company mapping | Validated demo membership and tenant-scoped facts | Stable source company/tenant/branch mapping and multi-company rules; source/security owners |
 | Production identity contract | Demo headers only | Verified IdP/SSO principal, memberships, revocation and policy owner; identity/security |
-| Source adapter architecture | Mock/SQLite canonical facts only | Confirm Python mart vs normalized source/API/replica and ownership; integration |
+| Source adapter architecture | Owned PostgreSQL mart, writer and SQL serving tested with synthetic data; no connector | Approve source boundary, mapping and implementation evidence; integration |
 | Data-quality checks | Canonical finite/date/measure/snapshot validation | Missing/duplicate/state/unit/entity rules, rejects and correction processing; source owner |
 | Reconciliation | Deterministic synthetic contract tests | Approved source report, watermark, date/group totals and tolerance sign-off; business |
 | Bounded query execution | Implemented request dedup + default 8 unique concurrent calls (1..64) | Source-specific timeout/cancellation, process-wide capacity and scale evidence still needed; platform |
 | LLM privacy/data sharing | Authorized context and safe diagnostics; edit spec can contain identifiers | Endpoint policy for prompts/spec titles/filter IDs and retention/residency; security/tenant |
-| DB migration strategy | Documented boundary; idempotent CREATE only | Choose production metadata store, versioned runner, backup/restore rehearsal; platform |
+| DB migration strategy | Five migrations with ledger/checksum/session lock and transaction rollback tested on PostgreSQL 18.6 | Runner/container/CI, grants/forced RLS and synthetic migration evidence implemented; production hosting, restore drills and metadata-store migration remain separate; platform |
 
 A document alone does not close a business gate. Do not ingest real data or send customer specs to external endpoints before approval.
 
@@ -28,8 +28,8 @@ A document alone does not close a business gate. Do not ingest real data or send
 | Persistent audit | In-memory AuditSink | Durable sink, access, retention and tamper/recovery policy |
 | Liveness/readiness | Implemented live/ready plus health compatibility | Deployment probe wiring; source probe deadlines/cancellation |
 | Config schema validation | Implemented bounded root parser, safe fail-fast | Secret-manager/deployment override verification |
-| Query timeouts/cancellation | LLM timeout exists; analytics lacks cancellation | Source-native cancellation and bounded resource cleanup |
-| Connection pooling | DatabaseSync SQLite; no source pool | Real source pool/backpressure sized to concurrency |
+| Query timeouts/cancellation | LLM timeout and PostgreSQL-native statement timeout implemented; SQLite remains synchronous | Source-native cancellation and bounded resource cleanup |
+| Connection pooling | DatabaseSync SQLite; opt-in mart pool with bounded size and checkout timeout | Real source pool/backpressure sized to concurrency |
 | Load/performance | Functional synthetic tests only | Expected rows/users/dashboards, p95 target and sustained-load evidence |
 | Deployment architecture | Local API + Vite; built API/web available | TLS/proxy/API replicas/durable DB and migration ownership |
 | Production CORS/security headers | Development permissive setup | Approved origin/session/CSRF/header policy |
@@ -54,4 +54,6 @@ Readiness says storage shape available, not reconciled source/business freshness
 
 ## Recommended first vertical slice
 
-One approved pilot tenant, revenue/net_revenue/order_count, monthly and branch grouping, explicit reporting currency and a fixed source watermark. Implement canonical source adapter contract tests, verify branch intersection and a second-tenant isolation control, then reconcile one closed month and a correction case against the signed source report. Disable external LLM use until privacy approval. Expand to ratios/snapshots only after input mappings are certified.
+One approved pilot tenant, revenue/net_revenue/order_count, monthly and one certified organizational grouping (branch only when supported), explicit reporting currency and a fixed source watermark. Implement canonical source adapter contract tests, verify branch intersection and a second-tenant isolation control, then reconcile one closed month and a correction case against the signed source report. Disable external LLM use until privacy approval. Expand to ratios/snapshots only after input mappings are certified.
+
+[ADR 027](../architecture/adr/027-production-data-foundation.md) records the offline foundation. None of its contracts or synthetic tests close source, currency, business approval or operational gates. Legacy systems remain read-only; no credentials or production connection are part of this milestone.

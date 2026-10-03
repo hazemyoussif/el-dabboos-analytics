@@ -12,7 +12,7 @@
 | apps/api | Fastify routes, HTTP/session context, safe errors, provider HTTP adapter, configuration and dependency composition | Semantic formulas or chart-library domain contracts |
 | packages/application | Templates, planners, executor, authorization orchestration, saved dashboard/library services | process.env, Fastify/React, source SQL |
 | packages/domain | Contracts, semantic catalog, registry, canonical schemas, validators, ports and layout/chart rules | React, Fastify, SQLite, Recharts or LLM SDKs |
-| packages/data | Canonical facts, deterministic engine/calendar, mock/SQLite analytics and metadata adapters | HTTP, user UI state, planner prompts |
+| packages/data | Canonical facts, deterministic engine/calendar, mock/SQLite and PostgreSQL analytics, mart ingestion/reconciliation and SQLite metadata adapters | HTTP, user UI state, planner prompts |
 
 ### Dependency direction
 
@@ -65,7 +65,7 @@ Theme/UI locale are preferences outside spec and never imply Save. Layout-only c
 
 ## Current operational limits
 
-Node DatabaseSync executes synchronously; async repository facades and bounded concurrency do not make SQLite parallel/non-blocking. Analytics loads relevant tenant measure facts into memory for the deterministic engine. There is no source query cancellation/pool, production authentication, persistent audit, migration version table or operational data reconciliation. Health probes check structure without business data and cannot interrupt synchronous blocking work. These are explicit integration risks, not completed production capabilities.
+Node DatabaseSync executes synchronously; async repository facades and bounded concurrency do not make SQLite parallel/non-blocking. Analytics loads relevant tenant measure facts into memory for the deterministic engine. The opt-in PostgreSQL mart adapter has a pool, statement timeout, forced tenant RLS, versioned migrations and frozen synthetic reconciliation. Production authentication, persistent application audit, source integration and operational backup/restore evidence remain pending. Health probes check structure without business data and cannot interrupt synchronous blocking work. These are explicit integration risks, not completed production capabilities.
 
 ## Manual palette path
 
@@ -76,3 +76,7 @@ Manual and sparse AI palette edits converge on `WidgetPresentation.palette`; gen
 ## Relative periods and viewer filters
 
 DashboardSpec v2 business filters persist a symbolic datePreset, fixed dateRange, or neither for all time. The modes are mutually exclusive. Templates and blank drafts preserve relative intent. Execution accepts a separate trusted timezone plus transient viewer overrides, resolves concrete business filters once, then validates/identifies repository queries. effectiveFilters metadata exposes only business selections; source coverage and policy remain separate. Viewer controls use the governed cross-series dimension intersection and policy-scoped values. Reset/navigation/enter-edit restore canonical defaults without dirtying or saving; authoring uses normal semantic patches/history and explicit Save. [ADR 026](adr/026-relative-dates-and-viewer-filters.md).
+
+## Offline production foundation
+
+[ADR 027](adr/027-production-data-foundation.md) establishes an El Dabboos-owned PostgreSQL mart, separate ingestion envelope, source reader, versioned mapping certification and reconciliation contracts. Domain validators, five transactional SQL migrations, role/RLS enforcement, a mart writer, frozen reconciliation and bounded SQL-based serving are implemented and tested on PostgreSQL 18.6. [Operations](../integration/postgres-mart-operations.md) documents provisioning and limits. Existing mock/SQLite execution is unchanged. Production sources and mappings are unapproved.

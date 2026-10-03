@@ -14,7 +14,9 @@
     "seed": "node --experimental-transform-types --disable-warning=ExperimentalWarning packages/data/src/seed-cli.ts",
     "build": "pnpm --filter @el-dabboos/api build && pnpm --filter @el-dabboos/web build",
     "dev:api": "pnpm --filter @el-dabboos/api dev",
-    "dev:web": "pnpm --filter @el-dabboos/web dev"
+    "dev:web": "pnpm --filter @el-dabboos/web dev",
+    "test:postgres": "node --experimental-transform-types --disable-warning=ExperimentalWarning --test packages/data/test/postgres/*.test.ts",
+    "mart:migrate": "node --experimental-transform-types --disable-warning=ExperimentalWarning packages/data/src/postgres/migrate-cli.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

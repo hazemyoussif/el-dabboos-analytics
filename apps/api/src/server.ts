@@ -1,6 +1,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
-import { SqliteDashboardLibraryRepository, createDashboardLibrarySchema, MockAnalyticsRepository, SqliteAnalyticsRepository, SqliteDashboardRepository, createSqliteSchema, createDashboardPersistenceSchema, generateSeedFacts } from '@el-dabboos/data';
+import { SqliteDashboardLibraryRepository, createDashboardLibrarySchema, MockAnalyticsRepository, SqliteAnalyticsRepository, SqliteDashboardRepository, createSqliteSchema, createDashboardPersistenceSchema, generateSeedFacts, PostgresAnalyticsRepository, createMartPool, verifyMartRuntimeRole } from '@el-dabboos/data';
+import { tenantProfiles } from '@el-dabboos/domain';
 import type { AnalyticsRepository, DimensionValueRepository } from '@el-dabboos/domain';
 import { StructuredDashboardPlanner } from '@el-dabboos/application';
 import type { StructuredPlannerDiagnostic } from '@el-dabboos/application';
@@ -14,7 +15,7 @@ const config = parseRuntimeConfig(process.env, { analyticsPath: fileURLToPath(ne
 const provider = config.analyticsProvider;
 let analyticsReady: () => Promise<boolean>;
 let repository: AnalyticsRepository & DimensionValueRepository;
-let close = () => {};
+let close: () => void | Promise<void> = () => {};
 if (provider === 'sqlite') {
   const db = new DatabaseSync(config.analyticsPath);
   createSqliteSchema(db);
@@ -25,7 +26,13 @@ if (provider === 'sqlite') {
   repository = new MockAnalyticsRepository([...generateSeedFacts('demo-iq'), ...generateSeedFacts('demo-eg')]);
   analyticsReady = async () => true;
 } else {
-  throw new Error(`ANALYTICS_PROVIDER=${provider} is reserved but not implemented. Use sqlite or mock.`);
+  if (!config.postgres) throw new Error('Missing PostgreSQL runtime configuration');
+  const pool = createMartPool(config.postgres.runtimeUrl,config.postgres.poolMax);
+  pool.on('error', () => { process.stderr.write('PostgreSQL pool connection failed\n'); });
+  repository = new PostgresAnalyticsRepository(pool,{ reportingCurrencies: Object.fromEntries(Object.values(tenantProfiles).map(t => [t.id,t.reportingCurrency])),statementTimeoutMs: config.postgres.statementTimeoutMs,maxGroups: config.postgres.maxGroups,maxDateSpanDays: config.postgres.maxDateSpanDays });
+  close = () => pool.end();
+  try { await verifyMartRuntimeRole(pool); } catch { await pool.end(); throw new Error('PostgreSQL runtime identity/provisioning check failed'); }
+  analyticsReady = async () => { await pool.query('SELECT 1 FROM mart.canonical_facts LIMIT 0'); return true; };
 }
 const dashboardDb = new DatabaseSync(config.dashboardPath);
 createDashboardPersistenceSchema(dashboardDb);
@@ -56,8 +63,8 @@ try {
   process.stdout.write(`${startupSummary({ analyticsProvider: provider, dashboardPath: config.dashboardPath, plannerMode, modelId: config.llm.modelId, baseUrl: config.llm.baseUrl, diagnostics: config.llm.diagnostics, llmTemperature: config.llm.temperature, llmMaxTokens: config.llm.maxTokens, ...(config.llm.reasoningBudgetTokens !== undefined ? { llmReasoningBudgetTokens: config.llm.reasoningBudgetTokens } : {}), ...(config.llm.seed !== undefined ? { llmSeed: config.llm.seed } : {}), llmTimeoutMs: config.llm.timeoutMs, llmRepairAttempts: config.llm.repairAttempts, port, executionConcurrency: config.executionConcurrency }, config.llm.apiKey)}\n`);
   process.stdout.write(`El Dabboos API listening at ${address}\n`);
 } catch (error) {
-  close(); dashboardDb.close();
+  await close(); dashboardDb.close();
   throw error;
 }
-process.on('SIGTERM', () => { void app.close().then(() => { close(); dashboardDb.close(); }); });
-process.on('SIGINT', () => { void app.close().then(() => { close(); dashboardDb.close(); }); });
+process.on('SIGTERM', () => { void app.close().then(async () => { await close(); dashboardDb.close(); }); });
+process.on('SIGINT', () => { void app.close().then(async () => { await close(); dashboardDb.close(); }); });

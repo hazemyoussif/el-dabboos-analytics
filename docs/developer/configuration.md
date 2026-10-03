@@ -4,7 +4,7 @@ Current parser: [startup-config.ts](../../apps/api/src/startup-config.ts). Root 
 
 | Variable | Default | Validation / meaning |
 | --- | --- | --- |
-| ANALYTICS_PROVIDER | sqlite | sqlite or mock |
+| ANALYTICS_PROVIDER | sqlite | sqlite, mock or explicitly configured postgres; see [mart operations](../integration/postgres-mart-operations.md) |
 | DASHBOARD_PLANNER | mock | mock, structured or disabled |
 | SQLITE_DB_PATH | repository demo.db | Nonblank, no NUL; analytics DB; explicit relative paths use process cwd |
 | DASHBOARD_DB_PATH | repository dashboards.db | Nonblank, no NUL; required metadata persistence even for mock analytics |
