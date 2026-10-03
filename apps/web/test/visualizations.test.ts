@@ -46,14 +46,14 @@ test('new metric creation has canonical sizes, unique IDs and compatible drop ac
 test('presentation and visualization changes preserve queries, layout, filters; Undo/Redo does not requery', async () => {
   const queries: AnalyticsQuery[] = [];
   const executor = new DashboardExecutor({ async execute(query) { queries.push(query); return { metric: query.metric, groupBy: query.groupBy ?? null, rows: [], metadata: { sourceId: 'test', executedAt: '2026-01-01', metricType: 'currency', semantics: 'additive' } }; } });
-  await executor.execute(spec, { tenantId: 'demo-iq', locale: 'en' });
+  await executor.execute(spec, { tenantId: 'demo-iq', locale: 'en' }, { timeZone: 'Asia/Baghdad' });
   for (const id of ['horizontal', 'donut', 'treemap', 'table']) {
     const changed = visualizationCandidate(w, option(id));
     const step = commitBuilderCommand(startBuilder({ kind: 'dashboard', spec }), { type: 'patch', patch: { schemaVersion: 2, operations: [{ op: 'replace', widgetId: w.id, widget: changed }] } });
     assert.equal(step.execute, false); assert.equal(undoBuilder(step.history).execute, false); assert.equal(redoBuilder(undoBuilder(step.history).history).execute, false);
     if (step.history.present.kind !== 'dashboard') throw new Error('Expected dashboard');
     assert.deepEqual(step.history.present.spec.layout, spec.layout); assert.deepEqual(step.history.present.spec.filters, spec.filters);
-    await executor.execute(step.history.present.spec, { tenantId: 'demo-iq', locale: 'en' });
+    await executor.execute(step.history.present.spec, { tenantId: 'demo-iq', locale: 'en' }, { timeZone: 'Asia/Baghdad' });
     assert.deepEqual(queries.at(-1), queries[0]);
   }
 });

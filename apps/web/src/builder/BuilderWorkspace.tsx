@@ -2,6 +2,11 @@ import { ArrowUp, ArrowDown, X, Undo2, Redo2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { governedPalettes, resolveDashboardLayout, widgetTypes } from '@el-dabboos/domain';
 import type { AnalysisSpec, DashboardPatch, DashboardSeries, DashboardSpec, DashboardWidget, DimensionId, GovernedPalette, Locale, MetricId, ProductMetric, SemanticMetric, TenantProfile, WidgetType } from '@el-dabboos/domain';
+import { dashboardFilterDimensions, dashboardFilterSelection } from '@el-dabboos/application';
+import { DimensionFilterControl } from '../DimensionFilterControl.tsx';
+import type { FilterOptions } from '../DimensionFilterControl.tsx';
+export type { FilterOptions } from '../DimensionFilterControl.tsx';
+import { DatePeriodControl } from '../DatePeriodControl.tsx';
 import type { DashboardExecutionResult } from '@el-dabboos/application';
 import { WidgetCard } from '../Renderer.tsx';
 import { DashboardAppearance } from './DashboardAppearance.tsx';
@@ -18,7 +23,6 @@ import { appearanceCopy, copy, paletteLabels } from '../i18n.ts';
 import { analysisAllowed, canAddSeries, commonDimensions, selectableMetric, validWidgetDraft, dashboardPaletteCommand, withWidgetPalette, widgetPaletteCommand, withWidgetMetric } from './model.ts';
 import type { BuilderCommand, BuilderDocument, BuilderHistory, WidgetPaletteSelection } from './model.ts';
 
-export type FilterOptions = Partial<Record<DimensionId, Array<{ id: string; label: string }>>>;
 interface Props {
   history: BuilderHistory;
   execution: DashboardExecutionResult | null;
@@ -32,7 +36,6 @@ interface Props {
   onUndo: () => void;
   onRedo: () => void;
 }
-const filterDimensions: DimensionId[] = ['branch', 'region', 'salesperson', 'product_category', 'warehouse'];
 const types: readonly WidgetType[] = widgetTypes;
 const domainNames = {
   en: { sales: 'Sales', crm: 'CRM', finance: 'Finance', inventory: 'Inventory', maintenance: 'Maintenance', customers: 'Customers', purchasing: 'Purchasing' },
@@ -92,7 +95,7 @@ function WidgetEditor({ initial, adding, base, registry, catalog, locale, onAppl
   const changeAnalysis = (series: DashboardSeries, change: Partial<AnalysisSpec>, remove?: keyof AnalysisSpec) => {
     const analysis = { ...series.analysis, ...change };
     if (remove) delete analysis[remove];
-    if (!analysisAllowed(series.metric, draft.dimension, base.filters.dateRange, analysis) || !validWidgetDraft({ ...draft, series: draft.series.map(item => item.id === series.id ? { ...item, analysis } : item) }, base)) return;
+    if (!analysisAllowed(series.metric, draft.dimension, base.filters.dateRange ?? base.filters.datePreset, analysis) || !validWidgetDraft({ ...draft, series: draft.series.map(item => item.id === series.id ? { ...item, analysis } : item) }, base)) return;
     updateSeries(series.id, old => ({ ...old, ...(Object.keys(analysis).length ? { analysis } : { analysis: undefined }) }));
   };
   const valid = validWidgetDraft(draft, base);
@@ -138,7 +141,7 @@ function WidgetEditor({ initial, adding, base, registry, catalog, locale, onAppl
     <div className="builder-series-heading">{t.metric}</div>
     {draft.series.map((series, index) => {
       const analysis = series.analysis ?? {};
-      const allowed = (next: AnalysisSpec) => analysisAllowed(series.metric, draft.dimension, base.filters.dateRange, next) && validWidgetDraft({ ...draft, series: draft.series.map(item => item.id === series.id ? { ...item, analysis: next } : item) }, base);
+      const allowed = (next: AnalysisSpec) => analysisAllowed(series.metric, draft.dimension, base.filters.dateRange ?? base.filters.datePreset, next) && validWidgetDraft({ ...draft, series: draft.series.map(item => item.id === series.id ? { ...item, analysis: next } : item) }, base);
       return <div className="builder-series" key={series.id}>
         <div className="builder-series-title"><strong>{index === 0 ? t.primary : `${t.metric} ${index + 1}`}</strong><span>
           <button type="button" disabled={index === 0 || (index === 1 && !!draft.series[0]?.analysis?.topN)} onClick={() => moveSeries(index, -1)} aria-label={t.moveUp}><ArrowUp aria-hidden="true" /></button>
@@ -187,22 +190,15 @@ export function BuilderWorkspace({ history, execution, catalog, registry, profil
   useEffect(() => { if (busy) setDragItem(null); }, [busy]);
   const [layoutError, setLayoutError] = useState('');
   const [addingType, setAddingType] = useState<WidgetType | null>(null);
-  const [dateFrom, setDateFrom] = useState(base?.filters.dateRange?.from ?? '');
-  const [dateTo, setDateTo] = useState(base?.filters.dateRange?.to ?? '');
-  useEffect(() => { setDateFrom(base?.filters.dateRange?.from ?? ''); setDateTo(base?.filters.dateRange?.to ?? ''); }, [base?.filters.dateRange?.from, base?.filters.dateRange?.to]);
   const selected = spec?.widgets.find(widget => widget.id === selectedId);
   const dashboardTitle = document.kind === 'dashboard' ? document.spec.title[locale] : document.base.title[locale];
   const newWidget = useMemo(() => addingType ? makeWidget(nextWidgetId(spec?.widgets ?? []), addingType, 'revenue', spec?.widgets.flatMap(widget => widget.series.map(series => series.id)) ?? []) : null, [addingType, spec?.widgets]);
   const requestedFilters = base?.filters.dimensions ?? [];
-  const setRequestedFilter = (dimension: DimensionId, value: string) => {
+  const setRequestedFilter = (dimension: DimensionId, values: string[]) => {
     if (!base || !spec) return;
     const dimensions = requestedFilters.filter(filter => filter.dimension !== dimension);
-    if (value) dimensions.push({ dimension, values: [value] });
+    if (values.length) dimensions.push({ dimension, values });
     onCommand(patch({ op: 'set_filters', filters: { ...base.filters, ...(dimensions.length ? { dimensions } : { dimensions: undefined }) } }));
-  };
-  const applyDates = () => {
-    if (!base || !spec) return;
-    onCommand(patch({ op: 'set_filters', filters: { ...base.filters, dateRange: { from: dateFrom, to: dateTo } } }));
   };
   const applyWidget = (widget: DashboardWidget) => {
     if (addingType) { onCommand(spec ? patch({ op: 'add', widget }) : { type: 'add-first', widget }); setAddingType(null); setSelectedId(widget.id); }
@@ -286,8 +282,8 @@ export function BuilderWorkspace({ history, execution, catalog, registry, profil
       <section className="dashboard-settings"><h3>{t.dashboardSettings}</h3>
         {spec && <DashboardAppearance locale={locale} palette={spec.presentation?.palette ?? 'default'} disabled={busy} onChange={palette => onCommand(dashboardPaletteCommand(palette))} />}
         <details className="dashboard-filters"><summary>{t.filters}</summary>
-          <div className="builder-filters"><div className="builder-dates"><label>{t.dateFrom}<input type="date" value={dateFrom} onChange={event => setDateFrom(event.target.value)} /></label><label>{t.dateTo}<input type="date" value={dateTo} onChange={event => setDateTo(event.target.value)} /></label><button disabled={!spec || !dateFrom || !dateTo || dateFrom > dateTo} onClick={applyDates}>{t.applyDates}</button></div>
-            {filterDimensions.map(dimension => <label key={dimension}>{copy[locale].dimensions[dimension]}<select value={requestedFilters.find(filter => filter.dimension === dimension)?.values[0] ?? ''} disabled={!spec || !spec.widgets.every(widget => widget.series.every(series => catalog[series.metric]?.dimensions.includes(dimension)))} onChange={event => setRequestedFilter(dimension, event.target.value)}><option value="">{t.all}</option>{(filterOptions[dimension] ?? []).map(option => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label>)}
+          <div className="builder-filters">{base && <DatePeriodControl filters={base.filters} effectiveRange={execution?.metadata.effectiveFilters?.dateRange} timeZone={profile.timeZone} locale={locale} disabled={!spec || busy} onChange={date => onCommand(patch({ op: 'set_filters', filters: dashboardFilterSelection(base.filters, { date }) }))} />}
+            {dashboardFilterDimensions(spec ?? { widgets: [] }, catalog).map(dimension => <DimensionFilterControl key={dimension} dimension={dimension} values={requestedFilters.find(filter => filter.dimension === dimension)?.values ?? []} options={filterOptions[dimension] ?? []} locale={locale} disabled={!spec || busy} onChange={values => setRequestedFilter(dimension, values)} />)}
           </div>
         </details>
       </section>

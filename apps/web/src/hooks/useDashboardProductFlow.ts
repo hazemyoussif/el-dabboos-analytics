@@ -6,7 +6,7 @@ import type { ReturnTypePlanner } from './useDashboardPlanner.ts';
 import { dashboardActions, dashboardStatus, mayEnterCreation, switchDashboardEditor } from '../product-flow.ts';
 import type { ProductPanel } from '../product-flow.ts';
 
-export function useDashboardProductFlow(workspace: WorkspaceController, builder: ReturnTypeBuilder, planner: ReturnTypePlanner) {
+export function useDashboardProductFlow(workspace: WorkspaceController, builder: ReturnTypeBuilder, planner: ReturnTypePlanner, clearViewerFilters: () => void | Promise<void>) {
   const [nameDialog, setNameDialog] = useState<{ spec: DashboardSpec; operation: 'save' | 'copy' | 'rename' } | null>(null);
   const [panel, setPanel] = useState<ProductPanel>('none');
   const actions = dashboardActions(workspace.document, !!builder.history, workspace.permissions.includes('ai:generate'), workspace.permissions.includes('ai:edit'));
@@ -24,7 +24,7 @@ export function useDashboardProductFlow(workspace: WorkspaceController, builder:
   const createAi = async () => { if (await planner.generate()) close(); };
   const useTemplate = () => {
     if (workspace.document?.kind !== 'template') return;
-    workspace.applyWorkingSpec(workspace.document.spec); close();
+    clearViewerFilters(); workspace.applyWorkingSpec(workspace.document.spec); close();
   };
   const openTemplate = (templateId: string, selected: TenantProfile, locale: Locale) => {
     if (!workspace.confirmAbandon()) return;
@@ -34,12 +34,13 @@ export function useDashboardProductFlow(workspace: WorkspaceController, builder:
     if (!workspace.confirmAbandon()) return;
     builder.reset(); planner.reset(); close(); void workspace.openSaved(recordId);
   };
-  const editManual = () => switchDashboardEditor('manual', builder, setPanel);
-  const editAi = () => switchDashboardEditor('ai', builder, setPanel);
+  const editManual = () => { clearViewerFilters(); switchDashboardEditor('manual', builder, setPanel); };
+  const editAi = () => { clearViewerFilters(); switchDashboardEditor('ai', builder, setPanel); };
   const applyAiEdit = async () => { if (await planner.edit()) close(); };
   const view = () => { builder.exit(); close(); };
   const save = async (asNew = false) => {
     if (!workspace.dashboard) return;
+    await clearViewerFilters();
     if (asNew || workspace.document?.kind !== 'saved') { setNameDialog({ spec: workspace.dashboard, operation: asNew ? 'copy' : 'save' }); return; }
     if (await workspace.save()) { builder.exit(); close(); }
   };

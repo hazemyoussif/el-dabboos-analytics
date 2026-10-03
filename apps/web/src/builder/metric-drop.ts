@@ -46,7 +46,7 @@ function replacePrimary(widget: DashboardWidget, metric: MetricId, base: Omit<Da
   const analysis: AnalysisSpec = {};
   for (const key of Object.keys(original.analysis ?? {}) as Array<keyof AnalysisSpec>) {
     const part = { [key]: original.analysis![key] };
-    if (analysisAllowed(metric, widget.dimension, base.filters.dateRange, part)) Object.assign(analysis, part);
+    if (analysisAllowed(metric, widget.dimension, base.filters.dateRange ?? base.filters.datePreset, part)) Object.assign(analysis, part);
   }
   const series: DashboardSeries = { id: original.id, metric, ...(Object.keys(analysis).length ? { analysis } : {}) };
   return { ...widget, series: [series, ...widget.series.slice(1)] };

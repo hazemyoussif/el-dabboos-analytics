@@ -1,6 +1,5 @@
 import { applyDashboardPatch, governedPalettes, resolveDashboardLayout, semanticCatalog, validateAnalysis, validateDashboardSpec, visualizationIssues } from '@el-dabboos/domain';
 import type { AnalysisSpec, DashboardLayout, DashboardPatch, DashboardSpec, DashboardWidget, DimensionId, GovernedPalette, Locale, MetricId, ProductMetric, SemanticMetric, TenantProfile } from '@el-dabboos/domain';
-import { resolveDatePreset } from '@el-dabboos/application';
 
 export interface EmptyBuilderDraft {
   kind: 'empty';
@@ -16,9 +15,10 @@ export type BuilderCommand =
 export interface BuilderTransition { history: BuilderHistory; execute: boolean }
 const MAX_HISTORY = 40;
 
-export function blankDashboardDraft(profile: TenantProfile, locale: Locale, now = new Date()): EmptyBuilderDraft {
+export function blankDashboardDraft(_profile: TenantProfile, locale: Locale, _now?: Date): EmptyBuilderDraft {
+  void _now; // Retain existing callers; authoring no longer resolves the clock.
   return { kind: 'empty', base: { schemaVersion: 2, id: 'manual-dashboard', title: { en: 'Untitled Dashboard', ar: 'لوحة بدون اسم' },
-    locale, filters: { dateRange: resolveDatePreset('current_year', profile, now) }, layout: { columns: 12, items: [] } } };
+    locale, filters: { datePreset: 'current_year' }, layout: { columns: 12, items: [] } } };
 }
 export function startBuilder(document: BuilderDocument): BuilderHistory {
   return { past: [], present: structuredClone(document), future: [] };
@@ -87,7 +87,7 @@ export function withWidgetMetric(widget: DashboardWidget, seriesId: string, metr
   const dimensions = commonDimensions(series.map(entry => entry.metric));
   return { ...widget, series, ...(widget.dimension && dimensions.includes(widget.dimension) ? { dimension: widget.dimension } : { dimension: undefined }) };
 }
-export function analysisAllowed(metric: MetricId, dimension: DimensionId | undefined, dateRange: DashboardSpec['filters']['dateRange'], analysis: AnalysisSpec): boolean {
+export function analysisAllowed(metric: MetricId, dimension: DimensionId | undefined, dateRange: DashboardSpec['filters']['dateRange'] | DashboardSpec['filters']['datePreset'], analysis: AnalysisSpec): boolean {
   try { validateAnalysis(analysis, metric, dimension, dateRange); return true; } catch { return false; }
 }
 export function validWidgetDraft(widget: DashboardWidget, base: Omit<DashboardSpec, 'widgets'>): boolean {

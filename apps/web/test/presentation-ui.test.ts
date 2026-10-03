@@ -17,7 +17,7 @@ test('every renderer uses centralized presentation in both themes/locales withou
   const server=await createServer({root:fileURLToPath(new URL('../',import.meta.url)),server:{middlewareMode:true},optimizeDeps:{noDiscovery:true},appType:'custom'});
   try {
     let calls=0;const repository:AnalyticsRepository={execute:async query=>{calls++;return {metric:query.metric,groupBy:query.groupBy??null,rows:[{key:query.groupBy?'2026-01':null,value:100,comparisonValue:80,absoluteChange:20,percentageChange:25,rank:1}],metadata:{sourceId:'test',executedAt:'2026-01-01',metricType:'currency',semantics:'additive'}};}};
-    const execution=await new DashboardExecutor(repository).execute(spec,{tenantId:'demo-iq',locale:'en'});const expectedCalls=calls;const original=JSON.stringify(spec);
+    const execution=await new DashboardExecutor(repository).execute(spec,{tenantId:'demo-iq',locale:'en'}, {timeZone:'Asia/Baghdad'});const expectedCalls=calls;const original=JSON.stringify(spec);
     const document=savedDocument({id:'record',tenantId:'demo-iq',ownerUserId:'alice',scope:'private',version:1,spec,createdBy:'alice',updatedBy:'alice',createdAt:'2026-01-01',updatedAt:'2026-01-01'});
     const {DashboardRenderer,WidgetCard}=await server.ssrLoadModule('/src/Renderer.tsx'); const {ThemeContext}=await server.ssrLoadModule('/src/presentation/ThemeProvider.tsx');
     const {DashboardNameDialog}=await server.ssrLoadModule('/src/library/DashboardNameDialog.tsx');
@@ -210,7 +210,7 @@ test('viewer and live builder previews inherit current dashboard palette while o
     const dashboard: DashboardSpec = { ...spec, layout: { columns: 12 }, presentation: { palette: 'blue' }, widgets: [chart, { ...chart, id: 'rose', presentation: { palette: 'red', legend: 'show' } }, { ...chart, id: 'enterprise', presentation: { palette: 'default', legend: 'show' } }] };
     let calls = 0;
     const repository: AnalyticsRepository = { execute: async query => { calls++; return { metric: query.metric, groupBy: 'month', rows: [{ key: '2026-01', value: 100 }], metadata: { sourceId: 'test', executedAt: '2026-01-01' } }; } };
-    const execution = await new DashboardExecutor(repository).execute(dashboard, { tenantId: 'demo-iq', locale: 'en' });
+    const execution = await new DashboardExecutor(repository).execute(dashboard, { tenantId: 'demo-iq', locale: 'en' }, { timeZone: 'Asia/Baghdad' });
     const expectedCalls = calls;
     for (const mode of ['light','dark'] as const) for (const locale of ['en','ar'] as const) for (const palette of ['blue','green'] as const) {
       const current = { ...dashboard, presentation: { palette } }; const theme = chartTheme(mode);
@@ -257,6 +257,47 @@ test('builder inspector groups dashboard disclosures above selected widget contr
       assert.ok(empty.includes('class="dashboard-settings"')); assert.ok(empty.includes('class="dashboard-filters"'));
       assert.ok(!empty.includes('class="dashboard-appearance"')); assert.ok(!empty.includes('class="widget-settings"'));
       assert.ok(empty.includes(locale === 'en' ? 'Select a widget or add one' : 'اختر بطاقة أو أضف واحدة'));
+    }
+  } finally { await server.close(); }
+});
+
+test('Save waits for viewer defaults to finish restoring before starting persistence', async () => {
+  const server = await createServer({ root: fileURLToPath(new URL('..', import.meta.url)), server: { middlewareMode: true, hmr: false } });
+  try {
+    const { useDashboardProductFlow } = await server.ssrLoadModule('/src/hooks/useDashboardProductFlow.ts');
+    let restore!: () => void;
+    const restoring = new Promise<void>(resolve => { restore = resolve; });
+    const events: string[] = [];
+    let flow!: { save: () => Promise<void> };
+    const document = savedDocument({ id: 'record', tenantId: 'demo-iq', ownerUserId: 'alice', scope: 'private', version: 1, spec, createdBy: 'alice', updatedBy: 'alice', createdAt: '2026-01-01', updatedAt: '2026-01-01' });
+    function Harness() {
+      flow = useDashboardProductFlow({ document, dashboard: spec, permissions: [], save: async () => { events.push('save'); return true; } },
+        { history: null, exit: () => events.push('exit') }, {}, () => restoring);
+      return null;
+    }
+    renderToStaticMarkup(createElement(Harness));
+    const saving = flow.save();
+    assert.deepEqual(events, []);
+    restore(); await saving;
+    assert.deepEqual(events, ['save', 'exit']);
+  } finally { await server.close(); }
+});
+
+test('date and viewer controls render all governed presets, truthful multi-value defaults, and localized native controls', async () => {
+  const server = await createServer({ root: fileURLToPath(new URL('..', import.meta.url)), server: { middlewareMode: true, hmr: false } });
+  try {
+    const { DatePeriodControl } = await server.ssrLoadModule('/src/DatePeriodControl.tsx');
+    const { DashboardViewFilters } = await server.ssrLoadModule('/src/DashboardViewFilters.tsx');
+    for (const locale of ['en', 'ar'] as const) {
+      const relative = renderToStaticMarkup(createElement(DatePeriodControl, { filters: { datePreset: 'previous_month' }, timeZone: 'Asia/Baghdad', locale, onChange() {} }));
+      assert.equal((relative.match(/<option /g) ?? []).length, 14); assert.ok(relative.includes('value="previous_month" selected=""'));
+      assert.ok(relative.includes(locale === 'en' ? 'Fixed dates' : 'تواريخ ثابتة'));
+      const fixed = renderToStaticMarkup(createElement(DatePeriodControl, { filters: { dateRange: { from: '2026-09-01', to: '2026-09-30' } }, timeZone: 'Asia/Baghdad', locale, onChange() {} }));
+      assert.ok(fixed.includes('value="2026-09-01"')); assert.ok(fixed.includes('value="absolute" selected=""'));
+      const html = renderToStaticMarkup(createElement(DashboardViewFilters, { dashboard: spec, selection: { datePreset: 'previous_month', dimensions: [{ dimension: 'branch', values: ['baghdad', 'basra'] }] }, catalog: semanticCatalog, profile: tenantProfiles['demo-iq'], locale, options: { branch: [{ id: 'baghdad', label: 'Baghdad' }, { id: 'basra', label: 'Basra' }] }, active: true, busy: false, onChange() {}, onReset() {} }));
+      assert.ok(html.includes('<details class="view-filters">')); assert.ok(!html.includes('open=""'));
+      assert.ok(html.includes('Baghdad، Basra')); assert.ok(html.includes(locale === 'en' ? 'Temporary filters' : 'مرشحات مؤقتة'));
+      assert.ok(!html.includes('Warehouse')); // Revenue-only series cannot be filtered by warehouse.
     }
   } finally { await server.close(); }
 });

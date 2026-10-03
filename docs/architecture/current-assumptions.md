@@ -5,6 +5,7 @@
 - Two validated demo tenant profiles, IQ/IQD and EG/EGP; synthetic dates October 2024–September 2026. No actual company geography/customer identity.
 - Header-based demo identity directory with membership, permissions, domains and enforced branch policy. Production authentication, token verification and revocation are future work.
 - Canonical v2 schemas and semantics, market-neutral templates, eight widget types, bounded analyses and manual/AI working drafts.
+- Relative periods remain symbolic in DashboardSpec v2 and resolve using the execution clock/tenant timezone. Fixed ranges remain fixed; neither mode means all time. Temporary viewer filters never persist or enter AI context. [ADR 026](adr/026-relative-dates-and-viewer-filters.md).
 - Explicit saved-record lifecycle with owner checks and optimistic versions; personal flat folders/favorites separate from record content.
 - UI locale/theme preferences survive refresh without spec changes; browser working draft does not survive refresh until saved.
 - Default execution concurrency 8 with request-local deduplication. No shared cache, query cancellation or source pool.

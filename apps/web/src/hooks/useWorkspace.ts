@@ -37,6 +37,8 @@ export function useWorkspace() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({});
+  const [navigationRevision, setNavigationRevision] = useState(0);
+  const nextNavigation = () => setNavigationRevision(value => value + 1);
   const requestId = useRef(0);
   const beginRequest = () => ++requestId.current;
   const isCurrent = (id: number) => id === requestId.current;
@@ -48,6 +50,7 @@ export function useWorkspace() {
   const confirmAbandon = () => !dirty || typeof window === 'undefined' || window.confirm(locale === 'ar'
     ? 'لديك تغييرات غير محفوظة. هل تريد تجاهلها؟' : 'You have unsaved changes. Discard them?');
   const loadWorkspace = async (nextUserId: string, nextTenantId?: string, restoreRoute = true) => {
+    nextNavigation();
     const id = beginRequest();
     setUserId(nextUserId); setLoading(true); setError(null); setDocument(null); setExecution(null); setSavedDashboards([]);
     setFilterOptions({});
@@ -113,6 +116,7 @@ export function useWorkspace() {
     return () => window.removeEventListener('popstate', onPopState);
   });
   const openTemplate = async (templateId: string, selected: TenantProfile, selectedLocale: Locale) => {
+    nextNavigation(); setExecution(null);
     const id = beginRequest(); setError(null); setLoading(true);
     try {
       const result = await instantiateTemplate(session(selected, selectedLocale), templateId);
@@ -122,6 +126,7 @@ export function useWorkspace() {
   };
   const openSaved = async (recordId: string, changePath = true) => {
     if (!profile) return;
+    nextNavigation(); setExecution(null);
     const id = beginRequest(); setError(null); setLoading(true);
     try {
       const record = await getSavedDashboard(session(), recordId);
@@ -139,9 +144,9 @@ export function useWorkspace() {
     }
   };
   const applyWorkingSpec = (spec: DashboardSpec | null) => setDocument(current => current ? editDocument(current, spec) : spec ? generatedDocument(spec) : newManualDocument());
-  const startManual = () => { beginRequest(); setError(null); setDocument(newManualDocument()); setExecution(null); navigate(null); };
+  const startManual = () => { nextNavigation(); beginRequest(); setError(null); setDocument(newManualDocument()); setExecution(null); navigate(null); };
   const openGenerated = (spec: DashboardSpec, result: DashboardExecutionResult) => {
-    setDocument(generatedDocument(spec)); setExecution(result); navigate(null);
+    nextNavigation(); setDocument(generatedDocument(spec)); setExecution(result); navigate(null);
   };
   const save = async (asNew = false, named?: DashboardSpec) => {
     if (!document?.spec || !profile) return false;
@@ -160,6 +165,7 @@ export function useWorkspace() {
   const discard = async () => {
     if (!document || !profile) return;
     if (document.kind !== 'saved') { await loadWorkspace(userId, profile.id, false); return; }
+    nextNavigation();
     const restored = discardSavedChanges(document)!;
     const id = beginRequest(); setDocument(restored); setError(null); setLoading(true);
     try { const result = await executeDashboard(session(), restored.spec!); if (isCurrent(id)) setExecution(result); }
@@ -167,7 +173,7 @@ export function useWorkspace() {
     finally { if (isCurrent(id)) setLoading(false); }
   };
   return { locale, userId, demoUsers, permissions, profiles, profile, catalog, metricRegistry, templates, savedDashboards,
-    activeTemplateId, document, dashboard, execution, loading, error, mode, dirty, filterOptions, setExecution, setLoading, setError,
+    navigationRevision, activeTemplateId, document, dashboard, execution, loading, error, mode, dirty, filterOptions, setExecution, setLoading, setError,
     beginRequest, isCurrent, session, loadWorkspace, openTemplate, openSaved, selectLocale, applyWorkingSpec, startManual,
     openGenerated, save, discard, confirmAbandon };
 }
