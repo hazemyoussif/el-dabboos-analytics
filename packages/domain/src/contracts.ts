@@ -42,7 +42,8 @@ export interface TenantProfile {
   timeZone: 'Asia/Baghdad' | 'Africa/Cairo';
   labels: LocalizedText;
   branchLabels: Readonly<Record<string, LocalizedText>>;
-  exampleBranchIds: readonly [string, string];
+  /** Trusted presentation/planner examples only. [] means none available; never authorization or source certification. */
+  exampleBranchIds: readonly string[];
 }
 /** The repository receives resolved constraints, never a user or role. */
 export interface AnalyticsContext { tenantId: string; locale: Locale; enforcedFilters?: readonly AnalyticsFilter[] }
