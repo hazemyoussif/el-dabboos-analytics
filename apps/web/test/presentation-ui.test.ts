@@ -9,7 +9,7 @@ import type { AnalyticsRepository, DashboardSpec, DashboardWidget } from '@el-da
 import { DashboardExecutor } from '@el-dabboos/application';
 import { blankDashboardDraft } from '../src/builder/model.ts';
 import { chartTheme, seriesColor } from '../src/rendering/chart-theme.ts';
-import { formatValue } from '../src/i18n.ts';
+import { formatValue, paletteLabels } from '../src/i18n.ts';
 import { savedDocument, documentIsDirty } from '../src/dashboard-lifecycle.ts';
 const widgets: DashboardWidget[] = widgetTypes.map((type,index)=>({ id:`w${index}`,type,series:[{ id:`s${index}`,metric:'revenue' },...(type==='combo'?[{ id:'profit',metric:'gross_profit' as const }]:[])],...(type==='kpi'?{}:{ dimension: ['line','area','combo'].includes(type)?'month' as const:'branch' as const }) }));
 const spec:DashboardSpec={...blankDashboardDraft(tenantProfiles['demo-iq'],'en').base,layout:{columns:12},widgets};
@@ -124,10 +124,139 @@ test('builder palette select exposes the domain vocabulary with localized native
     for (const locale of ['en', 'ar'] as const) for (const mode of ['light', 'dark'] as const) {
       const html = renderToStaticMarkup(createElement(ThemeContext.Provider, { value: { preference: mode, theme: chartTheme(mode), setPreference() {} } }, createElement(PaletteSelect, { locale, value: 'blue', onChange() {} })));
       assert.ok(html.startsWith(`<label>${locale === 'ar' ? 'لوحة الألوان' : 'Palette'}<select>`));
-      assert.equal((html.match(/<option/g) ?? []).length, governedPalettes.length);
-      for (const palette of governedPalettes) assert.ok(html.includes(`value="${palette}"`));
+      assert.equal((html.match(/<option/g) ?? []).length, governedPalettes.length + 1);
+      for (const palette of governedPalettes) assert.ok(html.includes(`value="${palette}"${palette === 'blue' ? ' selected=""' : ''}>${paletteLabels[locale][palette]}</option>`));
       assert.ok(html.includes('value="blue" selected=""')); assert.ok(!html.includes('#'));
-      assert.ok(html.includes(locale === 'ar' ? 'محايدة' : 'Neutral'));
+      assert.ok(html.includes(locale === 'ar' ? 'أردواز' : 'Slate'));
+    }
+  } finally { await server.close(); }
+});
+
+test('Pie and Treemap retain eight named category colors including distinct first and fifth categories', async () => {
+  const { governedPalettes } = await import('@el-dabboos/domain');
+  const server = await createServer({ root: fileURLToPath(new URL('../', import.meta.url)), server: { middlewareMode: true }, optimizeDeps: { noDiscovery: true }, appType: 'custom' });
+  try {
+    const { WidgetCard } = await server.ssrLoadModule('/src/Renderer.tsx');
+    const { ThemeContext } = await server.ssrLoadModule('/src/presentation/ThemeProvider.tsx');
+    for (const mode of ['light', 'dark'] as const) for (const locale of ['en', 'ar'] as const) for (const palette of governedPalettes) for (const type of ['pie', 'treemap'] as const) {
+      const widget: DashboardWidget = { id: type, type, dimension: 'customer', presentation: { palette }, series: [{ id: 'revenue', metric: 'revenue' }] };
+      const entry = { status: 'success', seriesResults: {}, alignedRows: Array.from({ length: 8 }, (_, index) => ({ key: `customer_${index + 1}`, series: { revenue: { value: (index + 1) * 100 } } })) };
+      const theme = chartTheme(mode);
+      const html = renderToStaticMarkup(createElement(ThemeContext.Provider, { value: { preference: mode, theme, setPreference() {} } }, createElement(WidgetCard, { widget, entry, locale, catalog: semanticCatalog, profile: tenantProfiles['demo-iq'] })));
+      const marks = [...html.matchAll(/class="legend-mark " style="color:([^;]+);/gu)].map(match => match[1]);
+      assert.equal(marks.length, 8); assert.equal(new Set(marks).size, 8); assert.notEqual(marks[0], marks[4]);
+    }
+  } finally { await server.close(); }
+});
+
+test('dashboard Appearance uses theme-resolved swatches and native radio semantics in EN/AR', async () => {
+  const { governedPalettes } = await import('@el-dabboos/domain');
+  const server = await createServer({ root: fileURLToPath(new URL('../', import.meta.url)), server: { middlewareMode: true }, optimizeDeps: { noDiscovery: true }, appType: 'custom' });
+  try {
+    const { DashboardAppearance } = await server.ssrLoadModule('/src/builder/DashboardAppearance.tsx');
+    const { PaletteSelect } = await server.ssrLoadModule('/src/builder/BuilderWorkspace.tsx');
+    const { ThemeContext } = await server.ssrLoadModule('/src/presentation/ThemeProvider.tsx');
+    const { withGovernedPalette } = await server.ssrLoadModule('/src/rendering/chart-theme.ts');
+    for (const mode of ['light','dark'] as const) for (const locale of ['en','ar'] as const) {
+      const theme = chartTheme(mode);
+      const html = renderToStaticMarkup(createElement(ThemeContext.Provider, { value: { preference: mode, theme, setPreference() {} } }, createElement(DashboardAppearance, { locale, palette: 'blue', onChange() {} })));
+      assert.equal((html.match(/type="radio"/gu) ?? []).length, 7);
+      assert.equal((html.match(/checked=""/gu) ?? []).length, 1);
+      assert.match(html, /<input[^>]*(?:checked=""[^>]*value="blue"|value="blue"[^>]*checked="")/u);
+      assert.ok(html.includes(locale === 'ar' ? 'مظهر لوحة المعلومات' : 'Dashboard appearance'));
+      for (const palette of governedPalettes) for (const color of withGovernedPalette(theme, palette).categorical) assert.ok(html.includes(`background-color:${color}`));
+      assert.equal((html.match(/aria-hidden="true"/gu) ?? []).length, 8);
+      const inherit = renderToStaticMarkup(createElement(PaletteSelect, { locale, value: 'inherit', dashboardPalette: 'blue', onChange() {} }));
+      assert.ok(inherit.includes(`value="inherit" selected=""`)); assert.ok(inherit.includes(`(${paletteLabels[locale].blue})`));
+      assert.ok(inherit.includes(`value="default">${paletteLabels[locale].default}</option>`));
+    }
+  } finally { await server.close(); }
+});
+
+test('appearance disclosure starts closed with localized selected palette and eight theme-resolved summary swatches', async () => {
+  const { governedPalettes } = await import('@el-dabboos/domain');
+  const { appearanceCopy } = await import('../src/i18n.ts');
+  const server = await createServer({ root: fileURLToPath(new URL('../', import.meta.url)), server: { middlewareMode: true }, optimizeDeps: { noDiscovery: true }, appType: 'custom' });
+  try {
+    const { DashboardAppearance } = await server.ssrLoadModule('/src/builder/DashboardAppearance.tsx');
+    const { ThemeContext } = await server.ssrLoadModule('/src/presentation/ThemeProvider.tsx');
+    const { withGovernedPalette } = await server.ssrLoadModule('/src/rendering/chart-theme.ts');
+    for (const mode of ['light','dark'] as const) for (const locale of ['en','ar'] as const) for (const palette of governedPalettes) {
+      const theme = chartTheme(mode);
+      const html = renderToStaticMarkup(createElement(ThemeContext.Provider, { value: { preference: mode, theme, setPreference() {} } }, createElement(DashboardAppearance, { locale, palette, onChange() {} })));
+      const details = html.match(/^<details\b([^>]*)>/u);
+      assert.ok(details); assert.ok(!/\bopen(?:\s|=|$)/u.test(details[1]!));
+      const summary = html.match(/<summary>(.*?)<\/summary>/u)?.[1];
+      assert.ok(summary); assert.ok(summary.includes(appearanceCopy[locale].heading)); assert.ok(summary.includes(paletteLabels[locale][palette]));
+      assert.ok(summary.includes('aria-hidden="true"')); assert.ok(!summary.includes('<input'));
+      const colors = [...summary.matchAll(/background-color:([^";]+)/gu)].map(match => match[1]);
+      assert.equal(colors.length, 8); assert.deepEqual(colors, withGovernedPalette(theme, palette).categorical);
+      assert.equal((html.match(/type="radio"/gu) ?? []).length, 7);
+      assert.match(html, new RegExp(`<input[^>]*(?:checked=""[^>]*value="${palette}"|value="${palette}"[^>]*checked="")`, 'u'));
+    }
+  } finally { await server.close(); }
+});
+
+test('viewer and live builder previews inherit current dashboard palette while overrides stay fixed', async () => {
+  const server = await createServer({ root: fileURLToPath(new URL('../', import.meta.url)), server: { middlewareMode: true }, optimizeDeps: { noDiscovery: true }, appType: 'custom' });
+  try {
+    const { DashboardRenderer } = await server.ssrLoadModule('/src/Renderer.tsx');
+    const { BuilderWorkspace } = await server.ssrLoadModule('/src/builder/BuilderWorkspace.tsx');
+    const { ThemeContext } = await server.ssrLoadModule('/src/presentation/ThemeProvider.tsx');
+    const { startBuilder } = await import('../src/builder/model.ts');
+    const { productMetricCatalog } = await import('@el-dabboos/domain');
+    const { withGovernedPalette } = await import('../src/rendering/chart-theme.ts');
+    const chart: DashboardWidget = { id: 'inherited', type: 'line', dimension: 'month', presentation: { legend: 'show' }, series: [{ id: 'r', metric: 'revenue' }] };
+    const dashboard: DashboardSpec = { ...spec, layout: { columns: 12 }, presentation: { palette: 'blue' }, widgets: [chart, { ...chart, id: 'rose', presentation: { palette: 'red', legend: 'show' } }, { ...chart, id: 'enterprise', presentation: { palette: 'default', legend: 'show' } }] };
+    let calls = 0;
+    const repository: AnalyticsRepository = { execute: async query => { calls++; return { metric: query.metric, groupBy: 'month', rows: [{ key: '2026-01', value: 100 }], metadata: { sourceId: 'test', executedAt: '2026-01-01' } }; } };
+    const execution = await new DashboardExecutor(repository).execute(dashboard, { tenantId: 'demo-iq', locale: 'en' });
+    const expectedCalls = calls;
+    for (const mode of ['light','dark'] as const) for (const locale of ['en','ar'] as const) for (const palette of ['blue','green'] as const) {
+      const current = { ...dashboard, presentation: { palette } }; const theme = chartTheme(mode);
+      const provider = { preference: mode, theme, setPreference() {} };
+      const viewer = renderToStaticMarkup(createElement(ThemeContext.Provider, { value: provider }, createElement(DashboardRenderer, { execution, dashboardOverride: current, locale, catalog: semanticCatalog, profile: tenantProfiles['demo-iq'] })));
+      const builder = renderToStaticMarkup(createElement(ThemeContext.Provider, { value: provider }, createElement(BuilderWorkspace, { history: startBuilder({ kind: 'dashboard', spec: current }), execution, locale, catalog: semanticCatalog, registry: productMetricCatalog, profile: tenantProfiles['demo-iq'], filterOptions: {}, busy: false, onCommand() {}, onUndo() {}, onRedo() {} })));
+      for (const html of [viewer, builder]) {
+        const colors = [...html.matchAll(/class="legend-mark " style="color:([^;]+);/gu)].map(match => match[1]);
+        assert.deepEqual(colors, [withGovernedPalette(theme, palette).categorical[0], withGovernedPalette(theme, 'red').categorical[0], theme.categorical[0]]);
+      }
+      assert.ok(!viewer.includes('dashboard-appearance')); assert.ok(builder.includes('dashboard-appearance'));
+      const { appearanceCopy, paletteLabels } = await import('../src/i18n.ts');
+      assert.ok(builder.includes(`${appearanceCopy[locale].inherit} (${paletteLabels[locale][palette]})`));
+      assert.equal(calls, expectedCalls); assert.equal(execution.dashboard.presentation?.palette, 'blue');
+    }
+  } finally { await server.close(); }
+});
+
+
+test('builder inspector groups dashboard disclosures above selected widget controls in EN/AR and preserves empty guidance', async () => {
+  const server = await createServer({ root: fileURLToPath(new URL('../', import.meta.url)), server: { middlewareMode: true }, optimizeDeps: { noDiscovery: true }, appType: 'custom' });
+  try {
+    const { BuilderWorkspace } = await server.ssrLoadModule('/src/builder/BuilderWorkspace.tsx');
+    const { startBuilder } = await import('../src/builder/model.ts');
+    const { productMetricCatalog } = await import('@el-dabboos/domain');
+    for (const locale of ['en','ar'] as const) {
+      const props = { execution: null, locale, catalog: semanticCatalog, registry: productMetricCatalog, profile: tenantProfiles['demo-iq'], filterOptions: {}, busy: false, onCommand() {}, onUndo() {}, onRedo() {} };
+      const html = renderToStaticMarkup(createElement(BuilderWorkspace, { ...props, history: startBuilder({ kind: 'dashboard', spec }) }));
+      const dashboardStart = html.indexOf('<section class="dashboard-settings">');
+      const widgetStart = html.indexOf('<section class="widget-settings">');
+      assert.ok(dashboardStart >= 0); assert.ok(widgetStart > dashboardStart);
+      const dashboard = html.slice(dashboardStart, widgetStart);
+      const widget = html.slice(widgetStart, html.indexOf('</aside>', widgetStart));
+      assert.ok(dashboard.includes(`<h3>${locale === 'en' ? 'Dashboard settings' : 'إعدادات لوحة المعلومات'}</h3>`));
+      assert.match(dashboard, /<details class="dashboard-appearance">/u);
+      assert.match(dashboard, /<details class="dashboard-filters"><summary>/u);
+      assert.ok(dashboard.includes(locale === 'en' ? 'Dashboard filters' : 'مرشحات لوحة المعلومات'));
+      assert.ok(!dashboard.includes('builder-editor')); assert.ok(!dashboard.includes('layout-inspector'));
+      assert.ok(widget.includes(`<h3>${locale === 'en' ? 'Selected widget' : 'البطاقة المحددة'}</h3>`));
+      assert.ok(widget.indexOf('layout-inspector') < widget.indexOf('builder-editor'));
+      assert.ok(widget.includes(`<h4>${locale === 'en' ? 'Widget properties' : 'خصائص البطاقة'}</h4>`));
+      assert.ok(widget.includes('value="inherit" selected=""')); assert.ok(!widget.includes('dashboard-filters'));
+      const empty = renderToStaticMarkup(createElement(BuilderWorkspace, { ...props, history: startBuilder(blankDashboardDraft(tenantProfiles['demo-iq'], locale)) }));
+      assert.ok(empty.includes('class="dashboard-settings"')); assert.ok(empty.includes('class="dashboard-filters"'));
+      assert.ok(!empty.includes('class="dashboard-appearance"')); assert.ok(!empty.includes('class="widget-settings"'));
+      assert.ok(empty.includes(locale === 'en' ? 'Select a widget or add one' : 'اختر بطاقة أو أضف واحدة'));
     }
   } finally { await server.close(); }
 });

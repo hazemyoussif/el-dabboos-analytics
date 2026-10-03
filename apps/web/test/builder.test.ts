@@ -110,3 +110,35 @@ test('manual palette changes preserve business intent, participate in history an
   assert.deepEqual(current, original);
   for (const raw of ['#0000ff', 'rgb(0,0,255)', 'cyan']) assert.throws(() => widgetPaletteCommand(chart, raw), /Invalid governed palette/);
 });
+
+test('dashboard appearance and inherited widget overrides participate in history without analytics', async () => {
+  const { dashboardPaletteCommand, widgetPaletteCommand, withWidgetPalette } = await import('../src/builder/model.ts');
+  const { resolveGovernedPalette } = await import('../src/rendering/chart-theme.ts');
+  const current: DashboardSpec = { ...spec, widgets: [widget, { ...widget, id: 'override', presentation: { palette: 'red' } }] };
+  const palette = (history: ReturnType<typeof startBuilder>) => history.present.kind === 'dashboard' ? history.present.spec.presentation?.palette ?? 'default' : 'default';
+  let transition = commitBuilderCommand(startBuilder({ kind: 'dashboard', spec: current }), dashboardPaletteCommand('blue'));
+  assert.equal(transition.execute, false); assert.equal(palette(transition.history), 'blue');
+  transition = commitBuilderCommand(transition.history, dashboardPaletteCommand('green'));
+  assert.equal(transition.execute, false); assert.equal(palette(transition.history), 'green');
+  transition = undoBuilder(transition.history); assert.equal(transition.execute, false); assert.equal(palette(transition.history), 'blue');
+  transition = undoBuilder(transition.history); assert.equal(transition.execute, false); assert.equal(palette(transition.history), 'default');
+  transition = redoBuilder(transition.history); assert.equal(transition.execute, false); assert.equal(palette(transition.history), 'blue');
+  assert.equal(transition.history.present.kind, 'dashboard');
+  if (transition.history.present.kind !== 'dashboard') throw new Error('Missing spec');
+  const draft = transition.history.present.spec;
+  assert.deepEqual(draft.widgets, current.widgets);
+  assert.equal(resolveGovernedPalette(draft.widgets[0]!.presentation?.palette, draft.presentation?.palette), 'blue');
+  assert.equal(resolveGovernedPalette(draft.widgets[1]!.presentation?.palette, draft.presentation?.palette), 'red');
+  const inherit = commitBuilderCommand(transition.history, widgetPaletteCommand(draft.widgets[1]!, 'inherit'));
+  assert.equal(inherit.execute, false); assert.equal(undoBuilder(inherit.history).execute, false); assert.equal(redoBuilder(undoBuilder(inherit.history).history).execute, false);
+  if (inherit.history.present.kind !== 'dashboard') throw new Error('Missing spec');
+  assert.equal(inherit.history.present.spec.widgets[1]!.presentation, undefined);
+  const bar: DashboardWidget = { ...widget, type: 'bar', dimension: 'branch', presentation: { orientation: 'horizontal', palette: 'red', legend: 'hide' } };
+  assert.deepEqual(withWidgetPalette(bar, 'inherit').presentation, { orientation: 'horizontal', legend: 'hide' });
+  assert.equal(bar.presentation?.palette, 'red');
+  assert.equal(withWidgetPalette(widget, 'default').presentation?.palette, 'default');
+  const last = commitBuilderCommand(startBuilder({ kind: 'dashboard', spec: { ...spec, presentation: { palette: 'blue' } } }), { type: 'remove-last' });
+  const first = commitBuilderCommand(last.history, { type: 'add-first', widget });
+  assert.equal(first.history.present.kind === 'dashboard' && first.history.present.spec.presentation?.palette, 'blue');
+  assert.equal(first.history.present.kind === 'dashboard' && first.history.present.spec.widgets[0]!.presentation?.palette, undefined);
+});

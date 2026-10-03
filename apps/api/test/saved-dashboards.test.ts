@@ -82,3 +82,30 @@ test('governed palette survives explicit save, update and reopening through a fr
     assert.equal(reopened.json().version, 2);
   } finally { await app.close(); db.close(); }
 });
+
+test('dashboard appearance and widget overrides survive save, Save As, fresh reopen, and version conflicts', async () => {
+  const db = new DatabaseSync(':memory:'); createDashboardPersistenceSchema(db);
+  const facts = new MockAnalyticsRepository([]);
+  const deps = { analyticsRepository: facts, dimensionValues: facts, dashboardRepository: new SqliteDashboardRepository(db) };
+  let app = await buildApi(deps);
+  try {
+    const owner = headers('demo-iq-admin');
+    const ocean: DashboardSpec = { ...spec, presentation: { palette: 'blue' }, widgets: [spec.widgets[0]!, { ...spec.widgets[0]!, id: 'rose', presentation: { palette: 'red' } }, { ...spec.widgets[0]!, id: 'enterprise', presentation: { palette: 'default' } }] };
+    const created = await app.inject({ method: 'POST', url: '/api/saved-dashboards', headers: owner, payload: { dashboard: ocean } });
+    assert.equal(created.statusCode, 200); const saved = created.json(); assert.deepEqual(saved.spec, ocean);
+    const forest = { ...ocean, presentation: { palette: 'green' } };
+    const updated = await app.inject({ method: 'PUT', url: `/api/saved-dashboards/${saved.id}`, headers: owner, payload: { dashboard: forest, expectedVersion: 1 } });
+    assert.equal(updated.statusCode, 200); assert.equal(updated.json().version, 2);
+    const stale = await app.inject({ method: 'PUT', url: `/api/saved-dashboards/${saved.id}`, headers: owner, payload: { dashboard: ocean, expectedVersion: 1 } });
+    assert.equal(stale.statusCode, 409);
+    const copy = await app.inject({ method: 'POST', url: '/api/saved-dashboards', headers: owner, payload: { dashboard: forest } });
+    assert.equal(copy.statusCode, 200); assert.notEqual(copy.json().id, saved.id);
+    await app.close(); app = await buildApi(deps);
+    for (const id of [saved.id, copy.json().id]) {
+      const reopened = await app.inject({ method: 'GET', url: `/api/saved-dashboards/${id}`, headers: owner });
+      assert.equal(reopened.statusCode, 200); assert.deepEqual(reopened.json().spec, forest);
+    }
+    const invalid = await app.inject({ method: 'POST', url: '/api/saved-dashboards', headers: owner, payload: { dashboard: { ...forest, presentation: { palette: 'inherit' } } } });
+    assert.equal(invalid.statusCode, 400);
+  } finally { await app.close(); db.close(); }
+});

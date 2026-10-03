@@ -58,3 +58,23 @@ The manual builder offers a native localized Palette / لوحة الألوان s
 Manual and sparse AI palette edits converge on `WidgetPresentation.palette`; generation can supply the same governed token. The centralized web ChartTheme resolves actual Light/Dark colors. Builder and provider plans never store resolved colors, CSS or chart-library options. Global theme/locale remain preferences outside saved content.
 
 Generation uses the summary/grouped structural contract in [ADR-024](adr/024-compact-generation-plan.md). AI edits use sparse DashboardEditPlan in [ADR-025](adr/025-compact-dashboard-edit-plan.md), then canonical patch/spec validation and authorization.
+
+## Enterprise Chart Palette V2.0
+
+Categorical, sequential and semantic colors are separate governed concepts in the web ChartTheme. Default (Enterprise) and every named palette provide eight distinct categorical colors in intentionally tuned Light/Dark variants. Named palettes are accent-first categorical themes, not monochrome scales. Categories/series 1–8 are distinct; category/series 9 deterministically wraps to 1. Labels, legends and precise value tables retain category identity beyond capacity. Existing composition density warnings (Pie >12, Treemap >20) remain unchanged; they address readability rather than palette capacity.
+
+Persisted tokens remain `default`, `blue`, `green`, `orange`, `purple`, `red`, `neutral`, with no migration. Display labels are Enterprise, Ocean, Forest, Amber, Plum, Rose and Slate, with Arabic equivalents. An omitted palette and explicit `default` resolve identically. Palette-only edits reuse analytics results and still require explicit Save.
+
+The sequential primitive is a six-step teal ramp ordered low → high, independent of categorical selection. This pass does not assign it to charts or add continuous-color behavior. Semantic positive green, negative, warning and neutral are independent of brand/default teal and aesthetic palette choice; numeric sign alone does not establish business meaning.
+
+Raw colors remain presentation-only and never enter DashboardSpec/Patch, generation/edit plans or provider schemas. Dense Line/Combo differentiation through additional non-color channels is deferred to Palette V2.1 / accessibility; current comparison dash/opacity conventions are preserved.
+
+## Dashboard Appearance V1
+
+Personal System/Light/Dark remains a browser preference outside saved content. The optional DashboardSpec v2 `presentation.palette` is shared dashboard design, using the existing governed tokens and explicit Save/version lifecycle. Omission or dashboard `default` resolves to Enterprise. No migration is required: the repository stores the complete spec as JSON, preserving appearance through Save, Save As, copies and reopening.
+
+Effective widget palette resolves from explicit widget palette, then dashboard palette, then Enterprise. Widget palette omission means inherit; widget `"default"` means an explicit Enterprise override. The editor-only “Use dashboard palette” option removes just that override and preserves other presentation settings. New widgets inherit by omission. Legacy dashboards without dashboard presentation keep their prior colors.
+
+Manual edit mode offers a native disclosure, collapsed on entry, whose localized summary shows the selected palette and eight theme-resolved swatches. Expanding it reveals dashboard palette cards with native radio controls. The inspector groups Appearance and a collapsed native Filters disclosure under Dashboard settings, above Selected widget layout and properties; dashboard controls remain available without a widget selection. Filter commands retain their existing analytics execution behavior. Selecting a palette keeps the disclosure open; expansion state is UI-only and never persisted. Dashboard and widget palette/inheritance edits preview immediately, participate in Undo/Redo and dirty the draft without executing analytics or auto-saving. `set_presentation` replaces the bounded dashboard presentation object; null clears it. Final canonical validation and existing edit/save permissions remain authoritative.
+
+Appearance is manual-only in V1. Generation/edit plans, provider schemas and prompts gain no fields or text. Dashboard presentation is excluded from serialized AI edit context, and sparse AI widget edits preserve it. Raw colors remain web-only. DashboardSpec remains v2; theme names, raw colors and the editor-only inheritance option are rejected by the canonical schemas.

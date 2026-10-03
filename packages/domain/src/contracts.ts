@@ -100,6 +100,8 @@ export const widgetTypes = ['kpi', 'line', 'area', 'bar', 'pie', 'treemap', 'com
 export type WidgetType = typeof widgetTypes[number];
 export const governedPalettes = ['default', 'blue', 'green', 'orange', 'purple', 'red', 'neutral'] as const;
 export type GovernedPalette = typeof governedPalettes[number];
+/** Shared dashboard design; personal Light/Dark/System stays outside saved content. */
+export interface DashboardPresentation { palette?: GovernedPalette }
 export interface WidgetPresentation {
   palette?: GovernedPalette;
   orientation?: 'vertical' | 'horizontal';
@@ -127,6 +129,7 @@ export interface DashboardSpec {
   id: string;
   title: LocalizedText;
   locale: Locale;
+  presentation?: DashboardPresentation;
   /** User-requested filters. Future policy-enforced filters belong outside DashboardSpec. */
   filters: { dateRange?: DateRange; dimensions?: AnalyticsFilter[] };
   layout: DashboardLayout;
@@ -141,6 +144,7 @@ export type DashboardPatch = {
     | { op: 'set_title'; title: LocalizedText }
     | { op: 'set_filters'; filters: DashboardSpec['filters'] }
     | { op: 'set_layout'; layout: DashboardLayout }
+    | { op: 'set_presentation'; presentation: DashboardPresentation | null }
   >;
 };
 export interface PlannerCapabilities { metricIds: readonly MetricId[]; templateIds: readonly string[]; actions: readonly Permission[] }

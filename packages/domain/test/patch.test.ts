@@ -32,3 +32,19 @@ test('patch schema rejects unknown fields and validates completed dashboard atom
   assert.equal(next.widgets[1]?.series[0]?.metric, 'sales_growth');
   assert.equal(original.filters.dateRange, undefined);
 });
+
+test('dashboard presentation patches replace, explicitly default, and clear atomically', () => {
+  const blue = applyDashboardPatch(original, { schemaVersion: 2, operations: [{ op: 'set_presentation', presentation: { palette: 'blue' } }] });
+  assert.deepEqual(blue.presentation, { palette: 'blue' }); assert.equal(original.presentation, undefined);
+  const enterprise = applyDashboardPatch(blue, { schemaVersion: 2, operations: [{ op: 'set_presentation', presentation: { palette: 'default' } }] });
+  assert.deepEqual(enterprise.presentation, { palette: 'default' });
+  const empty = applyDashboardPatch(blue, { schemaVersion: 2, operations: [{ op: 'set_presentation', presentation: {} }] });
+  assert.deepEqual(empty.presentation, {});
+  const cleared = applyDashboardPatch(blue, { schemaVersion: 2, operations: [{ op: 'set_presentation', presentation: null }] });
+  assert.equal(Object.hasOwn(cleared, 'presentation'), false);
+  for (const presentation of [{ palette: '#355fa8' }, { palette: 'custom' }, { palette: 'inherit' }, { font: 'Comic Sans' }]) {
+    assert.throws(() => applyDashboardPatch(blue, { schemaVersion: 2, operations: [{ op: 'set_presentation', presentation }] } as Parameters<typeof applyDashboardPatch>[1]), /Invalid DashboardPatch/);
+  }
+  assert.throws(() => applyDashboardPatch(blue, { schemaVersion: 2, operations: [{ op: 'set_presentation', presentation: null }, { op: 'remove', widgetId: 'revenue' }] }));
+  assert.deepEqual(blue.presentation, { palette: 'blue' });
+});

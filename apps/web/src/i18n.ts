@@ -1,5 +1,13 @@
 import { dimensionLabels } from '@el-dabboos/domain';
-import type { DimensionId, Locale, MetricType, TenantProfile } from '@el-dabboos/domain';
+import type { DimensionId, GovernedPalette, Locale, MetricType, TenantProfile } from '@el-dabboos/domain';
+export const appearanceCopy = {
+  en: { heading: 'Dashboard appearance', palette: 'Dashboard palette', widgetPalette: 'Palette', inherit: 'Use dashboard palette', savedHint: 'Applies to widgets without an override. Save to keep changes.' },
+  ar: { heading: 'مظهر لوحة المعلومات', palette: 'لوحة ألوان لوحة المعلومات', widgetPalette: 'لوحة الألوان', inherit: 'استخدام لوحة ألوان لوحة المعلومات', savedHint: 'تُطبّق على البطاقات دون تخصيص. احفظ للاحتفاظ بالتغييرات.' },
+} as const;
+export const paletteLabels: Record<Locale, Record<GovernedPalette, string>> = {
+  en: { default: 'Enterprise', blue: 'Ocean', green: 'Forest', orange: 'Amber', purple: 'Plum', red: 'Rose', neutral: 'Slate' },
+  ar: { default: 'مؤسسية', blue: 'محيط', green: 'غابة', orange: 'كهرمان', purple: 'برقوق', red: 'ورد', neutral: 'أردواز' },
+};
 export const copy = {
   en: {
     studio: 'Analytics Studio', product: 'El Dabboos', metricCatalog: 'Metric catalog', available: 'available', planned: 'planned', tagline: 'Ask your business. See the answer.',

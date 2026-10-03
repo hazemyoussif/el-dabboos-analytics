@@ -1,5 +1,5 @@
 import { applyDashboardPatch, governedPalettes, resolveDashboardLayout, semanticCatalog, validateAnalysis, validateDashboardSpec, visualizationIssues } from '@el-dabboos/domain';
-import type { AnalysisSpec, DashboardLayout, DashboardPatch, DashboardSpec, DashboardWidget, DimensionId, Locale, MetricId, ProductMetric, SemanticMetric, TenantProfile } from '@el-dabboos/domain';
+import type { AnalysisSpec, DashboardLayout, DashboardPatch, DashboardSpec, DashboardWidget, DimensionId, GovernedPalette, Locale, MetricId, ProductMetric, SemanticMetric, TenantProfile } from '@el-dabboos/domain';
 import { resolveDatePreset } from '@el-dabboos/application';
 
 export interface EmptyBuilderDraft {
@@ -41,8 +41,8 @@ export function commitBuilderCommand(history: BuilderHistory, command: BuilderCo
     next = { kind: 'dashboard', spec };
   } else if (command.type === 'remove-last') {
     if (current.kind !== 'dashboard' || current.spec.widgets.length !== 1) throw new Error('Not the last widget');
-    const { schemaVersion, id, title, locale, filters } = current.spec;
-    next = { kind: 'empty', base: { schemaVersion, id, title, locale, filters, layout: { columns: 12, items: [] } } };
+    const { schemaVersion, id, title, locale, filters, presentation } = current.spec;
+    next = { kind: 'empty', base: { schemaVersion, id, title, locale, filters, ...(presentation ? { presentation } : {}), layout: { columns: 12, items: [] } } };
   } else {
     if (current.kind !== 'dashboard') throw new Error('Add a widget before editing the dashboard');
     const patch: DashboardPatch = command.type === 'layout' ? { schemaVersion: 2, operations: [{ op: 'set_layout', layout: command.layout }] } : command.patch;
@@ -94,11 +94,23 @@ export function validWidgetDraft(widget: DashboardWidget, base: Omit<DashboardSp
   try { validateDashboardSpec({ ...base, layout: { columns: 12 }, widgets: [widget] }); return true; } catch { return false; }
 }
 
-/** Palette edits use the same canonical replacement/history path as other edits. */
+export type WidgetPaletteSelection = 'inherit' | GovernedPalette;
+/** Inheritance is editor-only; removing the override preserves other presentation. */
+export function withWidgetPalette(widget: DashboardWidget, value: WidgetPaletteSelection): DashboardWidget {
+  if (value !== 'inherit' && !governedPalettes.includes(value)) throw new Error('Invalid governed palette.');
+  const next = { ...widget, presentation: { ...widget.presentation } };
+  if (value === 'inherit') delete next.presentation.palette;
+  else next.presentation.palette = value;
+  if (!Object.keys(next.presentation).length) delete (next as DashboardWidget).presentation;
+  return next;
+}
+/** Palette edits use the canonical replacement/history path. */
 export function widgetPaletteCommand(widget: DashboardWidget, value: string): BuilderCommand {
-  const palette = governedPalettes.find(palette => palette === value);
-  if (!palette) throw new Error('Invalid governed palette.');
+  if (value !== 'inherit' && !governedPalettes.includes(value as GovernedPalette)) throw new Error('Invalid governed palette.');
   return { type: 'patch', patch: { schemaVersion: 2, operations: [{ op: 'replace', widgetId: widget.id,
-    widget: { ...widget, presentation: { ...widget.presentation, palette } },
+    widget: withWidgetPalette(widget, value as WidgetPaletteSelection),
   }] } };
+}
+export function dashboardPaletteCommand(palette: GovernedPalette): BuilderCommand {
+  return { type: 'patch', patch: { schemaVersion: 2, operations: [{ op: 'set_presentation', presentation: { palette } }] } };
 }

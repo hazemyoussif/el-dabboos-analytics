@@ -348,3 +348,23 @@ test('edit authorization checks current dashboard before invoking provider and r
   await assert.rejects(planner.edit(spec, 'Add finance', profile, capabilities), { code: 'METRIC_FORBIDDEN' });
   assert.equal(provider.requests.length, 1);
 });
+
+test('manual dashboard appearance adds no provider context or schema and survives sparse AI edits', async () => {
+  const intent = { operations: [{ op: 'update_widget', widgetId: 'revenue', changes: { presentation: { palette: 'red' } } }] };
+  const provider = new SequenceProvider([intent, intent, plan]);
+  const planner = new StructuredDashboardPlanner(provider, { clock: () => now });
+  const decorated: DashboardSpec = { ...spec, presentation: { palette: 'blue' } };
+  const before = structuredClone(decorated);
+  await planner.edit(spec, 'Use a red palette', profile, capabilities);
+  const patch = await planner.edit(decorated, 'Use a red palette', profile, capabilities);
+  assert.deepEqual(provider.requests[0], provider.requests[1]);
+  assert.equal(provider.requests.length, 2);
+  assert.ok(!JSON.stringify(provider.requests[1]!.responseFormat.jsonSchema).includes('set_presentation'));
+  const next = applyDashboardPatch(decorated, patch);
+  assert.deepEqual(next.presentation, { palette: 'blue' }); assert.equal(next.widgets[0]!.presentation?.palette, 'red');
+  assert.deepEqual(decorated, before);
+  await planner.generate(request);
+  assert.deepEqual(provider.requests[2]!.responseFormat.jsonSchema, projectProviderSchema(expectedSchema));
+  assert.ok(!Object.hasOwn(provider.requests[2]!.responseFormat.jsonSchema.properties as object, 'presentation'));
+  assert.ok(!Object.hasOwn(provider.requests[2]!.responseFormat.jsonSchema.$defs as object, 'dashboardPresentation'));
+});

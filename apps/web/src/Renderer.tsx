@@ -1,10 +1,10 @@
 import { TrendingUp, ChartLine, ChartArea, ChartBar, ChartPie, PanelsTopLeft, ChartNoAxesCombined, Table2, AlertCircle } from 'lucide-react';
-import { withGovernedPalette } from './rendering/chart-theme.ts';
+import { resolveGovernedPalette, withGovernedPalette } from './rendering/chart-theme.ts';
 import { useChartTheme } from './presentation/ThemeProvider.tsx';
 import { EmptyState, Notice } from './presentation/Feedback.tsx';
 import type { DashboardExecutionResult, WidgetExecution } from '@el-dabboos/application';
 import { resolveDashboardLayout } from '@el-dabboos/domain';
-import type { DashboardSpec, DashboardWidget, Locale, SemanticMetric, TenantProfile } from '@el-dabboos/domain';
+import type { DashboardSpec, DashboardWidget, GovernedPalette, Locale, SemanticMetric, TenantProfile } from '@el-dabboos/domain';
 import { copy, formatKey } from './i18n.ts';
 import { AreaContent } from './rendering/AreaContent.tsx';
 import { PieContent } from './rendering/PieContent.tsx';
@@ -21,9 +21,9 @@ const icons = { kpi: TrendingUp, line: ChartLine, area: ChartArea, bar: ChartBar
 const renderers = { kpi: KpiContent, line: LineContent, area: AreaContent, bar: BarContent, pie: PieContent, treemap: TreemapContent, combo: ComboContent, table: TableContent };
 
 interface Props { execution: DashboardExecutionResult; catalog: Record<string, SemanticMetric>; locale: Locale; profile: TenantProfile }
-export function WidgetCard({ widget, entry, catalog, locale, profile }: { widget: DashboardWidget; entry: WidgetExecution | undefined; catalog: Record<string, SemanticMetric>; locale: Locale; profile: TenantProfile }) {
+export function WidgetCard({ widget, dashboardPalette, entry, catalog, locale, profile }: { widget: DashboardWidget; dashboardPalette?: GovernedPalette; entry: WidgetExecution | undefined; catalog: Record<string, SemanticMetric>; locale: Locale; profile: TenantProfile }) {
   const t = copy[locale];
-  const theme = withGovernedPalette(useChartTheme(), widget.presentation?.palette);
+  const theme = withGovernedPalette(useChartTheme(), resolveGovernedPalette(widget.presentation?.palette, dashboardPalette));
   const Icon = icons[widget.type];
   const labels = widget.series.map(series => catalog[series.metric]?.labels[locale] ?? series.metric.replaceAll('_', ' '));
   const title = widget.title?.[locale] ?? (labels.length === 1 ? labels[0]! : labels.join(' · '));
@@ -55,7 +55,7 @@ export function DashboardRenderer({ execution, catalog, locale, profile, dashboa
   return <div className="viewer-canvas">{spec.widgets.map(widget => {
     const item = layout.items?.find(candidate => candidate.widgetId === widget.id);
     return <div key={widget.id} className="viewer-item" style={item ? { gridColumn: `${item.x + 1} / span ${item.w}`, gridRow: `${item.y + 1} / span ${item.h}` } : undefined}>
-      <WidgetCard widget={widget} entry={execution.widgetResults[widget.id]} catalog={catalog} locale={locale} profile={profile} />
+      <WidgetCard widget={widget} dashboardPalette={spec.presentation?.palette} entry={execution.widgetResults[widget.id]} catalog={catalog} locale={locale} profile={profile} />
     </div>;
   })}</div>;
 }

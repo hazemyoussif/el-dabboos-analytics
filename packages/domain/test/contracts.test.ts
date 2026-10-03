@@ -56,3 +56,13 @@ test('analytics queries require tenant context and supported dimensions', () => 
   assert.throws(() => validateQuery({ metric: 'revenue', groupBy: 'equipment' }, { tenantId: 'demo-iq', locale: 'en' }));
   assert.doesNotThrow(() => validateQuery({ metric: 'revenue', groupBy: 'branch' }, { tenantId: 'demo-iq', locale: 'ar' }));
 });
+
+test('optional dashboard appearance is strict governed V2 presentation and legacy omission remains valid', () => {
+  for (const presentation of [{}, ...['default','blue','green','orange','purple','red','neutral'].map(palette => ({ palette }))]) {
+    assert.doesNotThrow(() => validateDashboardSpec({ ...spec, presentation }));
+  }
+  assert.doesNotThrow(() => validateDashboardSpec(spec));
+  for (const presentation of [null, { palette: '#355fa8' }, { palette: 'custom' }, { palette: 'inherit' }, { font: 'Comic Sans' }, { palette: 'blue', theme: 'dark' }, { orientation: 'horizontal' }]) {
+    assert.throws(() => validateDashboardSpec({ ...spec, presentation }), /Invalid DashboardSpec/);
+  }
+});
