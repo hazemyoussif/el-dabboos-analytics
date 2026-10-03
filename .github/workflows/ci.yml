@@ -17,7 +17,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd 'pg_isready -U foundation_test -d foundation_test'
+          --health-cmd "pg_isready -U foundation_test -d foundation_test"
           --health-interval 2s --health-timeout 3s --health-retries 30
     env:
       PG_TEST_ADMIN_URL: postgres://foundation_test:foundation_test_only@127.0.0.1:5432/foundation_test
