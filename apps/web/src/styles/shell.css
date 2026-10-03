@@ -58,3 +58,13 @@ html[dir=rtl] .navigation-drawer { margin-inline-start: auto; }
   .topbar-control select { max-width: 130px; }
   .page-content { padding: var(--space-4); }
 }
+.administration { max-width: 1100px; margin-inline: auto; }
+.admin-table-scroll { overflow-x: auto; margin-block: 1rem; }
+.administration table { width: 100%; border-collapse: collapse; }
+.administration th, .administration td { text-align: start; vertical-align: top; padding: .75rem; border-bottom: 1px solid var(--border-default); }
+.administration td p, .administration th p { margin-block: .25rem; font-weight: normal; }
+.admin-form { margin-block: 1rem; }
+.admin-form fieldset { border: 1px solid var(--border-default); padding: 1rem; margin-block: .75rem; }
+.admin-form label { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-block: .5rem; }
+.admin-form input:not([type=checkbox]), .admin-form textarea { max-width: 100%; min-width: 0; }
+.administration button { margin-inline-end: .5rem; margin-block: .25rem; }
