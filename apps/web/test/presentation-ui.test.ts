@@ -165,10 +165,34 @@ test('dashboard Appearance uses theme-resolved swatches and native radio semanti
       assert.match(html, /<input[^>]*(?:checked=""[^>]*value="blue"|value="blue"[^>]*checked="")/u);
       assert.ok(html.includes(locale === 'ar' ? 'مظهر لوحة المعلومات' : 'Dashboard appearance'));
       for (const palette of governedPalettes) for (const color of withGovernedPalette(theme, palette).categorical) assert.ok(html.includes(`background-color:${color}`));
-      assert.equal((html.match(/aria-hidden="true"/gu) ?? []).length, 7);
+      assert.equal((html.match(/aria-hidden="true"/gu) ?? []).length, 8);
       const inherit = renderToStaticMarkup(createElement(PaletteSelect, { locale, value: 'inherit', dashboardPalette: 'blue', onChange() {} }));
       assert.ok(inherit.includes(`value="inherit" selected=""`)); assert.ok(inherit.includes(`(${paletteLabels[locale].blue})`));
       assert.ok(inherit.includes(`value="default">${paletteLabels[locale].default}</option>`));
+    }
+  } finally { await server.close(); }
+});
+
+test('appearance disclosure starts closed with localized selected palette and eight theme-resolved summary swatches', async () => {
+  const { governedPalettes } = await import('@el-dabboos/domain');
+  const { appearanceCopy } = await import('../src/i18n.ts');
+  const server = await createServer({ root: fileURLToPath(new URL('../', import.meta.url)), server: { middlewareMode: true }, optimizeDeps: { noDiscovery: true }, appType: 'custom' });
+  try {
+    const { DashboardAppearance } = await server.ssrLoadModule('/src/builder/DashboardAppearance.tsx');
+    const { ThemeContext } = await server.ssrLoadModule('/src/presentation/ThemeProvider.tsx');
+    const { withGovernedPalette } = await server.ssrLoadModule('/src/rendering/chart-theme.ts');
+    for (const mode of ['light','dark'] as const) for (const locale of ['en','ar'] as const) for (const palette of governedPalettes) {
+      const theme = chartTheme(mode);
+      const html = renderToStaticMarkup(createElement(ThemeContext.Provider, { value: { preference: mode, theme, setPreference() {} } }, createElement(DashboardAppearance, { locale, palette, onChange() {} })));
+      const details = html.match(/^<details\b([^>]*)>/u);
+      assert.ok(details); assert.ok(!/\bopen(?:\s|=|$)/u.test(details[1]!));
+      const summary = html.match(/<summary>(.*?)<\/summary>/u)?.[1];
+      assert.ok(summary); assert.ok(summary.includes(appearanceCopy[locale].heading)); assert.ok(summary.includes(paletteLabels[locale][palette]));
+      assert.ok(summary.includes('aria-hidden="true"')); assert.ok(!summary.includes('<input'));
+      const colors = [...summary.matchAll(/background-color:([^";]+)/gu)].map(match => match[1]);
+      assert.equal(colors.length, 8); assert.deepEqual(colors, withGovernedPalette(theme, palette).categorical);
+      assert.equal((html.match(/type="radio"/gu) ?? []).length, 7);
+      assert.match(html, new RegExp(`<input[^>]*(?:checked=""[^>]*value="${palette}"|value="${palette}"[^>]*checked="")`, 'u'));
     }
   } finally { await server.close(); }
 });

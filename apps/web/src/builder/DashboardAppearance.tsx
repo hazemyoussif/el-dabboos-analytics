@@ -8,8 +8,13 @@ export function DashboardAppearance({ locale, palette, disabled = false, onChang
   locale: Locale; palette: GovernedPalette; disabled?: boolean; onChange: (palette: GovernedPalette) => void;
 }) {
   const theme = useChartTheme(); const t = appearanceCopy[locale];
-  return <section className="dashboard-appearance">
-    <h3>{t.heading}</h3>
+  return <details className="dashboard-appearance">
+    <summary><span className="appearance-summary-content">
+      <strong>{t.heading}</strong>
+      <span className="appearance-summary-preview"><span>{paletteLabels[locale][palette]}</span>
+        <span className="appearance-swatches" aria-hidden="true">{withGovernedPalette(theme, palette).categorical.map((color, index) => <i key={index} style={{ backgroundColor: color }} />)}</span>
+      </span>
+    </span></summary>
     <fieldset disabled={disabled} className="appearance-palettes">
       <legend>{t.palette}</legend>
       {governedPalettes.map(value => <label key={value} className={`appearance-card ${palette === value ? 'selected' : ''}`}>
@@ -18,5 +23,5 @@ export function DashboardAppearance({ locale, palette, disabled = false, onChang
       </label>)}
     </fieldset>
     <p className="builder-hint">{t.savedHint}</p>
-  </section>;
+  </details>;
 }
