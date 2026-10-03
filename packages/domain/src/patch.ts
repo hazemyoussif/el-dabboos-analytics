@@ -32,6 +32,10 @@ export function applyDashboardPatch(current: DashboardSpec, patch: DashboardPatc
       }
       case 'set_title': next.title = operation.title; break;
       case 'set_filters': next.filters = operation.filters; break;
+      case 'set_presentation':
+        if (operation.presentation === null) delete next.presentation;
+        else next.presentation = structuredClone(operation.presentation);
+        break;
       case 'set_layout': next.layout = operation.layout; break;
       default: throw new Error('Unsupported patch operation');
     }

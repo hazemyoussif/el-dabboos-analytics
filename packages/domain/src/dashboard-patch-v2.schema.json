@@ -117,6 +117,29 @@
                 "$ref": "#/$defs/layout"
               }
             }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "op",
+              "presentation"
+            ],
+            "properties": {
+              "op": {
+                "const": "set_presentation"
+              },
+              "presentation": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/dashboardPresentation"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
           }
         ]
       }
@@ -437,6 +460,23 @@
             "smooth"
           ]
         },
+        "palette": {
+          "enum": [
+            "default",
+            "blue",
+            "green",
+            "orange",
+            "purple",
+            "red",
+            "neutral"
+          ]
+        }
+      }
+    },
+    "dashboardPresentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
         "palette": {
           "enum": [
             "default",

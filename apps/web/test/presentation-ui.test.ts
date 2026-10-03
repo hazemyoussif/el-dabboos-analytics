@@ -124,7 +124,7 @@ test('builder palette select exposes the domain vocabulary with localized native
     for (const locale of ['en', 'ar'] as const) for (const mode of ['light', 'dark'] as const) {
       const html = renderToStaticMarkup(createElement(ThemeContext.Provider, { value: { preference: mode, theme: chartTheme(mode), setPreference() {} } }, createElement(PaletteSelect, { locale, value: 'blue', onChange() {} })));
       assert.ok(html.startsWith(`<label>${locale === 'ar' ? 'لوحة الألوان' : 'Palette'}<select>`));
-      assert.equal((html.match(/<option/g) ?? []).length, governedPalettes.length);
+      assert.equal((html.match(/<option/g) ?? []).length, governedPalettes.length + 1);
       for (const palette of governedPalettes) assert.ok(html.includes(`value="${palette}"${palette === 'blue' ? ' selected=""' : ''}>${paletteLabels[locale][palette]}</option>`));
       assert.ok(html.includes('value="blue" selected=""')); assert.ok(!html.includes('#'));
       assert.ok(html.includes(locale === 'ar' ? 'أردواز' : 'Slate'));
@@ -145,6 +145,62 @@ test('Pie and Treemap retain eight named category colors including distinct firs
       const html = renderToStaticMarkup(createElement(ThemeContext.Provider, { value: { preference: mode, theme, setPreference() {} } }, createElement(WidgetCard, { widget, entry, locale, catalog: semanticCatalog, profile: tenantProfiles['demo-iq'] })));
       const marks = [...html.matchAll(/class="legend-mark " style="color:([^;]+);/gu)].map(match => match[1]);
       assert.equal(marks.length, 8); assert.equal(new Set(marks).size, 8); assert.notEqual(marks[0], marks[4]);
+    }
+  } finally { await server.close(); }
+});
+
+test('dashboard Appearance uses theme-resolved swatches and native radio semantics in EN/AR', async () => {
+  const { governedPalettes } = await import('@el-dabboos/domain');
+  const server = await createServer({ root: fileURLToPath(new URL('../', import.meta.url)), server: { middlewareMode: true }, optimizeDeps: { noDiscovery: true }, appType: 'custom' });
+  try {
+    const { DashboardAppearance } = await server.ssrLoadModule('/src/builder/DashboardAppearance.tsx');
+    const { PaletteSelect } = await server.ssrLoadModule('/src/builder/BuilderWorkspace.tsx');
+    const { ThemeContext } = await server.ssrLoadModule('/src/presentation/ThemeProvider.tsx');
+    const { withGovernedPalette } = await server.ssrLoadModule('/src/rendering/chart-theme.ts');
+    for (const mode of ['light','dark'] as const) for (const locale of ['en','ar'] as const) {
+      const theme = chartTheme(mode);
+      const html = renderToStaticMarkup(createElement(ThemeContext.Provider, { value: { preference: mode, theme, setPreference() {} } }, createElement(DashboardAppearance, { locale, palette: 'blue', onChange() {} })));
+      assert.equal((html.match(/type="radio"/gu) ?? []).length, 7);
+      assert.equal((html.match(/checked=""/gu) ?? []).length, 1);
+      assert.match(html, /<input[^>]*(?:checked=""[^>]*value="blue"|value="blue"[^>]*checked="")/u);
+      assert.ok(html.includes(locale === 'ar' ? 'مظهر لوحة المعلومات' : 'Dashboard appearance'));
+      for (const palette of governedPalettes) for (const color of withGovernedPalette(theme, palette).categorical) assert.ok(html.includes(`background-color:${color}`));
+      assert.equal((html.match(/aria-hidden="true"/gu) ?? []).length, 7);
+      const inherit = renderToStaticMarkup(createElement(PaletteSelect, { locale, value: 'inherit', dashboardPalette: 'blue', onChange() {} }));
+      assert.ok(inherit.includes(`value="inherit" selected=""`)); assert.ok(inherit.includes(`(${paletteLabels[locale].blue})`));
+      assert.ok(inherit.includes(`value="default">${paletteLabels[locale].default}</option>`));
+    }
+  } finally { await server.close(); }
+});
+
+test('viewer and live builder previews inherit current dashboard palette while overrides stay fixed', async () => {
+  const server = await createServer({ root: fileURLToPath(new URL('../', import.meta.url)), server: { middlewareMode: true }, optimizeDeps: { noDiscovery: true }, appType: 'custom' });
+  try {
+    const { DashboardRenderer } = await server.ssrLoadModule('/src/Renderer.tsx');
+    const { BuilderWorkspace } = await server.ssrLoadModule('/src/builder/BuilderWorkspace.tsx');
+    const { ThemeContext } = await server.ssrLoadModule('/src/presentation/ThemeProvider.tsx');
+    const { startBuilder } = await import('../src/builder/model.ts');
+    const { productMetricCatalog } = await import('@el-dabboos/domain');
+    const { withGovernedPalette } = await import('../src/rendering/chart-theme.ts');
+    const chart: DashboardWidget = { id: 'inherited', type: 'line', dimension: 'month', presentation: { legend: 'show' }, series: [{ id: 'r', metric: 'revenue' }] };
+    const dashboard: DashboardSpec = { ...spec, layout: { columns: 12 }, presentation: { palette: 'blue' }, widgets: [chart, { ...chart, id: 'rose', presentation: { palette: 'red', legend: 'show' } }, { ...chart, id: 'enterprise', presentation: { palette: 'default', legend: 'show' } }] };
+    let calls = 0;
+    const repository: AnalyticsRepository = { execute: async query => { calls++; return { metric: query.metric, groupBy: 'month', rows: [{ key: '2026-01', value: 100 }], metadata: { sourceId: 'test', executedAt: '2026-01-01' } }; } };
+    const execution = await new DashboardExecutor(repository).execute(dashboard, { tenantId: 'demo-iq', locale: 'en' });
+    const expectedCalls = calls;
+    for (const mode of ['light','dark'] as const) for (const locale of ['en','ar'] as const) for (const palette of ['blue','green'] as const) {
+      const current = { ...dashboard, presentation: { palette } }; const theme = chartTheme(mode);
+      const provider = { preference: mode, theme, setPreference() {} };
+      const viewer = renderToStaticMarkup(createElement(ThemeContext.Provider, { value: provider }, createElement(DashboardRenderer, { execution, dashboardOverride: current, locale, catalog: semanticCatalog, profile: tenantProfiles['demo-iq'] })));
+      const builder = renderToStaticMarkup(createElement(ThemeContext.Provider, { value: provider }, createElement(BuilderWorkspace, { history: startBuilder({ kind: 'dashboard', spec: current }), execution, locale, catalog: semanticCatalog, registry: productMetricCatalog, profile: tenantProfiles['demo-iq'], filterOptions: {}, busy: false, onCommand() {}, onUndo() {}, onRedo() {} })));
+      for (const html of [viewer, builder]) {
+        const colors = [...html.matchAll(/class="legend-mark " style="color:([^;]+);/gu)].map(match => match[1]);
+        assert.deepEqual(colors, [withGovernedPalette(theme, palette).categorical[0], withGovernedPalette(theme, 'red').categorical[0], theme.categorical[0]]);
+      }
+      assert.ok(!viewer.includes('dashboard-appearance')); assert.ok(builder.includes('dashboard-appearance'));
+      const { appearanceCopy, paletteLabels } = await import('../src/i18n.ts');
+      assert.ok(builder.includes(`${appearanceCopy[locale].inherit} (${paletteLabels[locale][palette]})`));
+      assert.equal(calls, expectedCalls); assert.equal(execution.dashboard.presentation?.palette, 'blue');
     }
   } finally { await server.close(); }
 });

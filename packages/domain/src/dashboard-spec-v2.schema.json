@@ -42,6 +42,9 @@
       "items": {
         "$ref": "#/$defs/widget"
       }
+    },
+    "presentation": {
+      "$ref": "#/$defs/dashboardPresentation"
     }
   },
   "$defs": {
@@ -359,6 +362,23 @@
             "smooth"
           ]
         },
+        "palette": {
+          "enum": [
+            "default",
+            "blue",
+            "green",
+            "orange",
+            "purple",
+            "red",
+            "neutral"
+          ]
+        }
+      }
+    },
+    "dashboardPresentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
         "palette": {
           "enum": [
             "default",

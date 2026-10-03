@@ -36,6 +36,10 @@ export function withGovernedPalette(theme: ChartTheme, palette?: GovernedPalette
   if (!palette || palette === 'default') return theme;
   return { ...theme, categorical: palettes[theme.mode][palette] };
 }
+/** Omission inherits; explicit default always selects Enterprise. */
+export function resolveGovernedPalette(widgetPalette?: GovernedPalette, dashboardPalette?: GovernedPalette): GovernedPalette {
+  return widgetPalette ?? dashboardPalette ?? 'default';
+}
 export function chartTheme(theme: ResolvedTheme): ChartTheme { return themes[theme]; }
 export function seriesColor(theme: ChartTheme, index: number): string { return theme.categorical[Math.abs(index) % theme.categorical.length]!; }
 export const chartMargins = { top: 12, right: 16, bottom: 4, left: 4 };

@@ -19,3 +19,7 @@ API scripts load root .env then .env.local; shell values override both. Copy onl
 Build with `pnpm run build`; built API starts via `pnpm --filter @el-dabboos/api start`. Build artifact needs workspace dependencies and Node SQLite support. Keep developer servers separate from disposable manual verification instances; choose a separate port and explicit web proxy if needed. Stop the disposable API before replacing its metadata DB.
 
 Use [personas](../product/personas-and-roles.md) for IDs. Demo headers are x-demo-user-id and x-tenant-id; they are validated against the demo directory, not production authentication. Do not publish this demo identity mechanism as a customer login.
+
+## Internal visualization lab
+
+In Vite development mode, open `/dev/visualization-lab` to inspect real production renderers with synthetic values only. It supports all seven palette themes, EN/Arabic RTL, System/Light/Dark, Line 1/4/8 series, Area, Bar, Pie/Donut, Treemap and Combo. It makes no API requests and persists no dashboards; personal theme preference retains normal browser behavior. The lab has no customer navigation entry. Vite's development guard removes the lab import from production builds; the production path mounts the normal application.

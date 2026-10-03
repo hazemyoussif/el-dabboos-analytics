@@ -98,3 +98,23 @@ test('demo identity selection survives refresh only as a revalidated session pre
   values.set('el-dabboos.demo-user', 'untrusted user');
   assert.equal(preferredDemoUser(session), null);
 });
+
+test('dashboard appearance is unsaved until Save, survives Save As, and discard restores saved design', async () => {
+  const ocean: DashboardSpec = { ...spec, presentation: { palette: 'blue' } };
+  const forest: DashboardSpec = { ...ocean, presentation: { palette: 'green' } };
+  const saved = savedDocument({ ...record, spec: ocean });
+  const changed = editDocument(saved, forest);
+  assert.equal(documentIsDirty(changed), true);
+  assert.deepEqual(discardSavedChanges(changed)?.spec?.presentation, { palette: 'blue' });
+  let updates = 0; let creates = 0;
+  const actions = {
+    create: async (value: DashboardSpec) => { creates++; return { ...record, id: 'copy', spec: structuredClone(value) }; },
+    update: async (_id: string, value: DashboardSpec, version: number) => { updates++; assert.equal(version, 1); return { ...record, spec: structuredClone(value), version: 2 }; },
+  };
+  assert.equal(creates + updates, 0);
+  const updated = await persistDocument(changed, false, actions);
+  assert.deepEqual(updated.spec?.presentation, { palette: 'green' }); assert.equal(documentIsDirty(updated), false);
+  const copied = await persistDocument(updated, true, actions);
+  assert.deepEqual(copied.spec?.presentation, { palette: 'green' }); assert.equal(creates, 1); assert.equal(updates, 1);
+  assert.deepEqual(record.spec.presentation, undefined);
+});

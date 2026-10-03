@@ -54,3 +54,12 @@ test('persisted palette vocabulary and localized aesthetic labels remain governe
   assert.deepEqual(governedPalettes.map(token => paletteLabels.en[token]), ['Enterprise','Ocean','Forest','Amber','Plum','Rose','Slate']);
   assert.deepEqual(governedPalettes.map(token => paletteLabels.ar[token]), ['مؤسسية','محيط','غابة','كهرمان','برقوق','ورد','أردواز']);
 });
+
+test('widget omission inherits dashboard while explicit Enterprise and named overrides stay independent', async () => {
+  const { resolveGovernedPalette } = await import('../src/rendering/chart-theme.ts');
+  assert.equal(resolveGovernedPalette(), 'default');
+  assert.equal(resolveGovernedPalette(undefined, 'blue'), 'blue');
+  assert.equal(resolveGovernedPalette('default', 'blue'), 'default');
+  assert.equal(resolveGovernedPalette('red', 'blue'), 'red');
+  assert.equal(resolveGovernedPalette(undefined, 'green'), 'green');
+});

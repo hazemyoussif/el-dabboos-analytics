@@ -25,7 +25,7 @@ test('provider projection whitelists supported structure and converts scalar and
   assertPortable(projectedPatch);
   assert.deepEqual(projectedSpec.properties, {
     schemaVersion: { enum: [2] }, id: { $ref: '#/$defs/id' }, title: { $ref: '#/$defs/text' }, locale: { enum: ['en', 'ar'] },
-    filters: { $ref: '#/$defs/filters' }, layout: { $ref: '#/$defs/layout' },
+    presentation: { $ref: '#/$defs/dashboardPresentation' }, filters: { $ref: '#/$defs/filters' }, layout: { $ref: '#/$defs/layout' },
     widgets: { type: 'array', minItems: 1, maxItems: 30, items: { $ref: '#/$defs/widget' } },
   });
   const specDefs = projectedSpec.$defs as Record<string, Record<string, unknown>>;
