@@ -1,5 +1,4 @@
 import type { AdministrationUnitOfWork } from '@el-dabboos/domain';
-import { randomUUID } from 'node:crypto';
 import { fail } from './runtime.ts';
 /** Offline-only trusted bootstrap: no HTTP route can invoke this capability. */
 export async function bootstrapAdministration(unitOfWork: AdministrationUnitOfWork, input: {
@@ -13,7 +12,7 @@ export async function bootstrapAdministration(unitOfWork: AdministrationUnitOfWo
     return unitOfWork.write(async (transaction) => {
         if (await transaction.provisioning.bootstrapCompleted())
             fail('BOOTSTRAP_COMPLETED');
-        const timestamp = new Date().toISOString(), meta = { version: 1, createdAt: timestamp, updatedAt: timestamp }, userId = randomUUID(), identityId = randomUUID();
+        const timestamp = new Date().toISOString(), meta = { version: 1, createdAt: timestamp, updatedAt: timestamp }, userId = crypto.randomUUID(), identityId = crypto.randomUUID();
         await transaction.provisioning.initializeProtectedRoles(timestamp);
         await transaction.users.createUser({ ...meta, id: userId, displayName: input.displayName, preferredLocale: input.preferredLocale, status: 'active' });
         await transaction.users.bindIdentity({ id: identityId, userId, provider: input.provider, providerSubject: input.providerSubject, status: 'active' });
@@ -36,7 +35,7 @@ export async function provisionTenantAdministrator(unitOfWork: AdministrationUni
         if (!tenant || tenant.status !== 'provisioning')
             fail('INVALID_ADMIN_INPUT');
         const timestamp = new Date().toISOString(), meta = { version: 1, createdAt: timestamp, updatedAt: timestamp };
-        const member = await transaction.tenants.createMembership({ ...meta, id: randomUUID(), userId: target.userId, tenantId, status: 'active', roleIds: ['admin'], dataScopes: [] });
+        const member = await transaction.tenants.createMembership({ ...meta, id: crypto.randomUUID(), userId: target.userId, tenantId, status: 'active', roleIds: ['admin'], dataScopes: [] });
         const result = await transaction.customers.updateTenant({ ...tenant, status: 'active', updatedAt: timestamp }, expectedVersion);
         if (result.outcome !== 'saved')
             return fail('VERSION_CONFLICT');

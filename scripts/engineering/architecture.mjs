@@ -16,7 +16,7 @@ export function checkImports(file, source, resolve) {
     const target = resolve(specifier, file), destination = target && layer(target);
     if (destination && owner && !permitted[owner].includes(destination)) diagnostics.push(`${file}: forbidden dependency ${specifier} -> ${destination}`);
     if (owner === 'apps/web' && /^(?:node:|pg$|better-sqlite3$|sqlite3$)/.test(specifier)) diagnostics.push(`${file}: browser database/runtime dependency ${specifier}`);
-    if (owner && ['packages/domain', 'packages/application'].includes(owner) && /^(?:react|fastify|pg$|node:sqlite|recharts)/.test(specifier)) diagnostics.push(`${file}: infrastructure dependency ${specifier}`);
+    if (owner && ['packages/domain', 'packages/application'].includes(owner) && /^(?:react|fastify|pg$|node:|recharts)/.test(specifier)) diagnostics.push(`${file}: infrastructure dependency ${specifier}`);
     if (!target && (specifier.startsWith('.') || specifier.startsWith('@el-dabboos/'))) diagnostics.push(`${file}: unresolved local dependency ${specifier}`);
   }
   function visit(node) {
