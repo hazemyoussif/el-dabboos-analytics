@@ -1,0 +1,10 @@
+import { accessMetricDomains, scopeDimensions, tenantPermissions } from '@el-dabboos/domain';
+export const text = { type: 'string', minLength: 1, maxLength: 200 };
+export const version = { type: 'integer', minimum: 1 };
+export const status = (values: readonly string[]) => ({ type: 'string', enum: values });
+export const ids = { type: 'array', items: text, minItems: 1, maxItems: 1000, uniqueItems: true };
+export const scopes = { type: 'array', maxItems: 3, items: { type: 'object', additionalProperties: false, required: ['dimension', 'values'], properties: { dimension: status(scopeDimensions), values: ids } } };
+export const grants = { type: 'array', maxItems: 1000, items: { type: 'object', additionalProperties: false, required: ['subjectType', 'subjectId', 'access'], properties: { subjectType: status(['role', 'membership']), subjectId: text, access: status(['view']) } } };
+export const configuration = { type: 'object', additionalProperties: false, required: ['countryCode', 'defaultLocale', 'arabicDialect', 'reportingCurrency', 'timeZone'], properties: { countryCode: status(['IQ', 'EG']), defaultLocale: status(['en', 'ar']), arabicDialect: status(['iq', 'eg']), reportingCurrency: status(['IQD', 'EGP']), timeZone: status(['Asia/Baghdad', 'Africa/Cairo']) } };
+export const role = { name: text, description: { type: 'string', maxLength: 1000 }, permissions: { type: 'array', maxItems: tenantPermissions.length, uniqueItems: true, items: status(tenantPermissions) }, metricDomains: { type: 'array', maxItems: accessMetricDomains.length, uniqueItems: true, items: status(accessMetricDomains) } };
+export const body = (properties: Record<string, unknown>) => ({ body: { type: 'object', additionalProperties: false, properties, required: Object.keys(properties) } });

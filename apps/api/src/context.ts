@@ -1,4 +1,4 @@
-import { AdministrationService, GovernedSavedDashboardService, resolveTenantAccess } from '@el-dabboos/application';
+import { createAdministration, GovernedSavedDashboardService, resolveTenantAccess } from '@el-dabboos/application';
 import type { AdministrationActor } from '@el-dabboos/application';
 import type { AdministrationUnitOfWork, AccessDirectory, TenantProfileProvider } from '@el-dabboos/domain';
 import { DashboardLibraryService, AuthorizedAnalyticsService, AuthorizationError, DefaultAuthorizationPolicy, DemoIdentityProvider, DashboardExecutor, InMemoryAuditSink, MockDashboardPlanner, SavedDashboardService, analyticsContext, dashboardTemplates } from '@el-dabboos/application';
@@ -31,7 +31,7 @@ export interface RouteContext {
   planner: DashboardPlanner | null;
   library: DashboardLibraryService | null;
   savedDashboards: SavedDashboardService | GovernedSavedDashboardService | null;
-  administration: AdministrationService | null;
+  administration: ReturnType<typeof createAdministration> | null;
   identityId(headers: Record<string, unknown>): Promise<string>;
   requireData(tenantId: string): Promise<void>;
   executor: DashboardExecutor;
@@ -55,7 +55,7 @@ export function createRouteContext(deps: ApiDependencies): RouteContext {
   const executor = new DashboardExecutor(deps.analyticsRepository, clock, deps.executionConcurrency === undefined ? {} : { maxConcurrency: deps.executionConcurrency });
   const analytics = new AuthorizedAnalyticsService(deps.analyticsRepository, policy);
   const actors = new WeakMap<RequestContext, AdministrationActor>();
-  const administration = deps.administration ? new AdministrationService(deps.administration.unitOfWork, policy, clock) : null;
+  const administration = deps.administration ? createAdministration(deps.administration.unitOfWork, policy, clock) : null;
   const savedDashboards = deps.administration ? new GovernedSavedDashboardService(deps.administration.unitOfWork, policy, context => {
     const actor = actors.get(context); if (!actor) throw new ApiError(403, 'ACCESS_DENIED', 'Access unavailable.'); return actor;
   }, clock) : deps.dashboardRepository ? new SavedDashboardService(deps.dashboardRepository, policy, clock) : null;
