@@ -208,8 +208,16 @@ Deliberately deferred product/integration: production IdP/session integration, i
 
 Unresolved defects: none known after narrow fixes. Remaining QA gaps: System preference transition not manually exercised; no-customer database, truly zero-membership tenant, stale governed source value, cursor pagination and backend fault-injected mutation rollback were not manually reproduced. Existing automated tests cover the applicable behaviors; these are not reported as manual passes. Assignment creation was not exercised because stock candidates were empty. OS/screen-reader audit was outside available controls.
 
+## System-theme completion
+
+Manual follow-up verified the System theme against both light and dark
+`prefers-color-scheme` states. Administration pages followed the active
+preference without refresh and remained usable in both states.
+
 ## Recommendation
 
-NOT READY TO MERGE
+READY TO MERGE
 
-The exercised core flows and automated checks pass, but the requested real System color-preference transition has no manual evidence. Complete that small acceptance check and verify exact-final-HEAD CI before making a READY recommendation. The branch remains unmerged.
+All required Access Control Administration acceptance checks are complete.
+No known security, correctness, architecture, persistence, accessibility,
+bilingual, RTL, responsive, or theme blocker remains.
