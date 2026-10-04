@@ -24,3 +24,5 @@ export * from './access-control.ts';
 export * from "./administration.ts";
 
 export * from "./governed-saved-dashboards.ts";
+
+export { bootstrapAdministration, provisionTenantAdministrator, provisionAssignmentCandidate } from './administration/provisioning.ts';

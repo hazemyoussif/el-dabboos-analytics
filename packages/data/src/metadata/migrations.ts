@@ -57,7 +57,7 @@ function legacyBaseline(db: DatabaseSync): boolean {
     try {
         reference.exec(metadataMigrations[0]!.sql);
         const expected = schema(reference);
-        if (actual.length !== expected.length || actual.some((row, i) => row.name !== expected[i]?.name || row.type !== expected[i]?.type || normalizeSql(String(row.sql)) !== normalizeSql(String(expected[i]?.sql))))
+        if (actual.length !== expected.length || actual.some((row, index) => row.name !== expected[index]?.name || row.type !== expected[index]?.type || normalizeSql(String(row.sql)) !== normalizeSql(String(expected[index]?.sql))))
             throw new MetadataSchemaError('UNKNOWN_LEGACY_SCHEMA');
     }
     finally {

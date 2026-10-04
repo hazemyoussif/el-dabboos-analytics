@@ -10,8 +10,7 @@ const monetaryMeasures = new Set<AnalyticsFact['measureId']>(['revenue', 'net_re
 
 /** Two years of canonical source measures with fixed, discoverable business patterns. */
 export function generateSeedFacts(tenantId: TenantProfile['id'] = 'demo-iq', seed = 20261003): AnalyticsFact[] {
-  const profile = tenantProfiles[tenantId];
-  if (!profile) throw new Error('Synthetic seed requires a known demo tenant profile.');
+  const profile = syntheticSeedProfile(tenantId);
   const branches = Object.keys(profile.branchLabels);
   const warehouses = branches.slice(0, 5).map(branch => `${branch}-main`);
   const customersPerBranch = tenantId === 'demo-iq' ? 70 : 60;
@@ -114,4 +113,11 @@ export function generateSeedFacts(tenantId: TenantProfile['id'] = 'demo-iq', see
     }
   }
   return facts;
+}
+
+/** Synthetic fact generation must use a configured demo profile, never a dynamic workspace. */
+function syntheticSeedProfile(tenantId: TenantProfile['id']): TenantProfile {
+  const profile = tenantProfiles[tenantId];
+  if (!profile) throw new Error('Synthetic seed requires a known demo tenant profile.');
+  return profile;
 }

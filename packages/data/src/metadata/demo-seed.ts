@@ -4,8 +4,8 @@ import { tenantProfiles, tenantPermissions, platformPermissions, accessMetricDom
 export function seedDemoAdministration(db: DatabaseSync): void {
     const timestamp = '2026-10-04T00:00:00.000Z';
     db.prepare('INSERT INTO customers(id,name,status,version,created_at,updated_at) VALUES (?,?,?,?,?,?)').run('demo-customer', 'Synthetic demo customer', 'active', 1, timestamp, timestamp);
-    for (const p of Object.values(tenantProfiles))
-        db.prepare(`INSERT INTO tenants(id,customer_id,name,status,country_code,default_locale,arabic_dialect,reporting_currency,time_zone,version,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(p.id, 'demo-customer', p.id, 'active', p.countryCode, p.defaultLocale, p.arabicDialect, p.reportingCurrency, p.timeZone, 1, timestamp, timestamp);
+    for (const profile of Object.values(tenantProfiles))
+        db.prepare(`INSERT INTO tenants(id,customer_id,name,status,country_code,default_locale,arabic_dialect,reporting_currency,time_zone,version,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(profile.id, 'demo-customer', profile.id, 'active', profile.countryCode, profile.defaultLocale, profile.arabicDialect, profile.reportingCurrency, profile.timeZone, 1, timestamp, timestamp);
     seedProtectedAccessRoles(db, timestamp);
     db.prepare('INSERT INTO roles(id,name,description,scope,tenant_id,protected,system_key,version,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)').run('demo-sales-viewer', 'Sales Viewer', 'Synthetic tenant custom role', 'tenant', 'demo-iq', 0, null, 1, timestamp, timestamp);
     for (const permission of ['dashboard:view', 'analytics:query'])
@@ -40,7 +40,7 @@ export function seedProtectedAccessRoles(db: DatabaseSync, timestamp: string): v
         ['agent-manager', 'Agent Manager', 'tenant', 'agent_manager', ['dashboard:view', 'analytics:query'], ['sales', 'crm']],
         ['viewer', 'Viewer', 'tenant', 'viewer', ['dashboard:view', 'analytics:query'], []],
         ['platform-admin', 'Platform Admin', 'platform', 'platform_admin', platformPermissions, []],
-        ['support-admin', 'Support Admin', 'platform', 'support_admin', platformPermissions.filter(p => p.endsWith(':view')), []],
+        ['support-admin', 'Support Admin', 'platform', 'support_admin', platformPermissions.filter(permission => permission.endsWith(':view')), []],
     ] as const;
     for (const [id, name, scope, key, permissions, domains] of roles) {
         db.prepare('INSERT INTO roles(id,name,description,scope,tenant_id,protected,system_key,version,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)').run(id, name, 'Synthetic protected template', scope, null, 1, key, 1, timestamp, timestamp);
