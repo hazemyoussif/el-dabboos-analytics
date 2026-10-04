@@ -6,24 +6,24 @@ function fail(code: string): never { throw new AccessControlError(code); }
 export function usersRepository(connection: MetadataConnection, rows: MetadataRows): UserIdentityRepository {
     const { one, all, run, insert, update, page } = connection;
     const { convert, getUser, getAssignment, identityFor } = rows;
-    return { listUsers: async (pageRequest) => page('users', pageRequest, '', convert<ProductUser>), getUser: async (id) => getUser(id), createUser: async (user) => { insert('users', { ...user, version: 1 }); return getUser(user.id)!; }, updateUser: async (user, value) => {
+    return { listUsers: async (pageRequest) => page('users', pageRequest, '', convert<ProductUser>), getUser: async (id) => getUser(id), createUser: async (user) => { insert('users', { ...user, version: 1 }); return getUser(user.id)!; }, updateUser: async (user, expectedVersion) => {
             const old = getUser(user.id);
             if (old && old.status !== 'invited' && user.status === 'invited')
                 fail('INVALID_LIFECYCLE_TRANSITION');
-            return update('users', user.id, { displayName: user.displayName, preferredLocale: user.preferredLocale, status: user.status, updatedAt: user.updatedAt }, value, () => getUser(user.id));
+            return update('users', user.id, { displayName: user.displayName, preferredLocale: user.preferredLocale, status: user.status, updatedAt: user.updatedAt }, expectedVersion, () => getUser(user.id));
         },
-        getIdentity: async (id) => identityFor(id), listIdentities: async (id) => all('SELECT * FROM identities WHERE user_id=? ORDER BY id', id).map(convert<IdentityBinding>), findIdentity: async (provider, subject) => { const record = one('SELECT * FROM identities WHERE provider=? AND provider_subject=?', provider, subject); return record ? convert<IdentityBinding>(record) : null; }, bindIdentity: async (record) => { insert('identities', record); return structuredClone(record); }, disableIdentity: async (id) => Boolean(run("UPDATE identities SET status='disabled' WHERE id=? AND status='active'", id).changes), membershipTenantIds: async (id) => all('SELECT tenant_id FROM memberships WHERE user_id=? ORDER BY tenant_id', id).map(value => String(value.tenant_id)), getPlatformAssignment: async (id) => getAssignment(id),
-        provisionPlatformAssignment: async (record, value) => {
+        getIdentity: async (id) => identityFor(id), listIdentities: async (id) => all('SELECT * FROM identities WHERE user_id=? ORDER BY id', id).map(convert<IdentityBinding>), findIdentity: async (provider, subject) => { const record = one('SELECT * FROM identities WHERE provider=? AND provider_subject=?', provider, subject); return record ? convert<IdentityBinding>(record) : null; }, bindIdentity: async (record) => { insert('identities', record); return structuredClone(record); }, disableIdentity: async (id) => Boolean(run("UPDATE identities SET status='disabled' WHERE id=? AND status='active'", id).changes), membershipTenantIds: async (id) => all('SELECT tenant_id FROM memberships WHERE user_id=? ORDER BY tenant_id', id).map(storedRow => String(storedRow.tenant_id)), getPlatformAssignment: async (id) => getAssignment(id),
+        provisionPlatformAssignment: async (record, expectedVersion) => {
             const { roleIds, ...rest } = record;
             let result: MetadataWriteResult<PlatformAssignment>;
-            if (value === null) {
+            if (expectedVersion === null) {
                 if (getAssignment(record.userId))
                     return { outcome: 'conflict' };
                 insert('platform_assignments', { ...rest, version: 1 });
                 result = { outcome: 'saved', value: record };
             }
             else
-                result = update('platform_assignments', { id: record.userId, column: 'user_id' }, { status: record.status, updatedAt: record.updatedAt }, value, () => getAssignment(record.userId));
+                result = update('platform_assignments', { id: record.userId, column: 'user_id' }, { status: record.status, updatedAt: record.updatedAt }, expectedVersion, () => getAssignment(record.userId));
             if (result.outcome === 'saved') {
                 run('DELETE FROM platform_assignment_roles WHERE user_id=?', record.userId);
                 for (const role_id of roleIds)
@@ -32,6 +32,6 @@ export function usersRepository(connection: MetadataConnection, rows: MetadataRo
             }
             return result;
         },
-        activePlatformAdministratorUserIds: async () => all(`SELECT DISTINCT u.id FROM users u JOIN platform_assignments a ON a.user_id=u.id JOIN platform_assignment_roles ar ON ar.user_id=a.user_id JOIN roles r ON r.id=ar.role_id WHERE u.status='active' AND a.status='active' AND r.scope='platform' AND r.system_key='platform_admin' AND r.protected=1 AND EXISTS(SELECT 1 FROM identities i WHERE i.user_id=u.id AND i.status='active')`).map(record => String(record.id)),
+        activePlatformAdministratorUserIds: async () => all("SELECT DISTINCT productUser.id FROM users productUser JOIN platform_assignments platformAssignment ON platformAssignment.user_id=productUser.id JOIN platform_assignment_roles assignmentRole ON assignmentRole.user_id=platformAssignment.user_id JOIN roles role ON role.id=assignmentRole.role_id WHERE productUser.status='active' AND platformAssignment.status='active' AND role.scope='platform' AND role.system_key='platform_admin' AND role.protected=1 AND EXISTS(SELECT 1 FROM identities identity WHERE identity.user_id=productUser.id AND identity.status='active')").map(record => String(record.id)),
     };
 }

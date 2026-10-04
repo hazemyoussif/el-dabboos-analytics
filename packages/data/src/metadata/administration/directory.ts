@@ -30,7 +30,7 @@ export function directoryRepository(connection: MetadataConnection, rows: Metada
             const identity = identityFor(id);
             if (!identity || identity.status !== 'active' || getUser(identity.userId)?.status !== 'active')
                 return [];
-            return all("SELECT m.* FROM memberships m JOIN tenants t ON t.id=m.tenant_id JOIN customers c ON c.id=t.customer_id WHERE m.user_id=? AND m.status='active' AND t.status='active' AND c.status='active' ORDER BY m.id", identity.userId).map(membership);
+            return all("SELECT membership.* FROM memberships membership JOIN tenants tenant ON tenant.id=membership.tenant_id JOIN customers customer ON customer.id=tenant.customer_id WHERE membership.user_id=? AND membership.status='active' AND tenant.status='active' AND customer.status='active' ORDER BY membership.id", identity.userId).map(membership);
         },
     };
 }

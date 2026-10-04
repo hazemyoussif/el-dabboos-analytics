@@ -13,12 +13,12 @@ export function dashboardsRepository(connection: MetadataConnection, rows: Metad
                 return { outcome: 'not_found' };
             return update('dashboard_records', record.id, { spec_json: JSON.stringify(record.spec), updatedBy: record.updatedBy, updatedAt: record.updatedAt }, record.expectedVersion, () => getRecord(record.tenantId, record.id));
         },
-        replaceAccess: async (record, value, actor) => {
+        replaceAccess: async (record, expectedVersion, actor) => {
             if (record.scope !== 'restricted' && record.grants.length)
                 fail('INVALID_GRANTS');
             if (!getRecord(record.tenantId, record.dashboardId))
                 return { outcome: 'not_found' };
-            const writeResult = update('dashboard_records', record.dashboardId, { scope: record.scope, updatedBy: actor, updatedAt: new Date().toISOString() }, value, () => getAccess(record.tenantId, record.dashboardId));
+            const writeResult = update('dashboard_records', record.dashboardId, { scope: record.scope, updatedBy: actor, updatedAt: new Date().toISOString() }, expectedVersion, () => getAccess(record.tenantId, record.dashboardId));
             if (writeResult.outcome !== 'saved')
                 return writeResult;
             run('DELETE FROM dashboard_grants WHERE tenant_id=? AND dashboard_id=?', record.tenantId, record.dashboardId);

@@ -13,7 +13,7 @@ export function metadataRows(connection: MetadataConnection) {
     const getCustomer = (id: string) => { const record = one('SELECT * FROM customers WHERE id=?', id); return record ? convert<CustomerAccount>(record) : null; };
     const getTenant = (id: string) => { const record = one('SELECT * FROM tenants WHERE id=?', id); return record ? tenant(record) : null; };
     const getUser = (id: string) => { const record = one('SELECT * FROM users WHERE id=?', id); return record ? convert<ProductUser>(record) : null; };
-    const getRole = (row: Row): AccessRole => { const value = { ...convert<AccessRole>(row), protected: row.protected === 1, permissions: all('SELECT permission FROM role_permissions WHERE role_id=? ORDER BY permission', String(row.id)).map(value => value.permission), ...(row.scope === 'tenant' ? { metricDomains: all('SELECT domain FROM role_metric_domains WHERE role_id=? ORDER BY domain', String(row.id)).map(value => value.domain) } : {}) } as unknown as AccessRole; validateAccessRole(value); return value; };
+    const getRole = (row: Row): AccessRole => { const value = { ...convert<AccessRole>(row), protected: row.protected === 1, permissions: all('SELECT permission FROM role_permissions WHERE role_id=? ORDER BY permission', String(row.id)).map(storedRow => storedRow.permission), ...(row.scope === 'tenant' ? { metricDomains: all('SELECT domain FROM role_metric_domains WHERE role_id=? ORDER BY domain', String(row.id)).map(storedRow => storedRow.domain) } : {}) } as unknown as AccessRole; validateAccessRole(value); return value; };
     const roleValues = (role: TenantAccessRole) => {
         run('DELETE FROM role_permissions WHERE role_id=?', role.id);
         run('DELETE FROM role_metric_domains WHERE role_id=?', role.id);
@@ -26,7 +26,7 @@ export function metadataRows(connection: MetadataConnection) {
         const scopes = new Map<string, string[]>();
         for (const snapshot of all('SELECT dimension,value FROM membership_scopes WHERE tenant_id=? AND membership_id=? ORDER BY dimension,value', String(row.tenant_id), String(row.id)))
             scopes.set(String(snapshot.dimension), [...(scopes.get(String(snapshot.dimension)) ?? []), String(snapshot.value)]);
-        const value = { ...convert<ManagedMembership>(row), roleIds: all('SELECT role_id FROM membership_roles WHERE tenant_id=? AND membership_id=? ORDER BY role_id', String(row.tenant_id), String(row.id)).map(value => String(value.role_id)), dataScopes: [...scopes].map(([dimension, values]) => ({ dimension, values })) } as ManagedMembership;
+        const value = { ...convert<ManagedMembership>(row), roleIds: all('SELECT role_id FROM membership_roles WHERE tenant_id=? AND membership_id=? ORDER BY role_id', String(row.tenant_id), String(row.id)).map(storedRow => String(storedRow.role_id)), dataScopes: [...scopes].map(([dimension, values]) => ({ dimension, values })) } as ManagedMembership;
         compileMembershipScopes(value.dataScopes);
         return value;
     };
@@ -43,7 +43,7 @@ export function metadataRows(connection: MetadataConnection) {
             for (const value of snapshot.values)
                 insert('membership_scopes', { membership_id: membership.id, tenant_id: membership.tenantId, dimension: snapshot.dimension, value });
     };
-    const getAssignment = (id: string): PlatformAssignment | null => { const record = one('SELECT * FROM platform_assignments WHERE user_id=?', id); return record ? { ...convert<PlatformAssignment>(record), roleIds: all('SELECT role_id FROM platform_assignment_roles WHERE user_id=? ORDER BY role_id', id).map(value => String(value.role_id)) } : null; };
+    const getAssignment = (id: string): PlatformAssignment | null => { const record = one('SELECT * FROM platform_assignments WHERE user_id=?', id); return record ? { ...convert<PlatformAssignment>(record), roleIds: all('SELECT role_id FROM platform_assignment_roles WHERE user_id=? ORDER BY role_id', id).map(storedRow => String(storedRow.role_id)) } : null; };
     const getRecord = (tenant: string, id: string) => { const record = one('SELECT * FROM dashboard_records WHERE tenant_id=? AND id=?', tenant, id); return record ? dashboard(record) : null; };
     const getAccess = (tenantId: string, id: string): DashboardAccessState | null => { const record = getRecord(tenantId, id); return record ? { tenantId, dashboardId: id, version: record.version, scope: record.scope, grants: all('SELECT subject_type,subject_id,access FROM dashboard_grants WHERE tenant_id=? AND dashboard_id=? ORDER BY subject_type,subject_id', tenantId, id).map(grant => ({ subjectType: grant.subject_type, subjectId: grant.subject_id, access: grant.access })) as DashboardAccessState['grants'] } : null; };
     const referenced = (tenant: string, id: string) => !!(one('SELECT 1 FROM membership_roles WHERE tenant_id=? AND role_id=? LIMIT 1', tenant, id) || one('SELECT 1 FROM dashboard_grants WHERE tenant_id=? AND role_id=? LIMIT 1', tenant, id));

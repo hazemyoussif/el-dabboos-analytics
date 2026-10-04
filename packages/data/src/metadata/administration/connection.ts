@@ -13,13 +13,13 @@ export function metadataConnection(db: DatabaseSync) {
     const update = <T>(table: string, target: string | {
         id: string;
         column: string;
-    }, changes: object, expected: number, read: () => T | null): MetadataWriteResult<T> => {
-        if (!Number.isInteger(expected) || expected < 1)
+    }, changes: object, expectedVersion: number, read: () => T | null): MetadataWriteResult<T> => {
+        if (!Number.isInteger(expectedVersion) || expectedVersion < 1)
             fail('INVALID_ADMIN_INPUT');
         const id = typeof target === 'string' ? target : target.id;
         const key = typeof target === 'string' ? 'id' : target.column;
         const entries = Object.entries(changes);
-        const writeResult = run(`UPDATE ${table} SET ${entries.map(([key]) => `${column(key)}=?`).join(',')},version=version+1 WHERE ${key}=? AND version=?`, ...entries.map(([, value]) => value as SQLInputValue), id, expected);
+        const writeResult = run(`UPDATE ${table} SET ${entries.map(([key]) => `${column(key)}=?`).join(',')},version=version+1 WHERE ${key}=? AND version=?`, ...entries.map(([, value]) => value as SQLInputValue), id, expectedVersion);
         const value = read();
         return writeResult.changes && value ? { outcome: 'saved', value } : value ? { outcome: 'conflict' } : { outcome: 'not_found' };
     };
