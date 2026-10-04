@@ -12,7 +12,7 @@ export function registerHealthRoutes(app: FastifyInstance, deps: ApiDependencies
   app.get('/health/live', async () => ({ status: 'ok' }));
   app.get('/health/ready', async (_request, reply) => {
     const [persistence, analytics] = await Promise.all([
-      deps.dashboardRepository && deps.readiness ? available(deps.readiness.persistence) : Promise.resolve(false),
+      (deps.administration || deps.dashboardRepository) && deps.readiness ? available(deps.readiness.persistence) : Promise.resolve(false),
       deps.readiness?.analytics ? available(deps.readiness.analytics) : Promise.resolve(undefined),
     ]);
     const ready = persistence && analytics !== false;
