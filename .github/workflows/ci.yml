@@ -23,6 +23,8 @@ jobs:
       PG_TEST_ADMIN_URL: postgres://foundation_test:foundation_test_only@127.0.0.1:5432/foundation_test
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: pnpm/action-setup@v6
         with:
           version: 12.6.0
