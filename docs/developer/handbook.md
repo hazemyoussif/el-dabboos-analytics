@@ -32,3 +32,13 @@ Paths above are relative to packages or apps stated; [repository map](../archite
 ## First useful session
 
 Run frozen install and targeted tests; start mock API with a disposable metadata DB; browse IQ and EG templates; create a draft, edit, Save, reopen, then change theme/language while monitoring requests. Confirm layout-only changes and preferences do not execute queries/save. Read an API authorization test and a data engine test before touching security/semantics. Preserve established ports rather than moving HTTP into application code.
+
+## Administration metadata
+
+Use the dedicated metadata migration/bootstrap commands before starting the governed API; repositories never auto-upgrade. Keep the metadata database separate from demo analytics and the PostgreSQL mart. Read [local administration operations](../security/administration-operations.md) for explicit demo reconciliation, trusted operational bootstrap, tenant candidates, version conflicts and source-readiness behavior. [Verification status](../security/access-control-implementation-status.md) distinguishes automated evidence from the deferred manual UI and production gates.
+
+## Engineering review and administration operations
+
+Follow [engineering standards](engineering-standards.md) in addition to functional tests. Run `check:architecture`, `check:quality` and `check:diff`; debt may not grow beyond the historical pre-feature source. See [remaining debt](engineering-quality-debt.md).
+
+For one administration flow, read the named operation in `packages/application/src/administration/<area>.ts`, its typed HTTP handler in `apps/api/src/routes/administration/<area>.ts`, and its concrete page in `apps/web/src/admin/`. The composition module binds operations and owns no generic resource/action dispatch. Operational bootstrap/provisioning is composed by `apps/api/src/administration-cli.ts`; the command `pnpm metadata:bootstrap` is unchanged. SQLite's connection/transaction owner remains the metadata store, with explicit transaction-bound repository factories beside it.

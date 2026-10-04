@@ -1,3 +1,4 @@
+import { MetadataSchemaError } from './metadata/migrations.ts';
 import type { DatabaseSync } from 'node:sqlite';
 import type { DashboardRecord, DashboardRepository, DashboardUpdate } from '@el-dabboos/domain';
 
@@ -18,7 +19,9 @@ export function createDashboardPersistenceSchema(db: DatabaseSync): void {
   CREATE INDEX IF NOT EXISTS dashboard_records_tenant_access ON dashboard_records(tenant_id, scope, owner_user_id, updated_at);`);
 }
 export class SqliteDashboardRepository implements DashboardRepository {
-  constructor(private readonly db: DatabaseSync) {}
+  constructor(private readonly db: DatabaseSync) {
+    if (db.prepare("SELECT 1 FROM sqlite_master WHERE name='metadata_schema_migrations'").get()) throw new MetadataSchemaError('LEGACY_ADAPTER_UNSUPPORTED');
+  }
   async listAccessible(tenantId: string, userId: string): Promise<DashboardRecord[]> {
     const rows = this.db.prepare(`SELECT * FROM dashboard_records WHERE tenant_id = ? AND (scope = 'tenant' OR owner_user_id = ?)
       ORDER BY updated_at DESC, id`).all(tenantId, userId) as unknown as RecordRow[];

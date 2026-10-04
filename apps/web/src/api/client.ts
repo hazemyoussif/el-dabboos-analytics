@@ -1,6 +1,6 @@
 import type { DashboardExecutionResult, DashboardTemplate, DashboardFilterOverrides } from '@el-dabboos/application';
 import { categoricalDimensions } from '@el-dabboos/domain';
-import type { DashboardRecord, DashboardSpec, DimensionId, Locale, ProductMetric, SemanticMetric, TenantProfile } from '@el-dabboos/domain';
+import type { AccessControlledDashboardRecord as DashboardRecord, DashboardSpec, DimensionId, Locale, ProductMetric, SemanticMetric, TenantProfile } from '@el-dabboos/domain';
 import type { FilterOptions } from '../builder/BuilderWorkspace.tsx';
 
 export type DemoUser = { id: string; displayName: string };
@@ -10,7 +10,7 @@ type ApiError = { error?: { code: string; message: string } };
 export class ApiClientError extends Error {
   constructor(readonly status: number, readonly code: string, message: string) { super(message); }
 }
-async function request<T>(session: ApiSession, path: string, method: string, body?: unknown): Promise<T> {
+export async function request<T>(session: ApiSession, path: string, method: string, body?: unknown): Promise<T> {
   const response = await fetch(path, { method, headers: { 'content-type': 'application/json', 'x-demo-user-id': session.userId, 'x-tenant-id': session.tenantId, 'x-locale': session.locale }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
   const data = await response.json() as T & ApiError;
   if (!response.ok) throw new ApiClientError(response.status, data.error?.code ?? 'REQUEST_FAILED', data.error?.message ?? `Request failed (${response.status})`);
@@ -25,7 +25,14 @@ export const getCapabilities = (session: ApiSession) => request<{ permissions: s
 export const instantiateTemplate = (session: ApiSession, templateId: string) => request<{ dashboard: DashboardSpec; execution: DashboardExecutionResult }>(session, `/api/dashboard-templates/${encodeURIComponent(templateId)}/instantiate`, 'GET');
 export const generateDashboard = (session: ApiSession, prompt: string) => request<{ dashboard: DashboardSpec; execution: DashboardExecutionResult }>(session, '/api/dashboards/generate', 'POST', { prompt });
 export const editDashboard = (session: ApiSession, dashboard: DashboardSpec, instruction: string) => request<{ dashboard: DashboardSpec; execution: DashboardExecutionResult }>(session, '/api/dashboards/edit', 'POST', { dashboard, instruction });
-export const listSavedDashboards = (session: ApiSession) => request<{ dashboards: DashboardRecord[] }>(session, '/api/saved-dashboards', 'GET');
+export async function listSavedDashboards(session: ApiSession) {
+  const dashboards: DashboardRecord[] = []; let cursor: string | undefined;
+  do {
+    const page = await request<{ dashboards: DashboardRecord[]; nextCursor?: string }>(session, `/api/saved-dashboards${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`, 'GET');
+    dashboards.push(...page.dashboards); cursor = page.nextCursor;
+  } while (cursor);
+  return { dashboards };
+}
 export const getSavedDashboard = (session: ApiSession, id: string) => request<DashboardRecord>(session, `/api/saved-dashboards/${encodeURIComponent(id)}`, 'GET');
 export const createSavedDashboard = (session: ApiSession, dashboard: DashboardSpec) => request<DashboardRecord>(session, '/api/saved-dashboards', 'POST', { dashboard });
 export const updateSavedDashboard = (session: ApiSession, id: string, dashboard: DashboardSpec, expectedVersion: number) => request<DashboardRecord>(session, `/api/saved-dashboards/${encodeURIComponent(id)}`, 'PUT', { dashboard, expectedVersion });
@@ -42,3 +49,6 @@ export const createDashboardFolder = (session: ApiSession, name: string) => requ
 export const renameDashboardFolder = (session: ApiSession, id: string, name: string) => request<import('@el-dabboos/domain').DashboardFolder>(session, `/api/dashboard-library/folders/${encodeURIComponent(id)}`, 'PUT', { name });
 export const deleteDashboardFolder = (session: ApiSession, id: string) => request(session, `/api/dashboard-library/folders/${encodeURIComponent(id)}`, 'DELETE');
 export const setDashboardPreference = (session: ApiSession, id: string, value: { favorite: boolean; folderId?: string }) => request<import('@el-dabboos/domain').DashboardLibraryPreference>(session, `/api/dashboard-library/dashboards/${encodeURIComponent(id)}`, 'PUT', value);
+
+export const getAdministrationCapabilities = (userId: string) => request<{ platformPermissions: string[] }>(demoSession(userId), "/api/administration-capabilities", "GET");
+export const executeSavedDashboard = (session: ApiSession, id: string) => request<DashboardExecutionResult>(session, `/api/saved-dashboards/${encodeURIComponent(id)}/execute`, "POST");

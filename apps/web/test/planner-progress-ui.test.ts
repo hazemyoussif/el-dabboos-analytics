@@ -8,7 +8,7 @@ import { createServer } from 'vite';
 import { tenantProfiles } from '@el-dabboos/domain';
 import { plannerCopy } from '../src/planner-copy.ts';
 test('generation and edit panels retain instructions, localized progress, elapsed timer and polite status in EN/RTL', async () => {
-  const server = await createServer({ root: fileURLToPath(new URL('../', import.meta.url)), server: { middlewareMode: true }, optimizeDeps: { noDiscovery: true }, appType: 'custom' });
+  const server = await createServer({ root: fileURLToPath(new URL('../', import.meta.url)), server: { middlewareMode: true, hmr: false }, optimizeDeps: { noDiscovery: true }, appType: 'custom' });
   try {
     const { DashboardCreationPanel } = await server.ssrLoadModule('/src/product/DashboardCreationPanel.tsx');
     const { DashboardAiEditor } = await server.ssrLoadModule('/src/product/DashboardAiEditor.tsx');
@@ -31,4 +31,17 @@ test('generation and edit panels retain instructions, localized progress, elapse
 test('loading animation uses existing Lucide and respects reduced-motion CSS', async () => {
   const css = await readFile(new URL('../src/styles/dashboard.css', import.meta.url), 'utf8');
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)\s*\{\s*\.ai-loading-icon\s*\{\s*animation: none/);
+});
+test('AI edit examples omit unavailable branches and handle one or many trusted examples in both locales', async()=>{
+ const server=await createServer({root:fileURLToPath(new URL('../',import.meta.url)),server:{middlewareMode:true,hmr:false},optimizeDeps:{noDiscovery:true},appType:'custom'});
+ try {
+  const {DashboardAiEditor}=await server.ssrLoadModule('/src/product/DashboardAiEditor.tsx');
+  for(const locale of ['en','ar'] as const)for(const ids of [[],['known-a'],['known-a','known-b','known-c']]){
+   const profile={...tenantProfiles['demo-iq'],id:'dynamic',exampleBranchIds:ids,branchLabels:Object.fromEntries(ids.map(id=>[id,{en:id,ar:id}]))};
+   const html=renderToStaticMarkup(createElement(DashboardAiEditor,{locale,profile,instruction:'',loading:false,onInstruction(){},onApply(){},onClose(){}}));
+   assert.ok(!html.includes('undefined'));assert.ok(!html.includes('Baghdad'));assert.ok(!html.includes('Cairo'));assert.ok(!html.includes('بغداد'));assert.ok(!html.includes('القاهرة'));
+   for(const id of ids)assert.ok(html.includes(id));
+   if(!ids.length){assert.ok(!html.includes('Show only'));assert.ok(!html.includes('اعرض'));}
+  }
+ }finally{await server.close();}
 });

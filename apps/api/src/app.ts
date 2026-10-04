@@ -1,3 +1,4 @@
+import { registerAdministrationRoutes } from './routes/administration.ts';
 import { registerHealthRoutes } from './routes/health.ts';
 import { registerDashboardLibraryRoutes } from './routes/dashboard-library.ts';
 import Fastify from 'fastify';
@@ -15,11 +16,12 @@ import { registerSavedDashboardRoutes } from './routes/saved-dashboards.ts';
 export { ApiError };
 export type { ApiDependencies };
 export async function buildApi(deps: ApiDependencies) {
-  const app = Fastify({ logger: false });
+  const app = Fastify({ logger: false, ajv: { customOptions: { removeAdditional: false } } });
   await app.register(cors, { origin: ['http://localhost:5173', 'http://127.0.0.1:5173'] });
   const services = createRouteContext(deps);
   registerErrorHandler(app);
   registerHealthRoutes(app, deps);
+  if (deps.administration) registerAdministrationRoutes(app, services);
   registerIdentityRoutes(app, services);
   registerMetadataRoutes(app, services);
   registerTemplateRoutes(app, services);

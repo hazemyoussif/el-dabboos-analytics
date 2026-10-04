@@ -28,14 +28,22 @@ For implementation tasks where the user explicitly asks to apply the quality gat
 
 Do not load this skill for backend, domain, data, integration, infrastructure, or non-UI documentation work unless that task also changes the web presentation. Project architecture, domain invariants, and ADRs override generic aesthetic guidance.
 
+## Engineering quality gate
+
+Green tests are necessary but not sufficient. Follow [engineering standards](docs/developer/engineering-standards.md): review naming, responsibility, abstraction quality, dependency direction, transaction clarity, security readability, error ownership and test maintainability. Run architecture, baseline-aware quality and diff gates. New code has no debt allowance; historical debt may not grow. Do not game metrics or baseline access-control blockers.
+
 ## Verification before push
 
 ```bash
 pnpm install --frozen-lockfile
 pnpm run lint
+pnpm run check:architecture
+pnpm run check:quality
 pnpm run typecheck
 pnpm test
+pnpm run test:postgres
 pnpm run build
+pnpm run check:diff
 ```
 
 Run targeted tests first. Tests must not load developer env files or require real customer/model services. Report manual evidence separately from automated coverage. Never commit .env/.env.local, credentials or customer extracts. Do not merge unless explicitly requested.

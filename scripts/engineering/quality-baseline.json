@@ -1,0 +1,1907 @@
+{
+  "sourceCommit": "fdce5cb671ccf2fdd5d0c2651802a8dbd4fb1368",
+  "entries": [
+    {
+      "file": "apps/api/src/providers/openai-compatible.ts",
+      "symbol": "OpenAICompatibleLLMProvider/constructor",
+      "metric": "complexity",
+      "ceiling": 23
+    },
+    {
+      "file": "apps/api/src/providers/openai-compatible.ts",
+      "symbol": "OpenAICompatibleLLMProvider/generateStructured",
+      "metric": "complexity",
+      "ceiling": 21
+    },
+    {
+      "file": "apps/api/src/providers/transport-diagnostics.ts",
+      "symbol": "providerHttpDiagnostic",
+      "metric": "complexity",
+      "ceiling": 27
+    },
+    {
+      "file": "apps/api/src/startup-config.ts",
+      "symbol": "parseRuntimeConfig",
+      "metric": "complexity",
+      "ceiling": 33
+    },
+    {
+      "file": "apps/web/src/App.tsx",
+      "symbol": "App",
+      "metric": "complexity",
+      "ceiling": 68
+    },
+    {
+      "file": "apps/web/src/App.tsx",
+      "symbol": "App/binding:t",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/DashboardViewFilters.tsx",
+      "symbol": "DashboardViewFilters/binding:t",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/DatePeriodControl.tsx",
+      "symbol": "DatePeriodControl/binding:t",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/Renderer.tsx",
+      "symbol": "WidgetCard/binding:t",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/builder/BuilderWorkspace.tsx",
+      "symbol": "WidgetEditor",
+      "metric": "complexity",
+      "ceiling": 27
+    },
+    {
+      "file": "apps/web/src/builder/BuilderWorkspace.tsx",
+      "symbol": "WidgetEditor/binding:t",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/builder/BuilderWorkspace.tsx",
+      "symbol": "WidgetEditor/draft.series.map:callback0:ceab747d78e5",
+      "metric": "complexity",
+      "ceiling": 22
+    },
+    {
+      "file": "apps/web/src/builder/BuilderWorkspace.tsx",
+      "symbol": "BuilderWorkspace",
+      "metric": "complexity",
+      "ceiling": 33
+    },
+    {
+      "file": "apps/web/src/builder/BuilderWorkspace.tsx",
+      "symbol": "BuilderWorkspace/binding:t",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/builder/DashboardAppearance.tsx",
+      "symbol": "DashboardAppearance/binding:t",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/builder/DashboardGrid.tsx",
+      "symbol": "DashboardGrid/[...spec.widgets].sort:callback0/binding:a",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/builder/DashboardGrid.tsx",
+      "symbol": "DashboardGrid/[...spec.widgets].sort:callback0/binding:b",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/builder/DashboardGrid.tsx",
+      "symbol": "DashboardGrid/content",
+      "metric": "complexity",
+      "ceiling": 21
+    },
+    {
+      "file": "apps/web/src/builder/MetricChooser.ts",
+      "symbol": "MetricChooser/binding:t",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/builder/drag-item.ts",
+      "symbol": "parseBuilderDragItem",
+      "metric": "complexity",
+      "ceiling": 18
+    },
+    {
+      "file": "apps/web/src/builder/grid-map.ts",
+      "symbol": "toGridItems/items.map:callback0/binding:x",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/builder/grid-map.ts",
+      "symbol": "toGridItems/items.map:callback0/binding:y",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/builder/grid-map.ts",
+      "symbol": "toGridItems/items.map:callback0/binding:w",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/builder/grid-map.ts",
+      "symbol": "toGridItems/items.map:callback0/binding:h",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/builder/grid-map.ts",
+      "symbol": "fromGridItems/[...items].sort:callback0/binding:a",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/builder/grid-map.ts",
+      "symbol": "fromGridItems/[...items].sort:callback0/binding:b",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/builder/grid-map.ts",
+      "symbol": "fromGridItems/stable.map:callback0/binding:i",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/builder/grid-map.ts",
+      "symbol": "fromGridItems/stable.map:callback0/binding:x",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/builder/grid-map.ts",
+      "symbol": "fromGridItems/stable.map:callback0/binding:y",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/builder/grid-map.ts",
+      "symbol": "fromGridItems/stable.map:callback0/binding:w",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/builder/grid-map.ts",
+      "symbol": "fromGridItems/stable.map:callback0/binding:h",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/builder/layout-tools.ts",
+      "symbol": "overlaps/binding:a",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/builder/layout-tools.ts",
+      "symbol": "overlaps/binding:b",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/builder/layout-tools.ts",
+      "symbol": "freePlacement/binding:y",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/builder/layout-tools.ts",
+      "symbol": "freePlacement/binding:x",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/builder/layout-tools.ts",
+      "symbol": "arrangeLayout/[...previous].sort:callback0/binding:a",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/builder/layout-tools.ts",
+      "symbol": "arrangeLayout/[...previous].sort:callback0/binding:b",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/builder/metric-drop.ts",
+      "symbol": "createWidgetFromMetric",
+      "metric": "parameters",
+      "ceiling": 6
+    },
+    {
+      "file": "apps/web/src/builder/metric-drop.ts",
+      "symbol": "applyMetricDrop",
+      "metric": "parameters",
+      "ceiling": 6
+    },
+    {
+      "file": "apps/web/src/builder/metric-drop.ts",
+      "symbol": "createMetricCommand",
+      "metric": "parameters",
+      "ceiling": 7
+    },
+    {
+      "file": "apps/web/src/builder/model.ts",
+      "symbol": "canAddSeries/widget.series.map:callback0/binding:s",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/dev/VisualizationLab.tsx",
+      "symbol": "VisualizationLab/cases.map:callback0/Array.from:callback1/binding:i",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/dev/VisualizationLab.tsx",
+      "symbol": "VisualizationLab/cases.map:callback0/Array.from:callback1/widget.series.map:callback0/binding:i",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/hooks/useDashboardLibrary.ts",
+      "symbol": "useDashboardLibrary/preference/preferences.find:callback0/binding:p",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/hooks/useWorkspace.ts",
+      "symbol": "useWorkspace/loadWorkspace",
+      "metric": "complexity",
+      "ceiling": 27
+    },
+    {
+      "file": "apps/web/src/library-model.ts",
+      "symbol": "filterLibrary",
+      "metric": "parameters",
+      "ceiling": 7
+    },
+    {
+      "file": "apps/web/src/library-model.ts",
+      "symbol": "filterLibrary/records.filter:callback0/binding:p",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/library-model.ts",
+      "symbol": "filterLibrary/records.filter:callback0/preferences.find:callback0/binding:p",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/library-model.ts",
+      "symbol": "filterLibrary/filtered.sort:callback0/binding:a",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/library-model.ts",
+      "symbol": "filterLibrary/filtered.sort:callback0/binding:b",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/library-model.ts",
+      "symbol": "filterTemplates/templates.filter:callback0/binding:t",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/library/DashboardLibrary.tsx",
+      "symbol": "DashboardLibrary/binding:c",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/library/DashboardLibrary.tsx",
+      "symbol": "DashboardLibrary/binding:t",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/library/DashboardLibrary.tsx",
+      "symbol": "DashboardLibrary/c.folders.map:callback0/c.preferences.filter:callback0/binding:p",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/library/DashboardLibrary.tsx",
+      "symbol": "DashboardLibrary/c.folders.map:callback0/c.preferences.filter:callback0/records.some:callback0/binding:r",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/library/DashboardLibrary.tsx",
+      "symbol": "DashboardLibrary/rows.map:callback0/binding:p",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/library/DashboardLibrary.tsx",
+      "symbol": "DashboardLibrary/rows.map:callback0/c.preferences.find:callback0/binding:p",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/library/DashboardNameDialog.tsx",
+      "symbol": "DashboardNameDialog/binding:t",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/library/TemplateBrowser.tsx",
+      "symbol": "TemplateBrowser/binding:t",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/product/AiProgress.tsx",
+      "symbol": "AiProgress/binding:t",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/product/DashboardActions.tsx",
+      "symbol": "DashboardActions",
+      "metric": "complexity",
+      "ceiling": 22
+    },
+    {
+      "file": "apps/web/src/product/DashboardActions.tsx",
+      "symbol": "DashboardActions/binding:t",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/product/DashboardAiEditor.tsx",
+      "symbol": "DashboardAiEditor/binding:t",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/product/DashboardCreationPanel.tsx",
+      "symbol": "DashboardCreationPanel/binding:t",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/rendering/AreaContent.tsx",
+      "symbol": "AreaContent/ArrowFunction:anonymous/binding:n",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/rendering/BarContent.tsx",
+      "symbol": "BarContent/numberTick/binding:n",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/rendering/ChartChrome.tsx",
+      "symbol": "EnterpriseTooltip/binding:t",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/rendering/ComboContent.tsx",
+      "symbol": "ComboContent/ArrowFunction:anonymous/binding:n",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/rendering/LineContent.tsx",
+      "symbol": "LineContent/ArrowFunction:anonymous/binding:n",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/rendering/TableContent.tsx",
+      "symbol": "TableContent/binding:t",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/rendering/TreemapContent.tsx",
+      "symbol": "Cell/binding:x",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/rendering/TreemapContent.tsx",
+      "symbol": "Cell/binding:y",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "apps/web/src/rendering/shared.ts",
+      "symbol": "formatSeriesValue",
+      "metric": "parameters",
+      "ceiling": 6
+    },
+    {
+      "file": "apps/web/src/shell/WorkspaceNavigation.tsx",
+      "symbol": "WorkspaceNavigation/binding:t",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/application/src/dashboard-filters.ts",
+      "symbol": "object/binding:v",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/application/src/dashboard-filters.ts",
+      "symbol": "exact/binding:v",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/application/src/dashboard-filters.ts",
+      "symbol": "validateDashboardFilterOverrides",
+      "metric": "complexity",
+      "ceiling": 17
+    },
+    {
+      "file": "packages/application/src/dashboard-filters.ts",
+      "symbol": "validateDashboardFilterOverrides/value.dimensions.some:callback0/filter.values.some:callback0/binding:v",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/application/src/edit-plan.ts",
+      "symbol": "editPlanSchemaIssues/[...(check.errors ?? [])].sort:callback0/binding:a",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/application/src/edit-plan.ts",
+      "symbol": "editPlanSchemaIssues/[...(check.errors ?? [])].sort:callback0/binding:b",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/application/src/edit-plan.ts",
+      "symbol": "mergeAnalysis",
+      "metric": "complexity",
+      "ceiling": 21
+    },
+    {
+      "file": "packages/application/src/edit-plan.ts",
+      "symbol": "compileDashboardEditPlan",
+      "metric": "complexity",
+      "ceiling": 29
+    },
+    {
+      "file": "packages/application/src/edit-plan.ts",
+      "symbol": "compileDashboardEditPlan",
+      "metric": "statements",
+      "ceiling": 94
+    },
+    {
+      "file": "packages/application/src/executor.ts",
+      "symbol": "align/keys.sort:callback0/binding:a",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/application/src/executor.ts",
+      "symbol": "align/keys.sort:callback0/binding:b",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/application/src/executor.ts",
+      "symbol": "align/keys.map:callback0/item.rows.find:callback0/binding:r",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/application/src/planner.ts",
+      "symbol": "MockDashboardPlanner/edit/replace/current.widgets.find:callback0/binding:w",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/application/src/provider-schema.ts",
+      "symbol": "projectNode",
+      "metric": "complexity",
+      "ceiling": 17
+    },
+    {
+      "file": "packages/application/src/query-execution.ts",
+      "symbol": "filters/items.map(item => ({ dimension: item.dimension, values: [...new Set(item.values)].sort() }))\n  .sort:callback0/binding:a",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/application/src/query-execution.ts",
+      "symbol": "filters/items.map(item => ({ dimension: item.dimension, values: [...new Set(item.values)].sort() }))\n  .sort:callback0/binding:b",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/application/src/query-execution.ts",
+      "symbol": "stable/Object.entries(value).sort:callback0/binding:a",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/application/src/query-execution.ts",
+      "symbol": "stable/Object.entries(value).sort:callback0/binding:b",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/application/src/relative-date.ts",
+      "symbol": "resolveRelativeDatePreset/date/binding:y",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/application/src/relative-date.ts",
+      "symbol": "resolveRelativeDatePreset/date/binding:m",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/application/src/relative-date.ts",
+      "symbol": "resolveRelativeDatePreset/date/binding:d",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/application/src/visualization-intent.ts",
+      "symbol": "resolveGenerationWidget",
+      "metric": "complexity",
+      "ceiling": 16
+    },
+    {
+      "file": "packages/data/src/calendar.ts",
+      "symbol": "addDays/binding:d",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/calendar.ts",
+      "symbol": "shiftMonths/binding:d",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/calendar.ts",
+      "symbol": "periodRange/binding:d",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/engine.ts",
+      "symbol": "dimension/binding:f",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/engine.ts",
+      "symbol": "inRange/binding:f",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/engine.ts",
+      "symbol": "filtered/binding:f",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/engine.ts",
+      "symbol": "aggregate/values.reduce:callback0/binding:a",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/engine.ts",
+      "symbol": "aggregate/values.reduce:callback0/binding:b",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/engine.ts",
+      "symbol": "evaluate",
+      "metric": "parameters",
+      "ceiling": 6
+    },
+    {
+      "file": "packages/data/src/engine.ts",
+      "symbol": "evaluate/measure/facts.filter:callback0/binding:f",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/engine.ts",
+      "symbol": "evaluate/measure/facts.filter(f => f.measureId === id && matches(f)).map:callback0/binding:f",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/engine.ts",
+      "symbol": "evaluate/latestSnapshots(facts, semantics.measure, range?.to).filter:callback0/binding:f",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/engine.ts",
+      "symbol": "evaluate/snapshots.reduce:callback0/binding:f",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/engine.ts",
+      "symbol": "currentKeys/facts.filter:callback0/binding:f",
+      "metric": "shortNames",
+      "ceiling": 2
+    },
+    {
+      "file": "packages/data/src/engine.ts",
+      "symbol": "currentKeys/source.filter:callback0/binding:f",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/engine.ts",
+      "symbol": "currentKeys/source.filter(f => filtered(f, query, context) && (semantics.kind === 'snapshot' || inRange(f, query.dateRange)))\n    .map:callback0/binding:f",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/engine.ts",
+      "symbol": "currentKeys/source.filter(f => filtered(f, query, context) && (semantics.kind === 'snapshot' || inRange(f, query.dateRange)))\n    .map(f => dimension(f, groupBy)).filter:callback0/binding:k",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/engine.ts",
+      "symbol": "currentKeys/facts.filter(f => f.measureId === semantics.measure && filtered(f, query, context))\n      .map:callback0/binding:f",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/engine.ts",
+      "symbol": "currentKeys/facts.filter(f => f.measureId === semantics.measure && filtered(f, query, context))\n      .map(f => dimension(f, groupBy)).filter:callback0/binding:k",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/engine.ts",
+      "symbol": "average/values.filter:callback0/binding:v",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/engine.ts",
+      "symbol": "average/present.reduce:callback0/binding:v",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/engine.ts",
+      "symbol": "numericOrder/binding:a",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/engine.ts",
+      "symbol": "numericOrder/binding:b",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/engine.ts",
+      "symbol": "executeFacts",
+      "metric": "complexity",
+      "ceiling": 16
+    },
+    {
+      "file": "packages/data/src/engine.ts",
+      "symbol": "executeFacts/facts.filter:callback0/binding:f",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/engine.ts",
+      "symbol": "executeFacts/scoped.filter:callback0/binding:f",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/engine.ts",
+      "symbol": "executeFacts/before.map:callback0/binding:i",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/engine.ts",
+      "symbol": "executeFacts/before.map:callback0/slice.map:callback0/binding:r",
+      "metric": "shortNames",
+      "ceiling": 2
+    },
+    {
+      "file": "packages/data/src/engine.ts",
+      "symbol": "executeFacts/[...rows].sort:callback0/binding:a",
+      "metric": "shortNames",
+      "ceiling": 2
+    },
+    {
+      "file": "packages/data/src/engine.ts",
+      "symbol": "executeFacts/[...rows].sort:callback0/binding:b",
+      "metric": "shortNames",
+      "ceiling": 2
+    },
+    {
+      "file": "packages/data/src/library-sqlite.ts",
+      "symbol": "folder/binding:r",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/library-sqlite.ts",
+      "symbol": "preference/binding:r",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/library-sqlite.ts",
+      "symbol": "SqliteDashboardLibraryRepository/listFolders/binding:s",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/library-sqlite.ts",
+      "symbol": "SqliteDashboardLibraryRepository/createFolder/binding:f",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/library-sqlite.ts",
+      "symbol": "SqliteDashboardLibraryRepository/renameFolder/binding:s",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/library-sqlite.ts",
+      "symbol": "SqliteDashboardLibraryRepository/deleteFolder/binding:s",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/library-sqlite.ts",
+      "symbol": "SqliteDashboardLibraryRepository/listPreferences/binding:s",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/library-sqlite.ts",
+      "symbol": "SqliteDashboardLibraryRepository/getPreference/binding:s",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/library-sqlite.ts",
+      "symbol": "SqliteDashboardLibraryRepository/getPreference/binding:r",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/library-sqlite.ts",
+      "symbol": "SqliteDashboardLibraryRepository/setPreference/binding:p",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/migrations.ts",
+      "symbol": "migratePostgres/(await readdir(directory)).filter:callback0/binding:n",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/migrations.ts",
+      "symbol": "migratePostgres/migrations.some:callback0/binding:m",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/migrations.ts",
+      "symbol": "migratePostgres/migrations.some:callback0/binding:i",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/migrations.ts",
+      "symbol": "migratePostgres/binding:i",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/migrations.ts",
+      "symbol": "migratePostgres/binding:m",
+      "metric": "shortNames",
+      "ceiling": 2
+    },
+    {
+      "file": "packages/data/src/postgres/reconciliation.ts",
+      "symbol": "PostgresReconciliation/record/binding:c",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/reconciliation.ts",
+      "symbol": "PostgresReconciliation/record/scope/binding:c",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/reconciliation.ts",
+      "symbol": "PostgresReconciliation/record/expected.some:callback0/binding:c",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/reconciliation.ts",
+      "symbol": "PostgresReconciliation/record/expected.map:callback0/binding:c",
+      "metric": "shortNames",
+      "ceiling": 2
+    },
+    {
+      "file": "packages/data/src/postgres/reconciliation.ts",
+      "symbol": "PostgresReconciliation/record/tenantTransaction:callback2:d414b9899556",
+      "metric": "complexity",
+      "ceiling": 35
+    },
+    {
+      "file": "packages/data/src/postgres/reconciliation.ts",
+      "symbol": "PostgresReconciliation/record/tenantTransaction:callback2/binding:m",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/reconciliation.ts",
+      "symbol": "PostgresReconciliation/record/tenantTransaction:callback2/m.measures.find:callback0/binding:m",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/reconciliation.ts",
+      "symbol": "PostgresReconciliation/record/tenantTransaction:callback2/batches.some:callback0/binding:b",
+      "metric": "shortNames",
+      "ceiling": 2
+    },
+    {
+      "file": "packages/data/src/postgres/reconciliation.ts",
+      "symbol": "PostgresReconciliation/record/tenantTransaction:callback2/batches.find:callback0/binding:b",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/reconciliation.ts",
+      "symbol": "PostgresReconciliation/record/tenantTransaction:callback2/binding:i",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/reconciliation.ts",
+      "symbol": "PostgresReconciliation/record/tenantTransaction:callback2/actual.some:callback0/binding:r",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/reconciliation.ts",
+      "symbol": "PostgresReconciliation/record/tenantTransaction:callback2/actual.map:callback0/binding:r",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/reconciliation.ts",
+      "symbol": "PostgresReconciliation/record/tenantTransaction:callback2/expected.map:callback0/binding:c",
+      "metric": "shortNames",
+      "ceiling": 2
+    },
+    {
+      "file": "packages/data/src/postgres/reconciliation.ts",
+      "symbol": "PostgresReconciliation/record/tenantTransaction:callback2/expected.filter:callback0/binding:c",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/reconciliation.ts",
+      "symbol": "PostgresReconciliation/record/tenantTransaction:callback2/expected.filter(c => c.groupKey!==null && !actualMap.has(c.groupKey)).map:callback0/binding:c",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/reconciliation.ts",
+      "symbol": "PostgresReconciliation/record/tenantTransaction:callback2/actual.filter:callback0/binding:r",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/reconciliation.ts",
+      "symbol": "PostgresReconciliation/record/tenantTransaction:callback2/actual.filter(r => r.key!==null && !expectedKeys.has(r.key)).map:callback0/binding:r",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/reconciliation.ts",
+      "symbol": "PostgresReconciliation/record/tenantTransaction:callback2/cases.map:callback0/binding:c",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/reconciliation.ts",
+      "symbol": "PostgresReconciliation/record/tenantTransaction:callback2/binding:c",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/records.ts",
+      "symbol": "iso/binding:v",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/records.ts",
+      "symbol": "productionFactFromRow/binding:r",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/records.ts",
+      "symbol": "productionFactFromRow/binding:m",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/records.ts",
+      "symbol": "productionFactFromRow/binding:f",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/records.ts",
+      "symbol": "productionFactFromRow/categoricalDimensions.filter:callback0/binding:d",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/records.ts",
+      "symbol": "productionFactFromRow/categoricalDimensions.filter(d => r[d] != null).map:callback0/binding:d",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/records.ts",
+      "symbol": "factColumns/binding:f",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/records.ts",
+      "symbol": "factColumns/binding:c",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/records.ts",
+      "symbol": "factColumns/categoricalDimensions.map:callback0/binding:d",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "compare/binding:v",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "compare/binding:p",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "order/ArrowFunction:anonymous/binding:a",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "order/ArrowFunction:anonymous/binding:b",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "mean/values.filter:callback0/binding:v",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "mean/present.reduce:callback0/binding:a",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "mean/present.reduce:callback0/binding:b",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/release/binding:m",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2:0f73d0ab95c6",
+      "metric": "complexity",
+      "ceiling": 37
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2:0f73d0ab95c6",
+      "metric": "statements",
+      "ceiling": 65
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/mapping.capabilities.some:callback0/binding:c",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/result.rows.map:callback0/binding:r",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/keys.sort:callback0/binding:a",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/keys.sort:callback0/binding:b",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/aggregate/result.rows.map:callback0/binding:r",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/aggregate/slots.map:callback0/binding:s",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/aggregate/slots.map:callback0/binding:r",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/keys.map:callback0/binding:i",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/keys.map:callback0/binding:v",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/keys.map:callback0/binding:p",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/before.map:callback0/binding:r",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/before.map:callback0/binding:i",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/before.map:callback0/binding:v",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/before.map:callback0/slice.map:callback0/binding:r",
+      "metric": "shortNames",
+      "ceiling": 2
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/binding:v",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/binding:p",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/rows.map:callback0/binding:r",
+      "metric": "shortNames",
+      "ceiling": 3
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/rows.reduce:callback0/binding:n",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/rows.reduce:callback0/binding:r",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/[...rows].sort(order('top')).map:callback0/binding:r",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/[...rows].sort(order('top')).map:callback0/binding:i",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/rows.some:callback0/binding:r",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/rows.some:callback0/Object.values(r).some:callback0/binding:v",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/mapping.measures.filter:callback0/binding:m",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/mapping.measures.filter(m => requiredMeasures(query.metric).includes(m.measureId)).map:callback0/binding:m",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/listDimensionValues/tenantTransaction:callback2/binding:m",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/listDimensionValues/tenantTransaction:callback2/m.capabilities.filter:callback0/binding:c",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/listDimensionValues/tenantTransaction:callback2/m.capabilities.filter:callback0/(context.enforcedFilters ?? []).every:callback0/binding:f",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/listDimensionValues/tenantTransaction:callback2/eligible.flatMap:callback0/binding:c",
+      "metric": "shortNames",
+      "ceiling": 2
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/listDimensionValues/tenantTransaction:callback2/binding:d",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/repository.ts",
+      "symbol": "PostgresAnalyticsRepository/listDimensionValues/tenantTransaction:callback2/result.rows.map:callback0/binding:r",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/sql.ts",
+      "symbol": "dimensionSql/binding:d",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/sql.ts",
+      "symbol": "filterSql/filters.map:callback0/binding:f",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/sql.ts",
+      "symbol": "filterSql/filters.map:callback0/f.values.some:callback0/binding:v",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/sql.ts",
+      "symbol": "numericOutput/binding:n",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/writer.ts",
+      "symbol": "canonical/JSON.stringify:callback1/binding:v",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/writer.ts",
+      "symbol": "canonical/JSON.stringify:callback1/Object.keys(v).sort().map:callback0/binding:k",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/writer.ts",
+      "symbol": "insert/columns.map:callback0/binding:i",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/writer.ts",
+      "symbol": "PostgresMartWriter/commit",
+      "metric": "complexity",
+      "ceiling": 16
+    },
+    {
+      "file": "packages/data/src/postgres/writer.ts",
+      "symbol": "PostgresMartWriter/commit/evidence.sourceObjects.some:callback0/binding:s",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/writer.ts",
+      "symbol": "PostgresMartWriter/commit/tenantTransaction:callback2:b76855b6fbbf",
+      "metric": "complexity",
+      "ceiling": 39
+    },
+    {
+      "file": "packages/data/src/postgres/writer.ts",
+      "symbol": "PostgresMartWriter/commit/tenantTransaction:callback2:b76855b6fbbf",
+      "metric": "statements",
+      "ceiling": 77
+    },
+    {
+      "file": "packages/data/src/postgres/writer.ts",
+      "symbol": "PostgresMartWriter/commit/tenantTransaction:callback2/records.flatMap:callback0/binding:r",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/writer.ts",
+      "symbol": "PostgresMartWriter/commit/tenantTransaction:callback2/records.some:callback0/binding:r",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/writer.ts",
+      "symbol": "PostgresMartWriter/commit/tenantTransaction:callback2/['rowsRead','rowsAccepted','rowsRejected','factsInserted','factsUpdated','factsTombstoned','factsReplayed'].map:callback0/binding:k",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/writer.ts",
+      "symbol": "PostgresMartWriter/commit/tenantTransaction:callback2/['rowsRead','rowsAccepted','rowsRejected','factsInserted','factsUpdated','factsTombstoned','factsReplayed'].map:callback0/k.replace:callback1/binding:c",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/writer.ts",
+      "symbol": "PostgresMartWriter/commit/tenantTransaction:callback2/binding:r",
+      "metric": "shortNames",
+      "ceiling": 2
+    },
+    {
+      "file": "packages/data/src/postgres/writer.ts",
+      "symbol": "PostgresMartWriter/commit/tenantTransaction:callback2/unit.facts.some:callback0/binding:f",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/writer.ts",
+      "symbol": "PostgresMartWriter/commit/tenantTransaction:callback2/binding:f",
+      "metric": "shortNames",
+      "ceiling": 2
+    },
+    {
+      "file": "packages/data/src/postgres/writer.ts",
+      "symbol": "PostgresMartWriter/commit/tenantTransaction:callback2/old.rows.some:callback0/binding:r",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/writer.ts",
+      "symbol": "PostgresMartWriter/commit/tenantTransaction:callback2/old.rows.some:callback0/unit.facts.some:callback0/binding:f",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/writer.ts",
+      "symbol": "PostgresMartWriter/commit/tenantTransaction:callback2/records.filter:callback0/binding:r",
+      "metric": "shortNames",
+      "ceiling": 2
+    },
+    {
+      "file": "packages/data/src/postgres/writer.ts",
+      "symbol": "PostgresMartWriter/commit/tenantTransaction:callback2/[...facts].sort:callback0/binding:a",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/postgres/writer.ts",
+      "symbol": "PostgresMartWriter/commit/tenantTransaction:callback2/[...facts].sort:callback0/binding:b",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/seed.ts",
+      "symbol": "Array.from:callback1/binding:i",
+      "metric": "shortNames",
+      "ceiling": 4
+    },
+    {
+      "file": "packages/data/src/seed.ts",
+      "symbol": "generateSeedFacts",
+      "metric": "complexity",
+      "ceiling": 51
+    },
+    {
+      "file": "packages/data/src/seed.ts",
+      "symbol": "generateSeedFacts",
+      "metric": "statements",
+      "ceiling": 100
+    },
+    {
+      "file": "packages/data/src/seed.ts",
+      "symbol": "generateSeedFacts/Array.from:callback1/binding:i",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/seed.ts",
+      "symbol": "generateSeedFacts/binding:m",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/seed.ts",
+      "symbol": "generateSeedFacts/binding:b",
+      "metric": "shortNames",
+      "ceiling": 3
+    },
+    {
+      "file": "packages/data/src/seed.ts",
+      "symbol": "generateSeedFacts/binding:c",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/seed.ts",
+      "symbol": "generateSeedFacts/binding:p",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/seed.ts",
+      "symbol": "generateSeedFacts/binding:w",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/seed.ts",
+      "symbol": "generateSeedFacts/binding:e",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/data/src/sqlite.ts",
+      "symbol": "Object.values(semanticCatalog).flatMap:callback0/binding:m",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/catalog.ts",
+      "symbol": "Object.values(semantics).flatMap:callback0/binding:s",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/catalog.ts",
+      "symbol": "requiredMeasures/binding:s",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/layout.ts",
+      "symbol": "overlaps/binding:a",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/layout.ts",
+      "symbol": "overlaps/binding:b",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/layout.ts",
+      "symbol": "validateDashboardLayout",
+      "metric": "complexity",
+      "ceiling": 25
+    },
+    {
+      "file": "packages/domain/src/layout.ts",
+      "symbol": "placeDashboardWidget/binding:w",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/layout.ts",
+      "symbol": "placeDashboardWidget/binding:h",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/layout.ts",
+      "symbol": "placeDashboardWidget/binding:y",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/layout.ts",
+      "symbol": "placeDashboardWidget/binding:x",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/patch.ts",
+      "symbol": "applyDashboardPatch",
+      "metric": "complexity",
+      "ceiling": 19
+    },
+    {
+      "file": "packages/domain/src/patch.ts",
+      "symbol": "applyDashboardPatch/next.widgets.some:callback0/binding:w",
+      "metric": "shortNames",
+      "ceiling": 2
+    },
+    {
+      "file": "packages/domain/src/patch.ts",
+      "symbol": "applyDashboardPatch/next.widgets.findIndex:callback0/binding:w",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "object/binding:v",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "text/binding:v",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "shape/binding:v",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "shape/required.some:callback0/binding:k",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "shape/Object.keys(v).some:callback0/binding:k",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "date/binding:v",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "timestamp/binding:v",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "currencyCode/binding:v",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "unsigned/binding:v",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "isCanonicalDecimal/binding:v",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "decimalUnits/binding:v",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "snapshot/Object.values(semanticCatalog).some:callback0/binding:m",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "monetary/Object.values(semanticCatalog).some:callback0/binding:m",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "measureDimensions/categoricalDimensions.filter:callback0/binding:d",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "measureDimensions/categoricalDimensions.filter:callback0/Object.values(semanticCatalog).filter:callback0/binding:m",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "measureDimensions/categoricalDimensions.filter:callback0/Object.values(semanticCatalog).filter(m => requiredMeasures(m.id).includes(id)).every:callback0/binding:m",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "validateSourceMapping",
+      "metric": "complexity",
+      "ceiling": 34
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "validateSourceMapping/binding:a",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "validateSourceMapping/binding:m",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "validateSourceMapping/binding:k",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "validateSourceMapping/Object.entries(m.dimensionMappings).some:callback0/binding:d",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "validateSourceMapping/binding:c",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "validateSourceMapping/c.dimensions.some:callback0/binding:d",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "validateSourceMapping/c.dimensions.some:callback0/requiredMeasures(c.metric as MetricId).every:callback0/(value.measures as MeasureMapping[]).find:callback0/binding:m",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "certifiedDimensions/mapping.capabilities.find:callback0/binding:c",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "validateProductionFact",
+      "metric": "complexity",
+      "ceiling": 45
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "validateProductionFact/mapping.measures.find:callback0/binding:m",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "validateProductionFact/Object.entries(value.dimensions).some:callback0/binding:d",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "validateProductionFact/Object.entries(value.dimensions).some:callback0/binding:v",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "validateProductionFact/Object.keys(rule.dimensionMappings).some:callback0/binding:d",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "validateProductionFact/binding:c",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "productionFactIdentity/binding:f",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "canonical/binding:v",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "canonical/normalize/binding:x",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "canonical/normalize/Object.keys(x).sort().map:callback0/binding:k",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "content/binding:f",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "validateSnapshotUniqueness/binding:f",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "reconciliationStatus",
+      "metric": "complexity",
+      "ceiling": 28
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "reconciliationStatus/binding:k",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "reconciliationStatus/binding:t",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "reconciliationStatus/abs/binding:n",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "validateFactBatch",
+      "metric": "complexity",
+      "ceiling": 33
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "validateFactBatch/binding:k",
+      "metric": "shortNames",
+      "ceiling": 5
+    },
+    {
+      "file": "packages/domain/src/production-data.ts",
+      "symbol": "validateFactBatch/binding:f",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/validation.ts",
+      "symbol": "record/binding:v",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/validation.ts",
+      "symbol": "exactKeys/binding:v",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/validation.ts",
+      "symbol": "exactKeys/Object.keys(v).every:callback0/binding:k",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/validation.ts",
+      "symbol": "exactKeys/required.every:callback0/binding:k",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/validation.ts",
+      "symbol": "validDate/binding:v",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/validation.ts",
+      "symbol": "validDateRange/binding:v",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/validation.ts",
+      "symbol": "validFilter/binding:v",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/validation.ts",
+      "symbol": "validFilter/v.values.every:callback0/binding:x",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/validation.ts",
+      "symbol": "validateAnalysis",
+      "metric": "complexity",
+      "ceiling": 52
+    },
+    {
+      "file": "packages/domain/src/validation.ts",
+      "symbol": "validateMetricUse/filters.some:callback0/binding:f",
+      "metric": "shortNames",
+      "ceiling": 2
+    },
+    {
+      "file": "packages/domain/src/validation.ts",
+      "symbol": "validWidget",
+      "metric": "complexity",
+      "ceiling": 24
+    },
+    {
+      "file": "packages/domain/src/validation.ts",
+      "symbol": "validWidget/binding:v",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/validation.ts",
+      "symbol": "validWidget/v.series.map:callback0/binding:s",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/validation.ts",
+      "symbol": "validateDashboardSpec/binding:v",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/validation.ts",
+      "symbol": "validateDashboardSpec/v.widgets.map:callback0/binding:w",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/validation.ts",
+      "symbol": "validateDashboardPatch/binding:v",
+      "metric": "shortNames",
+      "ceiling": 1
+    },
+    {
+      "file": "packages/domain/src/visualization.ts",
+      "symbol": "visualizationIssues",
+      "metric": "complexity",
+      "ceiling": 39
+    }
+  ]
+}

@@ -12,3 +12,8 @@ export * from './postgres/migrations.ts';
 export * from './postgres/writer.ts';
 export * from './postgres/reconciliation.ts';
 export * from './postgres/repository.ts';
+
+export * from './metadata/migrations.ts';
+export * from './metadata/demo-seed.ts';
+
+export * from "./metadata/administration.ts";

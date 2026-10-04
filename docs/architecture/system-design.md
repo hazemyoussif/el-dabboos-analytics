@@ -80,3 +80,17 @@ DashboardSpec v2 business filters persist a symbolic datePreset, fixed dateRange
 ## Offline production foundation
 
 [ADR 027](adr/027-production-data-foundation.md) establishes an El Dabboos-owned PostgreSQL mart, separate ingestion envelope, source reader, versioned mapping certification and reconciliation contracts. Domain validators, five transactional SQL migrations, role/RLS enforcement, a mart writer, frozen reconciliation and bounded SQL-based serving are implemented and tested on PostgreSQL 18.6. [Operations](../integration/postgres-mart-operations.md) documents provisioning and limits. Existing mock/SQLite execution is unchanged. Production sources and mappings are unapproved.
+
+## Administration architecture checkpoint
+
+[ADR 028](adr/028-customer-tenant-access-control.md) defines customer/tenant, identity/membership and role/scope/grant administration with separate platform authority. Versioned metadata persistence, transactional services, strict APIs, grant-aware saved records and permission-gated admin pages are implemented. AccessDirectory and TenantProfileProvider load current persisted state; dynamic profiles have no fabricated branch labels/examples and analytics readiness is independent of workspace lifecycle. Analytics contracts and the PostgreSQL mart are unchanged. [Implementation handoff](../security/access-control-sol-handoff.md), [local operations](../security/administration-operations.md), [verification status](../security/access-control-implementation-status.md).
+
+## Engineering quality decomposition
+
+Administration composition now binds named typed operations in `packages/application/src/administration/`: roles, memberships, workspace, audiences, customers, tenants and users. The runtime owns fresh transactional actor resolution and safe failure audit, while each operation owns its authorization, CAS, recovery and successful audit. Operational provisioning lives in application operations composed by `apps/api/src/administration-cli.ts`.
+
+`SqliteAdministrationStore` retains the real-path queue, `BEGIN IMMEDIATE`, connection and unit of work. Transaction-bound metadata repositories and row mapping reside in `packages/data/src/metadata/administration/`; none starts a transaction. Operational persistence ports remain available only to trusted composition, never an HTTP endpoint.
+
+Resource route modules in `apps/api/src/routes/administration/` validate each request and call its named operation without command casts. Eight concrete page components in `apps/web/src/admin/` own their DTOs and versioned form serialization. Shared request ownership protects loads, mutations, unmounts and customer selection. No visual redesign is included. Governed persistence readiness now invokes the configured probe without requiring the legacy dashboard repository; health response semantics remain unchanged.
+
+[Engineering standards](../developer/engineering-standards.md) and fixture-tested architecture/quality/diff checks are mandatory. Historical ceilings derive only from `fdce5cb671ccf2fdd5d0c2651802a8dbd4fb1368`; administration has no allowance. [Historical debt](../developer/engineering-quality-debt.md) is a subsequent workstream.

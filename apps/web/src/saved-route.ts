@@ -1,4 +1,4 @@
-import type { DashboardRecord, TenantProfile } from '@el-dabboos/domain';
+import type { AccessControlledDashboardRecord as DashboardRecord, TenantProfile } from '@el-dabboos/domain';
 
 /** A route is resolved only through memberships returned for this user by the server. */
 export async function resolveSavedRoute(

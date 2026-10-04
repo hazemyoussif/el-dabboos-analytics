@@ -1,13 +1,14 @@
+import { discoverWorkspaceAccess, isPlatformOnlyAccess, selectWorkspaceProfile } from '../admin/workspace-access.ts';
 import { useEffect, useRef, useState } from 'react';
 import type { DashboardExecutionResult } from '@el-dabboos/application';
-import type { DashboardRecord, DashboardSpec, Locale, ProductMetric, SemanticMetric, TenantProfile } from '@el-dabboos/domain';
-import { ApiClientError, createSavedDashboard, executeDashboard, getCapabilities, getDemoUsers, getFilterOptions, getSavedDashboard, getSemanticCatalog,
-  getTemplates, getTenantProfiles, instantiateTemplate, listSavedDashboards, updateSavedDashboard } from '../api/client.ts';
+import type { AccessControlledDashboardRecord as DashboardRecord, DashboardSpec, Locale, ProductMetric, SemanticMetric, TenantProfile } from '@el-dabboos/domain';
+import { ApiClientError, createSavedDashboard, executeDashboard, getCapabilities, getFilterOptions, getSavedDashboard, getSemanticCatalog,
+  executeSavedDashboard, getTemplates, instantiateTemplate, listSavedDashboards, updateSavedDashboard } from '../api/client.ts';
 import type { AccessibleTemplate, ApiSession, DemoUser } from '../api/client.ts';
 import type { FilterOptions } from '../builder/BuilderWorkspace.tsx';
 import { discardSavedChanges, documentIsDirty, editDocument, generatedDocument, newManualDocument, openTemplateDocument, persistDocument, savedDocument } from '../dashboard-lifecycle.ts';
 import type { DashboardDocument } from '../dashboard-lifecycle.ts';
-import { preferredDemoUser, preferredLocale, preferredTenant, storeDemoUser, storeLocale, storeTenant } from '../ui-preferences.ts';
+import { preferredDemoUser, preferredLocale, storeDemoUser, storeLocale, storeTenant } from '../ui-preferences.ts';
 import { resolveSavedRoute } from '../saved-route.ts';
 import type { PreferenceStore } from '../ui-preferences.ts';
 
@@ -24,6 +25,7 @@ export function useWorkspace() {
   const [locale, setLocale] = useState<Locale>(preferredLocale(preferences()) ?? 'ar');
   const [userId, setUserId] = useState('demo-iq-admin');
   const [demoUsers, setDemoUsers] = useState<DemoUser[]>([]);
+  const [platformPermissions, setPlatformPermissions] = useState<string[]>([]);
   const [permissions, setPermissions] = useState<string[]>([]);
   const [profiles, setProfiles] = useState<TenantProfile[]>([]);
   const [profile, setProfile] = useState<TenantProfile | null>(null);
@@ -49,19 +51,39 @@ export function useWorkspace() {
   const dirty = documentIsDirty(document);
   const confirmAbandon = () => !dirty || typeof window === 'undefined' || window.confirm(locale === 'ar'
     ? 'لديك تغييرات غير محفوظة. هل تريد تجاهلها؟' : 'You have unsaved changes. Discard them?');
+  const publishWorkspace = ({ users, membership, selected, nextLocale, nextUserId, catalogResponse, templatesResponse, options, capabilities, saved, first, opened, openedExecution }: {
+    users: Awaited<ReturnType<typeof import('../api/client.ts').getDemoUsers>>;
+    membership: Awaited<ReturnType<typeof import('../api/client.ts').getTenantProfiles>>;
+    selected: TenantProfile; nextLocale: Locale; nextUserId: string;
+    catalogResponse: Awaited<ReturnType<typeof getSemanticCatalog>>;
+    templatesResponse: Awaited<ReturnType<typeof getTemplates>>;
+    options: FilterOptions; capabilities: Awaited<ReturnType<typeof getCapabilities>>;
+    saved: Awaited<ReturnType<typeof listSavedDashboards>>; first: AccessibleTemplate | undefined;
+    opened: DashboardDocument | null; openedExecution: DashboardExecutionResult | null;
+  }) => {
+      setDemoUsers(users.users); setProfiles(membership.profiles); setProfile(selected); setLocale(nextLocale); storeTenant(preferences(), selected.id); storeDemoUser(demoSessionPreference(), nextUserId);
+      setCatalog(Object.fromEntries(catalogResponse.metrics.map(metric => [metric.id, metric])));
+      setMetricRegistry(catalogResponse.registry); setTemplates(templatesResponse.templates); setFilterOptions(options);
+      setPermissions(capabilities.permissions); setSavedDashboards(saved.dashboards);
+      setActiveTemplateId(first?.id ?? ''); setDocument(opened); setExecution(openedExecution);
+  };
+  const enterPlatformWorkspace = (nextUserId: string) => {
+    setCatalog({}); setMetricRegistry([]); setTemplates([]); setActiveTemplateId('');
+    storeDemoUser(demoSessionPreference(), nextUserId); navigate(null);
+  };
   const loadWorkspace = async (nextUserId: string, nextTenantId?: string, restoreRoute = true) => {
     nextNavigation();
     const id = beginRequest();
     setUserId(nextUserId); setLoading(true); setError(null); setDocument(null); setExecution(null); setSavedDashboards([]);
-    setFilterOptions({});
+    setFilterOptions({}); setPermissions([]); setPlatformPermissions([]); setProfile(null); setProfiles([]);
     try {
-      const users = await getDemoUsers(nextUserId);
-      if (!users.users.some(user => user.id === nextUserId)) throw new Error('Unknown demo identity');
-      const membership = await getTenantProfiles(nextUserId);
-      const preferred = nextTenantId ? membership.profiles.find(item => item.id === nextTenantId)
-        ?? preferredTenant(preferences(), membership.profiles, membership.defaultTenantId)
-        : preferredTenant(preferences(), membership.profiles, membership.defaultTenantId);
-      if (!preferred) throw new Error('No demo tenant membership is available');
+      const { users, platform, membership } = await discoverWorkspaceAccess(nextUserId);
+      if (!isCurrent(id)) return;
+      setPlatformPermissions(platform.platformPermissions);
+      if (isPlatformOnlyAccess(membership.profiles, platform.platformPermissions)) {
+        enterPlatformWorkspace(nextUserId); return;
+      }
+      const preferred = selectWorkspaceProfile(membership.profiles, membership.defaultTenantId, nextTenantId, preferences());
       const nextLocale = preferredLocale(preferences()) ?? preferred.defaultLocale;
       const requestedRecordId = restoreRoute ? routeRecordId() : null;
       const resolved = requestedRecordId ? await resolveSavedRoute(requestedRecordId, preferred, membership.profiles,
@@ -70,6 +92,10 @@ export function useWorkspace() {
       const selected = resolved?.tenant ?? preferred;
       if (requestedRecordId && !resolved && isCurrent(id)) navigate(null);
       const selectedSession = session(selected, nextLocale, nextUserId);
+      // Load metadata capability independently: a workspace may be administrable before data is ready.
+      const initialCapabilities = await getCapabilities(selectedSession);
+      if (!isCurrent(id)) return;
+      setProfile(selected); setProfiles(membership.profiles); setLocale(nextLocale); setPermissions(initialCapabilities.permissions);
       const [catalogResponse, templatesResponse, options, capabilities, saved] = await Promise.all([
         getSemanticCatalog(selectedSession), getTemplates(selectedSession), getFilterOptions(selectedSession),
         getCapabilities(selectedSession), listSavedDashboards(selectedSession),
@@ -78,18 +104,14 @@ export function useWorkspace() {
         ?? templatesResponse.templates.find(template => template.availability === 'available');
       let opened: DashboardDocument | null = resolved ? savedDocument(resolved.record) : null;
       let openedExecution: DashboardExecutionResult | null = null;
-      if (resolved) openedExecution = await executeDashboard(selectedSession, resolved.record.spec);
+      if (resolved) openedExecution = await executeSavedDashboard(selectedSession, resolved.record.id);
       if (!opened && first) {
         const result = await instantiateTemplate(selectedSession, first.id);
         opened = openTemplateDocument(first.id, result.dashboard);
         openedExecution = result.execution;
       }
       if (!isCurrent(id)) return;
-      setDemoUsers(users.users); setProfiles(membership.profiles); setProfile(selected); setLocale(nextLocale); storeTenant(preferences(), selected.id); storeDemoUser(demoSessionPreference(), nextUserId);
-      setCatalog(Object.fromEntries(catalogResponse.metrics.map(metric => [metric.id, metric])));
-      setMetricRegistry(catalogResponse.registry); setTemplates(templatesResponse.templates); setFilterOptions(options);
-      setPermissions(capabilities.permissions); setSavedDashboards(saved.dashboards);
-      setActiveTemplateId(first?.id ?? ''); setDocument(opened); setExecution(openedExecution);
+      publishWorkspace({ users, membership, selected, nextLocale, nextUserId, catalogResponse, templatesResponse, options, capabilities, saved, first, opened, openedExecution });
       if (!restoreRoute) navigate(null);
     } catch (cause) {
       if (isCurrent(id)) {
@@ -121,7 +143,7 @@ export function useWorkspace() {
     try {
       const result = await instantiateTemplate(session(selected, selectedLocale), templateId);
       if (isCurrent(id)) { setDocument(openTemplateDocument(templateId, result.dashboard)); setExecution(result.execution); setActiveTemplateId(templateId); navigate(null); }
-    } catch (cause) { if (isCurrent(id)) setError(cause instanceof Error ? cause.message : String(cause)); }
+    } catch (cause) { if (isCurrent(id)) { if(cause instanceof ApiClientError && (cause.status===403||cause.status===404)) {setDocument(null);setExecution(null);setSavedDashboards([]);} setError(cause instanceof Error ? cause.message : String(cause)); } }
     finally { if (isCurrent(id)) setLoading(false); }
   };
   const openSaved = async (recordId: string, changePath = true) => {
@@ -130,9 +152,9 @@ export function useWorkspace() {
     const id = beginRequest(); setError(null); setLoading(true);
     try {
       const record = await getSavedDashboard(session(), recordId);
-      const result = await executeDashboard(session(), record.spec);
+      const result = await executeSavedDashboard(session(), record.id);
       if (isCurrent(id)) { setDocument(savedDocument(record)); setExecution(result); if (changePath) navigate(record.id); }
-    } catch (cause) { if (isCurrent(id)) setError(cause instanceof Error ? cause.message : String(cause)); }
+    } catch (cause) { if (isCurrent(id)) { if(cause instanceof ApiClientError && (cause.status===403||cause.status===404)) {setDocument(null);setExecution(null);setSavedDashboards([]);} setError(cause instanceof Error ? cause.message : String(cause)); } }
     finally { if (isCurrent(id)) setLoading(false); }
   };
   const selectLocale = (next: Locale) => {
@@ -158,7 +180,7 @@ export function useWorkspace() {
       });
       const list = await listSavedDashboards(session());
       if (isCurrent(id) && saved.kind === 'saved') { setDocument(saved); setSavedDashboards(list.dashboards); navigate(saved.record.id); return true; }
-    } catch (cause) { if (isCurrent(id)) setError(cause instanceof Error ? cause.message : String(cause)); }
+    } catch (cause) { if (isCurrent(id)) { if(cause instanceof ApiClientError && (cause.status===403||cause.status===404)) {setDocument(null);setExecution(null);setSavedDashboards([]);} setError(cause instanceof Error ? cause.message : String(cause)); } }
     finally { if (isCurrent(id)) setLoading(false); }
     return false;
   };
@@ -172,7 +194,7 @@ export function useWorkspace() {
     catch (cause) { if (isCurrent(id)) setError(cause instanceof Error ? cause.message : String(cause)); }
     finally { if (isCurrent(id)) setLoading(false); }
   };
-  return { locale, userId, demoUsers, permissions, profiles, profile, catalog, metricRegistry, templates, savedDashboards,
+  return { locale, userId, demoUsers, permissions, platformPermissions, profiles, profile, catalog, metricRegistry, templates, savedDashboards,
     navigationRevision, activeTemplateId, document, dashboard, execution, loading, error, mode, dirty, filterOptions, setExecution, setLoading, setError,
     beginRequest, isCurrent, session, loadWorkspace, openTemplate, openSaved, selectLocale, applyWorkingSpec, startManual,
     openGenerated, save, discard, confirmAbandon };

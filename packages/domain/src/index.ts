@@ -15,3 +15,5 @@ export * from './dashboard-library.ts';
 export * from './dimension-labels.ts';
 
 export * from './production-data.ts';
+export * from './access-control.ts';
+export * from './administration-repository.ts';

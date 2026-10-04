@@ -13,3 +13,7 @@ Current identities are synthetic header-based selections, **not production authe
 | Developer/Operator | No implicit privileged identity | Deployment/test fixture | Configure/diagnose via approved runtime access; application API rights still require membership |
 
 Sharing scope grants view eligibility, not ownership or metric permission. An accessible shared non-owned dashboard may be copied with Save As; updating the original remains owner-controlled. Folder/favorite preferences belong to tenant + user and are not sharing policy. Tenant/user administration permissions exist in the model; production administration workflows are future work.
+
+## Administration model designed for the next implementation phase
+
+[ADR 028](../architecture/adr/028-customer-tenant-access-control.md) adds synthetic contract-test personas for Platform Admin, Baghdad Agent Manager and a tenant custom-role Agent. Platform Admin has metadata authority only. Agent Manager has sales/CRM capabilities, explicit dashboard audiences and branch plus optional salesperson scopes; collections is not implicitly enabled. These are architecture fixtures, not yet selectable production/admin UI personas. Exact page and permission behavior: [administration contract](../security/administration-contract.md). Existing demo identities above remain working.

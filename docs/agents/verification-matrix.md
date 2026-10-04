@@ -12,3 +12,5 @@
 | Documentation | docs sanity tests | Read owning code and check current/proposed labels, Mermaid source and links |
 
 During development use targeted tests to resolve concrete risk. Before push always frozen install, lint, typecheck, all tests and API/web build; [commands](../developer/testing-guide.md). CI must not require live models or customer fixtures. Manual tests are distinct from SSR/unit/fake-provider tests; report blocked/manual-not-run honestly. [QA suite](../qa/manual-test-plan.md).
+
+Engineering changes also require `pnpm check:architecture`, `pnpm check:quality` and `pnpm check:diff`. Guardrail fixtures run in the normal suite. Before push run `pnpm test:postgres` against the disposable synthetic PostgreSQL 18.6 environment with zero skips. Manual evidence remains separate. [Engineering standards](../developer/engineering-standards.md).

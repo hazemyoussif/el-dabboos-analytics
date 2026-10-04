@@ -1,4 +1,4 @@
-import type { DashboardLibraryPreference, DashboardRecord, Locale } from '@el-dabboos/domain';
+import type { DashboardLibraryPreference, AccessControlledDashboardRecord as DashboardRecord, Locale } from '@el-dabboos/domain';
 import type { AccessibleTemplate } from './api/client.ts';
 export type LibraryView = 'all' | 'favorites' | 'mine' | 'shared' | `folder:${string}`;
 export type LibrarySort = 'updated' | 'az' | 'za' | 'oldest' | 'newest';

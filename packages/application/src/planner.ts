@@ -28,7 +28,7 @@ export class MockDashboardPlanner implements DashboardPlanner {
     };
     if (/(average order value|متوسط قيمة الطلب)/iu.test(prompt) && /(order count|orders|الطلبات|الطلبيات)/iu.test(prompt))
       return replace('order-count', previous => ({ ...previous, series: [{ id: 'average-order-value', metric: 'average_order_value' }] }));
-    const mentionsExampleBranches = profile.exampleBranchIds.every(id => {
+    const mentionsExampleBranches = profile.exampleBranchIds.length > 0 && profile.exampleBranchIds.every(id => {
       const labels = profile.branchLabels[id];
       return labels && [labels.en, labels.ar].some(label => prompt.includes(label.toLowerCase()));
     });

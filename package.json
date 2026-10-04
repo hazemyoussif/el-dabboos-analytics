@@ -9,14 +9,20 @@
   "scripts": {
     "lint": "eslint packages apps",
     "typecheck": "tsc --noEmit && pnpm --filter @el-dabboos/web exec tsc -p tsconfig.json",
-    "test": "node --experimental-transform-types --disable-warning=ExperimentalWarning --test packages/*/test/*.test.ts apps/*/test/*.test.ts",
+    "test": "node --experimental-transform-types --disable-warning=ExperimentalWarning --test packages/*/test/*.test.ts apps/*/test/*.test.ts scripts/engineering/test/*.test.mjs",
     "check": "pnpm run lint && pnpm run typecheck && pnpm test",
     "seed": "node --experimental-transform-types --disable-warning=ExperimentalWarning packages/data/src/seed-cli.ts",
     "build": "pnpm --filter @el-dabboos/api build && pnpm --filter @el-dabboos/web build",
     "dev:api": "pnpm --filter @el-dabboos/api dev",
     "dev:web": "pnpm --filter @el-dabboos/web dev",
     "test:postgres": "node --experimental-transform-types --disable-warning=ExperimentalWarning --test packages/data/test/postgres/*.test.ts",
-    "mart:migrate": "node --experimental-transform-types --disable-warning=ExperimentalWarning packages/data/src/postgres/migrate-cli.ts"
+    "mart:migrate": "node --experimental-transform-types --disable-warning=ExperimentalWarning packages/data/src/postgres/migrate-cli.ts",
+    "metadata:migrate": "node --experimental-transform-types --disable-warning=ExperimentalWarning packages/data/src/metadata/migrate-cli.ts",
+    "metadata:bootstrap": "node --experimental-transform-types --disable-warning=ExperimentalWarning apps/api/src/administration-cli.ts",
+    "check:architecture": "node scripts/engineering/check.mjs architecture",
+    "check:quality": "node scripts/engineering/check.mjs quality",
+    "check:diff": "node scripts/engineering/check.mjs diff",
+    "test:guardrails": "node --test scripts/engineering/test/*.test.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
