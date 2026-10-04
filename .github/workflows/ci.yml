@@ -32,6 +32,9 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm run lint
+      - run: pnpm run check:architecture
+      - run: pnpm run check:quality
+      - run: pnpm run check:diff
       - run: pnpm run typecheck
       - run: pnpm test
       - run: pnpm run test:postgres
