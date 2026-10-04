@@ -1,4 +1,5 @@
 import type { Locale } from '@el-dabboos/domain';
+import { Building2, Users, Contact, Shield, SlidersHorizontal, LayoutDashboard, Settings } from 'lucide-react';
 import { CustomersPage } from './CustomersPage.tsx';
 import { DashboardAccessPage } from './DashboardAccessPage.tsx';
 import { DataAccessPage } from './DataAccessPage.tsx';
@@ -9,6 +10,10 @@ import { RolesPage } from './RolesPage.tsx';
 import { TenantsPage } from './TenantsPage.tsx';
 import { WorkspacePage } from './WorkspacePage.tsx';
 export type AdminPage = 'platform-customers' | 'platform-tenants' | 'platform-users' | 'users' | 'roles' | 'data-access' | 'dashboard-access' | 'tenant';
+const administrationIcons = {
+    'platform-customers': Contact, 'platform-tenants': Building2, 'platform-users': Users,
+    users: Users, roles: Shield, 'data-access': SlidersHorizontal, 'dashboard-access': LayoutDashboard, tenant: Settings,
+};
 export const adminPages: readonly {
     page: AdminPage;
     permission: string;
@@ -28,7 +33,10 @@ export function AdministrationNavigation({ permissions, platformPermissions, pag
     return <>{[true, false].map(platform => {
             const allowed = adminPages.filter(entry => entry.page.startsWith('platform-') === platform && (platform ? platformPermissions : permissions).includes(entry.permission));
             const title = platform ? (locale === 'ar' ? 'إدارة المنصة' : 'Platform Administration') : (locale === 'ar' ? 'الإدارة' : 'Administration');
-            return allowed.length ? <nav className="sidebar-section" key={String(platform)} aria-label={title}><h3>{title}</h3>{allowed.map(entry => <button type="button" key={entry.page} aria-current={page === entry.page ? 'page' : undefined} onClick={() => onPage(entry.page)}>{entry[locale]}</button>)}</nav> : null;
+            return allowed.length ? <nav className="sidebar-section administration-navigation" key={String(platform)} aria-label={title}><h3 className="section-caption">{title}</h3>{allowed.map(entry => {
+                const Icon = administrationIcons[entry.page];
+                return <button type="button" key={entry.page} title={entry[locale]} aria-label={entry[locale]} aria-current={page === entry.page ? 'page' : undefined} onClick={() => onPage(entry.page)}><Icon aria-hidden="true"/><span className="nav-label">{entry[locale]}</span></button>;
+            })}</nav> : null;
         })}</>;
 }
 export function Administration(props: AdministrationPageProps & {

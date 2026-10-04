@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { ChartNoAxesCombined } from 'lucide-react';
 import type { WorkspaceController } from '../hooks/useWorkspace.ts';
 import type { AdminPage } from './Administration.tsx';
 import { Administration, AdministrationNavigation } from './Administration.tsx';
@@ -13,7 +14,7 @@ export function WorkspaceAdministrationNavigation({ workspace, page, onPage, clo
                 onPage(page);
                 closeDrawer();
             }
-        }}/>{page && workspace.profile && <button type="button" onClick={() => onPage(null)}>{workspace.locale === 'ar' ? 'التحليلات' : 'Analytics'}</button>}</>;
+        }}/>{page && workspace.profile && <button className="sidebar-browse" type="button" title={workspace.locale === 'ar' ? 'التحليلات' : 'Analytics'} aria-label={workspace.locale === 'ar' ? 'التحليلات' : 'Analytics'} onClick={() => { onPage(null); closeDrawer(); }}><ChartNoAxesCombined aria-hidden="true"/><span className="nav-label">{workspace.locale === 'ar' ? 'التحليلات' : 'Analytics'}</span></button>}</>;
 }
 export function WorkspaceAdministration({ workspace, page }: {
     workspace: WorkspaceController;

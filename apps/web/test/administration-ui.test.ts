@@ -13,6 +13,10 @@ test('administration navigation separates platform and tenant permissions in Eng
             assert.ok(platform.includes(locale === 'en' ? 'Customers' : 'العملاء'));
             assert.ok(!platform.includes(locale === 'en' ? 'Data Access' : 'الوصول للبيانات'));
             assert.ok(platform.includes('aria-current="page"'));
+            assert.ok(platform.includes('class="section-caption"'));
+            assert.ok(platform.includes('class="nav-label"'));
+            assert.ok(platform.includes('aria-hidden="true"'));
+            assert.ok(platform.includes(`aria-label="${locale === 'en' ? 'Customers' : 'العملاء'}"`));
             const tenant = renderToStaticMarkup(createElement(AdministrationNavigation, { locale, permissions: ['roles:view', 'data_scopes:view'], platformPermissions: [], page: null, onPage() { } }));
             assert.ok(tenant.includes(locale === 'en' ? 'Roles' : 'الأدوار'));
             assert.ok(!tenant.includes(locale === 'en' ? 'Platform Administration' : 'إدارة المنصة'));
