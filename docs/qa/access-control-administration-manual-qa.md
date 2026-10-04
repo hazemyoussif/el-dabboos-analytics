@@ -47,7 +47,7 @@ The stock Agent Manager has only dashboard/query authority. User-approved dispos
 | Iraq Admin | demo-customer / demo-iq | Data Access | Local API interruption; Reload and review | Safe localized recoverable error | Generic Arabic request error with reload; recovery loads data | PASS |
 | Iraq Admin | demo-customer / demo-iq | Navigation + forms | 390px RTL Dark: Tab, Enter, Shift+Tab, Escape | Reachable controls; focus wrap and visible indicator | Save Tab reaches Cancel; 2px focus outline; Enter cancels; nav wraps to Theme and Escape returns to trigger | PASS |
 | Iraq/Egypt Admin + Platform Admin | synthetic tenants / platform | Eight administration pages | Inspect EN/AR, Light/Dark, wide/laptop/tablet/mobile | Readable localized layout and actions | Raw labels/errors corrected; clipped tablet nav fixed; table overflow contained; technical tokens intentionally retained | PASS |
-| Iraq Admin | demo-customer / demo-iq | Theme | Select System and read browser media preference | System follows current preference | prefers dark=false; data-theme=light; OS/browser preference transition cannot be driven by available controls | PARTIAL |
+| Iraq Admin | demo-customer / demo-iq | Theme | Set app Theme to System; manually exercise light and dark `prefers-color-scheme` states | System follows each preference without refresh | Administration followed both preference states without refresh and remained usable in both | PASS |
 
 All eight top-level pages were visited in English and Arabic. Persisted synthetic role names, descriptions, permission/domain identifiers and fixture titles remain in their authored language; they are not untranslated UI copy. Private/tenant/restricted and member/user/identity lifecycle labels are localized while serialized enum values remain unchanged.
 
@@ -151,7 +151,7 @@ The temporary relay collected the upstream response then held delivery for four 
 - RTL: Arabic settings, memberships, roles, scope editor, dashboard audience form, mobile navigation and mixed identifiers inspected. Settings technical values use bidi isolation.
 - Light: platform and tenant tables/forms inspected.
 - Dark: memberships, data access/error, dashboard audience and 390px RTL inspected; visible focus verified.
-- System: current light preference resolved correctly; actual media preference transition is **unverified** because exposed browser controls offer no color-scheme emulation and native OS control is disabled.
+- System: manually tested in both light and dark `prefers-color-scheme` states; administration followed each preference without refresh and remained usable in both states.
 - Viewports: default ~1187x900, 1440x900, 1024x768 and 390x844. The narrow page and table container widths were checked through DOM measurements; 390px page scrollWidth=390, 1024px page scrollWidth=1009 (scrollbar). Actions remain in the table scroll/reflow area. Temporary viewport override reset before delivery.
 
 ## Accessibility and quality-skill AFTER review
@@ -206,7 +206,7 @@ Exact final SHA, push result, CI URL and conclusion are reported in the delivery
 
 Deliberately deferred product/integration: production IdP/session integration, invitations/email, customer sources, support impersonation and unrelated historical debt. None was added here.
 
-Unresolved defects: none known after narrow fixes. Remaining QA gaps: System preference transition not manually exercised; no-customer database, truly zero-membership tenant, stale governed source value, cursor pagination and backend fault-injected mutation rollback were not manually reproduced. Existing automated tests cover the applicable behaviors; these are not reported as manual passes. Assignment creation was not exercised because stock candidates were empty. OS/screen-reader audit was outside available controls.
+Unresolved defects: none known after narrow fixes. Remaining QA gaps: no-customer database, truly zero-membership tenant, stale governed source value, cursor pagination and backend fault-injected mutation rollback were not manually reproduced. Existing automated tests cover the applicable behaviors; these are not reported as manual passes. Assignment creation was not exercised because stock candidates were empty. OS/screen-reader audit was outside available controls.
 
 ## System-theme completion
 
