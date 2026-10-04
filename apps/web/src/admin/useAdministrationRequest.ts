@@ -1,3 +1,4 @@
+import { administrationError } from './copy.ts';
 import { useEffect, useRef, useState } from 'react';
 import type { ApiSession } from '../api/client.ts';
 import { ApiClientError, request } from '../api/client.ts';
@@ -5,7 +6,7 @@ import { AdministrationRequestOwnership } from './request-lifecycle.ts';
 export function useAdministrationRequest<Data>(session: ApiSession, read: (cursor?: string) => Promise<Data>, empty: Data, onReload: () => void, ownerKey = '') {
     const [data, setData] = useState(empty), [error, setError] = useState(''), [notice, setNotice] = useState(''), [busy, setBusy] = useState(false);
     const ownership = useRef(new AdministrationRequestOwnership());
-    const message = (error: unknown) => error instanceof Error ? error.message : String(error);
+    const message = (error: unknown) => administrationError(error, session.locale);
     const load = async (cursor?: string) => {
         const revision = ownership.current.begin();
         setBusy(true);

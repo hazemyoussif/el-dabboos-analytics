@@ -1,3 +1,4 @@
+import { administrationError, administrationLabel } from './copy.ts';
 import type { ScopeDimension } from '@el-dabboos/domain';
 import { scopeDimensions } from '@el-dabboos/domain';
 import type { FormEvent } from 'react';
@@ -37,7 +38,7 @@ export function DataAccessPage({ session, permissions }: AdministrationPageProps
             values = Object.fromEntries(entries);
         }
         catch (error) {
-            scopeError = error instanceof Error ? error.message : String(error);
+            scopeError = administrationError(error, locale);
         }
         return { ...result, values, scopeError };
     })(), { values: {}, scopeError: '' }, () => setEditing(null));
@@ -52,8 +53,8 @@ export function DataAccessPage({ session, permissions }: AdministrationPageProps
     };
     const membership = record;
     const editingRecord = record;
-    return <AdministrationFrame locale={locale} title={label('Data Access', 'الوصول للبيانات')} allowed={allowed.includes('data_scopes:view')} busy={busy} error={error} notice={notice} load={load} nextCursor={data.nextCursor} empty={data.items?.length === 0}><p>{label('Roles define what users can do. Data Access defines which business data they can see.', 'الأدوار تحدد ما يمكن للمستخدم فعله. الوصول للبيانات يحدد بيانات الأعمال التي يراها.')}</p>{scopeError && <p role="alert">{scopeError}</p>}{!!data.items?.length && <AdministrationTable locale={locale}>{data.items.map(item => <tr key={item.id}><th scope="row">{item.user.displayName}</th><td><MembershipDetails membership={item} locale={locale}/></td><td>{item.version}</td><td>{canManage && <button type="button" disabled={busy || !!scopeError} onClick={() => setEditing(item)}>{label('Edit', 'تعديل')}</button>}</td></tr>)}</AdministrationTable>}{editing && <form className="admin-form" onSubmit={save} key={editingRecord ? editingRecord.id : 'new'}><h3>{label('Review changes, then Save', 'راجع التغييرات ثم احفظ')}</h3><fieldset disabled={busy}>
-   {scopeDimensions.map(dimension => <fieldset key={dimension}><legend>{dimension}</legend>{scopeOptionsWithRetainedValues(values[dimension] ?? [], membership?.dataScopes ?? [], dimension, label('stale — requires review', 'قديم — يتطلب مراجعة')).map(value => <label key={value.id}><input type="checkbox" name={dimension} value={value.id} defaultChecked={membership?.dataScopes.find(dataScope => dataScope.dimension === dimension)?.values.includes(value.id)}/>{value.label}</label>)}</fieldset>)}
+    return <AdministrationFrame locale={locale} title={label('Data Access', 'الوصول للبيانات')} allowed={allowed.includes('data_scopes:view')} busy={busy} error={error} notice={notice} load={load} nextCursor={data.nextCursor} empty={data.items?.length === 0}><p>{label('Roles define what users can do. Data Access defines which business data they can see.', 'الأدوار تحدد ما يمكن للمستخدم فعله. الوصول للبيانات يحدد بيانات الأعمال التي يراها.')}</p><p>{label('Values within one dimension use OR; different dimensions combine with AND.', 'القيم داخل البعد الواحد تُجمع بمنطق «أو»؛ والأبعاد المختلفة تُجمع بمنطق «و».')}</p>{scopeError && <p role="alert">{scopeError}</p>}{!!data.items?.length && <AdministrationTable locale={locale}>{data.items.map(item => <tr key={item.id}><th scope="row">{item.user.displayName}</th><td><MembershipDetails membership={item} locale={locale}/></td><td>{item.version}</td><td>{canManage && <button type="button" disabled={busy || !!scopeError} onClick={() => setEditing(item)}>{label('Edit', 'تعديل')}</button>}</td></tr>)}</AdministrationTable>}{editing && <form className="admin-form" onSubmit={save} key={editingRecord ? editingRecord.id : 'new'}><h3>{label('Review changes, then Save', 'راجع التغييرات ثم احفظ')}</h3><fieldset disabled={busy}>
+   {scopeDimensions.map(dimension => <fieldset key={dimension}><legend>{administrationLabel(dimension, locale)}</legend>{scopeOptionsWithRetainedValues(values[dimension] ?? [], membership?.dataScopes ?? [], dimension, label('stale — requires review', 'قديم — يتطلب مراجعة')).map(value => <label key={value.id}><input type="checkbox" name={dimension} value={value.id} defaultChecked={membership?.dataScopes.find(dataScope => dataScope.dimension === dimension)?.values.includes(value.id)}/>{value.label}</label>)}</fieldset>)}
    <button type="submit" disabled={!!scopeError}>{label('Save', 'حفظ')}</button><button type="button" onClick={() => setEditing(null)}>{label('Cancel', 'إلغاء')}</button>
   </fieldset></form>}</AdministrationFrame>;
 }

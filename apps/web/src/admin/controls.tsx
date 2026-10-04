@@ -1,3 +1,4 @@
+import { administrationLabel } from './copy.ts';
 import type { Locale } from '@el-dabboos/domain';
 import type { ReactNode } from 'react';
 import type { MembershipSummary, RoleSummary } from './page-contracts.ts';
@@ -11,7 +12,7 @@ export function MembershipDetails({ membership, locale }: {
     locale: Locale;
 }) {
     const label = pageLabel(locale);
-    return <><p>{label('Global user', 'المستخدم العام')}: {membership.user.status}</p><p>{label('Authentication', 'المصادقة')}: {membership.identities.map(identity => `${identity.provider}: ${identity.status}${identity.loginHint ? ` (${identity.loginHint})` : ''}`).join(', ') || label('Unavailable', 'غير متاح')}</p><p>{label('Membership', 'العضوية')}: {membership.status}</p><p>{membership.roles.map(role => role.name).join(', ')}</p><p>{membership.dataScopes.map(dataScope => `${dataScope.dimension}: ${dataScope.values.join(', ')}`).join('; ') || label('Unscoped', 'بلا قيود بيانات')}</p></>;
+    return <><p>{label('Global user', 'المستخدم العام')}: {administrationLabel(membership.user.status, locale)}</p><p>{label('Authentication', 'المصادقة')}: {membership.identities.map(identity => `${identity.provider}: ${administrationLabel(identity.status, locale)}${identity.loginHint ? ` (${identity.loginHint})` : ''}`).join(', ') || label('Unavailable', 'غير متاح')}</p><p>{label('Membership', 'العضوية')}: {administrationLabel(membership.status, locale)}</p><p>{membership.roles.map(role => role.name).join(', ')}</p><p>{membership.dataScopes.map(dataScope => `${dataScope.dimension}: ${dataScope.values.join(', ')}`).join('; ') || label('Unscoped', 'بلا قيود بيانات')}</p></>;
 }
 export function AdministrationTable({ locale, children }: {
     locale: Locale;
