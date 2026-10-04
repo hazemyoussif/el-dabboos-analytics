@@ -53,3 +53,5 @@ SQLite metadata writers, readers and personal-library operations share a connect
 ## Verification boundary
 
 Automated migration, repository/service, API, planner/profile, SSR navigation and PostgreSQL tests cover the implemented boundaries. Responsive, theme, RTL visual, keyboard/manual and browser acceptance remain the explicit Sol Low follow-up. Automated SSR is not visual or interactive browser QA. Production audit retention/backup hosting, IdP/session revocation, invitations/email and authoritative organization integration remain pending production gates.
+
+The operational command is now composed in `apps/api/src/administration-cli.ts`. It calls named provisioning operations in `packages/application/src/administration/provisioning.ts`, using the metadata store's single unit of work. CLI arguments, verified-binding input, one-use bootstrap marker, protected-role values and audit/recovery behavior are preserved. No production identity or invitation delivery is introduced.

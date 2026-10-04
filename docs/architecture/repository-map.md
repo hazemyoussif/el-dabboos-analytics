@@ -65,3 +65,5 @@ Follow [system design](system-design.md) for the dependency rule; this map route
 **Typical files:** ci.yml.
 **Common modifications:** Frozen install/lint/typecheck/test/build gates.
 **Does NOT belong here:** Production secrets or real customer/model dependency.
+
+Administration operations are grouped under `packages/application/src/administration/`, typed HTTP resources under `apps/api/src/routes/administration/`, and concrete admin pages under `apps/web/src/admin/`. SQLite metadata transaction-bound repositories live beside the connection owner under `packages/data/src/metadata/administration/`. Trusted provisioning composition is `apps/api/src/administration-cli.ts`; the metadata bootstrap command remains unchanged.

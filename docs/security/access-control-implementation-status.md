@@ -45,3 +45,9 @@ The project UI skill was applied through code/SSR checks: native forms/controls,
 ## Operational limits and pending production gates
 
 [Local operations](administration-operations.md) documents explicit migration, backup/legacy reconciliation, bootstrap, candidate provisioning and source-readiness behavior. No production IdP, password/session/token validation, MFA/revocation SLA, invitation email, source connectors, production support impersonation, authoritative organization hierarchy or metadata hosting/backup/durable audit policy is implemented. These remain production gates. Local successful audit is not a claim of production retention readiness. Browser/manual product verification remains deferred.
+
+## Engineering quality refactor
+
+The resource/action administration dispatcher, generic cast-dependent mutation route factories and universal eight-page implementation have been replaced by named typed operations, transaction-bound metadata repositories, explicit resource handlers and concrete React pages. Permanent engineering standards and fixture-tested baseline-aware quality/architecture/diff checks apply. Historical pre-feature debt is recorded separately; no administration code is baselined.
+
+Q14 is a separately committed readiness correction: governed persistence invokes its configured readiness probe even without a legacy dashboard repository. Its regression first demonstrated zero probe calls, then passed after correction. Manual browser/RTL/theme/responsive/accessibility QA remains deferred and is not covered by these engineering claims.
