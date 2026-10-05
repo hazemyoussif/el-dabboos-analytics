@@ -1,5 +1,6 @@
+import { resolveOdooSourceConfig } from './source-connections.ts';
 import type { ExtractionRun } from '@el-dabboos/domain';
-import { createMartPool, createOdooSourcePool, ingestRetainedOdooPilot, odooComparisonCandidate, odooSourceConfig, OdooSnapshotLease, PostgresExtractionRuns, PostgresMappingReleases } from '@el-dabboos/data';
+import { createMartPool, createOdooSourcePool, ingestRetainedOdooPilot, odooComparisonCandidate, OdooSnapshotLease, PostgresExtractionRuns, PostgresMappingReleases } from '@el-dabboos/data';
 import type { OdooMappingIdentity } from '@el-dabboos/data';
 
 export interface OdooPilotManifest { mapping: OdooMappingIdentity; extractionId: string }
@@ -35,7 +36,7 @@ export async function executeOdooPilot(command: string,manifest: OdooPilotManife
 }
 async function executeRetainedRun(manifest: OdooPilotManifest,environment: NodeJS.ProcessEnv,mart: ReturnType<typeof createMartPool>) {
   const mapping = odooComparisonCandidate(manifest.mapping);
-  const config = odooSourceConfig(environment,{ tenantId: mapping.tenantId,sourceId: mapping.sourceId });
+  const config = await resolveOdooSourceConfig(environment,{ tenantId: mapping.tenantId,sourceId: mapping.sourceId });
   if (config.companyIds.length!==1 || config.companyIds[0]!=='1') throw new Error('Unapproved pilot company configuration');
   const ownerPool = createOdooSourcePool(config);
   const sourcePool = createOdooSourcePool(config);

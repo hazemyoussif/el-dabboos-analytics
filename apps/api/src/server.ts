@@ -1,6 +1,7 @@
+import { openControlStorage } from './control-storage.ts';
 import type { StructuredPlannerDiagnostic } from '@el-dabboos/application';
 import { StructuredDashboardPlanner } from '@el-dabboos/application';
-import { MockAnalyticsRepository, PostgresAnalyticsRepository, SqliteAdministrationStore, SqliteAnalyticsRepository, assertMetadataReady, createMartPool, createSqliteSchema, generateSeedFacts, verifyMartRuntimeRole } from '@el-dabboos/data';
+import { MockAnalyticsRepository, PostgresAnalyticsRepository, SqliteAnalyticsRepository, createMartPool, createSqliteSchema, generateSeedFacts, verifyMartRuntimeRole } from '@el-dabboos/data';
 import type { AnalyticsRepository, DashboardPlanner, DimensionValueRepository } from '@el-dabboos/domain';
 import { existsSync, realpathSync } from 'node:fs';
 import { resolve, } from 'node:path';
@@ -14,12 +15,12 @@ import { formatStructuredDiagnostic } from './structured-diagnostics.ts';
 const config = parseRuntimeConfig(process.env, { analyticsPath: fileURLToPath(new URL('../../../demo.db', import.meta.url)), dashboardPath: fileURLToPath(new URL('../../../dashboards.db', import.meta.url)) });
 // Metadata is independent of analytics: explicit migration command is required before startup.
 const canonicalPath = (path: string) => existsSync(path) ? realpathSync(path) : resolve(path);
-if (canonicalPath(config.analyticsPath) === canonicalPath(config.dashboardPath))
+if (config.controlProvider === 'sqlite' && canonicalPath(config.analyticsPath) === canonicalPath(config.dashboardPath))
     throw new Error('Analytics and metadata database paths must be separate. Copy approved dashboard/library tables explicitly to a dedicated metadata file before migration.');
-const dashboardDb = new DatabaseSync(config.dashboardPath);
-const administration = new SqliteAdministrationStore(dashboardDb);
-const syntheticIdentity = (process.env.ACCESS_IDENTITY_MODE ?? 'synthetic') === 'synthetic';
-if (!['synthetic', 'disabled'].includes(process.env.ACCESS_IDENTITY_MODE ?? 'synthetic'))
+const controlStorage = await openControlStorage(config);
+const administration = controlStorage.store;
+const syntheticIdentity = (process.env.ACCESS_IDENTITY_MODE ?? (config.controlProvider === 'postgres' ? 'disabled' : 'synthetic')) === 'synthetic';
+if (!['synthetic', 'disabled'].includes(process.env.ACCESS_IDENTITY_MODE ?? (config.controlProvider === 'postgres' ? 'disabled' : 'synthetic')))
     throw new Error('Unsupported identity mode. Production IdP integration is not implemented.');
 const provider = config.analyticsProvider;
 let dataReady: (tenantId: string) => Promise<boolean> = async (id) => id === 'demo-iq' || id === 'demo-eg';
@@ -77,7 +78,7 @@ else if (plannerMode === 'disabled')
 else if (plannerMode !== 'mock')
     throw new Error('DASHBOARD_PLANNER must be mock, structured, or disabled.');
 const app = await buildApi({ analyticsRepository: repository, dimensionValues: repository, executionConcurrency: config.executionConcurrency,
-    readiness: { persistence: async () => { assertMetadataReady(dashboardDb); return true; }, analytics: analyticsReady },
+    readiness: { persistence: controlStorage.ready, analytics: analyticsReady },
     administration: { unitOfWork: administration, directory: administration.directory, profiles: administration.profiles, dataReady,
         authenticate: async (headers) => {
             if (!syntheticIdentity)
@@ -102,13 +103,13 @@ const app = await buildApi({ analyticsRepository: repository, dimensionValues: r
 const port = config.port;
 try {
     const address = await app.listen({ port, host: '127.0.0.1' });
-    process.stdout.write(`${startupSummary({ analyticsProvider: provider, dashboardPath: config.dashboardPath, plannerMode, modelId: config.llm.modelId, baseUrl: config.llm.baseUrl, diagnostics: config.llm.diagnostics, llmTemperature: config.llm.temperature, llmMaxTokens: config.llm.maxTokens, ...(config.llm.reasoningBudgetTokens !== undefined ? { llmReasoningBudgetTokens: config.llm.reasoningBudgetTokens } : {}), ...(config.llm.seed !== undefined ? { llmSeed: config.llm.seed } : {}), llmTimeoutMs: config.llm.timeoutMs, llmRepairAttempts: config.llm.repairAttempts, port, executionConcurrency: config.executionConcurrency }, config.llm.apiKey)}\n`);
+    process.stdout.write(`${startupSummary({ analyticsProvider: provider, dashboardPath: config.controlProvider === 'postgres' ? 'postgres-control' : config.dashboardPath, plannerMode, modelId: config.llm.modelId, baseUrl: config.llm.baseUrl, diagnostics: config.llm.diagnostics, llmTemperature: config.llm.temperature, llmMaxTokens: config.llm.maxTokens, ...(config.llm.reasoningBudgetTokens !== undefined ? { llmReasoningBudgetTokens: config.llm.reasoningBudgetTokens } : {}), ...(config.llm.seed !== undefined ? { llmSeed: config.llm.seed } : {}), llmTimeoutMs: config.llm.timeoutMs, llmRepairAttempts: config.llm.repairAttempts, port, executionConcurrency: config.executionConcurrency }, config.llm.apiKey)}\n`);
     process.stdout.write(`El Dabboos API listening at ${address}\n`);
 }
 catch (error) {
     await close();
-    dashboardDb.close();
+    await controlStorage.close();
     throw error;
 }
-process.on('SIGTERM', () => { void app.close().then(async () => { await close(); dashboardDb.close(); }); });
-process.on('SIGINT', () => { void app.close().then(async () => { await close(); dashboardDb.close(); }); });
+process.on('SIGTERM', () => { void app.close().then(async () => { await close(); await controlStorage.close(); }); });
+process.on('SIGINT', () => { void app.close().then(async () => { await close(); await controlStorage.close(); }); });

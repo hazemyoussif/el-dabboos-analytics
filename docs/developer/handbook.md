@@ -46,3 +46,7 @@ Follow [engineering standards](engineering-standards.md) in addition to function
 For one administration flow, read the named operation in `packages/application/src/administration/<area>.ts`, its typed HTTP handler in `apps/api/src/routes/administration/<area>.ts`, and its concrete page in `apps/web/src/admin/`. The composition module binds operations and owns no generic resource/action dispatch. Operational bootstrap/provisioning is composed by `apps/api/src/administration-cli.ts`; the command `pnpm metadata:bootstrap` is unchanged. SQLite's connection/transaction owner remains the metadata store, with explicit transaction-bound repository factories beside it.
 
 For persistent local PostgreSQL mart setup on port 55437, use [local Analytics mart operations](../integration/local-analytics-mart.md). The disposable PostgreSQL suite remains on port 55436; local bootstrap and migration commands explicitly load root environment files.
+
+## PostgreSQL control persistence
+
+Use [control-plane operations](../integration/postgres-control-plane.md) for provisioning, explicit control migrations, source references and approved SQLite cutover. `CONTROL_PROVIDER=sqlite` remains local compatibility; `postgres` uses only `CONTROL_DATABASE_URL` and disables synthetic header identity. Keep `demo.db` synthetic/local, `dashboards.db` as compatibility/migration source, and control credentials separate from all mart identities. No runtime auto-migration, dual writes or source-discovery serving dependency is introduced.

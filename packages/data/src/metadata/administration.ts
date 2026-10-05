@@ -5,12 +5,7 @@ import { realpathSync } from 'node:fs';
 import type { DatabaseSync } from 'node:sqlite';
 import { SqliteDashboardLibraryRepository } from '../library-sqlite.ts';
 import { metadataConnection } from './administration/connection.ts';
-import { customersRepository } from './administration/customers.ts';
-import { dashboardsRepository } from './administration/dashboards.ts';
-import { directoryRepository } from './administration/directory.ts';
-import { metadataRows } from './administration/mappers.ts';
-import { tenantsRepository } from './administration/tenants.ts';
-import { usersRepository } from './administration/users.ts';
+import { administrationRepositories } from './administration/repositories.ts';
 import { seedProtectedAccessRoles } from './demo-seed.ts';
 import { assertMetadataReady } from './migrations.ts';
 const queues = new Map<string, Promise<unknown>>();
@@ -53,20 +48,12 @@ export class SqliteAdministrationStore implements AdministrationUnitOfWork {
             return { ...(getTenantProfile(id) ?? { labels: { en: tenant.name, ar: tenant.name }, branchLabels: {}, exampleBranchIds: [] }), id, ...tenant.configuration };
         }) };
     private repositories(): AdministrationTransaction {
-        const connection = metadataConnection(this.db), rows = metadataRows(connection);
-        return {
-            provisioning: {
-                bootstrapCompleted: async () => Boolean(connection.one("SELECT 1 FROM bootstrap_state WHERE id='completed'")),
-                initializeProtectedRoles: async (timestamp) => { seedProtectedAccessRoles(this.db, timestamp); },
-                completeBootstrap: async (reference, timestamp) => { connection.run('INSERT INTO bootstrap_state(id,reference,completed_at) VALUES (?,?,?)', 'completed', reference, timestamp); },
-                createAssignmentCandidate: async (tenantId, userId) => { connection.run('INSERT INTO tenant_assignment_candidates(tenant_id,user_id) VALUES (?,?)', tenantId, userId); },
-            },
-            directory: directoryRepository(connection, rows),
-            customers: customersRepository(connection, rows),
-            users: usersRepository(connection, rows),
-            tenants: tenantsRepository(connection, rows),
-            dashboards: dashboardsRepository(connection, rows),
-            appendAudit: async (event) => { connection.insert('admin_audit_events', { event_id: randomUUID(), actor_user_id: event.actorUserId, tenant_id: event.tenantId, customer_id: event.customerId, target_id: event.targetId, action: event.action, result: event.result, occurred_at: event.timestamp }); },
-        };
+        const connection = metadataConnection(this.db);
+        return administrationRepositories(connection, {
+            bootstrapCompleted: async () => Boolean(await connection.one("SELECT 1 FROM bootstrap_state WHERE id='completed'")),
+            initializeProtectedRoles: async timestamp => { seedProtectedAccessRoles(this.db, timestamp); },
+            completeBootstrap: async (reference, timestamp) => { await connection.run('INSERT INTO bootstrap_state(id,reference,completed_at) VALUES (?,?,?)', 'completed', reference, timestamp); },
+            createAssignmentCandidate: async (tenantId, userId) => { await connection.run('INSERT INTO tenant_assignment_candidates(tenant_id,user_id) VALUES (?,?)', tenantId, userId); },
+        });
     }
 }

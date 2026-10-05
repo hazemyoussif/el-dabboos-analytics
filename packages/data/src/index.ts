@@ -30,3 +30,8 @@ export * from './odoo/identity.ts';
 export * from './odoo/controls.ts';
 export * from './odoo/snapshot.ts';
 export * from './odoo/pilot.ts';
+export * from './control/administration.ts';
+export * from './control/migrations.ts';
+export * from './control/session.ts';
+export * from './control/import-sqlite.ts';
+export * from './control/sources.ts';

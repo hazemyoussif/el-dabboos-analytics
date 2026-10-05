@@ -31,8 +31,18 @@ export function seedDemoAdministration(db: DatabaseSync): void {
 }
 /** Protected templates are an explicit deployment/bootstrap capability, never tenant CRUD. */
 export function seedProtectedAccessRoles(db: DatabaseSync, timestamp: string): void {
+    for (const [id, name, scope, key, permissions, domains] of protectedAccessRoles()) {
+        db.prepare('INSERT INTO roles(id,name,description,scope,tenant_id,protected,system_key,version,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)').run(id, name, 'Synthetic protected template', scope, null, 1, key, 1, timestamp, timestamp);
+        for (const permission of permissions)
+            db.prepare('INSERT INTO role_permissions(role_id,permission) VALUES (?,?)').run(id, permission);
+        for (const domain of domains)
+            db.prepare('INSERT INTO role_metric_domains(role_id,domain) VALUES (?,?)').run(id, domain);
+    }
+}
+
+export function protectedAccessRoles() {
     const analyst = ['dashboard:view', 'dashboard:create', 'dashboard:edit', 'analytics:query', 'ai:generate', 'ai:edit'];
-    const roles = [
+    return  [
         ['admin', 'Tenant Admin', 'tenant', 'tenant_admin', tenantPermissions, accessMetricDomains],
         ['analyst', 'Analyst', 'tenant', 'analyst', analyst, accessMetricDomains],
         ['manager', 'Manager', 'tenant', 'manager', ['dashboard:view', 'dashboard:create', 'dashboard:edit', 'analytics:query'], accessMetricDomains],
@@ -42,11 +52,4 @@ export function seedProtectedAccessRoles(db: DatabaseSync, timestamp: string): v
         ['platform-admin', 'Platform Admin', 'platform', 'platform_admin', platformPermissions, []],
         ['support-admin', 'Support Admin', 'platform', 'support_admin', platformPermissions.filter(permission => permission.endsWith(':view')), []],
     ] as const;
-    for (const [id, name, scope, key, permissions, domains] of roles) {
-        db.prepare('INSERT INTO roles(id,name,description,scope,tenant_id,protected,system_key,version,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)').run(id, name, 'Synthetic protected template', scope, null, 1, key, 1, timestamp, timestamp);
-        for (const permission of permissions)
-            db.prepare('INSERT INTO role_permissions(role_id,permission) VALUES (?,?)').run(id, permission);
-        for (const domain of domains)
-            db.prepare('INSERT INTO role_metric_domains(role_id,domain) VALUES (?,?)').run(id, domain);
-    }
 }

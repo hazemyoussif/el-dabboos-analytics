@@ -18,3 +18,5 @@ Migration ownership belongs to the metadata adapter/deployment layer, never HTTP
 ## Next implementation gate
 
 Decide SQLite vs production metadata DB and replica strategy first. Add a small versioned runner only for the chosen store with upgrade/failure/restore tests; a heavy framework is not justified just for this demo. Existing repository boundaries are the migration extension point. [Readiness](../integration/production-readiness.md), [runtime](runtime-and-deployment.md).
+
+The [PostgreSQL control migration set](../integration/postgres-control-plane.md#local-provisioning-and-migrations) is independent from SQLite metadata history and the mart. It has five immutable migrations, operator-only execution, exact schema/checksum readiness checks and a read-only-source transactional import. Existing legacy metadata must be reconciled explicitly on an approved backup before import; unknown data is never repaired automatically.

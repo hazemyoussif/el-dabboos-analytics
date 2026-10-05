@@ -18,3 +18,6 @@ services:
 volumes:
   dabboos_analytics_data:
     name: dabboos_analytics_data
+# This persistent server also hosts el_dabboos_control after `pnpm control bootstrap-local`.
+# Do not add initdb hooks: existing volumes do not rerun them. Never reset this volume.
+# The disposable test server remains separately configured on port 55436.

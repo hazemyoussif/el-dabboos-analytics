@@ -24,7 +24,8 @@
     "check:quality": "node scripts/engineering/check.mjs quality",
     "check:diff": "node scripts/engineering/check.mjs diff",
     "test:guardrails": "node --test scripts/engineering/test/*.test.mjs",
-    "mart:local": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --experimental-transform-types --disable-warning=ExperimentalWarning apps/api/src/local-mart-cli.ts"
+    "mart:local": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --experimental-transform-types --disable-warning=ExperimentalWarning apps/api/src/local-mart-cli.ts",
+    "control": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --experimental-transform-types --disable-warning=ExperimentalWarning apps/api/src/control-cli.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
