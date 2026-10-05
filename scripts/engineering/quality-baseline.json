@@ -873,12 +873,6 @@
     },
     {
       "file": "packages/data/src/postgres/reconciliation.ts",
-      "symbol": "PostgresReconciliation/record/tenantTransaction:callback2:d414b9899556",
-      "metric": "complexity",
-      "ceiling": 35
-    },
-    {
-      "file": "packages/data/src/postgres/reconciliation.ts",
       "symbol": "PostgresReconciliation/record/tenantTransaction:callback2/binding:m",
       "metric": "shortNames",
       "ceiling": 1
@@ -886,30 +880,6 @@
     {
       "file": "packages/data/src/postgres/reconciliation.ts",
       "symbol": "PostgresReconciliation/record/tenantTransaction:callback2/m.measures.find:callback0/binding:m",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/reconciliation.ts",
-      "symbol": "PostgresReconciliation/record/tenantTransaction:callback2/batches.some:callback0/binding:b",
-      "metric": "shortNames",
-      "ceiling": 2
-    },
-    {
-      "file": "packages/data/src/postgres/reconciliation.ts",
-      "symbol": "PostgresReconciliation/record/tenantTransaction:callback2/batches.find:callback0/binding:b",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/reconciliation.ts",
-      "symbol": "PostgresReconciliation/record/tenantTransaction:callback2/binding:i",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/reconciliation.ts",
-      "symbol": "PostgresReconciliation/record/tenantTransaction:callback2/actual.some:callback0/binding:r",
       "metric": "shortNames",
       "ceiling": 1
     },
@@ -1029,91 +999,13 @@
     },
     {
       "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "order/ArrowFunction:anonymous/binding:a",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "order/ArrowFunction:anonymous/binding:b",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "mean/values.filter:callback0/binding:v",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "mean/present.reduce:callback0/binding:a",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "mean/present.reduce:callback0/binding:b",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
       "symbol": "PostgresAnalyticsRepository/release/binding:m",
       "metric": "shortNames",
       "ceiling": 1
     },
     {
       "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2:0f73d0ab95c6",
-      "metric": "complexity",
-      "ceiling": 37
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2:0f73d0ab95c6",
-      "metric": "statements",
-      "ceiling": 65
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
       "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/mapping.capabilities.some:callback0/binding:c",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/result.rows.map:callback0/binding:r",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/keys.sort:callback0/binding:a",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/keys.sort:callback0/binding:b",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/aggregate/result.rows.map:callback0/binding:r",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/aggregate/slots.map:callback0/binding:s",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/aggregate/slots.map:callback0/binding:r",
       "metric": "shortNames",
       "ceiling": 1
     },
@@ -1132,96 +1024,6 @@
     {
       "file": "packages/data/src/postgres/repository.ts",
       "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/keys.map:callback0/binding:p",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/before.map:callback0/binding:r",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/before.map:callback0/binding:i",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/before.map:callback0/binding:v",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/before.map:callback0/slice.map:callback0/binding:r",
-      "metric": "shortNames",
-      "ceiling": 2
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/binding:v",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/binding:p",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/rows.map:callback0/binding:r",
-      "metric": "shortNames",
-      "ceiling": 3
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/rows.reduce:callback0/binding:n",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/rows.reduce:callback0/binding:r",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/[...rows].sort(order('top')).map:callback0/binding:r",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/[...rows].sort(order('top')).map:callback0/binding:i",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/rows.some:callback0/binding:r",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/rows.some:callback0/Object.values(r).some:callback0/binding:v",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/mapping.measures.filter:callback0/binding:m",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/mapping.measures.filter(m => requiredMeasures(query.metric).includes(m.measureId)).map:callback0/binding:m",
       "metric": "shortNames",
       "ceiling": 1
     },
@@ -1282,120 +1084,6 @@
     {
       "file": "packages/data/src/postgres/sql.ts",
       "symbol": "numericOutput/binding:n",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/writer.ts",
-      "symbol": "canonical/JSON.stringify:callback1/binding:v",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/writer.ts",
-      "symbol": "canonical/JSON.stringify:callback1/Object.keys(v).sort().map:callback0/binding:k",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/writer.ts",
-      "symbol": "insert/columns.map:callback0/binding:i",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/writer.ts",
-      "symbol": "PostgresMartWriter/commit",
-      "metric": "complexity",
-      "ceiling": 16
-    },
-    {
-      "file": "packages/data/src/postgres/writer.ts",
-      "symbol": "PostgresMartWriter/commit/evidence.sourceObjects.some:callback0/binding:s",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/writer.ts",
-      "symbol": "PostgresMartWriter/commit/tenantTransaction:callback2:b76855b6fbbf",
-      "metric": "complexity",
-      "ceiling": 39
-    },
-    {
-      "file": "packages/data/src/postgres/writer.ts",
-      "symbol": "PostgresMartWriter/commit/tenantTransaction:callback2:b76855b6fbbf",
-      "metric": "statements",
-      "ceiling": 77
-    },
-    {
-      "file": "packages/data/src/postgres/writer.ts",
-      "symbol": "PostgresMartWriter/commit/tenantTransaction:callback2/records.flatMap:callback0/binding:r",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/writer.ts",
-      "symbol": "PostgresMartWriter/commit/tenantTransaction:callback2/records.some:callback0/binding:r",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/writer.ts",
-      "symbol": "PostgresMartWriter/commit/tenantTransaction:callback2/['rowsRead','rowsAccepted','rowsRejected','factsInserted','factsUpdated','factsTombstoned','factsReplayed'].map:callback0/binding:k",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/writer.ts",
-      "symbol": "PostgresMartWriter/commit/tenantTransaction:callback2/['rowsRead','rowsAccepted','rowsRejected','factsInserted','factsUpdated','factsTombstoned','factsReplayed'].map:callback0/k.replace:callback1/binding:c",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/writer.ts",
-      "symbol": "PostgresMartWriter/commit/tenantTransaction:callback2/binding:r",
-      "metric": "shortNames",
-      "ceiling": 2
-    },
-    {
-      "file": "packages/data/src/postgres/writer.ts",
-      "symbol": "PostgresMartWriter/commit/tenantTransaction:callback2/unit.facts.some:callback0/binding:f",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/writer.ts",
-      "symbol": "PostgresMartWriter/commit/tenantTransaction:callback2/binding:f",
-      "metric": "shortNames",
-      "ceiling": 2
-    },
-    {
-      "file": "packages/data/src/postgres/writer.ts",
-      "symbol": "PostgresMartWriter/commit/tenantTransaction:callback2/old.rows.some:callback0/binding:r",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/writer.ts",
-      "symbol": "PostgresMartWriter/commit/tenantTransaction:callback2/old.rows.some:callback0/unit.facts.some:callback0/binding:f",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/writer.ts",
-      "symbol": "PostgresMartWriter/commit/tenantTransaction:callback2/records.filter:callback0/binding:r",
-      "metric": "shortNames",
-      "ceiling": 2
-    },
-    {
-      "file": "packages/data/src/postgres/writer.ts",
-      "symbol": "PostgresMartWriter/commit/tenantTransaction:callback2/[...facts].sort:callback0/binding:a",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/writer.ts",
-      "symbol": "PostgresMartWriter/commit/tenantTransaction:callback2/[...facts].sort:callback0/binding:b",
       "metric": "shortNames",
       "ceiling": 1
     },

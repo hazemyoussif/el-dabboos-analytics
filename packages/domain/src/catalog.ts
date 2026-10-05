@@ -3,19 +3,30 @@ import type { DimensionId, FactMeasureId, MetricId, MetricSemantics, SemanticMet
 export const dimensions: readonly DimensionId[] = [
   'date', 'month', 'quarter', 'year', 'customer', 'branch', 'region',
   'salesperson', 'product', 'product_category', 'warehouse', 'equipment',
-  'equipment_category', 'technician',
+  'equipment_category', 'technician', 'business_line', 'city', 'state',
 ];
 export const timeDimensions: readonly DimensionId[] = ['date', 'month', 'quarter', 'year'];
 export const categoricalDimensions: readonly DimensionId[] = dimensions.filter(dimension => !timeDimensions.includes(dimension));
 const time: DimensionId[] = [...timeDimensions];
-const sales: DimensionId[] = [...time, 'customer', 'branch', 'region', 'salesperson', 'product', 'product_category'];
+const sales: DimensionId[] = [...time, 'customer', 'branch', 'region', 'salesperson', 'product', 'product_category','business_line','city','state'];
 const crm: DimensionId[] = [...time, 'customer', 'branch', 'region', 'salesperson'];
 const finance: DimensionId[] = [...time, 'customer', 'branch', 'region'];
 const inventory: DimensionId[] = [...time, 'product', 'product_category', 'warehouse', 'branch'];
+const transactions: DimensionId[] = [...time,'customer','salesperson','business_line','city','state'];
 const maintenance: DimensionId[] = [...time, 'equipment', 'equipment_category', 'technician', 'branch'];
 
 /** These recipes use canonical measures only; source adapters map physical data to them. */
 const semantics: Record<MetricId, MetricSemantics> = {
+  customers_served: { kind: 'distinct_count',measure: 'order_count',dimension: 'customer' },
+  order_revenue: { kind: 'additive',measure: 'order_revenue' },
+  net_invoiced_revenue: { kind: 'additive',measure: 'net_invoiced_revenue' },
+  invoiced_revenue: { kind: 'additive',measure: 'invoiced_revenue' },
+  refund_value: { kind: 'additive',measure: 'refund_value' },
+  invoice_count: { kind: 'additive',measure: 'invoice_count' },
+  refund_count: { kind: 'additive',measure: 'refund_count' },
+  cancelled_orders: { kind: 'additive',measure: 'cancelled_orders' },
+  average_invoice_value: { kind: 'ratio',numerator: 'invoiced_revenue',denominator: 'invoice_count',scale: 1 },
+  average_confirmed_order_value: { kind: 'ratio',numerator: 'order_revenue',denominator: 'order_count',scale: 1 },
   revenue: { kind: 'additive', measure: 'revenue' },
   net_revenue: { kind: 'additive', measure: 'net_revenue' },
   order_count: { kind: 'additive', measure: 'order_count' },
@@ -43,6 +54,16 @@ const semantics: Record<MetricId, MetricSemantics> = {
 };
 type Definition = [MetricId, string, string, SemanticMetric['type'], DimensionId[], string[], string[]];
 const definitions: Definition[] = [
+  ['customers_served','Customers / outlets served','العملاء / المنافذ المخدومة','number',sales,[],[]],
+  ['order_revenue','Order revenue','إيرادات الطلبات','currency',transactions,[],['قيمة الطلبات']],
+  ['net_invoiced_revenue','Net invoiced revenue','صافي إيرادات الفواتير','currency',transactions,[],['صافي الفواتير']],
+  ['invoiced_revenue','Invoiced revenue','إيرادات الفواتير','currency',transactions,[],[]],
+  ['refund_value','Refund value','قيمة الإشعارات الدائنة','currency',transactions,[],[]],
+  ['invoice_count','Invoice count','عدد الفواتير','number',transactions,[],[]],
+  ['refund_count','Refund count','عدد الإشعارات الدائنة','number',transactions,[],[]],
+  ['cancelled_orders','Cancelled orders','الطلبات الملغاة','number',transactions,[],[]],
+  ['average_invoice_value','Average invoice value','متوسط قيمة الفاتورة','currency',transactions,[],[]],
+  ['average_confirmed_order_value','Average confirmed order value','متوسط قيمة الطلب المؤكد','currency',sales,[],[]],
   ['revenue', 'Revenue', 'الإيرادات', 'currency', sales, ['sales', 'turnover'], ['المبيعات', 'قيمة المبيعات']],
   ['net_revenue', 'Net revenue', 'صافي الإيرادات', 'currency', sales, ['net sales'], ['صافي المبيعات']],
   ['order_count', 'Orders', 'عدد الطلبات', 'number', sales, ['sales orders'], ['الطلبات']],
@@ -86,7 +107,7 @@ export const semanticCatalog: Readonly<Record<MetricId, SemanticMetric>> = Objec
 ) as unknown as Record<MetricId, SemanticMetric>;
 
 const factIds = new Set<FactMeasureId>([
-  ...Object.values(semantics).flatMap(s => s.kind === 'additive' || s.kind === 'snapshot' ? [s.measure] : []),
+  ...Object.values(semantics).flatMap(s => s.kind === 'additive' || s.kind === 'snapshot' || s.kind === 'distinct_count' ? [s.measure] : []),
   'won_opportunity_count', 'closed_opportunity_count', 'operating_hours', 'repair_hours', 'completed_repair_count',
 ]);
 export const factMeasureIds: readonly FactMeasureId[] = [...factIds];
@@ -95,7 +116,7 @@ export function isDimensionId(id: string): id is DimensionId { return dimensions
 export function isFactMeasureId(id: string): id is FactMeasureId { return factIds.has(id as FactMeasureId); }
 export function requiredMeasures(id: MetricId): readonly FactMeasureId[] {
   const s = semanticCatalog[id].semantics;
-  if (s.kind === 'additive' || s.kind === 'snapshot') return [s.measure];
+  if (s.kind === 'additive' || s.kind === 'snapshot' || s.kind === 'distinct_count') return [s.measure];
   if (s.kind === 'ratio' || s.kind === 'duration_derived') return [s.numerator, s.denominator];
   return requiredMeasures(s.base);
 }

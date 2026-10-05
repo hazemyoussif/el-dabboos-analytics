@@ -17,3 +17,5 @@ export * from './dimension-labels.ts';
 export * from './production-data.ts';
 export * from './access-control.ts';
 export * from './administration-repository.ts';
+export * from './extraction.ts';
+export * from './transaction-evidence.ts';

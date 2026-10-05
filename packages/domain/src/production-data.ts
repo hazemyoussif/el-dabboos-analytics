@@ -1,3 +1,5 @@
+import { validateTransactionEvidence } from './transaction-evidence.ts';
+import type { TransactionEvidence } from './transaction-evidence.ts';
 /** Offline ingestion contracts. No source DTO, execution query, transport or database dependency. */
 import type { DimensionId, FactMeasureId, MetricId } from './contracts.ts';
 import { categoricalDimensions, isFactMeasureId, isMetricId, requiredMeasures, semanticCatalog } from './catalog.ts';
@@ -75,6 +77,7 @@ export interface ProductionFact {
   batchId: string; sourceAsOf: string; frozenRevision: string;
   status: 'active' | 'tombstone';
   currency?: CurrencyLineage;
+  transaction?: TransactionEvidence;
 }
 export interface IngestionBatch extends SourceScope {
   batchId: string; datasetId: string; mappingId: string; mappingVersion: string; adapterVersion: string;
@@ -153,8 +156,7 @@ export function certifiedDimensions(mapping: SourceMapping, metric: MetricId): r
 }
 export function validateProductionFact(value: unknown, mapping: SourceMapping): asserts value is ProductionFact {
   validateSourceMapping(mapping);
-  if (mapping.approval.status !== 'approved') fail('unapproved_mapping');
-  shape(value, ['tenantId','datasetId','measureId','kind','businessDate','value','dimensions','sourceId','sourceObject','sourceRecordId','componentId','sourceVersion','sourceRevision','mappingId','mappingVersion','batchId','sourceAsOf','frozenRevision','status'], ['entityId','sourceUpdatedAt','currency']);
+  shape(value, ['tenantId','datasetId','measureId','kind','businessDate','value','dimensions','sourceId','sourceObject','sourceRecordId','componentId','sourceVersion','sourceRevision','mappingId','mappingVersion','batchId','sourceAsOf','frozenRevision','status'], ['entityId','sourceUpdatedAt','currency','transaction']);
   for (const key of ['tenantId','datasetId','sourceId','sourceObject','sourceRecordId','componentId','sourceVersion','mappingId','mappingVersion','batchId','frozenRevision']) if (!text(value[key])) fail('identity');
   for (const key of ['tenantId','datasetId','sourceId','mappingId','mappingVersion'] as const) if (value[key] !== mapping[key]) fail('mapping_scope');
   if (typeof value.measureId !== 'string' || !isFactMeasureId(value.measureId)) fail('invalid_measure');
@@ -167,6 +169,7 @@ export function validateProductionFact(value: unknown, mapping: SourceMapping): 
   if (!unsigned(value.sourceRevision) || !timestamp(value.sourceAsOf) || (value.sourceUpdatedAt !== undefined && !timestamp(value.sourceUpdatedAt))) fail('lineage');
   if (!['active','tombstone'].includes(String(value.status))) fail('status');
   if (!object(value.dimensions) || Object.entries(value.dimensions).some(([d, v]) => !Object.hasOwn(rule.dimensionMappings, d) || !text(v))) fail('capability');
+  if (value.transaction!==undefined) validateTransactionEvidence(value.transaction as TransactionEvidence);
   // Certified categorical attribution is required, never silently absent or defaulted.
   if (Object.keys(rule.dimensionMappings).some(d => !Object.hasOwn(value.dimensions as object, d))) fail('missing_dimension');
   if (!monetary(value.measureId)) { if (value.currency !== undefined) fail('unexpected_currency'); return; }

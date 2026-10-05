@@ -1,6 +1,9 @@
 import type { Pool } from 'pg';
 import type { FactMeasureId, IngestionBatch, ProductionFact, SourceMapping } from '@el-dabboos/domain';
 import { semanticCatalog } from '@el-dabboos/domain';
+import { PostgresMappingReleases } from '../../src/postgres/mapping-releases.ts';
+import { PostgresMartWriter } from '../../src/postgres/writer.ts';
+import { PostgresReconciliation } from '../../src/postgres/reconciliation.ts';
 import { tenantTransaction } from '../../src/postgres/session.ts';
 export const clock = () => new Date('2026-10-01T12:00:00.000Z');
 export const evidence = { sourceObjects: ['fixture'], requestLimit: 1000, completeness: 'incremental' as const, deletionEvidence: 'explicit' as const, paginationComplete: true, watermarkEnd: 'fixture-end' };
@@ -11,10 +14,18 @@ export function mapping(tenantId = 'a'): SourceMapping {
   };
 }
 export async function deploy(pool: Pool, m: SourceMapping) {
-  await tenantTransaction(pool,m.tenantId, async c => {
-    await c.query('INSERT INTO mart.mapping_releases VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)', [m.tenantId,m.datasetId,m.sourceId,m.mappingId,m.mappingVersion,m.businessBasis,m.reportingCurrency,m.approval.status,m.approval.status === 'approved' ? m.approval.reference : null,JSON.stringify(m)]);
-    await c.query('INSERT INTO mart.serving_bindings VALUES ($1,$2)', [m.tenantId,m.datasetId]);
-  });
+  const releases = new PostgresMappingReleases(pool);
+  await releases.registerCandidate({ ...m,approval: { status: 'pending' } });
+  const calibration = { ...batch('fixture-calibration',0,m.tenantId),datasetId: m.datasetId,sourceId: m.sourceId,mappingId: m.mappingId,mappingVersion: m.mappingVersion,sourceAsOf: '2026-01-01T10:00:00.000Z',startedAt: '2026-01-01T09:00:00.000Z' };
+  await new PostgresMartWriter(pool,{ [m.tenantId]: ['fixture-company'] },clock).commit(calibration,[],{ ...evidence,sourceObjects: [...new Set(m.measures.map(measure => measure.sourceObject))],completeness: 'complete_scope' });
+  const caseIds = [];
+  for (const measure of m.measures) {
+    const caseId = `fixture-certification-${measure.measureId}`;
+    await new PostgresReconciliation(pool).record([{ caseId,tenantId: m.tenantId,datasetId: m.datasetId,mappingVersion: m.mappingVersion,measureId: measure.measureId,sourceReportReference: 'EMPTY SYNTHETIC CALIBRATION ONLY',frozenRevision: 'freeze-1',batchIds: ['fixture-calibration'],from: '2026-01-01',to: '2026-01-31',grouping: null,groupKey: null,expectedValue: '0.000000',actualValue: '0.000000',expectedCount: '0',actualCount: '0',tolerance: { status: 'approved',absoluteValue: '0.000000',absoluteCount: '0',approvalReference: 'SYNTHETIC TEST ONLY' } }],m.reportingCurrency);
+    caseIds.push(caseId);
+  }
+  await releases.approve({ tenantId: m.tenantId,datasetId: m.datasetId,caseIds,reference: 'SYNTHETIC TEST ONLY',approvedAt: clock().toISOString() });
+  await tenantTransaction(pool,m.tenantId,client => client.query('INSERT INTO mart.serving_bindings VALUES ($1,$2)',[m.tenantId,m.datasetId]));
 }
 export function fact(recordId = 'one', patch: Partial<ProductionFact> = {}): ProductionFact {
   const measure = patch.measureId ?? 'revenue';

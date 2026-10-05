@@ -33,3 +33,18 @@ test('startup summary drops credentials, query, fragment and API key even in all
   assert.ok(summary.includes('https://example.com/v1'));
   assert.ok(summary.includes('[redacted]'));
 });
+test('pilot command loads optional root files with shell over local over base using only temporary synthetic files',() => {
+  const pkg = JSON.parse(readFileSync(new URL('../../../package.json',import.meta.url),'utf8'));
+  const flags = pkg.scripts['odoo:pilot'].split(' ').filter((word: string) => word.startsWith('--env-file'));
+  const root = mkdtempSync(join(tmpdir(),'pilot-env-'));
+  try {
+    const run = (env: Record<string,string> = {}) => {
+      const child = spawnSync(process.execPath,[...flags,'-e','process.stdout.write(process.env.ENV_TEST_VALUE ?? "default")'],{ cwd: root,env,encoding: 'utf8' });
+      assert.equal(child.status,0,child.stderr); return child.stdout;
+    };
+    assert.equal(run(),'default');
+    writeFileSync(join(root,'.env'),'ENV_TEST_VALUE=base\n'); assert.equal(run(),'base');
+    writeFileSync(join(root,'.env.local'),'ENV_TEST_VALUE=local\n'); assert.equal(run(),'local');
+    assert.equal(run({ ENV_TEST_VALUE: 'shell' }),'shell');
+  } finally { rmSync(root,{ recursive: true,force: true }); }
+});

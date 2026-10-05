@@ -77,7 +77,7 @@ test('native and converted monetary lineage is explicit; no FX math is inferred'
 test('mapping approval and capability intersection cannot expand the semantic catalog', () => {
   const pending: SourceMapping = { ...mapping, approval: { status: 'pending' } };
   assert.deepEqual(certifiedDimensions(pending, 'revenue'), []);
-  assert.throws(() => validateProductionFact(fact, pending), /unapproved_mapping/);
+  assert.doesNotThrow(() => validateProductionFact(fact, pending));
   assert.deepEqual(certifiedDimensions(mapping, 'revenue'), ['month','branch']);
   assert.throws(() => validateSourceMapping({ ...mapping, capabilities: [{ metric: 'revenue', dimensions: ['warehouse'] }] }), /capability/);
   assert.throws(() => validateSourceMapping({ ...mapping, capabilities: [{ metric: 'revenue', dimensions: ['product'] }] }), /capability/);
@@ -97,7 +97,7 @@ test('reconciliation stays reported until explicit approved tolerance, then comp
   assert.throws(() => reconciliationStatus({ ...approved, batchIds: [] }), /reconciliation_batches/);
 });
 test('migration measure vocabulary matches canonical inputs and current view excludes tombstones', () => {
-  const sql = readFileSync(new URL('../../data/migrations/postgres/001_production_foundation.sql', import.meta.url), 'utf8');
+  const sql = readFileSync(new URL('../../data/migrations/postgres/001_production_foundation.sql', import.meta.url), 'utf8') + readFileSync(new URL('../../data/migrations/postgres/007_transaction_metrics.sql', import.meta.url),'utf8');
   const ids = [...sql.matchAll(/\('([a-z_]+)','(?:event|snapshot)',(?:true|false)\)/g)].map(m => m[1]);
   assert.deepEqual(ids.sort(), [...factMeasureIds].sort());
   assert.match(sql, /r.status = 'active' AND b.status = 'committed'/);

@@ -6,16 +6,19 @@ export type MetricId =
   | 'pipeline_value' | 'weighted_pipeline' | 'win_rate' | 'invoiced_amount'
   | 'collected_amount' | 'outstanding_amount' | 'overdue_amount'
   | 'stock_on_hand' | 'inventory_value' | 'low_stock_count'
-  | 'maintenance_requests' | 'failure_count' | 'mtbf' | 'mttr' | 'maintenance_cost';
-export type DerivedMetricId = 'average_order_value' | 'gross_margin' | 'sales_growth' | 'win_rate' | 'mtbf' | 'mttr';
+  | 'maintenance_requests' | 'failure_count' | 'mtbf' | 'mttr' | 'maintenance_cost'
+  | 'customers_served' | 'order_revenue' | 'net_invoiced_revenue' | 'invoiced_revenue' | 'refund_value'
+  | 'invoice_count' | 'refund_count' | 'cancelled_orders' | 'average_invoice_value' | 'average_confirmed_order_value';
+export type DerivedMetricId = 'average_order_value' | 'gross_margin' | 'sales_growth' | 'win_rate' | 'mtbf' | 'mttr' | 'average_invoice_value' | 'average_confirmed_order_value' | 'customers_served';
 export type InternalMeasureId = 'won_opportunity_count' | 'closed_opportunity_count' | 'operating_hours' | 'repair_hours' | 'completed_repair_count';
 export type FactMeasureId = Exclude<MetricId, DerivedMetricId> | InternalMeasureId;
 export type DimensionId = 'date' | 'month' | 'quarter' | 'year' | 'customer' | 'branch'
   | 'region' | 'salesperson' | 'product' | 'product_category' | 'warehouse'
-  | 'equipment' | 'equipment_category' | 'technician';
+  | 'equipment' | 'equipment_category' | 'technician' | 'business_line' | 'city' | 'state';
 export type AdditiveAggregation = 'sum' | 'count' | 'average' | 'min' | 'max';
 export type MetricType = 'currency' | 'number' | 'percentage' | 'duration';
 export type MetricSemantics =
+  | { kind: 'distinct_count'; measure: FactMeasureId; dimension: DimensionId }
   | { kind: 'additive'; measure: FactMeasureId }
   | { kind: 'ratio'; numerator: FactMeasureId; denominator: FactMeasureId; scale: number }
   | { kind: 'snapshot'; measure: FactMeasureId }
@@ -35,6 +38,8 @@ export interface SemanticMetric {
 }
 export interface TenantProfile {
   id: string;
+  /** Trusted business preferences, never source conditions or authorization. */
+  preferredMetrics?: Partial<Record<MetricId,MetricId>>;
   countryCode: 'IQ' | 'EG';
   defaultLocale: Locale;
   arabicDialect: 'iq' | 'eg';

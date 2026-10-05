@@ -20,7 +20,7 @@ test('viewer API requests carry temporary overrides separately; reset, AI and sa
   } finally { globalThis.fetch = fetch; }
 });
 test('dimension choices intersect every series across every widget; precedence preserves multi-value defaults until explicitly replaced', () => {
-  assert.deepEqual(dashboardFilterDimensions(spec, semanticCatalog), ['customer', 'branch', 'region', 'salesperson', 'product', 'product_category']);
+  assert.deepEqual(dashboardFilterDimensions(spec, semanticCatalog), ['customer', 'branch', 'region', 'salesperson', 'product', 'product_category', 'business_line', 'city', 'state']);
   const mixed: DashboardSpec = { ...spec, widgets: [...spec.widgets, { id: 'stock', type: 'kpi', series: [{ id: 's', metric: 'inventory_value' }] }] };
   assert.deepEqual(dashboardFilterDimensions(mixed, semanticCatalog), ['branch', 'product', 'product_category']);
   assert.deepEqual(dashboardFilterDimensions({ widgets: [] }), []);

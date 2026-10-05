@@ -2,6 +2,8 @@
 
 Status: accepted offline architecture; production source, business mappings and operational deployment **not approved**. No production access. Five migrations, writer, reconciliation and SQL repository are executed/tested on disposable PostgreSQL 18.6 using synthetic data. Existing serving defaults to SQLite; PostgreSQL is opt-in. [Operations](../../integration/postgres-mart-operations.md).
 
+Update, 5 October 2026: [ADR 029](029-ingestion-certification-lifecycle.md) supersedes the pre-ingestion approval boundary, single-write extraction limit and separate-basis release restriction for the approved comparison pilot. Immutable candidate releases, completed paged extraction evidence and metadata-only approval now govern that lifecycle. Production serving remains separately gated.
+
 ## Decision and package boundaries
 
 El Dabboos owns a canonical PostgreSQL analytics mart. A future approved read-only source → `SourceBatchReader<T>` → deterministic mapper → validated `ProductionFact` → transactional mart writer → PostgreSQL `AnalyticsRepository` is the integration path. Legacy Supabase databases and old sync jobs remain untouched, read-only source candidates, never the new platform's store. n8n, if approved, is a transport adapter, not the semantic authority.

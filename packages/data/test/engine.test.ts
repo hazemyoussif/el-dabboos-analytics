@@ -110,3 +110,15 @@ test('actual MoM and YoY queries honor leap-day and month-end baseline ranges', 
   assert.equal(run(facts, { metric: 'revenue', dateRange: { from: '2024-03-01', to: '2024-03-31' }, analysis: { comparison: 'month_over_month' } }).rows[0]?.comparisonValue, 10);
   assert.equal(run(facts, { metric: 'revenue', dateRange: { from: '2024-02-29', to: '2024-02-29' }, analysis: { comparison: 'year_over_year' } }).rows[0]?.comparisonValue, 5);
 });
+
+test('customers served counts stable customers once per authorized period/group; repeated orders and unknown outlets do not inflate it',() => {
+  const rows = [
+    { ...fact('order_count','2026-09-01',1),dimensions: { customer: 'outlet-1',salesperson: 'rep-1' } },
+    { ...fact('order_count','2026-09-02',1),dimensions: { customer: 'outlet-1',salesperson: 'rep-1' } },
+    { ...fact('order_count','2026-09-03',1),dimensions: { customer: 'outlet-2',salesperson: 'rep-2' } },
+    { ...fact('order_count','2026-09-04',1),dimensions: { customer: 'unassigned',salesperson: 'rep-1' } },
+  ];
+  assert.equal(run(rows,{ metric: 'customers_served' }).rows[0]!.value,2);
+  assert.deepEqual(run(rows,{ metric: 'customers_served',groupBy: 'salesperson' }).rows,[{ key: 'rep-1',value: 1 },{ key: 'rep-2',value: 1 }]);
+  assert.throws(() => run(rows,{ metric: 'customers_served',groupBy: 'month',analysis: { runningTotal: true } }),/additive/);
+});

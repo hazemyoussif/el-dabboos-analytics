@@ -1,5 +1,7 @@
 # Production and real-data readiness
 
+Pilot status, 5 October 2026: source adapter and immutable-candidate/paged-extraction controls are implemented and synthetically verified under [ADR 029](../architecture/adr/029-ingestion-certification-lifecycle.md). The user approved one September company-1 comparison pilot for `el-dabboos-iq`. Local source/mart credentials, certified source freeze and authoritative Invoice Analysis evidence remain outstanding. [Pilot operations](odoo-postgres-pilot.md) own these concrete gates; this does not close general production readiness or authorize serving.
+
 Status is evidence-based, not a claim that the prototype is production-ready. Owners named by role are proposed; Malik/business must assign individuals. [Questions](questions-for-malik.md), [source contract](real-data-contract.md), [reconciliation](reconciliation-plan.md).
 
 ## P0 — before real data

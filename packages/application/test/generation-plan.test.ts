@@ -232,3 +232,11 @@ test('explicit Line accepts required default palette while omitted presentation 
   type MissingPaletteAllowed = { type: 'line' } extends RequestedPresentation ? true : false;
   const missingPaletteAllowed: MissingPaletteAllowed = false; assert.equal(missingPaletteAllowed, false);
 });
+
+test('trusted tenant Revenue preference compiles net invoiced revenue without changing demo semantics or input intent',() => {
+  const pilot = { ...profile,id: 'el-dabboos-iq',preferredMetrics: { revenue: 'net_invoiced_revenue' as const,average_order_value: 'average_confirmed_order_value' as const } };
+  const generated = compile(minimal,pilot,'en',now);
+  assert.equal(generated.widgets[0]!.series[0]!.metric,'net_invoiced_revenue');
+  assert.equal(run().widgets[0]!.series[0]!.metric,'revenue');
+  assert.equal(minimal.widgets[0]!.series[0]!.metric,'revenue');
+});

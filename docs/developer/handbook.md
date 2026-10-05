@@ -35,6 +35,8 @@ Run frozen install and targeted tests; start mock API with a disposable metadata
 
 ## Administration metadata
 
+For the approved source pilot, use [Odoo PostgreSQL operations](../integration/odoo-postgres-pilot.md). `pnpm odoo:pilot` is an explicit offline API composition boundary; it reads local source configuration, registers candidates, ingests/resumes pages and records DB controls. It cannot approve a release or create a serving binding.
+
 Use the dedicated metadata migration/bootstrap commands before starting the governed API; repositories never auto-upgrade. Keep the metadata database separate from demo analytics and the PostgreSQL mart. Read [local administration operations](../security/administration-operations.md) for explicit demo reconciliation, trusted operational bootstrap, tenant candidates, version conflicts and source-readiness behavior. [Verification status](../security/access-control-implementation-status.md) distinguishes automated evidence from the deferred manual UI and production gates.
 
 ## Engineering review and administration operations

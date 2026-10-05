@@ -2,6 +2,8 @@
 
 ## Status and responsibilities
 
+The approved production comparison pilot extends the offline mart through [ADR 029](adr/029-ingestion-certification-lifecycle.md): immutable candidate → bounded paged extraction → completed reconciliation → metadata approval → separately authorized serving binding. Odoo source transport stays inside data; the operator command stays in API configuration/composition. [Pilot status](../integration/odoo-postgres-pilot.md) explicitly separates synthetic evidence from unavailable live evidence.
+
 **Current:** governed bilingual analytics over synthetic IQ/EG canonical facts; templates, manual/AI working drafts, explicit versioned persistence, personal library organization, centralized presentation. The product is not an operational ERP, source ETL, production identity system, SQL generation service or FX engine. **Proposed/future:** real source adapter, production identity, tracing, operational migrations and approved reconciliation. [Readiness](../integration/production-readiness.md) owns those gates.
 
 ## Five layers

@@ -19,7 +19,7 @@ export interface ManagedTenant extends VersionedMetadata {
     customerId: string;
     name: string;
     status: 'provisioning' | 'active' | 'suspended';
-    configuration: Pick<TenantProfile, 'countryCode' | 'defaultLocale' | 'arabicDialect' | 'reportingCurrency' | 'timeZone'>;
+    configuration: Pick<TenantProfile, 'countryCode' | 'defaultLocale' | 'arabicDialect' | 'reportingCurrency' | 'timeZone' | 'preferredMetrics'>;
 }
 export interface ProductUser extends VersionedMetadata {
     id: string;
@@ -170,6 +170,14 @@ export function validateTenantConfiguration(tenant: ManagedTenant): void {
     // Deliberately retain approved market profiles; opaque workspace IDs are independent of markets.
     requireInvariant((configuration.countryCode === 'IQ' && configuration.arabicDialect === 'iq' && configuration.reportingCurrency === 'IQD' && configuration.timeZone === 'Asia/Baghdad') ||
         (configuration.countryCode === 'EG' && configuration.arabicDialect === 'eg' && configuration.reportingCurrency === 'EGP' && configuration.timeZone === 'Africa/Cairo'), 'INVALID_TENANT_CONFIGURATION');
+    validatePreferredMetrics(configuration.preferredMetrics);
+}
+/** Optional trusted tenant metadata; explicit bounded preferences preserve legacy saved recipes. */
+function validatePreferredMetrics(preferences: TenantProfile['preferredMetrics']): void {
+    if (preferences === undefined) return;
+    requireInvariant(!!preferences && typeof preferences === 'object' && !Array.isArray(preferences), 'INVALID_METRIC_PREFERENCE');
+    const allowed: Partial<Record<string, string>> = { revenue: 'net_invoiced_revenue', average_order_value: 'average_confirmed_order_value' };
+    requireInvariant(Object.entries(preferences).every(([metric, target]) => Object.hasOwn(allowed, metric) && allowed[metric] === target), 'INVALID_METRIC_PREFERENCE');
 }
 export function compileMembershipScopes(scopes: readonly MembershipDataScope[]): AnalyticsFilter[] {
     requireInvariant(Array.isArray(scopes) && scopes.length <= scopeDimensions.length, 'INVALID_DATA_SCOPE');

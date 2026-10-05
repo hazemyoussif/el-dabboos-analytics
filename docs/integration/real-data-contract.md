@@ -1,5 +1,7 @@
 # Proposed production source contract
 
+Implemented pilot extension, 5 October 2026: the approved Odoo comparison adapter maps explicit order and invoice/refund recipes, stable customer/salesperson/Business Line IDs and immutable transaction/tax/lineage evidence. [ADR 029](../architecture/adr/029-ingestion-certification-lifecycle.md) defines immutable candidate certification and completed paged extraction. [Pilot operations](odoo-postgres-pilot.md) distinguish synthetic verification, live DB controls and the still-required Invoice Analysis sign-off. The requirements below continue to govern other future sources.
+
 **Future / unresolved until approved.** No Odoo tables or direct source access are assumed. This describes canonical requirements, not a claim that current demo facts have all production envelope fields. [Current model](../developer/data-model.md), [questions](questions-for-malik.md).
 
 ## Canonical row envelope

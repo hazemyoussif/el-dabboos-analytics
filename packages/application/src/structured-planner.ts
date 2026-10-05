@@ -50,7 +50,7 @@ function authorizedContext(capabilities: PlannerCapabilities, profile: TenantPro
     id: template.id, name: template.name, description: template.description, domain: template.domain,
     tags: template.tags, datePreset: template.datePreset,
   }));
-  return { market: marketContext(profile, clock), metrics, templates, actions: capabilities.actions,
+  return { market: marketContext(profile, clock), preferredMetrics: profile.preferredMetrics ?? {}, metrics, templates, actions: capabilities.actions,
     visualizations: { types: widgetTypes, governedPalettes, rules: [
       'KPI: one series, no dimension. Line: shared dimension, matching type/unit. Area: ordered date/month/quarter/year, compatible series, no stacking.',
       'Bar: grouped compatible series. orientation vertical or horizontal. No stacking.',

@@ -108,6 +108,7 @@ export class GenerationVisualizationError extends Error {
 export function compileDashboardGenerationPlan(plan: DashboardGenerationPlan, _profile: TenantProfile, locale: Locale, _now: Date): DashboardSpec {
   void _now; // Compatibility argument; relative intent is deliberately not resolved here.
   validateDashboardGenerationPlan(plan);
+  plan = preferredGenerationMetrics(plan,_profile);
   const widgets: DashboardWidget[] = plan.widgets.map((widget, index) => {
     const id = `widget-${index + 1}`;
     return { id, ...resolveGenerationWidget({ ...(widget.dimension ? { dimension: widget.dimension } : {}),
@@ -138,4 +139,14 @@ export function compileDashboardGenerationPlan(plan: DashboardGenerationPlan, _p
     throw error;
   }
   return spec;
+}
+
+/** Apply trusted business preferences only to new explicit generation intent; existing saved specs are untouched. */
+function preferredGenerationMetrics(plan: DashboardGenerationPlan,profile: TenantProfile): DashboardGenerationPlan {
+  if (!profile.preferredMetrics) return plan;
+  return { ...plan,widgets: plan.widgets.map(widget => ({ ...widget,series: widget.series.map(series => {
+    const metric = profile.preferredMetrics?.[series.metric] ?? series.metric;
+    if (!Object.hasOwn(semanticCatalog,metric)) throw new Error('Invalid preferred business metric');
+    return { ...series,metric };
+  }) } as GenerationWidget)) };
 }

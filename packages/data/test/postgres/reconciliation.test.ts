@@ -23,6 +23,6 @@ test('reconciliation: frozen revisions survive later corrections, exact decimals
     await assert.rejects(reconcile.record([{ ...approved,caseId: 'bad-release',mappingVersion: '2' }],'IQD'), /release/);
     await assert.rejects(reconcile.record([{ ...approved,caseId: 'bad-currency' }],'EGP'), /currency/);
     assert.equal((await db.admin.query("SELECT specification->>'actualValue' v FROM mart.reconciliation_evidence WHERE case_id='historical'")).rows[0].v,'100.000001');
-    assert.equal((await db.admin.query('SELECT count(*) n FROM mart.reconciliation_batches')).rows[0].n,'6');
+    assert.equal((await db.admin.query("SELECT count(*) n FROM mart.reconciliation_batches WHERE case_id NOT LIKE 'fixture-certification-%'")).rows[0].n,'6');
   } finally { await db.close(); }
 });

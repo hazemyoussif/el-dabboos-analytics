@@ -42,6 +42,7 @@ function evaluate(facts: readonly AnalyticsFact[], metricId: MetricId, query: An
     (key === null || !groupBy || dimension(fact, groupBy) === key);
   const measure = (id: FactMeasureId, aggregation: AdditiveAggregation = 'sum'): number =>
     aggregate(facts.filter(f => f.measureId === id && matches(f)).map(f => f.value), aggregation);
+  if (semantics.kind === 'distinct_count') return new Set(facts.filter(fact => fact.measureId===semantics.measure && matches(fact)).map(fact => fact.dimensions[semantics.dimension]).filter(value => value!==undefined && value!=='unassigned')).size;
   if (semantics.kind === 'additive') return measure(semantics.measure, metricId === query.metric ? query.aggregation ?? 'sum' : 'sum');
   if (semantics.kind === 'ratio' || semantics.kind === 'duration_derived') {
     const denominator = measure(semantics.denominator);
