@@ -59,6 +59,8 @@ test('source config uses local tunnel and explicit company allowlist; errors con
   assert.throws(() => odooSourceConfig({ ...environment,ODOO_SOURCE_HOST: 'external.example' },config),/local tunnel/);
   assert.throws(() => odooSourceConfig({ ...environment,ODOO_SOURCE_COMPANY_IDS: '1,1' },config),/scope/);
   assert.throws(() => odooSourceConfig({ ...environment,ODOO_SOURCE_BATCH_SIZE: '1001' },config),/bounds/);
+  assert.equal(config.snapshotMaxDurationMs,120000);
+  assert.throws(() => odooSourceConfig({ ...environment,ODOO_SOURCE_SNAPSHOT_MAX_DURATION_MS: '600001' },config),/bounds/);
 });
 
 test('incremental period corrections tombstone a previously recognized order when its business date moves outside the pilot',() => {

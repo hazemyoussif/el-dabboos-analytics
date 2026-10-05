@@ -28,3 +28,5 @@ export * from './odoo/mapping.ts';
 export * from './odoo/ingestion.ts';
 export * from './odoo/identity.ts';
 export * from './odoo/controls.ts';
+export * from './odoo/snapshot.ts';
+export * from './odoo/pilot.ts';

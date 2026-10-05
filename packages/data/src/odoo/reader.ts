@@ -5,28 +5,32 @@ import type { OdooSourceConfig } from './config.ts';
 import type { OdooSourceRow } from './rows.ts';
 import { odooCursor, odooRevision, parseOdooCursor, sourceTimestamp } from './cursor.ts';
 import { odooTransactionSql } from './sql.ts';
+import type { OdooSnapshotLease } from './snapshot.ts';
 export interface OdooReadScope {
   object: 'sale_order'|'account_move'; from: string; to: string; timeZone: string;
   sourceAsOf: string; frozenRevision: string; mode?: 'backfill'|'incremental';
-  /** Operator-certified immutable replica/snapshot. Must survive process restarts. */
+  /** Durable identity of the actual source snapshot; never an import token. */
   freezeReference: string;
 }
 /** Source is SELECT-only, one bounded read-only transaction per page. Tunnel ownership stays external. */
 export class OdooPostgresSourceBatchReader implements SourceBatchReader<OdooSourceRow> {
-  constructor(private readonly pool: Pool,private readonly config: OdooSourceConfig,private readonly scope: OdooReadScope) {
+  constructor(private readonly pool: Pool,private readonly config: OdooSourceConfig,private readonly scope: OdooReadScope,private readonly snapshot: OdooSnapshotLease) {
     if (!validDateRange({ from: scope.from,to: scope.to }) || !scope.freezeReference.trim() || !Number.isFinite(Date.parse(scope.sourceAsOf))) throw new Error('Certified source freeze and period required');
   }
   async readBatch(request: SourceReadRequest): Promise<SourceBatch<OdooSourceRow>> {
     this.validateRequest(request);
+    this.snapshot.assertScope(this.scope,this.config);
     const tokenStart = request.cursor ?? request.watermark;
     const cursor = tokenStart ? parseOdooCursor(tokenStart) : { writeDate: '1970-01-01 00:00:00.000000',id: '0' };
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
+      await this.snapshot.importInto(client);
       await client.query("SELECT set_config('statement_timeout',$1,true),set_config('TimeZone','UTC',true)",[String(this.config.statementTimeoutMs)]);
       const result = await client.query(odooTransactionSql(this.scope.object),[request.companyIds,this.scope.from,this.scope.to,cursor.writeDate,cursor.id,request.limit+1,this.scope.timeZone,this.scope.mode==='incremental']);
       const rows = result.rows.slice(0,request.limit).map(row => ({ ...row,object: this.scope.object } as OdooSourceRow));
       if (rows.some(row => !request.companyIds.includes(row.company_id))) throw new Error('Source company isolation failure');
+      await this.snapshot.assertAlive();
       await client.query('COMMIT');
       const last = rows.at(-1);
       const token = last ? odooCursor(last.write_date,last.id) : request.cursor;

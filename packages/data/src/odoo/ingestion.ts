@@ -7,20 +7,23 @@ import { OdooPostgresSourceBatchReader } from './reader.ts';
 import type { OdooReadScope } from './reader.ts';
 import { mapOdooRecord } from './mapper.ts';
 import { verifyOdooSourceIdentity } from './identity.ts';
+import type { OdooSnapshotLease } from './snapshot.ts';
 export interface OdooIngestionOptions {
   sourcePool: Pool; martPool: Pool; sourceConfig: OdooSourceConfig;
   mapping: SourceMapping; run: ExtractionRun; scope: OdooReadScope;
+  snapshot: OdooSnapshotLease;
   clock?: () => Date;
 }
 /** One Odoo extraction, with existing writer ownership and durable resume; no approvals or bindings. */
 export async function ingestOdooExtraction(options: OdooIngestionOptions) {
   const { run,mapping,sourceConfig,scope } = options;
+  options.snapshot.assertScope(run,sourceConfig);
   if (run.freezeReference!==scope.freezeReference || run.sourceAsOf!==scope.sourceAsOf || run.frozenRevision!==scope.frozenRevision || run.from!==scope.from || run.to!==scope.to || run.sourceObjects.length!==1 || run.sourceObjects[0]!==scope.object) throw new Error('Odoo extraction freeze/scope conflict');
   if (run.tenantId!==sourceConfig.tenantId || run.sourceId!==sourceConfig.sourceId) throw new Error('Odoo extraction configuration scope');
   await verifyOdooSourceIdentity(options.sourcePool);
   const runs = new PostgresExtractionRuns(options.martPool,{ [run.tenantId]: sourceConfig.companyIds });
   let checkpoint = await runs.begin(run);
-  const reader = new OdooPostgresSourceBatchReader(options.sourcePool,sourceConfig,{ ...scope,mode: run.completeness==='incremental' ? 'incremental' : 'backfill' });
+  const reader = new OdooPostgresSourceBatchReader(options.sourcePool,sourceConfig,{ ...scope,mode: run.completeness==='incremental' ? 'incremental' : 'backfill' },options.snapshot);
   const clock = options.clock ?? (() => new Date());
   const writer = new PostgresMartWriter(options.martPool,{ [run.tenantId]: sourceConfig.companyIds },clock);
   while (checkpoint.status==='running') {
@@ -28,7 +31,8 @@ export async function ingestOdooExtraction(options: OdooIngestionOptions) {
     const batchId = `${run.extractionId}-page-${checkpoint.pageCount+1}`;
     const batch: IngestionBatch = { tenantId: run.tenantId,sourceId: run.sourceId,companyIds: run.companyIds,batchId,datasetId: run.datasetId,mappingId: run.mappingId,mappingVersion: run.mappingVersion,adapterVersion: 'odoo18-pg-v1',startedAt: clock().toISOString(),sourceAsOf: run.sourceAsOf,frozenRevision: run.frozenRevision,status: 'running',rowsRead: page.rows.length,rowsAccepted: 0,rowsRejected: 0,factsInserted: 0,factsUpdated: 0,factsTombstoned: 0,factsReplayed: 0 };
     const pageEvidence = extractionPageEvidence(run,checkpoint,page,sourceConfig.batchSize);
-    await writer.commit(batch,page.rows.map(record => ({ facts: mapOdooRecord(record,mapping,batch,{ from: run.from,to: run.to }) })),pageEvidence);
+    await options.snapshot.assertAlive();
+    await writer.commit(batch,page.rows.map(record => ({ facts: mapOdooRecord(record,mapping,batch,{ from: run.from,to: run.to }) })),pageEvidence,pageEvidence.paginationComplete ? () => options.snapshot.assertAlive() : undefined);
     checkpoint = (await runs.resume(run.tenantId,run.extractionId)).checkpoint;
   }
   return checkpoint;

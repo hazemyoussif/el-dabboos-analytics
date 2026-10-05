@@ -3,7 +3,7 @@ import { executeOdooPilot, validateOdooPilotManifest } from './odoo-pilot.ts';
 
 try {
   const [command,path,...extra] = process.argv.slice(2);
-  if (!command || !path || extra.length) throw new Error('Usage: odoo:pilot register|ingest|reconcile-db|status manifest.json');
+  if (!command || !path || extra.length) throw new Error('Usage: odoo:pilot register|run|status manifest.json');
   const manifest = validateOdooPilotManifest(JSON.parse(readFileSync(path,'utf8')));
   process.stdout.write(`${JSON.stringify(await executeOdooPilot(command,manifest,process.env))}\n`);
 } catch {

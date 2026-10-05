@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import type { Pool } from 'pg';
 import type { FactMeasureId, ReconciliationCase, SourceMapping } from '@el-dabboos/domain';
 import type { OdooReadScope } from './reader.ts';
+import type { OdooSnapshotLease } from './snapshot.ts';
 export interface OdooControlScope {
   mapping: SourceMapping; source: OdooReadScope; companyIds: readonly string[];
   tolerance: ReconciliationCase['tolerance'];
@@ -29,12 +30,14 @@ function controlGrouping(grouping: 'business_line'|'salesperson'|null,source: Od
   return `CASE WHEN ${field} IS NULL THEN 'unassigned' ELSE $4::text||':'||${field}::text END`;
 }
 /** Independent governed header SQL controls; these are DB evidence, never Invoice Analysis sign-off. */
-export async function readOdooControls(pool: Pool,scope: OdooControlScope): Promise<Omit<ReconciliationCase,'batchIds'>[][]> {
+export async function readOdooControls(pool: Pool,scope: OdooControlScope,snapshot: OdooSnapshotLease): Promise<Omit<ReconciliationCase,'batchIds'>[][]> {
   const { source,mapping } = scope;
+  snapshot.assertScope(source,mapping);
   const date = source.object==='sale_order' ? "((date_order AT TIME ZONE 'UTC') AT TIME ZONE $5)::date" : 'invoice_date';
   const client = await pool.connect();
   try {
     await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
+    await snapshot.importInto(client);
     await client.query("SELECT set_config('statement_timeout','15000',true)");
     const sets: Omit<ReconciliationCase,'batchIds'>[][] = [];
     for (const measure of controlMeasures(source.object)) for (const grouping of [null,'business_line','salesperson'] as const) {
@@ -48,6 +51,7 @@ export async function readOdooControls(pool: Pool,scope: OdooControlScope): Prom
         tenantId: mapping.tenantId,datasetId: mapping.datasetId,mappingVersion: mapping.mappingVersion,measureId: measure.measure,sourceReportReference: scope.reportReference,frozenRevision: source.frozenRevision,
         from: source.from,to: source.to,grouping,groupKey: row.key,expectedValue: row.value,expectedCount: row.count,actualValue: '0.000000',actualCount: '0',tolerance: scope.tolerance })));
     }
+    await snapshot.assertAlive();
     await client.query('COMMIT');
     return sets;
   } catch (error) { await client.query('ROLLBACK'); throw error; }

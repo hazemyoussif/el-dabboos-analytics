@@ -1,0 +1,80 @@
+import { createHash, randomUUID } from 'node:crypto';
+import type { Pool, PoolClient } from 'pg';
+import { verifyOdooSourceIdentity } from './identity.ts';
+
+export interface OdooSnapshotEvidence {
+  sourceAsOf: string; frozenRevision: string; freezeReference: string;
+  descriptor: string;
+}
+/** One dedicated owner connection. Export capability stays private and is never persisted. */
+export class OdooSnapshotLease {
+  readonly #token: string;
+  readonly evidence: Readonly<OdooSnapshotEvidence>;
+  private alive = true;
+  private readonly deadline: number;
+  private readonly timer: ReturnType<typeof setTimeout>;
+  private closing: Promise<void> | undefined;
+  private readonly onError = () => { this.alive = false; };
+  private constructor(private readonly owner: PoolClient,token: string,readonly identity: Readonly<{ tenantId: string; sourceId: string }>,evidence: OdooSnapshotEvidence,durationMs: number) {
+    this.#token = token;
+    this.evidence = Object.freeze(evidence);
+    this.deadline = performance.now()+durationMs;
+    owner.on('error',this.onError);
+    this.timer = setTimeout(() => { void this.close(); },durationMs);
+    this.timer.unref();
+  }
+  static async open(pool: Pool,identity: { tenantId: string; sourceId: string },durationMs: number): Promise<OdooSnapshotLease> {
+    if (!Number.isInteger(durationMs) || durationMs<1 || durationMs>600000) throw new Error('Invalid source snapshot duration');
+    await verifyOdooSourceIdentity(pool);
+    const owner = await pool.connect();
+    const started = performance.now();
+    try {
+      await owner.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
+      await owner.query("SELECT set_config('statement_timeout',$1,true),set_config('idle_in_transaction_session_timeout',$1,true)",[String(durationMs)]);
+      const row = (await owner.query('SELECT transaction_timestamp() source_as_of,pg_export_snapshot() token,pg_current_snapshot()::text descriptor')).rows[0];
+      if (!/^[0-9A-Fa-f]+-[0-9A-Fa-f]+-\d+$/.test(row.token) || typeof row.descriptor!=='string') throw new Error('Invalid PostgreSQL snapshot evidence');
+      const digest = createHash('sha256').update(JSON.stringify([identity.sourceId,row.descriptor])).digest('hex');
+      const remaining = durationMs-(performance.now()-started);
+      if (remaining<=0) throw new Error('Source snapshot lease expired during acquisition');
+      return new OdooSnapshotLease(owner,row.token,Object.freeze({ ...identity }),{ sourceAsOf: row.source_as_of.toISOString(),descriptor: row.descriptor,frozenRevision: `pg-mvcc:${digest}`,freezeReference: `pg-lease:${randomUUID()}` },remaining);
+    } catch (error) {
+      try { await owner.query('ROLLBACK'); } finally { owner.release(true); }
+      throw error;
+    }
+  }
+  assertScope(scope: Pick<OdooSnapshotEvidence,'sourceAsOf'|'frozenRevision'|'freezeReference'>,identity: { tenantId: string; sourceId: string }): void {
+    this.requireAlive();
+    if (identity.tenantId!==this.identity.tenantId || identity.sourceId!==this.identity.sourceId || ['sourceAsOf','frozenRevision','freezeReference'].some(key => scope[key as keyof typeof scope]!==this.evidence[key as keyof typeof scope])) throw new Error('Source snapshot scope conflict');
+  }
+  private requireAlive(): void {
+    if (!this.alive || performance.now()>=this.deadline) throw new Error('Source snapshot lease lost or expired');
+  }
+  async assertAlive(): Promise<void> {
+    this.requireAlive();
+    try {
+      const row = (await this.owner.query('SELECT pg_current_snapshot()::text descriptor')).rows[0];
+      if (row.descriptor!==this.evidence.descriptor) throw new Error('Source snapshot changed');
+      this.requireAlive();
+    } catch { this.alive = false; throw new Error('Source snapshot lease lost or expired'); }
+  }
+  /** Caller begins RR/RO first. Import is the first command before any source SELECT. */
+  async importInto(client: PoolClient): Promise<void> {
+    await this.assertAlive();
+    await client.query(`SET TRANSACTION SNAPSHOT '${this.#token}'`);
+    const row = (await client.query('SELECT pg_current_snapshot()::text descriptor')).rows[0];
+    if (row.descriptor!==this.evidence.descriptor) throw new Error('Imported source snapshot mismatch');
+    await this.assertAlive();
+  }
+  close(): Promise<void> {
+    if (this.closing) return this.closing;
+    this.alive = false;
+    clearTimeout(this.timer);
+    this.closing = this.rollbackOwner();
+    return this.closing;
+  }
+  toJSON(): Readonly<OdooSnapshotEvidence> { return this.evidence; }
+  private async rollbackOwner(): Promise<void> {
+    try { await this.owner.query('ROLLBACK'); } catch { /* Lost owner is already unusable. */ }
+    finally { this.owner.removeListener('error',this.onError); this.owner.release(true); }
+  }
+}

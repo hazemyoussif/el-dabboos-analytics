@@ -19,11 +19,13 @@ export function odooTransactionSql(object: 'sale_order'|'account_move'): string 
     ? 'transaction.amount_untaxed::text amount_untaxed,transaction.amount_tax::text amount_tax,transaction.amount_total::text amount_total'
     : 'transaction.amount_untaxed_signed::text amount_untaxed,transaction.amount_tax_signed::text amount_tax,transaction.amount_total_signed::text amount_total';
   const accounting = object==='account_move' ? `,transaction.move_type,transaction.payment_state,${lineage}` : '';
+  const accountingScope = object==='account_move' ? "AND ($8::boolean OR (transaction.state='posted' AND transaction.move_type IN ('out_invoice','out_refund')))" : '';
   return `SELECT transaction.id::text id,transaction.company_id::text company_id,
  to_char(${updated},'YYYY-MM-DD HH24:MI:SS.US') write_date,${date}::date::text business_date,
  transaction.state,currency.name currency,transaction.currency_id::text currency_id,${amounts},${dimensions}${accounting}
  FROM ${object} transaction ${joins(object==='sale_order' ? 'user_id' : 'invoice_user_id')}
  WHERE $7::text IS NOT NULL AND transaction.company_id=ANY($1::int[]) AND ($8::boolean OR (${date}>=$2::date AND ${date}<$3::date+INTERVAL '1 day'))
+ ${accountingScope}
  AND (${updated},transaction.id)>($4::timestamp,$5::bigint)
  ORDER BY ${updated},transaction.id LIMIT $6`;
 }

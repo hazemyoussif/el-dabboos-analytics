@@ -1,63 +1,52 @@
 import type { ExtractionRun } from '@el-dabboos/domain';
-import { validateExtractionRun } from '@el-dabboos/domain';
-import { createMartPool, createOdooSourcePool, ingestOdooExtraction, odooComparisonCandidate, odooSourceConfig, PostgresExtractionRuns, PostgresMappingReleases, readOdooControls, reconcileExtraction, verifyOdooSourceIdentity } from '@el-dabboos/data';
+import { createMartPool, createOdooSourcePool, ingestRetainedOdooPilot, odooComparisonCandidate, odooSourceConfig, OdooSnapshotLease, PostgresExtractionRuns, PostgresMappingReleases } from '@el-dabboos/data';
 import type { OdooMappingIdentity } from '@el-dabboos/data';
 
-export interface OdooPilotManifest { mapping: OdooMappingIdentity; run: ExtractionRun }
+export interface OdooPilotManifest { mapping: OdooMappingIdentity; extractionId: string }
 export function validateOdooPilotManifest(value: unknown): OdooPilotManifest {
-  if (!value || typeof value!=='object' || Object.keys(value).sort().join(',')!=='mapping,run') throw new Error('Invalid pilot manifest');
+  if (!value || typeof value!=='object' || Object.keys(value).sort().join(',')!=='extractionId,mapping') throw new Error('Invalid pilot manifest');
   const manifest = value as OdooPilotManifest;
   const identityKeys = ['tenantId','sourceId','datasetId','mappingId','mappingVersion','businessOwner','reportingCurrency','timeZone'];
   if (!manifest.mapping || Object.keys(manifest.mapping).sort().join(',')!==identityKeys.sort().join(',')) throw new Error('Invalid pilot mapping identity');
   const mapping = odooComparisonCandidate(manifest.mapping);
-  const { run } = manifest;
-  validateExtractionRun(run);
-  if (mapping.tenantId!=='el-dabboos-iq' || mapping.sourceId!=='el-dabboos-odoo18-pg' || run.companyIds.length!==1 || run.companyIds[0]!=='1') throw new Error('Unapproved pilot identity');
-  for (const key of ['tenantId','sourceId','datasetId','mappingId','mappingVersion'] as const) {
-    if (run[key]!==mapping[key]) throw new Error('Pilot mapping scope conflict');
-  }
-  validatePilotPeriod(run);
+  if (mapping.tenantId!=='el-dabboos-iq' || mapping.sourceId!=='el-dabboos-odoo18-pg' || mapping.reportingCurrency!=='IQD' || manifest.mapping.timeZone!=='Asia/Baghdad') throw new Error('Unapproved pilot identity');
+  if (typeof manifest.extractionId!=='string' || !manifest.extractionId.trim() || manifest.extractionId.trim()!==manifest.extractionId || manifest.extractionId.length>160) throw new Error('Invalid pilot extraction identity');
   return manifest;
-}
-function validatePilotPeriod(run: ExtractionRun): void {
-  if (run.from!=='2026-09-01' || run.to!=='2026-09-30' || run.completeness!=='complete_scope' || run.sourceObjects.length!==1 || !['sale_order','account_move'].includes(run.sourceObjects[0]!)) throw new Error('Unapproved pilot extraction scope');
 }
 function required(environment: NodeJS.ProcessEnv,key: string): string {
   const value = environment[key];
   if (!value) throw new Error('Missing pilot mart configuration');
   return value;
 }
-/** Explicit offline composition: never part of serving startup, never approves or binds a release. */
+/** Explicit offline composition; runtime credentials never write, and no command approves or binds. */
 export async function executeOdooPilot(command: string,manifest: OdooPilotManifest,environment: NodeJS.ProcessEnv) {
-  if (!['register','ingest','reconcile-db','status'].includes(command)) throw new Error('Unknown pilot command');
+  if (!['register','run','status'].includes(command)) throw new Error('Unknown pilot command; use retained run for extraction and DB controls');
   validateOdooPilotManifest(manifest);
   const mapping = odooComparisonCandidate(manifest.mapping);
-  const { run } = manifest;
   const mart = createMartPool(required(environment,command==='register' ? 'MART_MIGRATOR_URL' : 'MART_INGESTOR_URL'),1);
   try {
     if (command==='register') {
       await new PostgresMappingReleases(mart).registerCandidate(mapping);
       return { status: 'candidate',datasetId: mapping.datasetId,mappingVersion: mapping.mappingVersion };
     }
-    if (command==='status') return (await new PostgresExtractionRuns(mart,{ [run.tenantId]: ['1'] }).resume(run.tenantId,run.extractionId)).checkpoint;
-    return await executeSourceStep(command,manifest,environment,mart);
+    if (command==='status') return (await new PostgresExtractionRuns(mart,{ [mapping.tenantId]: ['1'] }).resume(mapping.tenantId,manifest.extractionId)).checkpoint;
+    return await executeRetainedRun(manifest,environment,mart);
   } finally { await mart.end(); }
 }
-async function executeSourceStep(command: string,manifest: OdooPilotManifest,environment: NodeJS.ProcessEnv,mart: ReturnType<typeof createMartPool>) {
-  const { run } = manifest;
+async function executeRetainedRun(manifest: OdooPilotManifest,environment: NodeJS.ProcessEnv,mart: ReturnType<typeof createMartPool>) {
   const mapping = odooComparisonCandidate(manifest.mapping);
-  const config = odooSourceConfig(environment,{ tenantId: run.tenantId,sourceId: run.sourceId });
+  const config = odooSourceConfig(environment,{ tenantId: mapping.tenantId,sourceId: mapping.sourceId });
   if (config.companyIds.length!==1 || config.companyIds[0]!=='1') throw new Error('Unapproved pilot company configuration');
+  const ownerPool = createOdooSourcePool(config);
   const sourcePool = createOdooSourcePool(config);
-  const scope = { object: run.sourceObjects[0] as 'sale_order'|'account_move',from: run.from,to: run.to,timeZone: manifest.mapping.timeZone,sourceAsOf: run.sourceAsOf,frozenRevision: run.frozenRevision,freezeReference: run.freezeReference };
+  let snapshot: OdooSnapshotLease | undefined;
   try {
-    if (command==='ingest') return await ingestOdooExtraction({ sourcePool,martPool: mart,sourceConfig: config,mapping,run,scope });
-    const checkpoint = await new PostgresExtractionRuns(mart,{ [run.tenantId]: config.companyIds }).begin(run);
-    if (checkpoint.status!=='complete') throw new Error('Completed pilot extraction required');
-    await verifyOdooSourceIdentity(sourcePool);
-    const controls = await readOdooControls(sourcePool,{ mapping,source: scope,companyIds: run.companyIds,tolerance: { status: 'approved',absoluteValue: '0.000000',absoluteCount: '0',approvalReference: 'Pilot handoff: exact DB control equality' },reportReference: `DB controls ${run.extractionId} ${run.frozenRevision}` });
-    const evidence = [];
-    for (const group of controls) evidence.push(await reconcileExtraction(mart,run.extractionId,group,mapping.reportingCurrency));
-    return { extractionId: run.extractionId,cases: evidence.reduce((count,item) => count+item.cases.length,0),passed: evidence.length>0 && evidence.every(item => item.status==='passed'),evidenceKind: 'DB-only; Invoice Analysis sign-off still required' };
-  } finally { await sourcePool.end(); }
+    snapshot = await OdooSnapshotLease.open(ownerPool,config,config.snapshotMaxDurationMs);
+    const run: ExtractionRun = { tenantId: mapping.tenantId,sourceId: mapping.sourceId,companyIds: ['1'],datasetId: mapping.datasetId,mappingId: mapping.mappingId,mappingVersion: mapping.mappingVersion,extractionId: manifest.extractionId,sourceObjects: ['sale_order','account_move'],from: '2026-09-01',to: '2026-09-30',sourceAsOf: snapshot.evidence.sourceAsOf,frozenRevision: snapshot.evidence.frozenRevision,freezeReference: snapshot.evidence.freezeReference,completeness: 'complete_scope' };
+    const result = await ingestRetainedOdooPilot({ sourcePool,martPool: mart,sourceConfig: config,mapping,run,snapshot });
+    return { ...result,evidenceKind: 'DB-only; Invoice Analysis sign-off still required' };
+  } finally {
+    await snapshot?.close();
+    await Promise.all([ownerPool.end(),sourcePool.end()]);
+  }
 }

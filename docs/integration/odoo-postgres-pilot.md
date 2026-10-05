@@ -6,9 +6,11 @@ The user approved company `1` → tenant `el-dabboos-iq`, source `el-dabboos-odo
 
 Register an immutable `pending` mapping → ingest candidate pages → complete both logical extractions → reconcile exact mapping/version and all pages → capture authoritative Invoice Analysis evidence → approve certification metadata → request explicit serving authorization. Changes to mapping contents require a new dataset release and new reconciliation. Old revisions and reconciliation cases remain immutable.
 
-One logical run owns one source object, company scope, mapping release, business period and certified source freeze. Each atomic write has at most 1,000 source records. Keyset pagination uses `(effective write timestamp, id)` with microsecond precision; no offsets. The effective timestamp includes joined dimension updates so a rename creates a new immutable revision while stable IDs remain unchanged. The reader fetches one extra row to detect a terminal page; it never writes that extra row in the current page. The page transaction commits revisions, links and checkpoint together. Retry the same manifest to resume from the last committed cursor. Do not change its source freeze or scope. A final empty page is valid. Incomplete runs cannot reconcile or serve, including through runtime access to underlying revision/batch tables. During incomplete corrections the last completed revision remains visible.
+One logical pilot run owns both source objects, company scope, mapping release, business period and a retained PostgreSQL snapshot. Each atomic write has at most 1,000 source records. Keyset pagination uses `(effective write timestamp, id)` with microsecond precision; no offsets. The effective timestamp includes joined dimension updates so a rename creates a new immutable revision while stable IDs remain unchanged. The reader fetches one extra row to detect a terminal page; it never writes that extra row in the current page. The page transaction commits revisions, links and checkpoint together. The service can resume the last committed cursor only under the same still-alive lease. The CLI closes its lease on any failure; a new CLI invocation requires a new extraction ID. Do not change the scope of an existing run. A final empty page is valid. Incomplete runs cannot reconcile or serve, including through runtime access to underlying revision/batch tables. During incomplete corrections the last completed revision remains visible.
 
-Completion evidence persists source/company, mapping ID/version, period/objects, initial/final cursor, pages/rows, source-as-of, frozen revision, certified freeze reference and completion time. Per-page ingestion evidence retains accepted/rejected rows, revision counters and timestamps. The source freeze must be an externally certified immutable replica/snapshot that survives restarts. A moving replica plus a write-date upper bound does not prove repeatable extraction. The application does not create source snapshots or tunnels.
+Completion evidence persists source/company, mapping ID/version, period/objects, initial/final cursor, pages/rows, source-as-of, frozen revision, certified freeze reference and completion time. Per-page ingestion evidence retains accepted/rejected rows, revision counters and timestamps. The source owner holds a dedicated `REPEATABLE READ READ ONLY` transaction through all source pages and DB controls. Every page/control transaction imports the runtime-only PostgreSQL export token before source queries and verifies `pg_current_snapshot()`. `sourceAsOf` comes from PostgreSQL transaction time; `frozenRevision` fingerprints the actual descriptor under source identity. The descriptor is returned as durable completion evidence. The token is private and never persisted. Lease loss/expiry makes resume impossible; leave the old run incomplete and use a new extraction ID/snapshot. No descriptive string, write-date cutoff or persisted export token certifies repeatability.
+
+Order pages remain incomplete while accounting pages and source controls are read. Final-page facts, terminal checkpoint and DB reconciliation evidence commit together in one bounded mart transaction; certification failure rolls all three back. Partial pages remain ineligible. Owner cleanup always rolls back/releases the transaction. It is never retained for Invoice Analysis, mapping approval or serving authorization.
 
 ## Source semantics
 
@@ -35,7 +37,7 @@ Trusted tenant profile metadata can carry `preferredMetrics: { revenue: 'net_inv
 
 `pnpm odoo:pilot` loads shell → repository-root `.env.local` → `.env`. `.env.example` documents placeholders. Tests load temporary synthetic config only. The externally managed SSH tunnel must expose localhost/127.0.0.1/::1; the application contains no SSH credentials or orchestration.
 
-Required source keys: `ODOO_SOURCE_HOST`, `ODOO_SOURCE_PORT`, `ODOO_SOURCE_DATABASE`, `ODOO_SOURCE_USER`, `ODOO_SOURCE_PASSWORD`, `ODOO_SOURCE_COMPANY_IDS`. Bounds: `ODOO_SOURCE_CONNECT_TIMEOUT_MS` (default 5000), `ODOO_SOURCE_STATEMENT_TIMEOUT_MS` (15000), `ODOO_SOURCE_BATCH_SIZE` (500, maximum 1000). Company IDs must be exactly `1` for this pilot.
+Required source keys: `ODOO_SOURCE_HOST`, `ODOO_SOURCE_PORT`, `ODOO_SOURCE_DATABASE`, `ODOO_SOURCE_USER`, `ODOO_SOURCE_PASSWORD`, `ODOO_SOURCE_COMPANY_IDS`. Bounds: `ODOO_SOURCE_CONNECT_TIMEOUT_MS` (default 5000), `ODOO_SOURCE_STATEMENT_TIMEOUT_MS` (15000), `ODOO_SOURCE_BATCH_SIZE` (500, maximum 1000), `ODOO_SOURCE_SNAPSHOT_MAX_DURATION_MS` (120000, maximum 600000). Two source connections are bounded separately to one owner and one worker; no SSH management is included. Company IDs must be exactly `1` for this pilot.
 
 Use separately provisioned `MART_MIGRATOR_URL` for migrations/candidate registration and `MART_INGESTOR_URL` for ingestion/reconciliation/status. Runtime continues to use its own `MART_RUNTIME_URL` and existing runtime bounds. None of these credentials belong in the manifest, command line or Git. Mart roles/migrations are administered separately using [mart operations](postgres-mart-operations.md); never run them against Odoo.
 
@@ -43,7 +45,7 @@ The source identity must be a dedicated SELECT-only service role, with no superu
 
 ## Manifest and commands
 
-Keep an operator manifest outside Git, containing exactly `mapping` and `run`. Supply real owner/certification references locally; the placeholders below are not evidence. Create two manifests with the same mapping identity and frozen snapshot, separate extraction IDs and source objects (`sale_order`, `account_move`).
+Keep an operator manifest outside Git, containing exactly `mapping` and `extractionId`. Supply the confirmed business owner and immutable candidate identity locally. Snapshot evidence and September/company bounds are derived by composition; no manifest snapshot strings or credentials are accepted.
 
 ```json
 {
@@ -57,40 +59,24 @@ Keep an operator manifest outside Git, containing exactly `mapping` and `run`. S
     "reportingCurrency": "IQD",
     "timeZone": "Asia/Baghdad"
   },
-  "run": {
-    "tenantId": "el-dabboos-iq",
-    "sourceId": "el-dabboos-odoo18-pg",
-    "companyIds": ["1"],
-    "datasetId": "operator-chosen-immutable-comparison-release",
-    "mappingId": "operator-chosen-mapping-id",
-    "mappingVersion": "operator-chosen-version",
-    "extractionId": "operator-chosen-september-orders-run",
-    "sourceObjects": ["sale_order"],
-    "from": "2026-09-01",
-    "to": "2026-09-30",
-    "sourceAsOf": "REPLACE_WITH_CERTIFIED_UTC_ISO_TIMESTAMP",
-    "frozenRevision": "REPLACE_WITH_IMMUTABLE_SNAPSHOT_REVISION",
-    "freezeReference": "REPLACE_WITH_OPERATOR_CERTIFICATION_REFERENCE",
-    "completeness": "complete_scope"
-  }
+  "extractionId": "operator-chosen-new-september-pilot-run"
 }
 ```
 
-From repository root, register once, then ingest/resume and reconcile each completed object:
+Register the candidate once, then execute both source objects and DB reconciliation in one retained-snapshot operation:
 
 ```bash
-pnpm odoo:pilot register /path/outside-git/orders-manifest.json
-pnpm odoo:pilot ingest /path/outside-git/orders-manifest.json
-pnpm odoo:pilot status /path/outside-git/orders-manifest.json
-pnpm odoo:pilot reconcile-db /path/outside-git/orders-manifest.json
-pnpm odoo:pilot ingest /path/outside-git/invoices-manifest.json
-pnpm odoo:pilot reconcile-db /path/outside-git/invoices-manifest.json
+pnpm odoo:pilot register /path/outside-git/pilot-manifest.json
+pnpm odoo:pilot run /path/outside-git/pilot-manifest.json
+pnpm odoo:pilot status /path/outside-git/pilot-manifest.json
 ```
 
-The DB control reader independently aggregates governed source headers overall/by Business Line/by salesperson. The existing frozen reconciliation harness evaluates completed-run mart revisions against these controls with exact equality. The command outputs safe checkpoint/result metadata, never credentials/customer labels. Failure prints a generic message and leaves the durable checkpoint for status/resume. These commands contain no approval, binding, source migration or arbitrary SQL operation.
+`run` owns snapshot opening, paged order extraction, posted customer invoice/refund extraction, same-snapshot source controls, atomic terminal-page/candidate reconciliation and finally cleanup. Independent `ingest` and `reconcile-db` commands are refused. A failed CLI run leaves incomplete history; create a new extraction ID for the next invocation. Only in-process service retries can resume with the original live lease.
+
+The DB control reader independently aggregates governed source headers overall/by Business Line/by salesperson. The existing frozen reconciliation harness evaluates completed-run mart revisions against these controls with exact equality. The command outputs safe checkpoint/result metadata, never credentials/customer labels. Failure prints a generic message and leaves the durable checkpoint for status and diagnosis. These commands contain no approval, binding, source migration or arbitrary SQL operation.
 
 ## Remaining release gates
 
-Live extraction is blocked until local source/mart configuration and the immutable snapshot reference/source-as-of are supplied. Confirm the live schema/custom geography and owner before registering the actual candidate. Compare the live mart to independently derived DB controls; known candidate numbers belong only to fixtures/control evidence.
+Live extraction is blocked until local source/mart configuration is supplied. Confirm the live schema/custom geography and business owner before registering the actual candidate; the application obtains actual PostgreSQL snapshot evidence when running it. Compare the live mart to independently derived DB controls; known candidate numbers belong only to fixtures/control evidence.
 
 Then capture Odoo Invoice Analysis company/date/filters/measure/invoice-refund/tax basis and overall, Business Line and salesperson totals. Store case IDs against the exact candidate and completed invoice extraction. A difference requires investigation, never editing the mapped total. This document records no authoritative reconciliation result. Mapping approval uses explicit passing evidence and updates certification metadata only. **Do not create or activate a production serving binding until authoritative reconciliation passes and the user explicitly approves serving.** Browser/product QA with real served data belongs to that later step.

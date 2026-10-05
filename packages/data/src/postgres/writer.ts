@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import type { Pool } from 'pg';
+import type { Pool, PoolClient } from 'pg';
 import { productionFactIdentity, validateFactBatch, validateSourceMapping } from '@el-dabboos/domain';
 import type { DataQualityReject, ExtractionPage, IngestionBatch, ProductionFact, SourceMapping } from '@el-dabboos/domain';
 import { tenantTransaction } from './session.ts';
@@ -17,7 +17,8 @@ export type MappedRecord = { facts: ProductionFact[] } | { reject: DataQualityRe
 const canonical = (value: unknown): string => JSON.stringify(value, (_key,item) => item && typeof item==='object' && !Array.isArray(item) ? Object.fromEntries(Object.keys(item).sort().map(key => [key,item[key]])) : item);
 export class PostgresMartWriter {
   constructor(private readonly pool: Pool,private readonly authorizedCompanies: Readonly<Record<string,readonly string[]>>,private readonly clock = () => new Date()) {}
-  async commit(batch: IngestionBatch,records: readonly MappedRecord[],evidence: ExtractionEvidence): Promise<IngestionBatch> {
+  async commit(batch: IngestionBatch,records: readonly MappedRecord[],evidence: ExtractionEvidence,certifyTerminal?: (client: PoolClient) => Promise<void>): Promise<IngestionBatch> {
+    if (certifyTerminal && (!evidence.page || !evidence.paginationComplete)) throw new Error('Certification requires terminal extraction page');
     const facts = validateWriteBoundary(batch,records,evidence);
     if (!batch.companyIds.every(company => this.authorizedCompanies[batch.tenantId]?.includes(company))) throw new Error('Unauthorized company scope');
     const fingerprint = writeFingerprint(batch,records,evidence);
@@ -40,6 +41,7 @@ export class PostgresMartWriter {
       validateFactBatch(completed,facts,mapping);
       await finishBatch(client,completed,counters);
       await commitExtractionPage(client,completed,evidence);
+      if (certifyTerminal) await certifyTerminal(client);
       return completed;
     });
   }
