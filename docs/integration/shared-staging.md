@@ -1,6 +1,6 @@
 # Shared staging deployment and governed bootstrap
 
-This milestone packages the production API and React artifacts, provisions two separate staging databases, and reserves governed business objects. Authentication remains disabled: liveness/readiness can be exercised, but employee dashboard access requires the future trusted identity adapter. No ingestion worker or continuous sync is installed. Bootstrap never approves a mapping or activates serving.
+This milestone packages the production API and React artifacts, provisions two separate staging databases, and reserves governed business objects. The default deployment keeps authentication disabled. A [local identity foundation](../security/local-authentication.md) now supports governed credentials and cookie sessions; employee access still requires reviewed HTTPS configuration and explicit activation. No ingestion worker or continuous sync is installed. Bootstrap never approves a mapping or activates serving.
 
 ## Topology and artifacts
 
@@ -32,7 +32,7 @@ Review `infra/staging/runtime.env.example` and `operator.env.example`. Their val
 | --- | --- |
 | `ENVIRONMENT=staging` | API shared-mode safety and safe operational logs |
 | `API_HOST=0.0.0.0`, `PORT=3001` | Private container listener; local synthetic mode requires loopback |
-| `ACCESS_IDENTITY_MODE=disabled` | Required until trusted authentication integration; staging synthetic fails startup |
+| `ACCESS_IDENTITY_MODE=disabled` | Safe bootstrap default; `local` requires reviewed HTTPS origin/secret and provisioning; staging synthetic fails startup |
 | `CONTROL_PROVIDER=postgres`, `CONTROL_DATABASE_URL` | Control app login, database `el_dabboos_control_staging` |
 | `ANALYTICS_PROVIDER=postgres`, `MART_RUNTIME_URL` | Read-only runtime login, database `el_dabboos_analytics_staging` |
 | `CONTROL_MIGRATOR_URL`, `MART_MIGRATOR_URL` | Explicit operations only; never API secrets |
@@ -47,7 +47,7 @@ Review `infra/staging/runtime.env.example` and `operator.env.example`. Their val
 
 Existing pool/statement timeout, maximum groups/date span, execution concurrency and LLM limits retain the defaults/validation in `apps/api/src/startup-config.ts`. The runtime env contains only control app, mart runtime and optional LLM credentials. Source secret resolution remains `connectionRef=odoo-staging-main` through the existing Odoo configuration boundary; it belongs to a future worker's approved external secret environment. Neither the web nor API needs an SSH tunnel or Odoo credentials to start or serve mart queries. Do not run live extraction as a deployment smoke test.
 
-Production web builds omit `x-demo-user-id`. The server never accepts synthetic identity in staging, including on loopback; documented local-only demo mode is `ENVIRONMENT=development`, loopback API and existing SQLite synthetic seed. Arbitrary employee headers and email alone confer no identity. The injected `administration.authenticate` adapter must eventually return a trusted `IdentityBinding.id` based on verified issuer/provider plus stable subject.
+Local/shared session mode omits `x-demo-user-id`; that header is sent only after the API explicitly reports development synthetic mode. The server never accepts synthetic identity in staging, including on loopback; documented local-only demo mode is `ENVIRONMENT=development`, loopback API and existing SQLite synthetic seed. Arbitrary employee headers and email alone confer no identity. Local authentication now resolves verified session subject through the current binding and returns its trusted `IdentityBinding.id`; other providers remain future work.
 
 ## Roles and isolation
 
@@ -74,7 +74,7 @@ pnpm staging bootstrap infra/staging/bootstrap.example.json
 pnpm staging verify
 ```
 
-Provision creates role groups/logins first, then the two databases. It only targets `el_dabboos_control_staging` and `el_dabboos_analytics_staging`. Explicit migrate applies control versions 001–006 and mart versions 001–008, verifies immutable histories/checksums and installs scoped login grants. Runtime startup never repairs or migrates a schema. The existing developer mart was deliberately left on its prior version 007; running this updated API against that developer database requires the separately authorized explicit `pnpm mart:migrate` to apply 008 first. Staging simulation already uses 008 and never changes developer pilot data. A partially completed explicit migration remains safe to rerun; never start API until `verify` succeeds. For managed services where the administrator cannot create these roles/databases, an authorized DBA must provide equivalent reviewed isolation and grants before migration. Do not weaken runtime checks to accommodate elevated credentials.
+Provision creates role groups/logins first, then the two databases. It only targets `el_dabboos_control_staging` and `el_dabboos_analytics_staging`. Explicit migrate applies control versions 001–007 and mart versions 001–008, verifies immutable histories/checksums and installs scoped login grants. Runtime startup never repairs or migrates a schema. The existing developer mart was deliberately left on its prior version 007; running this updated API against that developer database requires the separately authorized explicit `pnpm mart:migrate` to apply 008 first. Staging simulation already uses 008 and never changes developer pilot data. A partially completed explicit migration remains safe to rerun; never start API until `verify` succeeds. For managed services where the administrator cannot create these roles/databases, an authorized DBA must provide equivalent reviewed isolation and grants before migration. Do not weaken runtime checks to accommodate elevated credentials.
 
 ## Governed bootstrap
 
@@ -82,7 +82,7 @@ Review the JSON manifest before execution. Exact field validation rejects unknow
 
 The fresh bootstrap uses one advisory-locked transaction for protected roles, customer, provisioning tenant, invited users, disabled `pending-idp` identities, suspended platform/tenant memberships, source, immutable receipt and audit. No dashboard, seed facts, mapping or binding is created. The receipt compares a key-sorted JSON representation (array order remains meaningful). Identical repeat returns `already_provisioned`; changed payload or another bootstrap ID on a governed DB fails. Existing legacy SQLite ownership import protections remain unchanged.
 
-Placeholders reserve explicit non-authenticating provider/subject IDs. After selecting an IdP, use a separately reviewed binding/activation procedure through controlled administration; changing the bootstrap manifest cannot activate users or overwrite configuration. Existing admin/analyst/viewer roles cover QA personas. The bootstrap audit records the declared inactive operator as an offline provisioning reference, not an authenticated session.
+Placeholders reserve explicit non-authenticating provider/subject IDs. For local credentials use the reviewed offline [provisioning procedure](../security/local-authentication.md), followed by separate governed membership activation; changing the bootstrap manifest cannot activate users or overwrite configuration. Existing admin/analyst/viewer roles cover QA personas. The bootstrap audit records the declared inactive operator as an offline provisioning reference, not an authenticated session.
 
 ## Local staging simulation
 

@@ -2,7 +2,7 @@ import { ConfigurationError } from './configuration-error.ts';
 export interface DeploymentConfig {
     environment: 'development' | 'staging' | 'production';
     host: '127.0.0.1' | '0.0.0.0';
-    identityMode: 'synthetic' | 'disabled';
+    identityMode: 'synthetic' | 'disabled' | 'local';
     corsOrigins: readonly string[];
     operationalLogging: boolean;
 }
@@ -12,7 +12,7 @@ export function parseDeploymentConfig(environment: Readonly<Record<string,string
     const host = environment.API_HOST ?? (mode==='development' ? '127.0.0.1' : '0.0.0.0');
     if (!['127.0.0.1','0.0.0.0'].includes(host)) throw new ConfigurationError('API_HOST');
     const identityMode = environment.ACCESS_IDENTITY_MODE ?? (mode==='development' && (environment.CONTROL_PROVIDER ?? 'sqlite')==='sqlite' ? 'synthetic' : 'disabled');
-    if (!['synthetic','disabled'].includes(identityMode) || identityMode==='synthetic' && (mode!=='development' || host!=='127.0.0.1')) throw new ConfigurationError('ACCESS_IDENTITY_MODE');
+    if (!['synthetic','disabled','local'].includes(identityMode) || identityMode==='synthetic' && (mode!=='development' || host!=='127.0.0.1')) throw new ConfigurationError('ACCESS_IDENTITY_MODE');
     if (mode!=='development') validateSharedDatabases(environment,mode);
     const corsOrigins = parseCorsOrigins(environment.CORS_ORIGINS,mode==='development');
     return { environment: mode as DeploymentConfig['environment'],host: host as DeploymentConfig['host'],identityMode: identityMode as DeploymentConfig['identityMode'],corsOrigins,operationalLogging: mode!=='development' };

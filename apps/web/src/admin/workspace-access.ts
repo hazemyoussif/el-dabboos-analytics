@@ -1,10 +1,11 @@
 import type { TenantProfile } from '@el-dabboos/domain';
 import { ApiClientError, getAdministrationCapabilities, getDemoUsers, getTenantProfiles } from '../api/client.ts';
+import type { DemoUser } from '../api/client.ts';
 import type { PreferenceStore } from '../ui-preferences.ts';
 import { preferredTenant } from '../ui-preferences.ts';
 /** Identity validation and plane discovery precede any tenant/data capability request. */
-export async function discoverWorkspaceAccess(userId: string) {
-    const users = await getDemoUsers(userId);
+export async function discoverWorkspaceAccess(userId: string, authenticatedUser?: DemoUser) {
+    const users = authenticatedUser ? { users: [authenticatedUser] } : await getDemoUsers(userId);
     if (!users.users.some(user => user.id === userId))
         throw new Error('Unknown demo identity');
     const platform = await getAdministrationCapabilities(userId).catch(cause => {
@@ -23,6 +24,6 @@ export function isPlatformOnlyAccess(profiles: readonly unknown[], platformPermi
 export function selectWorkspaceProfile(profiles: readonly TenantProfile[], defaultTenantId: string, explicitTenantId: string | undefined, preferences: PreferenceStore | null): TenantProfile {
     const preferred = explicitTenantId ? profiles.find(profile => profile.id === explicitTenantId) ?? preferredTenant(preferences, profiles, defaultTenantId) : preferredTenant(preferences, profiles, defaultTenantId);
     if (!preferred)
-        throw new Error('No demo tenant membership is available');
+        throw new Error('No workspace membership is available');
     return preferred;
 }

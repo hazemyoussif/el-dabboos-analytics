@@ -36,7 +36,7 @@ export async function grantStagingPrivileges(client: PoolClient, identity: Stagi
     await client.query(`GRANT USAGE ON SCHEMA ${schema} TO ${login}`);
     const commands = (await client.query(`SELECT format('GRANT %s ON %s %I.%I TO %I',privilege_type,CASE WHEN relkind='S' THEN 'SEQUENCE' ELSE 'TABLE' END,nspname,relname,$2::text) sql
       FROM pg_class JOIN pg_namespace ON pg_namespace.oid=relnamespace CROSS JOIN LATERAL aclexplode(relacl)
-      WHERE grantee=$1::regrole AND nspname=ANY($3::text[])`,[group,login,[schema,`${schema}_admin`]])).rows;
+      WHERE grantee=$1::regrole AND nspname=ANY($3::text[])`,[group,login,[schema,`${schema}_admin`,...(identity==='controlApp' ? ['auth'] : [])]])).rows;
     for (const command of commands) await client.query(command.sql);
     const functions = (await client.query(`SELECT format('GRANT EXECUTE ON FUNCTION %I.%I(%s) TO %I',nspname,proname,pg_get_function_identity_arguments(pg_proc.oid),$2::text) sql
       FROM pg_proc JOIN pg_namespace ON pg_namespace.oid=pronamespace CROSS JOIN LATERAL aclexplode(proacl)
@@ -47,7 +47,7 @@ export async function grantStagingPrivileges(client: PoolClient, identity: Stagi
 }
 async function grantAdministrationSchema(client: PoolClient, identity: StagingIdentity): Promise<void> {
     const { login } = stagingIdentities[identity];
-    if (identity==='controlApp') await client.query(`GRANT USAGE ON SCHEMA control_admin TO ${login}`);
+    if (identity==='controlApp') await client.query(`GRANT USAGE ON SCHEMA control_admin,auth TO ${login}`);
     if (identity==='martRuntime') await client.query(`GRANT USAGE ON SCHEMA mart_admin TO ${login}`);
 }
 async function grantRuntimePolicies(client: PoolClient, login: string): Promise<void> {

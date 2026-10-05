@@ -4,7 +4,13 @@ import { provisionControlRoles } from '../../src/control/provision.ts';
 import { migrateControl } from '../../src/control/migrations.ts';
 export async function controlDatabase(migrate = true) {
     const mart = await database(false);
-    await provisionControlRoles(mart.admin,{ migrator: 'control_test_migrator_only',app: 'control_test_app_only' });
+    // Roles are cluster-wide; transaction advisory locks on separate fixture DBs are not.
+    const roleLock = new Pool({ connectionString: process.env.PG_TEST_ADMIN_URL,max:1 });
+    const lock = await roleLock.connect();
+    try {
+        await lock.query('SELECT pg_advisory_lock(738421,12)');
+        await provisionControlRoles(mart.admin,{ migrator: 'control_test_migrator_only',app: 'control_test_app_only' });
+    } finally { await lock.query('SELECT pg_advisory_unlock(738421,12)'); lock.release(); await roleLock.end(); }
     const config = new URL(process.env.PG_TEST_ADMIN_URL!);
     const name = (await mart.admin.query('SELECT current_database() name')).rows[0].name;
     await mart.admin.query(`ALTER DATABASE ${name} OWNER TO control_migrator`);

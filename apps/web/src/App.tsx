@@ -1,3 +1,5 @@
+import type { AuthUser } from './auth/client.ts';
+import { AccountControls,AuthenticationNotice } from './auth/AccountControls.tsx';
 import { WorkspaceContent, WorkspaceAdministrationNavigation, workspaceNavigationPermissions, initialAdministrationPage } from './admin/WorkspaceAdministration.tsx';
 import type { AdminPage } from './admin/Administration.tsx';
 import { useDashboardViewFilters } from './hooks/useDashboardViewFilters.ts';
@@ -25,8 +27,8 @@ import { copy, formatDate, formatTimestamp } from './i18n.ts';
 import { showCreationPanel, showAiEditor } from './product-flow.ts';
 
 const BuilderWorkspace = lazy(() => import('./builder/BuilderWorkspace.tsx').then(module => ({ default: module.BuilderWorkspace })));
-export default function App() {
-  const workspace = useWorkspace();
+export default function App({ authenticatedUser,onLogout,authenticationError }: { authenticatedUser?: AuthUser; onLogout?(all?: boolean): void; authenticationError?: string } = {}) {
+  const workspace = useWorkspace(authenticatedUser);
   const [adminPage, setAdminPage] = useState<AdminPage | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const library = useDashboardLibrary(workspace);
@@ -63,7 +65,7 @@ export default function App() {
     </WorkspaceNavigation>
     <main className="main-content">
       <header className="topbar"><NavigationTrigger locale={locale} onClick={() => setDrawerOpen(true)} /><div className="breadcrumb">{t.workspace} <span>/</span> {isCreating ? t.newDashboard : <>{breadcrumb} <span>/</span> {activeTitle}</>}</div>
-        <div className="top-actions"><label className="topbar-control demo-identity"><span>{locale === 'ar' ? 'هوية تجريبية' : 'Demo identity'}</span><select aria-label="Demo identity" value={userId} onChange={event => flow.switchIdentity(event.target.value)}>{demoUsers.map(user => <option key={user.id} value={user.id}>{user.displayName}</option>)}</select></label>
+        <div className="top-actions"><AccountControls user={authenticatedUser} locale={locale} onLogout={onLogout} userId={userId} demoUsers={demoUsers} onIdentity={flow.switchIdentity} />
           <label className="topbar-control"><span>{t.market}</span><select aria-label={t.market} value={profile?.id ?? 'demo-iq'} onChange={event => { const next = profiles.find(item => item.id === event.target.value); if (next) flow.selectTenant(next); }}>{profiles.map(item => <option key={item.id} value={item.id}>{item.labels[locale]}</option>)}</select></label>
           <div className="topbar-control"><span>{t.language}</span><div className="language-toggle" role="group" aria-label={t.language}><button className={locale === 'en' ? 'selected' : ''} onClick={() => workspace.selectLocale('en' as Locale)}>EN</button><button className={locale === 'ar' ? 'selected' : ''} onClick={() => workspace.selectLocale('ar' as Locale)}>عربي</button></div></div></div></header>
       <div className="page-content">
@@ -73,6 +75,7 @@ export default function App() {
           onBlank={flow.blank} onChooseTemplate={() => flow.enterCreation('choose-template')} onTemplate={id => profile && flow.openTemplate(id, profile, locale)}
           onGenerate={() => void flow.createAi()} onClose={flow.close} />
         {!isCreating && <details className="catalog-panel"><summary>{t.metricCatalog} · {metricRegistry.filter(item => item.availability === 'available').length} {t.available} · {metricRegistry.filter(item => item.availability === 'planned').length} {t.planned}</summary><div className="catalog-list">{metricRegistry.map(item => <div key={item.id} className="catalog-metric"><span>{item.labels[locale]}</span><span className={item.availability === 'available' ? 'metric-available' : 'metric-planned'}>{item.availability === 'available' ? t.available : t.planned}</span></div>)}</div></details>}
+        <AuthenticationNotice message={authenticationError} />
         {displayError && <div className="global-error" role="alert"><AlertCircle aria-hidden="true" />{displayError}<button onClick={() => setError(null)} aria-label={locale === 'ar' ? 'إغلاق' : 'Dismiss'}><X aria-hidden="true" /></button></div>}
         {!isCreating && <DashboardSection header={<div className="dashboard-title-row"><div><div className="eyebrow eyebrow-light">{breadcrumb}</div><h2>{activeTitle}</h2>{flow.status && <span className={`save-status ${flow.status === 'modified' || flow.status === 'unsaved' ? 'dirty' : ''}`}>{statusText}</span>}</div>
           <DashboardActions locale={locale} status={flow.status} actions={flow.actions} editing={!!builderHistory} loading={loading || builder.busy || viewFilters.busy}

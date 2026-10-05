@@ -1,3 +1,5 @@
+import { parseLocalAuthConfig } from './auth/config.ts';
+import { openLocalAuthentication } from './auth/runtime.ts';
 import { openControlStorage } from './control-storage.ts';
 import type { StructuredPlannerDiagnostic } from '@el-dabboos/application';
 import { StructuredDashboardPlanner } from '@el-dabboos/application';
@@ -19,6 +21,8 @@ if (config.controlProvider === 'sqlite' && canonicalPath(config.analyticsPath) =
     throw new Error('Analytics and metadata database paths must be separate. Copy approved dashboard/library tables explicitly to a dedicated metadata file before migration.');
 const controlStorage = await openControlStorage(config);
 const administration = controlStorage.store;
+const authConfig = parseLocalAuthConfig(process.env);
+const localAuth = authConfig && config.control ? await openLocalAuthentication(config.control.databaseUrl,authConfig) : undefined;
 const syntheticIdentity = config.deployment.identityMode === 'synthetic';
 const provider = config.analyticsProvider;
 let dataReady: (tenantId: string) => Promise<boolean> = async (id) => id === 'demo-iq' || id === 'demo-eg';
@@ -76,9 +80,10 @@ else if (plannerMode === 'disabled')
 else if (plannerMode !== 'mock')
     throw new Error('DASHBOARD_PLANNER must be mock, structured, or disabled.');
 const app = await buildApi({ analyticsRepository: repository, dimensionValues: repository, executionConcurrency: config.executionConcurrency,
-    readiness: { persistence: controlStorage.ready, analytics: analyticsReady },
+    readiness: { persistence: async () => { await localAuth?.ready(); return controlStorage.ready(); }, analytics: analyticsReady },
     administration: { unitOfWork: administration, directory: administration.directory, profiles: administration.profiles, dataReady,
         authenticate: async (headers) => {
+            if (localAuth) return (await localAuth.principal(headers)).binding.id;
             if (!syntheticIdentity)
                 throw new ApiError(401, 'IDENTITY_REQUIRED', 'Trusted authentication is not configured.');
             const id = headers['x-demo-user-id'];
@@ -97,7 +102,7 @@ const app = await buildApi({ analyticsRepository: repository, dimensionValues: r
                         result.push({ id: user.id, displayName: user.displayName });
                 return result;
             }) } : {}),
-    }, libraryRepository: administration.library, ...(planner !== undefined ? { planner } : {}) }, { corsOrigins: config.deployment.corsOrigins,...(config.deployment.operationalLogging ? { operationalLog: (line: string) => process.stdout.write(`${line}\n`) } : {}) });
+    }, libraryRepository: administration.library, ...(planner !== undefined ? { planner } : {}) }, { corsOrigins: config.deployment.corsOrigins,identityMode: config.deployment.identityMode,...(localAuth ? { localAuth } : {}),...(config.deployment.operationalLogging ? { operationalLog: (line: string) => process.stdout.write(`${line}\n`) } : {}) });
 const port = config.port;
 try {
     const address = await app.listen({ port, host: config.deployment.host });
@@ -106,8 +111,8 @@ try {
 }
 catch (error) {
     await close();
-    await controlStorage.close();
+    await localAuth?.close(); await controlStorage.close();
     throw error;
 }
-process.on('SIGTERM', () => { void app.close().then(async () => { await close(); await controlStorage.close(); }); });
-process.on('SIGINT', () => { void app.close().then(async () => { await close(); await controlStorage.close(); }); });
+process.on('SIGTERM', () => { void app.close().then(async () => { await close(); await localAuth?.close(); await controlStorage.close(); }); });
+process.on('SIGINT', () => { void app.close().then(async () => { await close(); await localAuth?.close(); await controlStorage.close(); }); });

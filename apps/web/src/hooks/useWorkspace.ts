@@ -21,7 +21,7 @@ const navigate = (recordId: string | null) => {
   const path = recordId ? `/dashboards/${encodeURIComponent(recordId)}` : '/';
   if (window.location.pathname !== path) window.history.pushState({}, '', path);
 };
-export function useWorkspace() {
+export function useWorkspace(authenticatedUser?: DemoUser) {
   const [locale, setLocale] = useState<Locale>(preferredLocale(preferences()) ?? 'ar');
   const [userId, setUserId] = useState('demo-iq-admin');
   const [demoUsers, setDemoUsers] = useState<DemoUser[]>([]);
@@ -77,7 +77,7 @@ export function useWorkspace() {
     setUserId(nextUserId); setLoading(true); setError(null); setDocument(null); setExecution(null); setSavedDashboards([]);
     setFilterOptions({}); setPermissions([]); setPlatformPermissions([]); setProfile(null); setProfiles([]);
     try {
-      const { users, platform, membership } = await discoverWorkspaceAccess(nextUserId);
+      const { users, platform, membership } = await discoverWorkspaceAccess(nextUserId,authenticatedUser);
       if (!isCurrent(id)) return;
       setPlatformPermissions(platform.platformPermissions);
       if (isPlatformOnlyAccess(membership.profiles, platform.platformPermissions)) {
@@ -115,12 +115,12 @@ export function useWorkspace() {
       if (!restoreRoute) navigate(null);
     } catch (cause) {
       if (isCurrent(id)) {
-        if (nextUserId !== defaultDemoUserId && cause instanceof ApiClientError && cause.status === 401) void loadWorkspace(defaultDemoUserId);
+        if (!authenticatedUser && nextUserId !== defaultDemoUserId && cause instanceof ApiClientError && cause.status === 401) void loadWorkspace(defaultDemoUserId);
         else setError(cause instanceof Error ? cause.message : String(cause));
       }
     } finally { if (isCurrent(id)) setLoading(false); }
   };
-  useEffect(() => { void loadWorkspace(preferredDemoUser(demoSessionPreference()) ?? defaultDemoUserId); }, []);
+  useEffect(() => { void loadWorkspace(authenticatedUser?.id ?? preferredDemoUser(demoSessionPreference()) ?? defaultDemoUserId); }, []);
   useEffect(() => {
     if (!dirty) return;
     const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ''; };

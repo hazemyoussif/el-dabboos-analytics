@@ -1,3 +1,5 @@
+import { registerLocalAuthentication } from './auth/routes.ts';
+import type { LocalAuthenticationRuntime } from './auth/runtime.ts';
 import { correlationId, registerOperationalLogging } from './operational-logging.ts';
 import { parseCorsOrigins } from './deployment-config.ts';
 import { registerAdministrationRoutes } from './routes/administration.ts';
@@ -17,11 +19,13 @@ import { registerSavedDashboardRoutes } from './routes/saved-dashboards.ts';
 
 export { ApiError };
 export type { ApiDependencies };
-export async function buildApi(deps: ApiDependencies, runtime: { corsOrigins?: readonly string[]; operationalLog?: (line: string) => void } = {}) {
+export async function buildApi(deps: ApiDependencies, runtime: { corsOrigins?: readonly string[]; localAuth?: LocalAuthenticationRuntime; identityMode?: string; operationalLog?: (line: string) => void } = {}) {
   const app = Fastify({ logger: false, requestIdHeader: false, genReqId: request => correlationId(request.headers['x-request-id']), ajv: { customOptions: { removeAdditional: false } } });
   registerOperationalLogging(app,runtime.operationalLog);
   const origins = runtime.corsOrigins ? parseCorsOrigins(runtime.corsOrigins.join(',')) : parseCorsOrigins(undefined,true);
-  await app.register(cors, { origin: origins, exposedHeaders: ['x-request-id'] });
+  await app.register(cors, { origin: origins, exposedHeaders: ['x-request-id'], credentials: true });
+  app.get('/api/auth/state',async () => ({ mode: runtime.identityMode ?? (deps.administration ? 'disabled' : 'synthetic') }));
+  if (runtime.localAuth) registerLocalAuthentication(app,runtime.localAuth);
   const services = createRouteContext(deps);
   registerErrorHandler(app);
   registerHealthRoutes(app, deps);

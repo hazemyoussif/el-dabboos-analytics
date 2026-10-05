@@ -85,7 +85,7 @@ function parseControlSettings(env: Readonly<Record<string,string|undefined>>): P
   if (controlProvider !== 'postgres') throw new ConfigurationError('CONTROL_PROVIDER');
   const databaseUrl = env.CONTROL_DATABASE_URL;
   validateControlDatabaseUrl(databaseUrl,env);
-  if ((env.ACCESS_IDENTITY_MODE ?? 'disabled') !== 'disabled') throw new ConfigurationError('ACCESS_IDENTITY_MODE');
+  if (!['disabled','local'].includes(env.ACCESS_IDENTITY_MODE ?? 'disabled')) throw new ConfigurationError('ACCESS_IDENTITY_MODE');
   const raw = env.CONTROL_POOL_MAX ?? '8', poolMax = Number(raw);
   if (!/^\d+$/.test(raw) || !Number.isSafeInteger(poolMax) || poolMax < 1 || poolMax > 64) throw new ConfigurationError('CONTROL_POOL_MAX');
   return { controlProvider,control: { databaseUrl: databaseUrl!,poolMax } };

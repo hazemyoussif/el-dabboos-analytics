@@ -11,7 +11,7 @@ Status is evidence-based, not a claim that the prototype is production-ready. Ow
 | Metric/business definition approval | Synthetic canonical formulas and available/planned registry | Eligible states, tax/discount/returns/cost definitions signed by finance/domain owners |
 | Currency policy | Tenant IQD/EGP display; no FX and no fact currency field | Transaction/base/reporting currency and approved conversion before aggregation; finance |
 | Tenant/company mapping | Validated demo membership and tenant-scoped facts | Stable source company/tenant/branch mapping and multi-company rules; source/security owners |
-| Production identity contract | Demo headers only | Verified IdP/SSO principal, memberships, revocation and policy owner; identity/security |
+| Production identity contract | Governed local credentials/cookie sessions; shared bootstrap remains inactive | Verified IdP/SSO principal, memberships, revocation and policy owner; identity/security |
 | Source adapter architecture | Owned PostgreSQL mart, writer and SQL serving tested with synthetic data; no connector | Approve source boundary, mapping and implementation evidence; integration |
 | Data-quality checks | Canonical finite/date/measure/snapshot validation | Missing/duplicate/state/unit/entity rules, rejects and correction processing; source owner |
 | Reconciliation | Deterministic synthetic contract tests | Approved source report, watermark, date/group totals and tolerance sign-off; business |
@@ -61,3 +61,5 @@ One approved pilot tenant, revenue/net_revenue/order_count, monthly and one cert
 [ADR 027](../architecture/adr/027-production-data-foundation.md) records the offline foundation. None of its contracts or synthetic tests close source, currency, business approval or operational gates. Legacy systems remain read-only; no credentials or production connection are part of this milestone.
 
 Control persistence milestone: [PostgreSQL control plane](postgres-control-plane.md) provides schema/role separation, versioned product metadata, source/mapping authoring and exact SQLite cutover verification. This closes the persistence implementation path, not shared deployment, trusted identity, approved metadata migration, publication governance, backup/restore or business certification gates. Persistent local mart evidence remains independent and unchanged.
+
+Local identity milestone: [local authentication](../security/local-authentication.md) and ADR 030 provide governed offline initial setup, framework-owned hashing, revocable sessions, safe security audit and fresh authorization. This closes the local implementation slice; HTTPS deployment, approved employee credential handoff/activation, MFA/recovery policy, privacy/retention and upstream security review remain launch gates. No Odoo auth, invitation email or source sync is enabled.

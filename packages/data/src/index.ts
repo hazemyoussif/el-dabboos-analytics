@@ -37,3 +37,4 @@ export * from './control/import-sqlite.ts';
 export * from './control/sources.ts';
 export * from './control/staging-bootstrap.ts';
 export * from './postgres/readiness.ts';
+export * from './auth/control-authentication.ts';
