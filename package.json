@@ -16,14 +16,15 @@
     "dev:api": "pnpm --filter @el-dabboos/api dev",
     "dev:web": "pnpm --filter @el-dabboos/web dev",
     "test:postgres": "node --experimental-transform-types --disable-warning=ExperimentalWarning --test packages/data/test/postgres/*.test.ts",
-    "mart:migrate": "node --experimental-transform-types --disable-warning=ExperimentalWarning packages/data/src/postgres/migrate-cli.ts",
+    "mart:migrate": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --experimental-transform-types --disable-warning=ExperimentalWarning packages/data/src/postgres/migrate-cli.ts",
     "odoo:pilot": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --experimental-transform-types --disable-warning=ExperimentalWarning apps/api/src/odoo-pilot-cli.ts",
     "metadata:migrate": "node --experimental-transform-types --disable-warning=ExperimentalWarning packages/data/src/metadata/migrate-cli.ts",
     "metadata:bootstrap": "node --experimental-transform-types --disable-warning=ExperimentalWarning apps/api/src/administration-cli.ts",
     "check:architecture": "node scripts/engineering/check.mjs architecture",
     "check:quality": "node scripts/engineering/check.mjs quality",
     "check:diff": "node scripts/engineering/check.mjs diff",
-    "test:guardrails": "node --test scripts/engineering/test/*.test.mjs"
+    "test:guardrails": "node --test scripts/engineering/test/*.test.mjs",
+    "mart:local": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --experimental-transform-types --disable-warning=ExperimentalWarning apps/api/src/local-mart-cli.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

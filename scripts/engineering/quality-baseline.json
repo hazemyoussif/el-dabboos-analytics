@@ -819,24 +819,6 @@
     },
     {
       "file": "packages/data/src/postgres/migrations.ts",
-      "symbol": "migratePostgres/(await readdir(directory)).filter:callback0/binding:n",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/migrations.ts",
-      "symbol": "migratePostgres/migrations.some:callback0/binding:m",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/migrations.ts",
-      "symbol": "migratePostgres/migrations.some:callback0/binding:i",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/migrations.ts",
       "symbol": "migratePostgres/binding:i",
       "metric": "shortNames",
       "ceiling": 1

@@ -9,14 +9,7 @@ export async function migratePostgres(pool: Pool, directory: URL = migrationDire
   let locked = false;
   try {
     await client.query('SELECT pg_advisory_lock(738421, 1)'); locked = true;
-    const names = (await readdir(directory)).filter(n => n.endsWith('.sql')).sort();
-    const migrations = await Promise.all(names.map(async name => {
-      const match = /^(\d{3})_[a-z0-9_]+\.sql$/.exec(name);
-      if (!match) throw new Error('Invalid migration filename');
-      const sql = await readFile(new URL(name, directory), 'utf8');
-      return { version: Number(match[1]), name, sql, checksum: createHash('sha256').update(sql).digest('hex') };
-    }));
-    if (!migrations.length || migrations.some((m, i) => m.version !== i + 1)) throw new Error('Migration versions must be contiguous');
+    const migrations = await loadPostgresMigrations(directory);
     await client.query(`CREATE SCHEMA IF NOT EXISTS mart_admin;
       REVOKE ALL ON SCHEMA mart_admin FROM PUBLIC;
       CREATE TABLE IF NOT EXISTS mart_admin.mart_schema_migrations (
@@ -41,4 +34,17 @@ export async function migratePostgres(pool: Pool, directory: URL = migrationDire
     try { if (locked) await client.query('SELECT pg_advisory_unlock(738421, 1)'); }
     finally { client.release(); }
   }
+}
+
+/** Shared immutable manifest for migration execution and read-only infrastructure verification. */
+export async function loadPostgresMigrations(directory: URL = migrationDirectory) {
+  const names = (await readdir(directory)).filter(name => name.endsWith('.sql')).sort();
+  const migrations = await Promise.all(names.map(async name => {
+    const match = /^(\d{3})_[a-z0-9_]+\.sql$/.exec(name);
+    if (!match) throw new Error('Invalid migration filename');
+    const sql = await readFile(new URL(name, directory), 'utf8');
+    return { version: Number(match[1]), name, sql, checksum: createHash('sha256').update(sql).digest('hex') };
+  }));
+  if (!migrations.length || migrations.some((migration, index) => migration.version !== index + 1)) throw new Error('Migration versions must be contiguous');
+  return migrations;
 }

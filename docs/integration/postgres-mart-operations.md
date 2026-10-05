@@ -4,6 +4,10 @@ The approved comparison pilot now extends this foundation through [ADR 029](../a
 
 Implemented foundation, not production-source readiness. The approved adapter is implemented; live credentials, authoritative report evidence and production deployment readiness remain outstanding. PostgreSQL target and local/CI image: **postgres:18.6**. SQLite/mock remain available; SQLite is the default. Legacy systems are untouched.
 
+## Persistent local development mart
+
+Use the separate [local mart workflow](local-analytics-mart.md) and `infra/postgres/compose.mart.yml` for persistent development/pilot storage on port 55437. Its three dedicated logins inherit the existing group roles. The disposable environment below remains unchanged.
+
 ## Disposable integration environment
 
 ```bash
