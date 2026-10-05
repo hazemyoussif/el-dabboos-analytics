@@ -23,11 +23,14 @@ export async function tenantTransaction<T>(pool: Pool, tenantId: string, operati
 
 /** Refuse accidentally supplied migrator/ingestor/superuser credentials at the runtime boundary. */
 export async function verifyMartRuntimeRole(pool: Pool): Promise<void> {
-  const { rows } = await pool.query(`SELECT r.rolsuper, r.rolbypassrls,
+  const { rows } = await pool.query(`SELECT r.rolsuper, r.rolbypassrls, r.rolcreatedb,r.rolcreaterole,r.rolreplication,
     pg_has_role(current_user,'dabboos_runtime','MEMBER') AS runtime,
     pg_has_role(current_user,'dabboos_ingestor','MEMBER') AS ingestor,
-    pg_has_role(current_user,'dabboos_migrator','MEMBER') AS migrator
+    pg_has_role(current_user,'dabboos_migrator','MEMBER') AS migrator,
+    has_database_privilege(current_database(),'CREATE') database_create,
+    has_schema_privilege('mart','CREATE') schema_create,
+    EXISTS(SELECT 1 FROM pg_class JOIN pg_namespace ON pg_namespace.oid=relnamespace WHERE nspname IN ('mart','mart_admin') AND relkind IN ('r','v','p') AND has_table_privilege(pg_class.oid,'INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')) any_write
     FROM pg_roles r WHERE r.rolname=current_user`);
   const role = rows[0];
-  if (!role || !role.runtime || role.ingestor || role.migrator || role.rolsuper || role.rolbypassrls) throw new Error('PostgreSQL runtime requires its dedicated read-only identity');
+  if (!role || !role.runtime || role.ingestor || role.migrator || role.rolsuper || role.rolbypassrls || role.rolcreatedb || role.rolcreaterole || role.rolreplication || role.database_create || role.schema_create || role.any_write) throw new Error('PostgreSQL runtime requires its dedicated read-only identity');
 }

@@ -16,6 +16,6 @@ export async function openControlStorage(config: RuntimeConfig) {
     try {
         await assertControlReady(pool);
         await verifyControlAppRole(pool);
-        return { store: new PostgresAdministrationStore(pool), ready: async () => { await assertControlReady(pool); return true; }, close: () => pool.end() };
+        return { store: new PostgresAdministrationStore(pool), ready: async () => { await assertControlReady(pool); await verifyControlAppRole(pool); return true; }, close: () => pool.end() };
     } catch { await pool.end(); throw new Error('Control database identity/schema check failed'); }
 }

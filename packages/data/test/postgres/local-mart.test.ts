@@ -3,6 +3,7 @@ import test from 'node:test';
 import { randomBytes } from 'node:crypto';
 import { Pool } from 'pg';
 import { provisionLocalMartRoles, localMartLogins } from '../../src/postgres/local-mart.ts';
+import { migratePostgres } from '../../src/postgres/migrations.ts';
 import { verifyMartRuntimeRole } from '../../src/postgres/session.ts';
 import { database, enabled } from './support.ts';
 
@@ -13,6 +14,7 @@ test('local role provisioning: repeatable, safely quotes generated passwords and
   try {
     await provisionLocalMartRoles(fixture.admin,passwords);
     await provisionLocalMartRoles(fixture.admin,passwords);
+    await migratePostgres(fixture.migrator);
     for (const [identity,login] of Object.entries(localMartLogins)) {
       const url = new URL(process.env.PG_TEST_ADMIN_URL!);
       // Match the isolated fixture database while keeping its randomly generated credential private.

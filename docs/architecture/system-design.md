@@ -81,7 +81,7 @@ DashboardSpec v2 business filters persist a symbolic datePreset, fixed dateRange
 
 ## Offline production foundation
 
-[ADR 027](adr/027-production-data-foundation.md) establishes an El Dabboos-owned PostgreSQL mart, separate ingestion envelope, source reader, versioned mapping certification and reconciliation contracts. Domain validators, five transactional SQL migrations, role/RLS enforcement, a mart writer, frozen reconciliation and bounded SQL-based serving are implemented and tested on PostgreSQL 18.6. [Operations](../integration/postgres-mart-operations.md) documents provisioning and limits. Existing mock/SQLite execution is unchanged. Production sources and mappings are unapproved.
+[ADR 027](adr/027-production-data-foundation.md) establishes an El Dabboos-owned PostgreSQL mart, separate ingestion envelope, source reader, versioned mapping certification and reconciliation contracts. Domain validators, eight transactional SQL migrations, role/RLS enforcement, a mart writer, frozen reconciliation and bounded SQL-based serving are implemented and tested on PostgreSQL 18.6. [Operations](../integration/postgres-mart-operations.md) documents provisioning and limits. Existing mock/SQLite execution is unchanged. Production sources and mappings are unapproved.
 
 ## Administration architecture checkpoint
 
@@ -99,4 +99,4 @@ Resource route modules in `apps/api/src/routes/administration/` validate each re
 
 ## Control database boundary
 
-[PostgreSQL control operations](../integration/postgres-control-plane.md) implement a separate control database with explicit immutable migrations, dedicated migrator/app identities, shared administration contracts and a transactional exact-row SQLite cutover tool. Source/company scope and governed mapping authoring live there; source secrets resolve externally. The Analytics mart retains immutable evidence/releases/bindings and independent serving authority. PostgreSQL control mode never opens metadata SQLite and refuses synthetic production authentication. Shared staging/production deployment and trusted IdP remain future work.
+[PostgreSQL control operations](../integration/postgres-control-plane.md) implement a separate control database with explicit immutable migrations, dedicated migrator/app identities, shared administration contracts and a transactional exact-row SQLite cutover tool. Source/company scope and governed mapping authoring live there; source secrets resolve externally. The Analytics mart retains immutable evidence/releases/bindings and independent serving authority. PostgreSQL control mode never opens metadata SQLite and refuses synthetic production authentication. Shared staging images, explicit offline bootstrap, separate staging database logins, safe deployment configuration, correlation logs and exact schema readiness are implemented; see [shared staging runbook](../integration/shared-staging.md). External deployment and trusted IdP integration remain pending.

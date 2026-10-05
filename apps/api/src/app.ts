@@ -1,3 +1,5 @@
+import { correlationId, registerOperationalLogging } from './operational-logging.ts';
+import { parseCorsOrigins } from './deployment-config.ts';
 import { registerAdministrationRoutes } from './routes/administration.ts';
 import { registerHealthRoutes } from './routes/health.ts';
 import { registerDashboardLibraryRoutes } from './routes/dashboard-library.ts';
@@ -15,9 +17,11 @@ import { registerSavedDashboardRoutes } from './routes/saved-dashboards.ts';
 
 export { ApiError };
 export type { ApiDependencies };
-export async function buildApi(deps: ApiDependencies) {
-  const app = Fastify({ logger: false, ajv: { customOptions: { removeAdditional: false } } });
-  await app.register(cors, { origin: ['http://localhost:5173', 'http://127.0.0.1:5173'] });
+export async function buildApi(deps: ApiDependencies, runtime: { corsOrigins?: readonly string[]; operationalLog?: (line: string) => void } = {}) {
+  const app = Fastify({ logger: false, requestIdHeader: false, genReqId: request => correlationId(request.headers['x-request-id']), ajv: { customOptions: { removeAdditional: false } } });
+  registerOperationalLogging(app,runtime.operationalLog);
+  const origins = runtime.corsOrigins ? parseCorsOrigins(runtime.corsOrigins.join(',')) : parseCorsOrigins(undefined,true);
+  await app.register(cors, { origin: origins, exposedHeaders: ['x-request-id'] });
   const services = createRouteContext(deps);
   registerErrorHandler(app);
   registerHealthRoutes(app, deps);

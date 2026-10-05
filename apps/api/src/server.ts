@@ -1,7 +1,7 @@
 import { openControlStorage } from './control-storage.ts';
 import type { StructuredPlannerDiagnostic } from '@el-dabboos/application';
 import { StructuredDashboardPlanner } from '@el-dabboos/application';
-import { MockAnalyticsRepository, PostgresAnalyticsRepository, SqliteAnalyticsRepository, createMartPool, createSqliteSchema, generateSeedFacts, verifyMartRuntimeRole } from '@el-dabboos/data';
+import { MockAnalyticsRepository, PostgresAnalyticsRepository, SqliteAnalyticsRepository, createMartPool, createSqliteSchema, generateSeedFacts, assertMartRuntimeReady } from '@el-dabboos/data';
 import type { AnalyticsRepository, DashboardPlanner, DimensionValueRepository } from '@el-dabboos/domain';
 import { existsSync, realpathSync } from 'node:fs';
 import { resolve, } from 'node:path';
@@ -19,9 +19,7 @@ if (config.controlProvider === 'sqlite' && canonicalPath(config.analyticsPath) =
     throw new Error('Analytics and metadata database paths must be separate. Copy approved dashboard/library tables explicitly to a dedicated metadata file before migration.');
 const controlStorage = await openControlStorage(config);
 const administration = controlStorage.store;
-const syntheticIdentity = (process.env.ACCESS_IDENTITY_MODE ?? (config.controlProvider === 'postgres' ? 'disabled' : 'synthetic')) === 'synthetic';
-if (!['synthetic', 'disabled'].includes(process.env.ACCESS_IDENTITY_MODE ?? (config.controlProvider === 'postgres' ? 'disabled' : 'synthetic')))
-    throw new Error('Unsupported identity mode. Production IdP integration is not implemented.');
+const syntheticIdentity = config.deployment.identityMode === 'synthetic';
 const provider = config.analyticsProvider;
 let dataReady: (tenantId: string) => Promise<boolean> = async (id) => id === 'demo-iq' || id === 'demo-eg';
 let analyticsReady: () => Promise<boolean>;
@@ -48,13 +46,13 @@ else {
     dataReady = id => postgresRepository.isDataReady(id);
     close = () => pool.end();
     try {
-        await verifyMartRuntimeRole(pool);
+        await assertMartRuntimeReady(pool);
     }
     catch {
         await pool.end();
         throw new Error('PostgreSQL runtime identity/provisioning check failed');
     }
-    analyticsReady = async () => { await pool.query('SELECT 1 FROM mart.canonical_facts LIMIT 0'); return true; };
+    analyticsReady = async () => { await assertMartRuntimeReady(pool); return true; };
 }
 const plannerMode = config.plannerMode;
 let planner: DashboardPlanner | null | undefined;
@@ -99,10 +97,10 @@ const app = await buildApi({ analyticsRepository: repository, dimensionValues: r
                         result.push({ id: user.id, displayName: user.displayName });
                 return result;
             }) } : {}),
-    }, libraryRepository: administration.library, ...(planner !== undefined ? { planner } : {}) });
+    }, libraryRepository: administration.library, ...(planner !== undefined ? { planner } : {}) }, { corsOrigins: config.deployment.corsOrigins,...(config.deployment.operationalLogging ? { operationalLog: (line: string) => process.stdout.write(`${line}\n`) } : {}) });
 const port = config.port;
 try {
-    const address = await app.listen({ port, host: '127.0.0.1' });
+    const address = await app.listen({ port, host: config.deployment.host });
     process.stdout.write(`${startupSummary({ analyticsProvider: provider, dashboardPath: config.controlProvider === 'postgres' ? 'postgres-control' : config.dashboardPath, plannerMode, modelId: config.llm.modelId, baseUrl: config.llm.baseUrl, diagnostics: config.llm.diagnostics, llmTemperature: config.llm.temperature, llmMaxTokens: config.llm.maxTokens, ...(config.llm.reasoningBudgetTokens !== undefined ? { llmReasoningBudgetTokens: config.llm.reasoningBudgetTokens } : {}), ...(config.llm.seed !== undefined ? { llmSeed: config.llm.seed } : {}), llmTimeoutMs: config.llm.timeoutMs, llmRepairAttempts: config.llm.repairAttempts, port, executionConcurrency: config.executionConcurrency }, config.llm.apiKey)}\n`);
     process.stdout.write(`El Dabboos API listening at ${address}\n`);
 }

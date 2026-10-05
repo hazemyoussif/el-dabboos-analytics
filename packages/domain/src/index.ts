@@ -20,3 +20,4 @@ export * from './administration-repository.ts';
 export * from './extraction.ts';
 export * from './transaction-evidence.ts';
 export * from './source-control.ts';
+export * from './staging-bootstrap.ts';

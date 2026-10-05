@@ -1,0 +1,12 @@
+FROM node:24.14.0-bookworm-slim AS build
+WORKDIR /workspace
+RUN npm install --global pnpm@12.6.0
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
+COPY packages ./packages
+COPY apps ./apps
+RUN pnpm install --frozen-lockfile && pnpm --filter @el-dabboos/api build
+FROM build AS runtime
+ENV NODE_ENV=production
+USER node
+EXPOSE 3001
+CMD ["node", "--experimental-transform-types", "--disable-warning=ExperimentalWarning", "apps/api/dist/server.mjs"]

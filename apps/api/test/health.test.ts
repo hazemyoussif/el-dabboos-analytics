@@ -49,3 +49,22 @@ test('governed persistence readiness invokes the configured probe without a lega
     assert.deepEqual(response.json(), { status: 'ready', checks: { persistence: 'available', analytics: 'available' } });
   } finally { await app.close(); db.close(); }
 });
+
+test('staging origins and correlation logs exclude secrets; source connectivity is not a dependency', async () => {
+  const repository = new MockAnalyticsRepository([]), lines: string[] = [];
+  const database = new DatabaseSync(':memory:'); createDashboardPersistenceSchema(database);
+  const app = await buildApi({ analyticsRepository: repository,dimensionValues: repository,planner: null,dashboardRepository: new SqliteDashboardRepository(database),
+    readiness: { persistence: async () => true,analytics: async () => true } },
+    { corsOrigins: ['https://analytics.example.test'],operationalLog: line => lines.push(line) });
+  try {
+    const response = await app.inject({ url: '/health/ready?token=private-query',headers: { origin: 'https://analytics.example.test','x-request-id': 'qa-123',authorization: 'Bearer private-token','x-demo-user-id': 'private-user' } });
+    assert.equal(response.statusCode,200);
+    assert.equal(response.headers['access-control-allow-origin'],'https://analytics.example.test');
+    assert.equal(response.headers['x-request-id'],'qa-123');
+    const log = JSON.parse(lines[0]!);
+    assert.equal(log.route,'/health/ready'); assert.equal(log.requestId,'qa-123');
+    assert.ok(!lines.join('').includes('private-'));
+    const rejected = await app.inject({ url: '/health/live',headers: { origin: 'https://other.example.test' } });
+    assert.equal(rejected.headers['access-control-allow-origin'],undefined);
+  } finally { await app.close(); database.close(); }
+});

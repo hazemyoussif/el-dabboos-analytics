@@ -1,3 +1,7 @@
+import { parseDeploymentConfig } from './deployment-config.ts';
+import type { DeploymentConfig } from './deployment-config.ts';
+import { ConfigurationError } from './configuration-error.ts';
+export { ConfigurationError } from './configuration-error.ts';
 /** Explicit startup allowlist: never serialize process.env or provider requests. */
 export function startupSummary(config: { analyticsProvider: string; dashboardPath: string; plannerMode: string;
   modelId?: string | undefined; baseUrl?: string | undefined; diagnostics: boolean; port: number; executionConcurrency?: number; llmTimeoutMs?: number; llmRepairAttempts?: number; llmTemperature?: number; llmMaxTokens?: number; llmReasoningBudgetTokens?: number; llmSeed?: number }, apiKey?: string): string {
@@ -18,15 +22,13 @@ export function startupSummary(config: { analyticsProvider: string; dashboardPat
 }
 
 export interface RuntimeConfig {
+  deployment: DeploymentConfig;
   controlProvider: 'sqlite' | 'postgres';
   control?: { databaseUrl: string; poolMax: number };
   analyticsProvider: 'sqlite' | 'mock' | 'postgres';
   postgres?: { runtimeUrl: string; poolMax: number; statementTimeoutMs: number; maxGroups: number; maxDateSpanDays: number }; plannerMode: 'mock' | 'structured' | 'disabled';
   analyticsPath: string; dashboardPath: string; port: number; executionConcurrency: number;
   llm: { baseUrl?: string; modelId?: string; apiKey?: string; timeoutMs: number; repairAttempts: number; diagnostics: boolean; temperature: number; maxTokens: number; reasoningBudgetTokens?: number; seed?: number };
-}
-export class ConfigurationError extends Error {
-  constructor(field: string) { super(`Invalid API configuration: ${field}. Check the documented settings.`); }
 }
 /** Only the API composition root supplies environment values; never loads env files itself. */
 export function parseRuntimeConfig(env: Readonly<Record<string, string | undefined>>, defaults: { analyticsPath: string; dashboardPath: string }): RuntimeConfig {
@@ -67,7 +69,7 @@ export function parseRuntimeConfig(env: Readonly<Record<string, string | undefin
     catch { throw new ConfigurationError('MART_RUNTIME_URL'); }
     postgres = { runtimeUrl, poolMax: integer('MART_POOL_MAX', 8, 1, 64), statementTimeoutMs: integer('MART_STATEMENT_TIMEOUT_MS', 15000, 1, 120000), maxGroups: integer('MART_MAX_GROUPS', 1000, 1, 5000), maxDateSpanDays: integer('MART_MAX_DATE_SPAN_DAYS', 3660, 1, 36600) };
   }
-  return { ...controlSettings, analyticsProvider, plannerMode, ...(postgres ? { postgres } : {}),
+  return { deployment: parseDeploymentConfig(env), ...controlSettings, analyticsProvider, plannerMode, ...(postgres ? { postgres } : {}),
     analyticsPath: path('SQLITE_DB_PATH', defaults.analyticsPath), dashboardPath: path('DASHBOARD_DB_PATH', defaults.dashboardPath),
     port: integer('PORT', 3001, 1, 65535), executionConcurrency: integer('ANALYTICS_EXECUTION_CONCURRENCY', 8, 1, 64),
     llm: { ...(baseUrl ? { baseUrl } : {}), ...(modelId ? { modelId } : {}), ...(env.LLM_API_KEY ? { apiKey: env.LLM_API_KEY } : {}),

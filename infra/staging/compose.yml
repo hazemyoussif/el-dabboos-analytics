@@ -1,0 +1,45 @@
+name: el-dabboos-staging
+services:
+  api:
+    image: ${STAGING_API_IMAGE:-el-dabboos-api:staging-local}
+    build:
+      context: ../..
+      dockerfile: infra/staging/Dockerfile.api
+    env_file: ${STAGING_RUNTIME_ENV_FILE:?Set a protected runtime env file}
+    restart: unless-stopped
+    read_only: true
+    tmpfs: [/tmp]
+    networks: [application, database]
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3001/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+  web:
+    image: ${STAGING_WEB_IMAGE:-el-dabboos-web:staging-local}
+    build:
+      context: ../..
+      dockerfile: infra/staging/Dockerfile.web
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
+    depends_on: [api]
+    ports: ["127.0.0.1:${STAGING_WEB_PORT:-8088}:8080"]
+    read_only: true
+    tmpfs: [/tmp]
+    restart: unless-stopped
+    networks: [application]
+  operator:
+    profiles: [operations]
+    image: ${STAGING_API_IMAGE:-el-dabboos-api:staging-local}
+    env_file: ${STAGING_OPERATOR_ENV_FILE:?Set a protected operator env file}
+    entrypoint: [node, --experimental-transform-types, --disable-warning=ExperimentalWarning, apps/api/src/staging-cli.ts]
+    networks: [database]
+    read_only: true
+    tmpfs: [/tmp]
+    volumes:
+      - ./bootstrap.example.json:/workspace/bootstrap.json:ro
+networks:
+  application:
+  database:
+    external: true
+    name: ${STAGING_DATABASE_NETWORK:?Set the existing PostgreSQL network}

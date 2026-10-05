@@ -35,3 +35,5 @@ export * from './control/migrations.ts';
 export * from './control/session.ts';
 export * from './control/import-sqlite.ts';
 export * from './control/sources.ts';
+export * from './control/staging-bootstrap.ts';
+export * from './postgres/readiness.ts';

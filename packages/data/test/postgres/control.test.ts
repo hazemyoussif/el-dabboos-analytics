@@ -36,7 +36,7 @@ async function sqliteFixture() {
 test('control migration bootstrap, rerun, runtime schema checks and credential separation', { skip: !enabled }, async () => {
     const database = await controlDatabase(false);
     try {
-        assert.deepEqual(await migrateControl(database.migrator),[1,2,3,4,5]);
+        assert.deepEqual(await migrateControl(database.migrator),[1,2,3,4,5,6]);
         assert.deepEqual(await migrateControl(database.migrator),[]);
         await assertControlReady(database.app);
         await verifyControlAppRole(database.app);
@@ -62,7 +62,7 @@ test('control history refuses changed checksums, gaps and newer schemas', { skip
         await database.migrator.query('DELETE FROM control_admin.schema_migrations WHERE version=2');
         await assert.rejects(migrateControl(database.migrator));
         await database.migrator.query('INSERT INTO control_admin.schema_migrations(version,name,sha256) VALUES (2,$1,$2)',[manifest[1]!.name,manifest[1]!.checksum]);
-        await database.migrator.query("INSERT INTO control_admin.schema_migrations(version,name,sha256) VALUES (6,'future','future')");
+        await database.migrator.query("INSERT INTO control_admin.schema_migrations(version,name,sha256) VALUES (7,'future','future')");
         await assert.rejects(migrateControl(database.migrator));
         await assert.rejects(assertControlReady(database.app));
     } finally { await database.close(); }
@@ -71,12 +71,12 @@ test('control failed migration rolls back DDL and history; manifest gaps reject 
     const database = await controlDatabase(), directory = await mkdtemp(join(tmpdir(),'control-migrations-'));
     try {
         for (const migration of await loadControlMigrations()) await writeFile(join(directory,migration.name),migration.sql);
-        await writeFile(join(directory,'006_failure.sql'),'CREATE TABLE control.rollback_probe(id text); SELECT missing_column;');
+        await writeFile(join(directory,'007_failure.sql'),'CREATE TABLE control.rollback_probe(id text); SELECT missing_column;');
         await assert.rejects(migrateControl(database.migrator,pathToFileURL(directory+'/')));
         assert.equal((await database.admin.query("SELECT to_regclass('control.rollback_probe') table_name")).rows[0].table_name,null);
-        assert.equal((await database.admin.query('SELECT count(*)::int count FROM control_admin.schema_migrations')).rows[0].count,5);
-        await rm(join(directory,'006_failure.sql'));
-        await writeFile(join(directory,'007_gap.sql'),'SELECT 1;');
+        assert.equal((await database.admin.query('SELECT count(*)::int count FROM control_admin.schema_migrations')).rows[0].count,6);
+        await rm(join(directory,'007_failure.sql'));
+        await writeFile(join(directory,'008_gap.sql'),'SELECT 1;');
         await assert.rejects(migrateControl(database.migrator,pathToFileURL(directory+'/')));
     } finally { await database.close(); await rm(directory,{ recursive: true,force: true }); }
 });

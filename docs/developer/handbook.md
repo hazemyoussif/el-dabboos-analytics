@@ -50,3 +50,7 @@ For persistent local PostgreSQL mart setup on port 55437, use [local Analytics m
 ## PostgreSQL control persistence
 
 Use [control-plane operations](../integration/postgres-control-plane.md) for provisioning, explicit control migrations, source references and approved SQLite cutover. `CONTROL_PROVIDER=sqlite` remains local compatibility; `postgres` uses only `CONTROL_DATABASE_URL` and disables synthetic header identity. Keep `demo.db` synthetic/local, `dashboards.db` as compatibility/migration source, and control credentials separate from all mart identities. No runtime auto-migration, dual writes or source-discovery serving dependency is introduced.
+
+## Shared staging
+
+Use [shared staging operations](../integration/shared-staging.md) for immutable API/web images, separate staging DB identities, explicit `pnpm staging provision|migrate|bootstrap|verify`, inactive identity placeholders and backup/restore. These commands never load developer env files. Shared-mode startup requires PostgreSQL and approved CORS origins and rejects synthetic identity. Bootstrap uses fresh governed metadata rather than the demo seed or legacy SQLite import.

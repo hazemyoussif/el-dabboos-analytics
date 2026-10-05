@@ -1,3 +1,4 @@
+import { apiLocation, validateApiBase } from './api-location.ts';
 import type { DashboardExecutionResult, DashboardTemplate, DashboardFilterOverrides } from '@el-dabboos/application';
 import { categoricalDimensions } from '@el-dabboos/domain';
 import type { AccessControlledDashboardRecord as DashboardRecord, DashboardSpec, DimensionId, Locale, ProductMetric, SemanticMetric, TenantProfile } from '@el-dabboos/domain';
@@ -10,8 +11,10 @@ type ApiError = { error?: { code: string; message: string } };
 export class ApiClientError extends Error {
   constructor(readonly status: number, readonly code: string, message: string) { super(message); }
 }
+const apiBase = validateApiBase((import.meta as ImportMeta & { env?: { VITE_API_BASE_URL?: string } }).env?.VITE_API_BASE_URL);
+const syntheticHeaders = (import.meta as ImportMeta & { env?: { PROD?: boolean } }).env?.PROD !== true;
 export async function request<T>(session: ApiSession, path: string, method: string, body?: unknown): Promise<T> {
-  const response = await fetch(path, { method, headers: { 'content-type': 'application/json', 'x-demo-user-id': session.userId, 'x-tenant-id': session.tenantId, 'x-locale': session.locale }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
+  const response = await fetch(apiLocation(path,apiBase), { method, headers: { 'content-type': 'application/json', ...(syntheticHeaders ? { 'x-demo-user-id': session.userId } : {}), 'x-tenant-id': session.tenantId, 'x-locale': session.locale }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
   const data = await response.json() as T & ApiError;
   if (!response.ok) throw new ApiClientError(response.status, data.error?.code ?? 'REQUEST_FAILED', data.error?.message ?? `Request failed (${response.status})`);
   return data;

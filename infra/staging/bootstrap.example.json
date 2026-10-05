@@ -1,0 +1,12 @@
+{
+  "bootstrapId": "shared-staging-iq-v1",
+  "customer": { "id": "el-dabboos", "name": "El-Dabboos" },
+  "tenant": { "id": "el-dabboos-iq", "name": "El-Dabboos Iraq", "configuration": { "countryCode": "IQ", "reportingCurrency": "IQD", "timeZone": "Asia/Baghdad", "arabicDialect": "iq", "defaultLocale": "ar" } },
+  "platformOperator": { "userId": "staging-platform-operator", "identityId": "staging-platform-binding", "displayName": "Pending staging operator", "preferredLocale": "en", "provider": "pending-idp", "providerSubject": "staging-platform-placeholder" },
+  "tenantUsers": [
+    { "userId": "staging-tenant-admin", "identityId": "staging-admin-binding", "displayName": "Pending tenant administrator", "preferredLocale": "ar", "provider": "pending-idp", "providerSubject": "staging-admin-placeholder", "roleIds": ["admin"] },
+    { "userId": "staging-analyst", "identityId": "staging-analyst-binding", "displayName": "Pending staging analyst", "preferredLocale": "ar", "provider": "pending-idp", "providerSubject": "staging-analyst-placeholder", "roleIds": ["analyst"] },
+    { "userId": "staging-viewer", "identityId": "staging-viewer-binding", "displayName": "Pending staging viewer", "preferredLocale": "en", "provider": "pending-idp", "providerSubject": "staging-viewer-placeholder", "roleIds": ["viewer"] }
+  ],
+  "sources": [{ "sourceId": "el-dabboos-odoo18-pg", "tenantId": "el-dabboos-iq", "type": "odoo-postgres", "companyIds": ["1"], "connectionRef": "odoo-staging-main", "enabled": true }]
+}

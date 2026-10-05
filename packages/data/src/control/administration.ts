@@ -53,7 +53,7 @@ export class PostgresAdministrationStore implements AdministrationUnitOfWork {
         });
     }
 }
-async function initializeProtectedRoles(connection: MetadataConnection, timestamp: string): Promise<void> {
+export async function initializeProtectedRoles(connection: MetadataConnection, timestamp: string): Promise<void> {
     for (const [id,name,scope,systemKey,permissions,domains] of protectedAccessRoles()) {
         await connection.insert('roles',{ id,name,description: 'Protected template',scope,protected: 1,systemKey,version: 1,createdAt: timestamp,updatedAt: timestamp });
         for (const permission of permissions) await connection.insert('role_permissions',{ role_id: id,permission });
