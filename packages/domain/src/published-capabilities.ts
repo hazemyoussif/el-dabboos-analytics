@@ -8,7 +8,7 @@ export interface PublishedMetricCapability {
 }
 export interface AnalyticsReleaseProvenance {
   datasetId: string; sourceId: string; mappingId: string; mappingVersion: string;
-  certificationReference: string;
+  certificationReference: string; outputCertificationReference?: string;
 }
 export interface PublishedAnalyticsRelease extends AnalyticsReleaseProvenance {
   period?: DateRange;

@@ -109,6 +109,10 @@ test('repository parity: every executable catalog family, inventory/finance snap
       for (const groupBy of [undefined,'month' as const,dimension]) {
         const q: AnalyticsQuery = { metric: metric.id,dateRange: range,...(groupBy ? { groupBy } : {}) };
         const ctx = { tenantId: 'a',locale: 'en' as const };
+        if (['average_confirmed_order_value','average_invoice_value'].includes(metric.id)) {
+          await assert.rejects(repo.execute(q,ctx),/Uncertified derived/);
+          continue;
+        }
         const expected = executeFacts(facts,q,ctx,{ sourceId: 'postgres',executedAt: clock().toISOString(),sourceAsOf: '2026-10-01T10:00:00.000Z' });
         const actual=await repo.execute(q,ctx);
         expected.metadata.release={datasetId:'release',sourceId:'fixture',mappingId:'synthetic',mappingVersion:'1',certificationReference:'SYNTHETIC TEST ONLY'};

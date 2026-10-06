@@ -25,3 +25,5 @@ export * from './authentication.ts';
 export * from './release-certification.ts';
 export * from './analytics-errors.ts';
 export * from './published-capabilities.ts';
+export * from './derived-certification.ts';
+export * from './receivable-snapshot.ts';

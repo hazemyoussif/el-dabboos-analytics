@@ -3,8 +3,9 @@ import type { AnalyticsContext,DimensionId,FactMeasureId,PublishedAnalyticsCapab
 export interface PublishedReconciliationCoverage {
   measure_id: FactMeasureId; grouping: DimensionId|null; period_from: string; period_to: string; exact: boolean; case_count: string;
 }
+export interface PublishedDerivedCoverage { metric: SourceMapping['capabilities'][number]['metric']; grouping: DimensionId|null; period_from: string; period_to: string; reference: string }
 /** Intersect the immutable approved mapping with linked exact evidence; never infer Cartesian pairs. */
-export function projectPublishedRelease(mapping: SourceMapping,coverage: readonly PublishedReconciliationCoverage[],context: AnalyticsContext): PublishedAnalyticsCapabilities {
+export function projectPublishedRelease(mapping: SourceMapping,coverage: readonly PublishedReconciliationCoverage[],context: AnalyticsContext,derived: readonly PublishedDerivedCoverage[]=[]): PublishedAnalyticsCapabilities {
   if (mapping.tenantId!==context.tenantId || mapping.approval.status!=='approved') throw new Error('Unapproved published scope');
   const certificationReference = mapping.approval.reference;
   const periods = [...new Set(coverage.map(row => JSON.stringify({ from: row.period_from,to: row.period_to })))];
@@ -14,8 +15,9 @@ export function projectPublishedRelease(mapping: SourceMapping,coverage: readonl
     const capabilities = mapping.capabilities.flatMap(capability => {
       // Ratios, distinct counts and comparisons need their own semantic controls; certified inputs alone do not approve outputs.
       const kind = semanticCatalog[capability.metric].semantics.kind;
-      if (kind!=='additive' || !proves(capability.metric,null)) return [];
-      const dimensions = capability.dimensions.filter(dimension => proves(capability.metric,dimension));
+      const outputProven=(dimension: DimensionId|null) => kind==='additive' || kind==='ratio' && derived.some(row=>row.metric===capability.metric && row.grouping===dimension && row.period_from===period.from && row.period_to===period.to);
+      if (!outputProven(null) || !proves(capability.metric,null)) return [];
+      const dimensions = capability.dimensions.filter(dimension => outputProven(dimension) && proves(capability.metric,dimension));
       if (!(context.enforcedFilters ?? []).every(filter => dimensions.includes(filter.dimension))) return [];
       return [{ metric: capability.metric,summary: true,dimensions,analyses: [] }];
     });

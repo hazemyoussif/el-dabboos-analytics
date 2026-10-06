@@ -1,0 +1,659 @@
+{
+  "scope": {
+    "tenantId": "el-dabboos-iq",
+    "datasetId": "el-dabboos-staging-comparison-202609-v1",
+    "mappingVersion": "1",
+    "period": {
+      "from": "2026-09-01",
+      "to": "2026-09-30",
+      "timeZone": "Asia/Baghdad"
+    },
+    "sourceObservedAt": "2026-10-06T11:09:56.528Z",
+    "sourceSnapshotDate": "2026-10-06",
+    "sourceReadOnly": true,
+    "martReadOnly": true
+  },
+  "baselineCertification": "FIN-OIA-STAGING-2026-09-V1",
+  "oldLifecycleFingerprintsAndBindingUnchanged": true,
+  "technicalEvidence": {
+    "controlSets": 45,
+    "sourceGroupControls": 14049,
+    "exactExistingInputControls": 10119,
+    "newExactCustomerMonthControls": 9846,
+    "sourceOnlyMarginAndUntaxedControls": 3930,
+    "missingOrUnexpectedGroupsForExistingInputs": 0,
+    "newLegacyReconciliationRows": 0,
+    "oldReconciliationRows": 308,
+    "newDerivedOutputControlGroupsPerMart": 83,
+    "newDerivedCertificationRecordsPerMart": 6
+  },
+  "controls": [
+    {
+      "metric": "order_revenue",
+      "grouping": null,
+      "status": "exact",
+      "groups": 1,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "order_revenue",
+      "grouping": "month",
+      "status": "exact",
+      "groups": 1,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "order_revenue",
+      "grouping": "customer",
+      "status": "exact",
+      "groups": 1922,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "order_revenue",
+      "grouping": "salesperson",
+      "status": "exact",
+      "groups": 40,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "order_revenue",
+      "grouping": "business_line",
+      "status": "exact",
+      "groups": 1,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "order_count",
+      "grouping": null,
+      "status": "exact",
+      "groups": 1,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "order_count",
+      "grouping": "month",
+      "status": "exact",
+      "groups": 1,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "order_count",
+      "grouping": "customer",
+      "status": "exact",
+      "groups": 1922,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "order_count",
+      "grouping": "salesperson",
+      "status": "exact",
+      "groups": 40,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "order_count",
+      "grouping": "business_line",
+      "status": "exact",
+      "groups": 1,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "order_margin",
+      "grouping": null,
+      "status": "requires_new_bounded_extraction",
+      "groups": 1,
+      "missingGroups": 1,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "order_margin",
+      "grouping": "month",
+      "status": "requires_new_bounded_extraction",
+      "groups": 1,
+      "missingGroups": 1,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "order_margin",
+      "grouping": "customer",
+      "status": "requires_new_bounded_extraction",
+      "groups": 1922,
+      "missingGroups": 1922,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "order_margin",
+      "grouping": "salesperson",
+      "status": "requires_new_bounded_extraction",
+      "groups": 40,
+      "missingGroups": 40,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "order_margin",
+      "grouping": "business_line",
+      "status": "requires_new_bounded_extraction",
+      "groups": 1,
+      "missingGroups": 1,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "order_untaxed_revenue",
+      "grouping": null,
+      "status": "requires_new_bounded_extraction",
+      "groups": 1,
+      "missingGroups": 1,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "order_untaxed_revenue",
+      "grouping": "month",
+      "status": "requires_new_bounded_extraction",
+      "groups": 1,
+      "missingGroups": 1,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "order_untaxed_revenue",
+      "grouping": "customer",
+      "status": "requires_new_bounded_extraction",
+      "groups": 1922,
+      "missingGroups": 1922,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "order_untaxed_revenue",
+      "grouping": "salesperson",
+      "status": "requires_new_bounded_extraction",
+      "groups": 40,
+      "missingGroups": 40,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "order_untaxed_revenue",
+      "grouping": "business_line",
+      "status": "requires_new_bounded_extraction",
+      "groups": 1,
+      "missingGroups": 1,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "invoiced_revenue",
+      "grouping": null,
+      "status": "exact",
+      "groups": 1,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "invoiced_revenue",
+      "grouping": "month",
+      "status": "exact",
+      "groups": 1,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "invoiced_revenue",
+      "grouping": "customer",
+      "status": "exact",
+      "groups": 1923,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "invoiced_revenue",
+      "grouping": "salesperson",
+      "status": "exact",
+      "groups": 39,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "invoiced_revenue",
+      "grouping": "business_line",
+      "status": "exact",
+      "groups": 1,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "refund_value",
+      "grouping": null,
+      "status": "exact",
+      "groups": 1,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "refund_value",
+      "grouping": "month",
+      "status": "exact",
+      "groups": 1,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "refund_value",
+      "grouping": "customer",
+      "status": "exact",
+      "groups": 111,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "refund_value",
+      "grouping": "salesperson",
+      "status": "exact",
+      "groups": 31,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "refund_value",
+      "grouping": "business_line",
+      "status": "exact",
+      "groups": 1,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "net_invoiced_revenue",
+      "grouping": null,
+      "status": "exact",
+      "groups": 1,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "net_invoiced_revenue",
+      "grouping": "month",
+      "status": "exact",
+      "groups": 1,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "net_invoiced_revenue",
+      "grouping": "customer",
+      "status": "exact",
+      "groups": 1927,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "net_invoiced_revenue",
+      "grouping": "salesperson",
+      "status": "exact",
+      "groups": 39,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "net_invoiced_revenue",
+      "grouping": "business_line",
+      "status": "exact",
+      "groups": 1,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "invoice_count",
+      "grouping": null,
+      "status": "exact",
+      "groups": 1,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "invoice_count",
+      "grouping": "month",
+      "status": "exact",
+      "groups": 1,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "invoice_count",
+      "grouping": "customer",
+      "status": "exact",
+      "groups": 1923,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "invoice_count",
+      "grouping": "salesperson",
+      "status": "exact",
+      "groups": 39,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "invoice_count",
+      "grouping": "business_line",
+      "status": "exact",
+      "groups": 1,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "refund_count",
+      "grouping": null,
+      "status": "exact",
+      "groups": 1,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "refund_count",
+      "grouping": "month",
+      "status": "exact",
+      "groups": 1,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "refund_count",
+      "grouping": "customer",
+      "status": "exact",
+      "groups": 111,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "refund_count",
+      "grouping": "salesperson",
+      "status": "exact",
+      "groups": 31,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    },
+    {
+      "metric": "refund_count",
+      "grouping": "business_line",
+      "status": "exact",
+      "groups": 1,
+      "missingGroups": 0,
+      "unexpectedGroups": 0
+    }
+  ],
+  "marginQuality": [
+    {
+      "orders": "2895",
+      "header_line_margin_mismatches": "0",
+      "missing_margin": "0",
+      "standard_percentage_mismatches": "0"
+    }
+  ],
+  "receivables": {
+    "population": [
+      {
+        "move_type": "out_invoice",
+        "documents": "66718",
+        "positive_residuals": "2468",
+        "missing_due": "0",
+        "current_residual": "1364778432.060000"
+      },
+      {
+        "move_type": "out_refund",
+        "documents": "3502",
+        "positive_residuals": "0",
+        "missing_due": "0",
+        "current_residual": "-1047249.970000"
+      }
+    ],
+    "buckets": [
+      {
+        "bucket": "not_yet_due",
+        "invoice_count": "1331",
+        "residual": "766838342.890000"
+      },
+      {
+        "bucket": "overdue",
+        "invoice_count": "1137",
+        "residual": "597940089.170000"
+      }
+    ],
+    "ledgerCheck": [
+      {
+        "move_type": "out_invoice",
+        "documents": "66718",
+        "missing_ledger": "0",
+        "residual_mismatches": "0"
+      },
+      {
+        "move_type": "out_refund",
+        "documents": "3502",
+        "missing_ledger": "0",
+        "residual_mismatches": "0"
+      }
+    ]
+  },
+  "outputCertifications": [
+    {
+      "database": "pilot",
+      "reference": "FIN-OIA-WAVE1-2026-09-AOV-SUMMARY",
+      "metric": "average_confirmed_order_value",
+      "grouping": null,
+      "outputGroups": 1,
+      "inputCases": 2,
+      "state": "recorded"
+    },
+    {
+      "database": "pilot",
+      "reference": "FIN-OIA-WAVE1-2026-09-AOV-SALESPERSON",
+      "metric": "average_confirmed_order_value",
+      "grouping": "salesperson",
+      "outputGroups": 40,
+      "inputCases": 80,
+      "state": "recorded"
+    },
+    {
+      "database": "pilot",
+      "reference": "FIN-OIA-WAVE1-2026-09-AOV-BUSINESS_LINE",
+      "metric": "average_confirmed_order_value",
+      "grouping": "business_line",
+      "outputGroups": 1,
+      "inputCases": 2,
+      "state": "recorded"
+    },
+    {
+      "database": "pilot",
+      "reference": "FIN-OIA-WAVE1-2026-09-AIV-SUMMARY",
+      "metric": "average_invoice_value",
+      "grouping": null,
+      "outputGroups": 1,
+      "inputCases": 2,
+      "state": "recorded"
+    },
+    {
+      "database": "pilot",
+      "reference": "FIN-OIA-WAVE1-2026-09-AIV-SALESPERSON",
+      "metric": "average_invoice_value",
+      "grouping": "salesperson",
+      "outputGroups": 39,
+      "inputCases": 78,
+      "state": "recorded"
+    },
+    {
+      "database": "pilot",
+      "reference": "FIN-OIA-WAVE1-2026-09-AIV-BUSINESS_LINE",
+      "metric": "average_invoice_value",
+      "grouping": "business_line",
+      "outputGroups": 1,
+      "inputCases": 2,
+      "state": "recorded"
+    },
+    {
+      "database": "staging",
+      "reference": "FIN-OIA-WAVE1-2026-09-AOV-SUMMARY",
+      "metric": "average_confirmed_order_value",
+      "grouping": null,
+      "outputGroups": 1,
+      "inputCases": 2,
+      "state": "recorded"
+    },
+    {
+      "database": "staging",
+      "reference": "FIN-OIA-WAVE1-2026-09-AOV-SALESPERSON",
+      "metric": "average_confirmed_order_value",
+      "grouping": "salesperson",
+      "outputGroups": 40,
+      "inputCases": 80,
+      "state": "recorded"
+    },
+    {
+      "database": "staging",
+      "reference": "FIN-OIA-WAVE1-2026-09-AOV-BUSINESS_LINE",
+      "metric": "average_confirmed_order_value",
+      "grouping": "business_line",
+      "outputGroups": 1,
+      "inputCases": 2,
+      "state": "recorded"
+    },
+    {
+      "database": "staging",
+      "reference": "FIN-OIA-WAVE1-2026-09-AIV-SUMMARY",
+      "metric": "average_invoice_value",
+      "grouping": null,
+      "outputGroups": 1,
+      "inputCases": 2,
+      "state": "recorded"
+    },
+    {
+      "database": "staging",
+      "reference": "FIN-OIA-WAVE1-2026-09-AIV-SALESPERSON",
+      "metric": "average_invoice_value",
+      "grouping": "salesperson",
+      "outputGroups": 39,
+      "inputCases": 78,
+      "state": "recorded"
+    },
+    {
+      "database": "staging",
+      "reference": "FIN-OIA-WAVE1-2026-09-AIV-BUSINESS_LINE",
+      "metric": "average_invoice_value",
+      "grouping": "business_line",
+      "outputGroups": 1,
+      "inputCases": 2,
+      "state": "recorded"
+    }
+  ],
+  "pendingCandidates": [
+    {
+      "metric": "order_margin",
+      "businessApproval": "awaiting_business_approval",
+      "certification": "not_certified",
+      "publication": "unpublished",
+      "blocker": "New bounded margin input extraction plus approval; current frozen facts do not contain margin."
+    },
+    {
+      "metric": "order_margin_percentage",
+      "businessApproval": "awaiting_business_approval",
+      "certification": "not_certified",
+      "publication": "unpublished",
+      "blocker": "Approved Odoo order-margin/untaxed denominator meaning and both input facts required."
+    },
+    {
+      "metric": "refund_value_percentage",
+      "businessApproval": "awaiting_business_approval",
+      "certification": "not_certified",
+      "publication": "unpublished",
+      "blocker": "Approve positive refund-value/posted-invoice-value percentage and canonical output identity."
+    },
+    {
+      "metric": "refund_count_percentage",
+      "businessApproval": "awaiting_business_approval",
+      "certification": "not_certified",
+      "publication": "unpublished",
+      "blocker": "Approve refund-count/invoice-count percentage and zero-refund group controls."
+    },
+    {
+      "metric": "outstanding_amount",
+      "businessApproval": "awaiting_business_approval",
+      "certification": "not_certified",
+      "publication": "unpublished",
+      "blocker": "Approve invoice-only gross residual versus credits/openings/net AR scope; extract a current as-of snapshot."
+    },
+    {
+      "metric": "overdue_amount",
+      "businessApproval": "awaiting_business_approval",
+      "certification": "not_certified",
+      "publication": "unpublished",
+      "blocker": "Approve due-date/current snapshot and credit policy; extract current observations."
+    },
+    {
+      "metric": "not_yet_due_amount",
+      "businessApproval": "awaiting_business_approval",
+      "certification": "not_certified",
+      "publication": "unpublished",
+      "blocker": "Approve due-on-snapshot-date boundary and unknown-due policy; extract current observations."
+    },
+    {
+      "metric": "overdue_invoice_count",
+      "businessApproval": "awaiting_business_approval",
+      "certification": "not_certified",
+      "publication": "unpublished",
+      "blocker": "Approve positive posted customer-invoice overdue snapshot population; extract observations."
+    }
+  ],
+  "businessAuthorityForEstablishedAverages": "authorized-wave1-request:06995661-689c-4411-9539-a6d8a328cf11:established-average-recipes",
+  "productVerification": {
+    "authenticated": true,
+    "availableMetricsBefore": 8,
+    "availableMetricsAfter": 10,
+    "labels": [
+      "Average confirmed order value",
+      "Average invoice value"
+    ],
+    "headlineValuesUnchanged": true,
+    "savedDashboardCreated": false,
+    "manualLocales": [
+      "en",
+      "ar"
+    ],
+    "manualTheme": "dark"
+  },
+  "safety": {
+    "orderRevenueConflatedWithNetInvoicedRevenue": false,
+    "orderMarginCalledAccountingGrossProfit": false,
+    "unsupportedMetricsAutoCertified": false,
+    "odooMutated": false,
+    "sourceSchemaChanged": false,
+    "oldCertificationRewritten": false,
+    "septemberFingerprintsChanged": false,
+    "authenticationChanged": false,
+    "historicalBackfillImplemented": false,
+    "continuousSyncImplemented": false,
+    "externalDeployment": false,
+    "push": false,
+    "merge": false
+  },
+  "runtimeVerification": {
+    "availableMetrics": 10,
+    "averages": {
+      "average_confirmed_order_value": {
+        "value": 504779.1018998273,
+        "outputCertificationReference": "FIN-OIA-WAVE1-2026-09-AOV-SUMMARY"
+      },
+      "average_invoice_value": {
+        "value": 507166.78200692043,
+        "outputCertificationReference": "FIN-OIA-WAVE1-2026-09-AIV-SUMMARY"
+      }
+    },
+    "month": "blocked",
+    "customer": "blocked"
+  }
+}

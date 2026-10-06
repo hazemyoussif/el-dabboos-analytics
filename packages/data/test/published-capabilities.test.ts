@@ -30,3 +30,15 @@ test('only exact approval-linked pairs are projected; independent dimensions, ra
   assert.equal(projectPublishedRelease(mapping(),[{ ...coverage(null),exact: false }],context).releases[0]!.capabilities.length,0);
   assert.equal(projectPublishedRelease(mapping(),[coverage(null),coverage('branch')],{ ...context,enforcedFilters: [{ dimension: 'customer',values: ['one'] }] }).releases[0]!.capabilities.length,0);
 });
+
+test('derived output approval is separate and every pair requires exact compatible base coverage',()=>{
+ const release=mapping();release.measures[0]!.measureId='order_revenue';release.capabilities=[{metric:'average_confirmed_order_value',dimensions:['salesperson','customer','month']}];
+ const inputs=[{...coverage(null),measure_id:'order_revenue' as const},coverage(null),{...coverage('salesperson'),measure_id:'order_revenue' as const},coverage('salesperson')];
+ const certificate={metric:'average_confirmed_order_value' as const,grouping:null,period_from:'2026-09-01',period_to:'2026-09-30',reference:'SYNTHETIC-OUTPUT'};
+ assert.equal(projectPublishedRelease(release,inputs,context).releases[0]!.capabilities.length,0);
+ const approved=projectPublishedRelease(release,inputs,context,[certificate,{...certificate,grouping:'salesperson'}]);
+ assert.deepEqual(approved.releases[0]!.capabilities[0]!.dimensions,['salesperson']);
+ assert.ok(publishedQueryIssues({metric:'average_confirmed_order_value',groupBy:'customer',dateRange:approved.releases[0]!.period!},approved).length);
+ const missingBase=inputs.filter(row=>!(row.grouping==='salesperson' && row.measure_id==='order_count'));
+ assert.deepEqual(projectPublishedRelease(release,missingBase,context,[certificate,{...certificate,grouping:'salesperson'}]).releases[0]!.capabilities[0]!.dimensions,[]);
+});

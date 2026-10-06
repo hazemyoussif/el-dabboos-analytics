@@ -1,9 +1,9 @@
 import type { Pool, PoolClient } from 'pg';
-import { DimensionDiscoveryLimitError, UncertifiedDimensionError, categoricalDimensions, certifiedDimensions, requiredMeasures, semanticCatalog, validateQuery, validateSourceMapping } from '@el-dabboos/domain';
+import { publishedQueryIssues, DimensionDiscoveryLimitError, UncertifiedDimensionError, categoricalDimensions, certifiedDimensions, requiredMeasures, semanticCatalog, validateQuery, validateSourceMapping } from '@el-dabboos/domain';
 import type { AnalyticsContext, AnalyticsQuery, AnalyticsRepository, AnalyticsResult, AnalyticsRow, DimensionId, DimensionValueRepository, SourceMapping } from '@el-dabboos/domain';
 import { tenantTransaction } from './session.ts';
 import { projectPublishedRelease } from './published-capabilities.ts';
-import type { PublishedReconciliationCoverage } from './published-capabilities.ts';
+import type { PublishedReconciliationCoverage,PublishedDerivedCoverage } from './published-capabilities.ts';
 import type { PublishedAnalyticsCapabilities } from '@el-dabboos/domain';
 import { selectQueryKeys,querySlots } from './query-slots.ts';
 import { aggregateQuerySlots } from './query-aggregate.ts';
@@ -38,7 +38,8 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository, Dimensi
       if (!(await client.query('SELECT 1 FROM mart.serving_bindings WHERE tenant_id=$1',[context.tenantId])).rowCount) return { tenantId: context.tenantId,mode: 'certified',releases: [] };
       const mapping = await this.release(client,context);
       const coverage = (await client.query<PublishedReconciliationCoverage>('SELECT * FROM mart.published_reconciliation_coverage($1,$2)',[context.tenantId,mapping.datasetId])).rows;
-      return projectPublishedRelease(mapping,coverage,context);
+      const derived=(await client.query<PublishedDerivedCoverage>('SELECT * FROM mart.published_derived_coverage($1,$2)',[context.tenantId,mapping.datasetId])).rows;
+      return projectPublishedRelease(mapping,coverage,context,derived);
     },true,this.options.statementTimeoutMs ?? 15000);
   }
   async isDataReady(tenantId: string): Promise<boolean> {
@@ -52,6 +53,11 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository, Dimensi
     if (query.dateRange && (Date.parse(query.dateRange.to)-Date.parse(query.dateRange.from))/86400000+1 > (this.options.maxDateSpanDays ?? 3660)) throw new Error('Date span exceeds technical bound');
     return tenantTransaction(this.pool,context.tenantId,async client => {
       const mapping = await this.release(client,context);
+      if (['average_confirmed_order_value','average_invoice_value'].includes(query.metric)) {
+        const coverage=(await client.query<PublishedReconciliationCoverage>('SELECT * FROM mart.published_reconciliation_coverage($1,$2)',[context.tenantId,mapping.datasetId])).rows;
+        const derived=(await client.query<PublishedDerivedCoverage>('SELECT * FROM mart.published_derived_coverage($1,$2)',[context.tenantId,mapping.datasetId])).rows;
+        if (publishedQueryIssues(query,projectPublishedRelease(mapping,coverage,context,derived)).length) throw new Error('Uncertified derived metric/dimension capability');
+      }
       const certified = certifiedDimensions(mapping,query.metric);
       if (!mapping.capabilities.some(c => c.metric === query.metric) || query.groupBy && !certified.includes(query.groupBy)) throw new Error('Uncertified metric/dimension combination');
       const filters = [...(query.filters ?? []),...(context.enforcedFilters ?? [])];
