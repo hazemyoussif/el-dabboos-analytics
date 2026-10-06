@@ -16,7 +16,9 @@
     "newCertifications": 0,
     "canonicalInputContracts": 86,
     "currentCertifiedRequestedMetricsReused": 2,
-    "sourceValidatedRequestedMetricsReused": 5
+    "sourceValidatedRequestedMetricsReused": 5,
+    "workingImplementationApprovedAgingDecisions": 3,
+    "scopedCurrencyAndCreditDecisions": 2
   },
   "requests": [
     {
@@ -35,8 +37,8 @@
       "requestedDimensions": [
         "customer"
       ],
-      "interpretationStatus": "PROPOSED_PENDING_DEFINITIONS",
-      "notes": "Raw request preserved. Multiple candidates are alternatives/additional outputs where business wording is ambiguous; not automatic approval."
+      "interpretationStatus": "IMPLEMENTATION_APPROVED_V1_CONTROL_PENDING_FINANCE_CONFIRMATION",
+      "notes": "Receivables Aging v1 working policy resolved; independent engineering source control prepared. Requested customer grouping remains unpublished; no Finance Manager sign-off or runtime metric alias is implied."
     },
     {
       "id": "R02",
@@ -811,7 +813,14 @@
         "extraction": "BLOCKED_APPROVAL_OR_MAPPING",
         "reconciliation": "BLOCKED_INPUTS_AND_APPROVAL"
       },
-      "outputGrain": "One value per tenant/company, approved period or snapshot cutoff, metric and exact requested grouping; output never sums snapshots/ratios across dates"
+      "outputGrain": "One value per tenant/company, approved period or snapshot cutoff, metric and exact requested grouping; output never sums snapshots/ratios across dates",
+      "receivablesAgingV1": {
+        "definitionVersion": "receivables-aging-v1",
+        "status": "IMPLEMENTATION_APPROVED_V1_CONTROL_PENDING_FINANCE_CONFIRMATION",
+        "definitionReference": "receivables-aging-v1.md",
+        "existingIdentityUnchanged": true,
+        "publicationStatus": "UNPUBLISHED"
+      }
     },
     {
       "canonicalId": "not_yet_due_amount",
@@ -868,7 +877,14 @@
         "extraction": "BLOCKED_APPROVAL_OR_MAPPING",
         "reconciliation": "BLOCKED_INPUTS_AND_APPROVAL"
       },
-      "outputGrain": "One value per tenant/company, approved period or snapshot cutoff, metric and exact requested grouping; output never sums snapshots/ratios across dates"
+      "outputGrain": "One value per tenant/company, approved period or snapshot cutoff, metric and exact requested grouping; output never sums snapshots/ratios across dates",
+      "receivablesAgingV1": {
+        "definitionVersion": "receivables-aging-v1",
+        "status": "IMPLEMENTATION_APPROVED_V1_CONTROL_PENDING_FINANCE_CONFIRMATION",
+        "definitionReference": "receivables-aging-v1.md",
+        "existingIdentityUnchanged": true,
+        "publicationStatus": "UNPUBLISHED"
+      }
     },
     {
       "canonicalId": "overdue_amount",
@@ -925,7 +941,14 @@
         "extraction": "BLOCKED_APPROVAL_OR_MAPPING",
         "reconciliation": "BLOCKED_INPUTS_AND_APPROVAL"
       },
-      "outputGrain": "One value per tenant/company, approved period or snapshot cutoff, metric and exact requested grouping; output never sums snapshots/ratios across dates"
+      "outputGrain": "One value per tenant/company, approved period or snapshot cutoff, metric and exact requested grouping; output never sums snapshots/ratios across dates",
+      "receivablesAgingV1": {
+        "definitionVersion": "receivables-aging-v1",
+        "status": "IMPLEMENTATION_APPROVED_V1_CONTROL_PENDING_FINANCE_CONFIRMATION",
+        "definitionReference": "receivables-aging-v1.md",
+        "existingIdentityUnchanged": true,
+        "publicationStatus": "UNPUBLISHED"
+      }
     },
     {
       "canonicalId": "overdue_1_30_amount",
@@ -982,7 +1005,14 @@
         "extraction": "BLOCKED_APPROVAL_OR_MAPPING",
         "reconciliation": "BLOCKED_INPUTS_AND_APPROVAL"
       },
-      "outputGrain": "One value per tenant/company, approved period or snapshot cutoff, metric and exact requested grouping; output never sums snapshots/ratios across dates"
+      "outputGrain": "One value per tenant/company, approved period or snapshot cutoff, metric and exact requested grouping; output never sums snapshots/ratios across dates",
+      "receivablesAgingV1": {
+        "definitionVersion": "receivables-aging-v1",
+        "status": "IMPLEMENTATION_APPROVED_V1_CONTROL_PENDING_FINANCE_CONFIRMATION",
+        "definitionReference": "receivables-aging-v1.md",
+        "existingIdentityUnchanged": true,
+        "publicationStatus": "UNPUBLISHED"
+      }
     },
     {
       "canonicalId": "overdue_31_90_amount",
@@ -1039,7 +1069,14 @@
         "extraction": "BLOCKED_APPROVAL_OR_MAPPING",
         "reconciliation": "BLOCKED_INPUTS_AND_APPROVAL"
       },
-      "outputGrain": "One value per tenant/company, approved period or snapshot cutoff, metric and exact requested grouping; output never sums snapshots/ratios across dates"
+      "outputGrain": "One value per tenant/company, approved period or snapshot cutoff, metric and exact requested grouping; output never sums snapshots/ratios across dates",
+      "receivablesAgingV1": {
+        "definitionVersion": "receivables-aging-v1",
+        "status": "IMPLEMENTATION_APPROVED_V1_CONTROL_PENDING_FINANCE_CONFIRMATION",
+        "definitionReference": "receivables-aging-v1.md",
+        "existingIdentityUnchanged": true,
+        "publicationStatus": "UNPUBLISHED"
+      }
     },
     {
       "canonicalId": "overdue_over_90_amount",
@@ -1096,7 +1133,14 @@
         "extraction": "BLOCKED_APPROVAL_OR_MAPPING",
         "reconciliation": "BLOCKED_INPUTS_AND_APPROVAL"
       },
-      "outputGrain": "One value per tenant/company, approved period or snapshot cutoff, metric and exact requested grouping; output never sums snapshots/ratios across dates"
+      "outputGrain": "One value per tenant/company, approved period or snapshot cutoff, metric and exact requested grouping; output never sums snapshots/ratios across dates",
+      "receivablesAgingV1": {
+        "definitionVersion": "receivables-aging-v1",
+        "status": "IMPLEMENTATION_APPROVED_V1_CONTROL_PENDING_FINANCE_CONFIRMATION",
+        "definitionReference": "receivables-aging-v1.md",
+        "existingIdentityUnchanged": true,
+        "publicationStatus": "UNPUBLISHED"
+      }
     },
     {
       "canonicalId": "overdue_invoice_count",
@@ -1153,7 +1197,14 @@
         "extraction": "BLOCKED_APPROVAL_OR_MAPPING",
         "reconciliation": "BLOCKED_INPUTS_AND_APPROVAL"
       },
-      "outputGrain": "One value per tenant/company, approved period or snapshot cutoff, metric and exact requested grouping; output never sums snapshots/ratios across dates"
+      "outputGrain": "One value per tenant/company, approved period or snapshot cutoff, metric and exact requested grouping; output never sums snapshots/ratios across dates",
+      "receivablesAgingV1": {
+        "definitionVersion": "receivables-aging-v1",
+        "status": "IMPLEMENTATION_APPROVED_V1_CONTROL_PENDING_FINANCE_CONFIRMATION",
+        "definitionReference": "receivables-aging-v1.md",
+        "existingIdentityUnchanged": true,
+        "publicationStatus": "UNPUBLISHED"
+      }
     },
     {
       "canonicalId": "net_customer_balance",
@@ -4748,9 +4799,20 @@
       "why": "Changing the age basis changes overdue balances",
       "recommendedDefault": "Due date; not yet due, 1–30, 31–90, over 90 days",
       "owner": "Finance",
-      "status": "PENDING",
-      "approvedDefinition": null,
-      "approvalDate": null
+      "status": "IMPLEMENTATION_APPROVED_V1",
+      "approvedDefinition": "Due-date aging: current due on/after cutoff; overdue 1–30,31–90,>90; missing maturity separate. Due today is current.",
+      "approvalDate": null,
+      "implementationApprovals": [
+        {
+          "definitionVersion": "receivables-aging-v1",
+          "scope": "R01 / Company 1 Receivables Aging only",
+          "status": "IMPLEMENTATION_APPROVED_V1",
+          "authority": "User Receivables Aging implementation handoff and independent-control workflow correction, 2026-10-06",
+          "definition": "Due-date aging: current due on/after cutoff; overdue 1–30,31–90,>90; missing maturity separate. Due today is current.",
+          "financeOwner": null,
+          "financeApprovalDate": null
+        }
+      ]
     },
     {
       "id": "F02",
@@ -4759,9 +4821,20 @@
       "why": "Today’s residual is not September closing AR",
       "recommendedDefault": "Explicit Baghdad close-of-day current observation; historical reconstruction separate",
       "owner": "Finance",
-      "status": "PENDING",
-      "approvedDefinition": null,
-      "approvalDate": null
+      "status": "IMPLEMENTATION_APPROVED_V1",
+      "approvedDefinition": "Inclusive end-of-selected-date accounting cutoff in Asia/Baghdad. Reconstruct historical residual from original company balance and accounting-effective reconciliations; sourceAsOf/dataThrough distinct.",
+      "approvalDate": null,
+      "implementationApprovals": [
+        {
+          "definitionVersion": "receivables-aging-v1",
+          "scope": "R01 / Company 1 Receivables Aging only",
+          "status": "IMPLEMENTATION_APPROVED_V1",
+          "authority": "User Receivables Aging implementation handoff and independent-control workflow correction, 2026-10-06",
+          "definition": "Inclusive end-of-selected-date accounting cutoff in Asia/Baghdad. Reconstruct historical residual from original company balance and accounting-effective reconciliations; sourceAsOf/dataThrough distinct.",
+          "financeOwner": null,
+          "financeApprovalDate": null
+        }
+      ]
     },
     {
       "id": "F03",
@@ -4770,9 +4843,20 @@
       "why": "Header due date can hide instalment maturities",
       "recommendedDefault": "Remaining residual per receivable instalment; unknown due separate",
       "owner": "Finance",
-      "status": "PENDING",
-      "approvedDefinition": null,
-      "approvalDate": null
+      "status": "IMPLEMENTATION_APPROVED_V1",
+      "approvedDefinition": "Remaining accounting residual per individual maturity component; no percentage rule or header-date fallback. Missing maturity amount/count stay in gross.",
+      "approvalDate": null,
+      "implementationApprovals": [
+        {
+          "definitionVersion": "receivables-aging-v1",
+          "scope": "R01 / Company 1 Receivables Aging only",
+          "status": "IMPLEMENTATION_APPROVED_V1",
+          "authority": "User Receivables Aging implementation handoff and independent-control workflow correction, 2026-10-06",
+          "definition": "Remaining accounting residual per individual maturity component; no percentage rule or header-date fallback. Missing maturity amount/count stay in gross.",
+          "financeOwner": null,
+          "financeApprovalDate": null
+        }
+      ]
     },
     {
       "id": "F04",
@@ -4783,7 +4867,18 @@
       "owner": "Finance",
       "status": "PENDING",
       "approvedDefinition": null,
-      "approvalDate": null
+      "approvalDate": null,
+      "implementationApprovals": [
+        {
+          "definitionVersion": "receivables-aging-v1",
+          "scope": "R01 / Company 1 Receivables Aging only",
+          "status": "IMPLEMENTATION_APPROVED_V1",
+          "authority": "User Receivables Aging implementation handoff and independent-control workflow correction, 2026-10-06",
+          "definition": "For Receivables Aging v1 only: positive posted receivable residual components are gross; applied credit reduces residual; unapplied credits/advances separate; no arbitrary netting. Net customer position remains outside scope.",
+          "financeOwner": null,
+          "financeApprovalDate": null
+        }
+      ]
     },
     {
       "id": "F05",
@@ -4794,7 +4889,18 @@
       "owner": "Finance",
       "status": "PENDING",
       "approvedDefinition": null,
-      "approvalDate": null
+      "approvalDate": null,
+      "implementationApprovals": [
+        {
+          "definitionVersion": "receivables-aging-v1",
+          "scope": "R01 / Company 1 Receivables Aging only",
+          "status": "IMPLEMENTATION_APPROVED_V1",
+          "authority": "User Receivables Aging implementation handoff and independent-control workflow correction, 2026-10-06",
+          "definition": "For Receivables Aging v1 Company 1 only: accounting-recognized IQD company amounts; observed precision 0.001; transaction currency lineage retained; no independent FX.",
+          "financeOwner": null,
+          "financeApprovalDate": null
+        }
+      ]
     },
     {
       "id": "F06",
@@ -6685,7 +6791,7 @@
       "net_invoiced_revenue",
       "refund_value"
     ],
-    "conditionedFirstSlice": "Receivables aging only after F01–F05 and customer grouping decision B02 when requested; current bounded extraction, snapshot ownership and Aged Receivable controls; no September reconstruction",
+    "conditionedFirstSlice": "Receivables Aging v1 policy resolved. Independent Company-1 September control prepared for Finance confirmation; canonical mart extraction, confirmed-control reconciliation, certification and publication remain pending. No customer/month/branch publication.",
     "followingSlice": "Customer collections after F07–F09 and payment allocation proof",
     "laterSlices": [
       "Supplier payables/payment days",
@@ -6706,7 +6812,8 @@
         "refund_value_percentage"
       ],
       "condition": "No immediate extraction/publication authorization; residual candidates still need current snapshot extraction, maturity/bucket and scope controls; refund ratio still needs Finance-approved output definition and exact grouping output controls."
-    }
+    },
+    "receivablesAgingWorkingPolicyAvailable": true
   },
   "canonicalInputs": [
     {
@@ -8642,5 +8749,60 @@
   },
   "finalBranch": "codex/production-pilot-lifecycle",
   "finalHead": "167e3d9962290c1ff8a07c7f54dae511b58ee2d6",
-  "committed": false
+  "committed": true,
+  "receivablesAgingV1": {
+    "definitionVersion": "receivables-aging-v1",
+    "policyStatus": "IMPLEMENTATION_APPROVED_V1",
+    "financeStatus": "CANDIDATE_CONTROL_PENDING_FINANCE_CONFIRMATION",
+    "definitionDocument": "receivables-aging-v1.md",
+    "independentControlScript": "scripts/integration/odoo-receivables-control.mjs",
+    "independentSql": "scripts/integration/receivables-control-query.ts",
+    "companyId": 1,
+    "reportingCutoff": "2026-09-30",
+    "reportingCurrency": "IQD",
+    "sourceAsOf": "2026-10-06T12:44:27.764Z",
+    "gross": "1532751636.390000",
+    "buckets": {
+      "current": "760615731.130000",
+      "overdue1To30": "239405751.700000",
+      "overdue31To90": "94315000.660000",
+      "overdueOver90": "227502606.690000",
+      "missingDueDate": "210912546.210000"
+    },
+    "missingDueDateCount": 1319,
+    "positiveOpenComponents": 3864,
+    "knownCustomers": 2039,
+    "partiallySettledComponents": 1324,
+    "partiallySettledResidual": "623244340.380000",
+    "paymentLinkedPartiallySettledComponents": 929,
+    "paymentAppliedOnPartiallySettledComponents": "384988016.310000",
+    "separateCreditOrAdvanceComponents": 1378,
+    "separateCreditOrAdvanceSignedAmount": "-173290543.780000",
+    "recordRejections": 0,
+    "ambiguousComponents": 0,
+    "bucketInvariant": "EXACT",
+    "customerInvariant": "EXACT_CONTROL_ONLY_NOT_PUBLICATION",
+    "mappingStatus": "CANDIDATE_HISTORICAL_METHOD_SOURCE_PRECISION_VALIDATED",
+    "martExtracted": false,
+    "sourceReportCompared": false,
+    "businessCertified": false,
+    "published": false,
+    "publishedDimensions": [],
+    "financeOwner": null,
+    "financeApprovalDate": null,
+    "acceptedExceptions": null,
+    "toleranceStatus": "PENDING",
+    "proposedOutputIds": [
+      "receivables_gross_outstanding_amount",
+      "receivables_current_amount",
+      "receivables_overdue_amount",
+      "receivables_overdue_1_30_amount",
+      "receivables_overdue_31_90_amount",
+      "receivables_overdue_over_90_amount",
+      "receivables_missing_due_date_amount",
+      "receivables_missing_due_date_count"
+    ],
+    "existingGenericMetricSemanticsChanged": false
+  },
+  "discoveryCommit": "0ebbe20"
 }
