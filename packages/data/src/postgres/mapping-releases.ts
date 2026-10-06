@@ -1,5 +1,5 @@
 import type { Pool } from 'pg';
-import { validateSourceMapping } from '@el-dabboos/domain';
+import { validateSourceMapping, maxReleaseApprovalCases } from '@el-dabboos/domain';
 import type { SourceMapping } from '@el-dabboos/domain';
 import { tenantTransaction } from './session.ts';
 
@@ -22,7 +22,7 @@ export class PostgresMappingReleases {
     });
   }
   async approve(approval: MappingApproval): Promise<void> {
-    if (![approval.tenantId,approval.datasetId,approval.reference].every(value => value.trim()===value && value.length>0 && value.length<=200) || !approval.caseIds.length || approval.caseIds.length>1000 || !Number.isFinite(Date.parse(approval.approvedAt)) || new Date(approval.approvedAt).toISOString()!==approval.approvedAt) throw new Error('Invalid mapping approval');
+    if (![approval.tenantId,approval.datasetId,approval.reference].every(value => value.trim()===value && value.length>0 && value.length<=200) || !approval.caseIds.length || approval.caseIds.length>maxReleaseApprovalCases || !Number.isFinite(Date.parse(approval.approvedAt)) || new Date(approval.approvedAt).toISOString()!==approval.approvedAt) throw new Error('Invalid mapping approval');
     await tenantTransaction(this.pool,approval.tenantId,async client => {
       const result = await client.query(`UPDATE mart.mapping_releases SET approval_status='approved',approval_reference=$3,approved_at=$4,approval_case_ids=$5
         WHERE tenant_id=$1 AND dataset_id=$2 AND approval_status='pending'`,

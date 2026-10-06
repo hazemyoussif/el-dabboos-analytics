@@ -12,3 +12,9 @@ test('authorized business approval needs no fabricated UI metadata; external rep
   assert.throws(() => validateReleaseCertification({ ...evidence,caseIds: ['exact-case','exact-case'] }),/evidence/);
   assert.throws(() => validateReleaseCertification({ ...evidence,approvedValues: [{ measureId: 'net_invoiced_revenue',value: 'NaN' }] }),/values/);
 });
+test('complete Customer releases admit bounded multi-pair evidence without duplicate or overflow admission',()=>{
+ const caseIds=Array.from({length:10001},(_,index)=>`synthetic-${index}`);
+ assert.doesNotThrow(()=>validateReleaseCertification({...evidence,caseIds}));
+ assert.throws(()=>validateReleaseCertification({...evidence,caseIds:[...caseIds,caseIds[0]!]}),/evidence/);
+ assert.throws(()=>validateReleaseCertification({...evidence,caseIds:Array.from({length:20001},(_,index)=>`overflow-${index}`)}),/evidence/);
+});

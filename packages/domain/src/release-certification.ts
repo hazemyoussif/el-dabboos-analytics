@@ -1,3 +1,4 @@
+import { maxReleaseApprovalCases } from './reconciliation-limits.ts';
 import type { FactMeasureId } from './contracts.ts';
 import { isCanonicalDecimal } from './production-data.ts';
 import { validDateRange } from './validation.ts';
@@ -22,7 +23,7 @@ export function validateReleaseCertification(value: ReleaseCertification): void 
   if (!value || required.some(key => !Object.hasOwn(value,key)) || Object.keys(value).some(key => ![...required,'externalReportReference'].includes(key))) throw new Error('Invalid certification shape');
   if (![value.tenantId,value.datasetId,value.mappingVersion,value.reference,value.approverReference,value.technicalReference].every(evidenceText)) throw new Error('Invalid certification identity');
   if (!Number.isFinite(Date.parse(value.approvedAt)) || new Date(value.approvedAt).toISOString()!==value.approvedAt || !validDateRange({ from: value.from,to: value.to })) throw new Error('Invalid certification period');
-  if (!evidenceList(value.companyIds,100) || !evidenceList(value.caseIds,1000) || !evidenceList(value.businessSemantics,30)) throw new Error('Invalid certification evidence');
+  if (!evidenceList(value.companyIds,100) || !evidenceList(value.caseIds,maxReleaseApprovalCases) || !evidenceList(value.businessSemantics,30)) throw new Error('Invalid certification evidence');
   if (!['authorized_business_approval','external_report'].includes(value.evidenceKind) || value.evidenceKind==='external_report' && !evidenceText(value.externalReportReference)) throw new Error('Certification authority required');
   validateApprovedValues(value.approvedValues);
 }

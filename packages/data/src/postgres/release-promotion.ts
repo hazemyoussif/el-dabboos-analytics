@@ -49,6 +49,21 @@ export class PostgresReleasePromotion {
       return `${scope.tenantId}/${scope.datasetId}`;
     });
   }
+  /** Explicit compare-and-swap activation; the old release and its approvals remain immutable. */
+  async replaceBinding(scope: ReleasePromotionScope,expectedDatasetId: string): Promise<string> {
+    validatePromotionScope(scope);
+    if (!expectedDatasetId.trim() || expectedDatasetId.trim()!==expectedDatasetId || expectedDatasetId.length>200 || expectedDatasetId===scope.datasetId) throw new Error('Distinct expected serving release required');
+    return tenantTransaction(this.target,scope.tenantId,async client => {
+      await client.query("SET LOCAL TIME ZONE 'UTC'");
+      await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',[JSON.stringify([scope.tenantId,scope.datasetId])]);
+      await assertCertifiedRelease(client,scope);
+      const receipt=(await client.query('SELECT release_fingerprint FROM mart.release_promotions WHERE tenant_id=$1 AND dataset_id=$2',[scope.tenantId,scope.datasetId])).rows[0];
+      if (!receipt || releaseFingerprint(await readReleaseRows(client,scope))!==receipt.release_fingerprint) throw new Error('Exact promoted release required before activation');
+      const changed=await client.query('UPDATE mart.serving_bindings SET dataset_id=$3 WHERE tenant_id=$1 AND dataset_id=$2',[scope.tenantId,expectedDatasetId,scope.datasetId]);
+      if (changed.rowCount!==1) throw new Error('Serving release changed; activation conflict');
+      return `${scope.tenantId}/${scope.datasetId}`;
+    });
+  }
 }
 async function approvePromotedMapping(client: import('pg').PoolClient,transfer: ReleaseTransfer): Promise<void> {
   const mapping = JSON.parse(transfer.tables.mapping_releases![0]!);

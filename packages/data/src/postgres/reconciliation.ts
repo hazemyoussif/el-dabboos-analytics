@@ -1,5 +1,5 @@
 import type { Pool, PoolClient } from 'pg';
-import { categoricalDimensions, reconciliationStatus, validateSourceMapping } from '@el-dabboos/domain';
+import { categoricalDimensions, maxReconciliationGroups, reconciliationStatus, validateSourceMapping } from '@el-dabboos/domain';
 import type { ReconciliationCase, SourceMapping } from '@el-dabboos/domain';
 import { tenantTransaction } from './session.ts';
 import { validateFrozenExtractions } from './frozen-extractions.ts';
@@ -18,7 +18,7 @@ export class PostgresReconciliation {
 
 /** Shared frozen harness on the caller-owned mart transaction; no nested transaction. */
 export async function recordReconciliation(client: PoolClient,expected: readonly ReconciliationCase[],reportCurrency: string): Promise<ReconciliationResult> {
-  if (!expected.length || expected.length>1000) throw new Error('Bounded complete expected control set required');
+  if (!expected.length || expected.length>maxReconciliationGroups) throw new Error('Bounded complete expected control set required');
   for (const control of expected) reconciliationStatus(control);
   const first = expected[0]!;
   const scope = (control: ReconciliationCase) => JSON.stringify([control.tenantId,control.datasetId,control.mappingVersion,control.measureId,control.sourceReportReference,control.frozenRevision,[...control.batchIds].sort(),control.from,control.to,control.grouping,control.tolerance]);

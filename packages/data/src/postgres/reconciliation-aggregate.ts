@@ -1,5 +1,5 @@
 import type { PoolClient } from 'pg';
-import { isCanonicalDecimal, timeDimensions } from '@el-dabboos/domain';
+import { isCanonicalDecimal, maxReconciliationGroups, timeDimensions } from '@el-dabboos/domain';
 import type { ReconciliationCase } from '@el-dabboos/domain';
 import { periodKeys, periodRange } from '../calendar.ts';
 import { dimensionSql } from './sql.ts';
@@ -25,8 +25,8 @@ export async function aggregateReconciliation(client: PoolClient,control: Reconc
     const input = snapshot ? '(SELECT DISTINCT ON (entity_id) * FROM active WHERE business_date<=$5::date ORDER BY entity_id,business_date DESC)' : 'active';
     const range = snapshot ? '' : 'WHERE business_date BETWEEN $5::date AND $6::date';
     const dates = snapshot ? [control.to] : [control.from,control.to];
-    actual = (await client.query(`${frozenSql} SELECT ${group} key,coalesce(sum(value),0)::numeric(30,6)::text value,count(*)::text count FROM ${input} f ${range} ${control.grouping ? `GROUP BY ${group}` : ''} LIMIT 1001`,[control.tenantId,control.datasetId,control.batchIds,control.measureId,...dates])).rows;
+    actual = (await client.query(`${frozenSql} SELECT ${group} key,coalesce(sum(value),0)::numeric(30,6)::text value,count(*)::text count FROM ${input} f ${range} ${control.grouping ? `GROUP BY ${group}` : ''} LIMIT ${maxReconciliationGroups+1}`,[control.tenantId,control.datasetId,control.batchIds,control.measureId,...dates])).rows;
   }
-  if (actual.length>1000 || actual.some(row => !isCanonicalDecimal(row.value))) throw new Error('Reconciliation numeric/group bounds');
+  if (actual.length>maxReconciliationGroups || actual.some(row => !isCanonicalDecimal(row.value))) throw new Error('Reconciliation numeric/group bounds');
   return actual;
 }

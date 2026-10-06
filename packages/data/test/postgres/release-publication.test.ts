@@ -8,7 +8,7 @@ import { PostgresAnalyticsRepository } from '../../src/postgres/repository.ts';
 import { readReleaseRows,releaseFingerprint } from '../../src/postgres/release-transfer.ts';
 import { tenantTransaction } from '../../src/postgres/session.ts';
 import { database,enabled } from './support.ts';
-import { batch,certify,clock,evidence,fact,mapping } from './fixtures.ts';
+import { batch,certify,clock,deploy,evidence,fact,mapping } from './fixtures.ts';
 
 const scope = { tenantId: 'a',datasetId: 'release',reference: 'SYNTHETIC PROMOTION ONLY' };
 async function reconcile(db: Awaited<ReturnType<typeof database>>,wrongValue = false) {
@@ -81,4 +81,23 @@ test('certification cannot hide failed controls from the same frozen dataset and
     await new PostgresReconciliation(db.ingestor).record([{ ...original,caseId: 'failed-extra-control',expectedValue: '101.000000' }],'IQD');
     await assert.rejects(authorize(db,caseIds),/Failed technical evidence cannot be omitted/);
   } finally { await db.close(); }
+});
+
+
+test('explicit serving replacement requires an exact promotion and expected current release; old evidence is retained',{skip:!enabled},async()=>{
+ const source=await database(),target=await database();const promotion=new PostgresReleasePromotion(source.migrator,target.migrator);
+ try{
+  await deploy(target.migrator,{...mapping(),datasetId:'old-release',mappingId:'old-mapping'});
+  const oldScope={tenantId:'a',datasetId:'old-release'};
+  const before=await tenantTransaction(target.migrator,'a',async client=>releaseFingerprint(await readReleaseRows(client,oldScope)),true);
+  const ids=await reconcile(source);await authorize(source,ids);
+  await assert.rejects(promotion.replaceBinding(scope,'old-release'),/Approved certified/);
+  await promotion.promote(scope);
+  await assert.rejects(promotion.bind(scope),/Existing serving binding/);
+  await assert.rejects(promotion.replaceBinding(scope,'stale-release'),/activation conflict/);
+  assert.equal(await promotion.replaceBinding(scope,'old-release'),'a/release');
+  await assert.rejects(promotion.replaceBinding(scope,'old-release'),/activation conflict/);
+  assert.equal(await tenantTransaction(target.migrator,'a',async client=>releaseFingerprint(await readReleaseRows(client,oldScope)),true),before);
+  assert.equal((await new PostgresAnalyticsRepository(target.runtime,{reportingCurrencies:{a:'IQD'}}).execute({metric:'revenue'},{tenantId:'a',locale:'en'})).rows[0]?.value,100);
+ }finally{await Promise.all([source.close(),target.close()]);}
 });
