@@ -1,5 +1,5 @@
 import type { Pool, PoolClient } from 'pg';
-import { categoricalDimensions, certifiedDimensions, requiredMeasures, semanticCatalog, validateQuery, validateSourceMapping } from '@el-dabboos/domain';
+import { DimensionDiscoveryLimitError, UncertifiedDimensionError, categoricalDimensions, certifiedDimensions, requiredMeasures, semanticCatalog, validateQuery, validateSourceMapping } from '@el-dabboos/domain';
 import type { AnalyticsContext, AnalyticsQuery, AnalyticsRepository, AnalyticsResult, AnalyticsRow, DimensionId, DimensionValueRepository, SourceMapping } from '@el-dabboos/domain';
 import { tenantTransaction } from './session.ts';
 import { selectQueryKeys,querySlots } from './query-slots.ts';
@@ -64,14 +64,17 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository, Dimensi
       const m = await this.release(client,context);
       // Use only inputs of a metric certified for both discovery and every policy dimension.
       const eligible = m.capabilities.filter(c => c.dimensions.includes(dimension) && (context.enforcedFilters ?? []).every(f => c.dimensions.includes(f.dimension)));
-      if (!eligible.length) throw new Error('Uncertified discovery/policy dimension');
+      if (!eligible.length) {
+        if (!m.capabilities.some(capability => (context.enforcedFilters ?? []).every(filter => capability.dimensions.includes(filter.dimension)))) throw new Error('Uncertified discovery/policy dimension');
+        throw new UncertifiedDimensionError(dimension);
+      }
       const measures = [...new Set(eligible.flatMap(c => requiredMeasures(c.metric)))];
       const ps: unknown[] = [context.tenantId,m.datasetId,measures];
       const policy = filterSql(context.enforcedFilters ?? [],ps,[...new Set(eligible.flatMap(c => c.dimensions))]);
       const d = dimensionSql(dimension);
       const result = await client.query(`SELECT DISTINCT ${d} AS value FROM ((SELECT * FROM mart.canonical_facts WHERE tenant_id=$1 AND dataset_id=$2 AND measure_id=ANY($3::text[]) AND kind='event')
         UNION ALL (SELECT DISTINCT ON (measure_id,entity_id) * FROM mart.canonical_facts WHERE tenant_id=$1 AND dataset_id=$2 AND measure_id=ANY($3::text[]) AND kind='snapshot' ORDER BY measure_id,entity_id,business_date DESC)) f WHERE ${policy} AND ${d} IS NOT NULL ORDER BY value LIMIT ${this.maxGroups+1}`,ps);
-      if (result.rows.length > this.maxGroups) throw new Error('Discovery exceeds technical bound');
+      if (result.rows.length > this.maxGroups) throw new DimensionDiscoveryLimitError(dimension);
       return result.rows.map(r => String(r.value));
     },true,this.options.statementTimeoutMs ?? 15000);
   }

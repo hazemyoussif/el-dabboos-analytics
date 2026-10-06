@@ -10,7 +10,7 @@ import { PostgresReconciliation } from '../../src/postgres/reconciliation.ts';
 import { reconcileExtraction } from '../../src/postgres/extraction-reconciliation.ts';
 import { tenantTransaction } from '../../src/postgres/session.ts';
 import { database, enabled } from './support.ts';
-import { mapping, batch, fact, evidence, clock } from './fixtures.ts';
+import { mapping, batch, fact, evidence, clock, certify } from './fixtures.ts';
 const partialEvidence: ExtractionEvidence = { sourceObjects: ['fixture'],requestLimit: 1000,completeness: 'incremental',deletionEvidence: 'explicit',paginationComplete: false };
 const run: ExtractionRun = { tenantId: 'a',sourceId: 'fixture',companyIds: ['fixture-company'],datasetId: 'release',mappingId: 'synthetic',mappingVersion: '1',extractionId: 'september',sourceObjects: ['fixture'],from: '2026-09-01',to: '2026-09-30',sourceAsOf: '2026-10-01T10:00:00.000Z',frozenRevision: 'freeze-1',freezeReference: 'IMMUTABLE SYNTHETIC SOURCE',completeness: 'complete_scope' };
 const expected: Omit<ReconciliationCase,'batchIds'> = { caseId: 'september-control',tenantId: 'a',datasetId: 'release',mappingVersion: '1',measureId: 'revenue',sourceReportReference: 'SYNTHETIC CANDIDATE DB CONTROL ONLY',frozenRevision: 'freeze-1',from: '2026-09-01',to: '2026-09-30',grouping: null,groupKey: null,expectedValue: '1460597500.000000',actualValue: '0.000000',expectedCount: '2893',actualCount: '0',tolerance: { status: 'approved',absoluteValue: '0.000000',absoluteCount: '0',approvalReference: 'SYNTHETIC EXACT CONTROL ONLY' } };
@@ -72,6 +72,8 @@ test('candidate lifecycle: 2,893 records, bounded atomic pages, crash resume, ex
       assert.equal((await reconcileExtraction(db.ingestor,run.extractionId,[control],'IQD')).status,'passed');
       caseIds.push(control.caseId);
     }
+    await assert.rejects(releases.approve({ ...approval,caseIds }),/business certification/);
+    await certify(db.migrator,{ tenantId: 'a',datasetId: 'release',caseIds,from: expected.from,to: expected.to,measureId: expected.measureId,value: expected.expectedValue });
     await releases.approve({ ...approval,caseIds });
     assert.deepEqual((await db.admin.query('SELECT specification FROM mart.mapping_releases')).rows[0].specification,original);
     assert.equal((await db.runtime.query('SELECT * FROM mart.fact_revisions')).rowCount,0);

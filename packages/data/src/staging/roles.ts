@@ -51,10 +51,10 @@ async function grantAdministrationSchema(client: PoolClient, identity: StagingId
     if (identity==='martRuntime') await client.query(`GRANT USAGE ON SCHEMA mart_admin TO ${login}`);
 }
 async function grantRuntimePolicies(client: PoolClient, login: string): Promise<void> {
-    const policies = (await client.query(`SELECT format('ALTER POLICY %I ON mart.%I TO dabboos_runtime,%I',polname,relname,$1::text) sql
+    const policies = (await client.query(`SELECT format('ALTER POLICY %I ON mart.%I TO dabboos_runtime,%I',polname,relname,$1::text) sql,polname
       FROM pg_policy JOIN pg_class ON pg_class.oid=polrelid JOIN pg_namespace ON pg_namespace.oid=relnamespace
-      WHERE nspname='mart' AND polname='runtime_release' AND NOT polpermissive`,[login])).rows;
-    if (policies.length!==6) throw new Error('Staging serving policy set incomplete');
+      WHERE nspname='mart' AND NOT polpermissive AND (SELECT oid FROM pg_roles WHERE rolname='dabboos_runtime')=ANY(polroles)`,[login])).rows;
+    if (policies.filter(policy => policy.polname==='runtime_release').length!==6) throw new Error('Staging serving policy set incomplete');
     for (const policy of policies) await client.query(policy.sql);
 }
 

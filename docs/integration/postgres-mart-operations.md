@@ -70,3 +70,7 @@ Totals/counts are SQL NUMERIC/integer text; the domain harness compares decimals
 Source owner: integration boundary, dedicated credential mechanism, company scope, stable version/delete/freeze protocol, limits and freshness. Finance/business: authoritative revenue surface/states/tax/refunds, mapping/currency/rounding/tolerances, organizational dimension, pilot tenant/month and correction case. Security: production identity/membership/revocation/policy ownership, privacy/LLM sharing and retention. Platform: hosting/TLS/networking/secret manager, capacity/pool sizing, backups, RPO/RTO/restore drill and deployment ownership.
 
 All tests are synthetic. No live production data, live LLM, legacy writes, browser/visual QA, backup drill or production-scale benchmark is claimed. See [readiness](production-readiness.md), [source contract](real-data-contract.md), [questions](questions-for-malik.md) and [ADR 027](../architecture/adr/027-production-data-foundation.md).
+
+## Explicit certified publication
+
+Migration 009 adds append-only authorized-business/external-report certification and immutable promotion receipts. See [ADR 031](../architecture/adr/031-certified-release-promotion.md) and [publication operations](certified-release-publication.md). Both evidence paths require exact completed technical reconciliation; only an approved business-certified release can be promoted, and serving binding remains separate. Original migration files are never edited.

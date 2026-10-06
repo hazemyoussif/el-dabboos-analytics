@@ -22,3 +22,5 @@ export * from './transaction-evidence.ts';
 export * from './source-control.ts';
 export * from './staging-bootstrap.ts';
 export * from './authentication.ts';
+export * from './release-certification.ts';
+export * from './analytics-errors.ts';

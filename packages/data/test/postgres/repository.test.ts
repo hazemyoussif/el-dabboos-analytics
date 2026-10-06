@@ -67,8 +67,10 @@ test('repository: certification/currency gates, query bounds, numeric refusal an
     await assert.rejects(repo.execute({ metric: 'gross_profit' },ctx), /Uncertified/);
     await assert.rejects(repo.execute({ metric: 'revenue' },{ ...ctx,enforcedFilters: [{ dimension: 'customer',values: ['x'] }] }), /Uncertified/);
     await assert.rejects(repo.listDimensionValues('customer',ctx), /Uncertified/);
+    await assert.rejects(repo.listDimensionValues('branch',{ ...ctx,enforcedFilters: [{ dimension: 'customer',values: ['x'] }] }), /discovery\/policy/);
     await assert.rejects(new PostgresAnalyticsRepository(db.runtime,{ reportingCurrencies: { a: 'EGP' } }).execute({ metric: 'revenue' },ctx), /currency/);
     await assert.rejects(new PostgresAnalyticsRepository(db.runtime,{ reportingCurrencies: { a: 'IQD' },maxGroups: 1 }).execute({ metric: 'revenue',groupBy: 'branch' },ctx), /bound/);
+    await assert.rejects(new PostgresAnalyticsRepository(db.runtime,{ reportingCurrencies: { a: 'IQD' },maxGroups: 1 }).listDimensionValues('branch',ctx), /Discovery exceeds technical bound/);
     await assert.rejects(repo.execute({ metric: 'revenue',dateRange: { from: '2000-01-01',to: '2026-01-01' } },ctx), /bound/);
     const writer = new PostgresMartWriter(db.ingestor,{ a: ['fixture-company'] },clock);
     await writer.commit(batch('huge'),[{ facts: [fact('huge',{ batchId: 'huge',value: '9007199254740992.000000' })] }],evidence);

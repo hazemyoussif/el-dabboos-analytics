@@ -27,7 +27,8 @@
     "mart:local": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --experimental-transform-types --disable-warning=ExperimentalWarning apps/api/src/local-mart-cli.ts",
     "control": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --experimental-transform-types --disable-warning=ExperimentalWarning apps/api/src/control-cli.ts",
     "staging": "node --experimental-transform-types --disable-warning=ExperimentalWarning apps/api/src/staging-cli.ts",
-    "auth:local": "node --experimental-transform-types --disable-warning=ExperimentalWarning apps/api/src/auth/cli.ts"
+    "auth:local": "node --experimental-transform-types --disable-warning=ExperimentalWarning apps/api/src/auth/cli.ts",
+    "mart:publication": "node --experimental-transform-types --disable-warning=ExperimentalWarning apps/api/src/mart-publication-cli.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
