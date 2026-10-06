@@ -16694,6 +16694,53 @@
         "en": "Approve actual visit lifecycle, authoritative historic outlet-route linkage and direct visit-order relation; 17/1,939 sampled outlets had authoritative route membership and visit route IDs were null. Never use stock procurement routes as field-sales routes.",
         "ar": "اعتماد دورة الزيارة الفعلية وربط المنفذ بالمسار تاريخياً والعلاقة المباشرة بين الزيارة والطلب؛ 17 من 1939 منفذاً فقط لها ربط مسار موثوق ومعرفات مسار الزيارات فارغة. لا تُستخدم مسارات التوريد كمسارات مبيعات ميدانية."
       }
+    },
+    {
+      "id": "invoice-refund-operations",
+      "name": {
+        "en": "Invoice & Refund Operations",
+        "ar": "عمليات الفواتير والإشعارات الدائنة"
+      },
+      "metrics": [
+        "invoice_count",
+        "refund_count",
+        "average_invoice_value",
+        "invoiced_revenue",
+        "refund_value",
+        "net_invoiced_revenue"
+      ],
+      "dimensions": [
+        "salesperson"
+      ],
+      "state": "executable_certified",
+      "audience": {
+        "en": "Finance / Sales Operations",
+        "ar": "المالية / عمليات المبيعات"
+      },
+      "purpose": {
+        "en": "Monitor posted invoice and credit-note volumes, invoice size and salesperson detail.",
+        "ar": "متابعة أعداد الفواتير والإشعارات الدائنة المُرحّلة ومتوسط قيمة الفاتورة والتفاصيل حسب المندوب."
+      },
+      "questions": {
+        "en": "How many invoices and credit notes were issued, what is average invoice value, and how do volumes and values differ by salesperson?",
+        "ar": "كم فاتورة وإشعاراً دائناً صدر، وما متوسط قيمة الفاتورة، وكيف تختلف الأعداد والقيم حسب مندوب المبيعات؟"
+      },
+      "period": {
+        "en": "September 1–30, 2026; sourceAsOf October 5, 2026, 14:54:58.149 UTC.",
+        "ar": "من 1 إلى 30 سبتمبر 2026؛ المصدر كما في 5 أكتوبر 2026، 14:54:58.149 عالمياً."
+      },
+      "limitations": {
+        "en": "Uses only existing certified summary/Salesperson pairs. Average Invoice Value excludes refunds and is a ratio of totals. Refund Count counts credit-note documents, not original invoices or customers refunded. No new percentages, trends, Top-N or Customer/Product grouping.",
+        "ar": "يستخدم الإجماليات وأزواج المندوب المعتمدة سابقاً فقط. متوسط الفاتورة يستبعد الإشعارات الدائنة وهو نسبة الإجماليين. عدد الإشعارات يعدّ مستنداتها، لا الفواتير الأصلية أو العملاء المرتجعين. لا نسب أو اتجاهات أو ترتيب أو تجميع عميل أو منتج جديد."
+      },
+      "unlock": {
+        "en": "Available under existing publication; no new approval or certification event.",
+        "ar": "متاح وفق النشر القائم؛ لا اعتماد أو حدث مصادقة جديد."
+      },
+      "presentation": {
+        "en": "Six KPI cards for document counts, average invoice value and monetary totals; a six-metric Salesperson detail table. All values come from the analytics runtime.",
+        "ar": "ست بطاقات لأعداد المستندات ومتوسط الفاتورة والقيم، وجدول تفاصيل المندوب بستة مؤشرات. جميع القيم من تنفيذ التحليلات."
+      }
     }
   ],
   "decisions": [

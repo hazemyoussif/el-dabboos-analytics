@@ -28,7 +28,7 @@ test('certified business definitions retain the existing ten metric subset and e
 });
 test('all report and approval references resolve, while future reports cannot claim execution', () => {
  for (const entry of [...pack.reports, ...pack.decisions]) for (const id of entry.metrics) record(id);
- assert.equal(pack.reports.filter(report => report.state === 'executable_certified').length, 3);
+ assert.equal(pack.reports.filter(report => report.state === 'executable_certified').length, 4);
  for (const report of pack.reports.filter(item => item.state === 'executable_certified')) for (const id of report.metrics) assert.equal(record(id).published, true);
  assert.equal(pack.reports.find(report => report.id === 'customer-performance').state, 'blocked');
  for (const id of ['product-performance', 'order-margin', 'inventory-overview', 'expiry-risk', 'procurement-overview']) assert.equal(pack.reports.find(report => report.id === id).state, 'planned_unpublished');

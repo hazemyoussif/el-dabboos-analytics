@@ -289,6 +289,23 @@ Executive has six KPI cards. Each grouped report has a three-series invoice/refu
 | Limitations | Specification only; no executable template or metric publication added. Candidate groupings are not runtime permissions. |
 | Approval / next reconciliation | Approve actual visit lifecycle, authoritative historic outlet-route linkage and direct visit-order relation; 17/1,939 sampled outlets had authoritative route membership and visit route IDs were null. Never use stock procurement routes as field-sales routes. |
 
+## Invoice & Refund Operations (invoice-refund-operations)
+
+| Item | Business description |
+| --- | --- |
+| Purpose | Monitor posted invoice and credit-note volumes, invoice size and salesperson detail. |
+| Users | Finance / Sales Operations |
+| Questions | How many invoices and credit notes were issued, what is average invoice value, and how do volumes and values differ by salesperson? |
+| Metrics | Invoice Count (`invoice_count`); Refund Count (`refund_count`); Average Invoice Value (`average_invoice_value`); Posted Invoice Value (`invoiced_revenue`); Refund Value (`refund_value`); Net Invoiced Revenue (`net_invoiced_revenue`) |
+| Dimensions | salesperson |
+| Date basis | Invoice issue date; each credit note uses its own issue date. September 2026. |
+| Current period | September 1–30, 2026; sourceAsOf October 5, 2026, 14:54:58.149 UTC. |
+| State | Executable · Certified exact series |
+| Limitations | Uses only existing certified summary/Salesperson pairs. Average Invoice Value excludes refunds and is a ratio of totals. Refund Count counts credit-note documents, not original invoices or customers refunded. No new percentages, trends, Top-N or Customer/Product grouping. |
+| Approval / next reconciliation | Available under existing publication; no new approval or certification event. |
+
+Six KPI cards for document counts, average invoice value and monetary totals; a six-metric Salesperson detail table. All values come from the analytics runtime.
+
 ## Finance candidate control — pending confirmation
 
 **CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION.** Cutoff 2026-09-30, IQD. Total and all six buckets exactly reproduce the supplied workbook; 2,217 numeric customer vectors match, but Excel-customer→res_partner.id identity is unverified. Finance owner/date/accepted exceptions are unrecorded. Nothing is business-certified or published.

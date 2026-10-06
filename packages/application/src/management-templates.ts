@@ -5,6 +5,13 @@ const text=(en:string,ar:string):LocalizedText=>({en,ar});
 const monetary=['net_invoiced_revenue','invoiced_revenue','refund_value','order_revenue'] as const;
 const headlines=[...monetary,'order_count','average_confirmed_order_value'] as const;
 const series=(metrics:readonly MetricId[])=>metrics.map(metric=>({id:metric,metric}));
+function invoiceOperationsReport():DashboardTemplate {
+ const metrics=['invoice_count','refund_count','average_invoice_value','invoiced_revenue','refund_value','net_invoiced_revenue'] as const;
+ return {id:'invoice-refund-operations',name:text('Invoice & Refund Operations','عمليات الفواتير والإشعارات الدائنة'),description:text('Posted document volumes, average invoice value and salesperson detail.','أعداد المستندات المُرحّلة ومتوسط قيمة الفاتورة والتفاصيل حسب مندوب المبيعات.'),domain:'finance',tags:['management'],datePreset:'previous_month',periodStrategy:'certified',layout:{columns:3},widgets:[
+  ...metrics.map(metric=>({id:metric,type:'kpi' as const,series:series([metric]),...(metric==='invoiced_revenue'?{title:text('Posted Invoice Value','قيمة الفواتير المُرحّلة')}:{})})),
+  {id:'invoice-detail',type:'table',dimension:'salesperson',series:series(metrics),title:text('Invoice and refund detail by salesperson','تفاصيل الفواتير والإشعارات الدائنة حسب مندوب المبيعات')},
+ ]};
+}
 function groupedReport(id:string,name:LocalizedText,dimension:DimensionId,domain:DashboardTemplate['domain']):DashboardTemplate {
  const widgets:DashboardWidget[]=[
   {id:'invoice-comparison',type:'bar',dimension,series:series(['net_invoiced_revenue','invoiced_revenue','refund_value']),title:text('Invoices and refunds','الفواتير والإشعارات الدائنة'),presentation:{orientation:'horizontal'}},
@@ -18,6 +25,7 @@ export const managementTemplates:readonly DashboardTemplate[]=[
  groupedReport('business-line-performance',text('Business Line Performance','أداء خطوط الأعمال'),'business_line','sales'),
  groupedReport('salesperson-performance',text('Salesperson Performance','أداء مندوبي المبيعات'),'salesperson','sales'),
  groupedReport('customer-performance',text('Customer Performance','أداء العملاء'),'customer','customers'),
+ invoiceOperationsReport(),
 ];
 export function supportedTemplatePeriod(template:DashboardTemplate,published:PublishedAnalyticsCapabilities) {
  return published.releases.find(release=>template.widgets.every(widget=>widget.series.every(item=>!publishedQueryIssues({metric:item.metric,...(widget.dimension?{groupBy:widget.dimension}:{}),...(item.analysis?{analysis:item.analysis}:{}),...(release.period?{dateRange:release.period}:{})},{...published,releases:[release]}).length)))?.period;

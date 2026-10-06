@@ -4,7 +4,7 @@ import { tenantProfiles } from '@el-dabboos/domain';
 import type { PublishedAnalyticsCapabilities } from '@el-dabboos/domain';
 import { managementTemplates,selectDefaultTemplate,instantiateDashboardTemplate,templateCompatibility,managementControlReview } from '../src/index.ts';
 const period={from:'2026-09-01',to:'2026-09-30'};
-const metrics=['net_invoiced_revenue','invoiced_revenue','refund_value','order_revenue','order_count','average_confirmed_order_value'] as const;
+const metrics=['net_invoiced_revenue','invoiced_revenue','refund_value','order_revenue','order_count','average_confirmed_order_value','invoice_count','refund_count','average_invoice_value'] as const;
 const published:PublishedAnalyticsCapabilities={tenantId:'demo-iq',mode:'certified',releases:[{datasetId:'approved',sourceId:'any-source',mappingId:'approved-definition',mappingVersion:'1',certificationReference:'approved',period,capabilities:metrics.map(metric=>({metric,summary:true,dimensions:['business_line','salesperson'],analyses:[]}))}]};
 test('management reports require exact pairs, covered periods and no inferred time or ranking analyses',()=>{
  for(const template of managementTemplates) {
@@ -26,4 +26,14 @@ test('Finance control metadata stays tenant-scoped, non-executable and pending c
  const review=managementControlReview('el-dabboos-iq');assert.equal(review?.certified,false);assert.equal(review?.identityVerified,false);
  assert.equal(managementControlReview('demo-iq'),null);assert.equal(managementControlReview('other'),null);
  assert.ok(!published.releases.some(release=>release.capabilities.some(capability=>capability.metric==='outstanding_amount')));
+});
+
+test('invoice operations needs exact posted-document count, value and approved average pairs',()=>{
+ const template=managementTemplates.find(item=>item.id==='invoice-refund-operations')!;
+ assert.equal(template.widgets.length,7);
+ assert.deepEqual(template.widgets.at(-1)?.series.map(item=>item.metric),['invoice_count','refund_count','average_invoice_value','invoiced_revenue','refund_value','net_invoiced_revenue']);
+ const absentAverage={...published,releases:published.releases.map(release=>({...release,capabilities:release.capabilities.filter(capability=>capability.metric!=='average_invoice_value')}))};
+ assert.equal(templateCompatibility(template,absentAverage).status,'partially_supported');
+ const absentPair={...published,releases:published.releases.map(release=>({...release,capabilities:release.capabilities.map(capability=>capability.metric==='refund_count'?{...capability,dimensions:[]}:capability)}))};
+ assert.notEqual(templateCompatibility(template,absentPair).status,'supported');
 });

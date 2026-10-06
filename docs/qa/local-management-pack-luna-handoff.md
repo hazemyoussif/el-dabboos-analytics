@@ -1,6 +1,6 @@
 # Luna handoff — deferred local management report QA
 
-The user explicitly requested skipping browser/visual QA for the Local Management Reports Pack v1 **and the next task**, then handing both scopes to Luna. This is a deferred acceptance run, not a passed visual gate. The next task is not specified yet; append its changed surfaces and acceptance criteria here before Luna runs. No Luna task/message has been dispatched automatically.
+The user explicitly requested skipping browser/visual QA for the Local Management Reports Pack v1 **and the next task**, then handing both scopes to Luna; Executable Reports Wave 2 also explicitly defers visual QA. This is a deferred acceptance run, not a passed visual gate. The additional task scopes are recorded below. No Luna task/message has been dispatched automatically.
 
 Read [pack implementation/evidence](../integration/local-management-reports-v1.md), [ADR 022](../architecture/adr/022-web-presentation-themes.md) and the project [dashboard quality skill](../../.agents/skills/el-dabboos-dashboard-quality/SKILL.md) in AFTER mode. Inspect the actual final HEAD and preserve the unrelated Odoo edits and `.archify/`. Do not push, merge, deploy online, modify Odoo, weaken certification or change authentication.
 
@@ -44,3 +44,19 @@ Additional review cases:
 5. Check documentation lifecycle counts (10 certified, 15 numerically reconciled/pending, 97 defined/pending reconciliation, 50 discovered, 32 unavailable) are **definition counts**, not runtime capability counts. Candidate dimensions are not certified pair permissions. Marketing/CRM/routes/branch limitations describe source/capture gaps.
 
 Second-task automated evidence: 634 unit/API and 114 isolated PostgreSQL tests; all required engineering/build gates; bilingual render/reference/hash and financial bucket invariants. Read-only actual-mart executions preserve zero failed series; eleven staging history fingerprints unchanged; approved Odoo tunnel unavailable, so no new source extraction or publication. HTTPS health/local auth-state checks pass; authenticated login/browser/theme/responsive QA remains **Deferred**. No Luna task was dispatched; this document is the concrete handoff for the later requested run.
+
+## Third task scope — Executable Reports Wave 2
+
+Starts at `c692d6a`; find its final local commit with `git log` and read [Wave 2 evidence and blockers](../integration/executable-reports-wave-two.md) and the [pair ledger](../integration/executable-reports-wave-two.json). One new template, **Invoice & Refund Operations / عمليات الفواتير والإشعارات الدائنة**, uses existing certified summary and Salesperson pairs. No new reconciliation case, certificate or publication was created. Catalog now contains 18 report specifications and four executable reports; 204 definitions and 19 approval forms are unchanged. Customer/Product/Margin remain unavailable; do not interpret historical source-only findings as new certification.
+
+Production API/web images were rebuilt and started with the existing local launcher. Actual governed-profile/PostgreSQL executions passed all four executable reports with zero failed series on a quiet recheck; new report took approximately 35 seconds. An earlier run during PostgreSQL test load had timeouts; deadlines were not raised. These checks do not cover authenticated browser behavior.
+
+Additional deferred criteria:
+
+1. Select the new report through existing report/template navigation. It has **six KPI cards and one six-metric Salesperson table**. Verify September 1–30, 2026 and October 5 sourceAsOf; Executive remains the landing default.
+2. Check summary values: Invoice Count **2,890**, Refund Count **120**, Average Invoice Value **507,166.78200692043 IQD** before display rounding, Posted Invoice Value **1,465,712,000**, Refund Value **18,545,500**, Net Invoiced Revenue **1,447,166,500 IQD**. Refund Count counts credit-note documents; average invoice value excludes refunds. No refund percentage or ranking was added.
+3. Check stable Salesperson identity and readable labels. Invoice/value/average groups have 39 identities, refund-only operands 31; the merged table must preserve null/absent cells rather than invent zero evidence. Do not sum the per-person averages or require 39 refund groups. Exercise table scrolling and accessible controls.
+4. Check English/Arabic titles, RTL, Light/Dark/System, count versus IQD formatting, 3-column KPI layout and wide table at desktop/tablet/mobile. Pay attention to table column readability, horizontal scrolling, loading/error/retry states and actual execution latency.
+5. Confirm unavailable Customer/Product/Margin capabilities remain gated, Finance remains pending, the existing Executive/Business Line/Salesperson reports retain their values and all twelve original acceptance steps still apply. Record visual QA separately from automated/runtime evidence.
+
+No browser session, visual pass, new Finance approval or Luna dispatch is implied by this handoff.

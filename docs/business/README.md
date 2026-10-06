@@ -1,5 +1,7 @@
 # Enterprise reports and metric approval package
 
+Wave 2 update: [Invoice & Refund Operations](../integration/executable-reports-wave-two.md) adds one executable report from already-published invoice metrics. Current catalog: **18 specifications / 4 executable reports**; all 204 metric definitions and 19 approval forms are unchanged. The delivery record below describes the earlier `c692d6a` baseline.
+
 Prepared October 6, 2026 for Company 1 (Iraq), reporting currency IQD. Starting branch `codex/production-pilot-lifecycle`, HEAD `e5ea6a1ac3ada7574ac51f4a472fa226bdb0a2db`. This task expands the business catalog and approval specifications, with **no runtime metric/template change**. No new executable report has sufficient complete evidence for safe publication while the approved Odoo tunnel is unavailable. The three existing executable reports are preserved.
 
 | Deliverable | English | العربية |
