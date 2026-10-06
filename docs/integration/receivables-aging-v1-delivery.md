@@ -2,6 +2,8 @@
 
 **Control preparation complete; production metric delivery pending Finance confirmation.** The user's workflow correction authorizes engineering to prepare an independent candidate source control. Finance need not manually prepare the data. The candidate is not an authoritative confirmed control, and no production metric is business-certified or published.
 
+A subsequent supplied Odoo Excel control is investigated separately in [Odoo aged-report control](odoo-aged-receivable-control.md). Its signed report meaning takes priority for receivable publication; this gross candidate and its original evidence remain unchanged. Full customer identity/report-metadata acceptance and Finance approval are still pending.
+
 ## Repository state
 
 Starting branch: `codex/production-pilot-lifecycle`. Starting HEAD: `167e3d9962290c1ff8a07c7f54dae511b58ee2d6`.
