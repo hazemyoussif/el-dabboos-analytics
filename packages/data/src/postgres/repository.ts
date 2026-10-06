@@ -2,6 +2,9 @@ import type { Pool, PoolClient } from 'pg';
 import { DimensionDiscoveryLimitError, UncertifiedDimensionError, categoricalDimensions, certifiedDimensions, requiredMeasures, semanticCatalog, validateQuery, validateSourceMapping } from '@el-dabboos/domain';
 import type { AnalyticsContext, AnalyticsQuery, AnalyticsRepository, AnalyticsResult, AnalyticsRow, DimensionId, DimensionValueRepository, SourceMapping } from '@el-dabboos/domain';
 import { tenantTransaction } from './session.ts';
+import { projectPublishedRelease } from './published-capabilities.ts';
+import type { PublishedReconciliationCoverage } from './published-capabilities.ts';
+import type { PublishedAnalyticsCapabilities } from '@el-dabboos/domain';
 import { selectQueryKeys,querySlots } from './query-slots.ts';
 import { aggregateQuerySlots } from './query-aggregate.ts';
 import { queryMetadata } from './query-metadata.ts';
@@ -29,6 +32,14 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository, Dimensi
     const trustedCurrency = this.options.reportingCurrency ? await this.options.reportingCurrency(context.tenantId) : this.options.reportingCurrencies[context.tenantId];
     if (m.approval.status !== 'approved' || m.tenantId !== context.tenantId || m.datasetId !== row.dataset_id || m.sourceId !== row.source_id || m.mappingVersion !== row.mapping_version || m.mappingId !== row.mapping_id || m.reportingCurrency !== row.reporting_currency || m.reportingCurrency !== trustedCurrency) throw new Error('Uncertified binding/reporting currency mismatch');
     return m;
+  }
+  async getPublishedCapabilities(context: AnalyticsContext): Promise<PublishedAnalyticsCapabilities> {
+    return tenantTransaction(this.pool,context.tenantId,async client => {
+      if (!(await client.query('SELECT 1 FROM mart.serving_bindings WHERE tenant_id=$1',[context.tenantId])).rowCount) return { tenantId: context.tenantId,mode: 'certified',releases: [] };
+      const mapping = await this.release(client,context);
+      const coverage = (await client.query<PublishedReconciliationCoverage>('SELECT * FROM mart.published_reconciliation_coverage($1,$2)',[context.tenantId,mapping.datasetId])).rows;
+      return projectPublishedRelease(mapping,coverage,context);
+    },true,this.options.statementTimeoutMs ?? 15000);
   }
   async isDataReady(tenantId: string): Promise<boolean> {
     return tenantTransaction(this.pool, tenantId, async client => {

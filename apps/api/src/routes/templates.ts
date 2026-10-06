@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
-import { AuthorizationError, dashboardTemplates, getDashboardTemplate, instantiateDashboardTemplate } from '@el-dabboos/application';
+import { AuthorizationError, templateCompatibility,assertPublishedDashboard,dashboardTemplates, getDashboardTemplate, instantiateDashboardTemplate } from '@el-dabboos/application';
+import { workspacePublishedCapabilities } from '../published-analytics.ts';
 import { analyticsContext } from '../context.ts';
 import type { RouteContext } from '../context.ts';
 import { ApiError } from '../errors.ts';
@@ -7,8 +8,13 @@ import { ApiError } from '../errors.ts';
 export function registerTemplateRoutes(app: FastifyInstance, services: RouteContext): void {
   app.get('/api/dashboard-templates', async request => {
     const { context } = await services.session(request.headers); services.authorize(context, 'dashboard:view');
-    return { templates: dashboardTemplates.map(template => ({ ...template, availability: services.templateAllowed(template, context) ? 'available' : 'restricted',
-      ...(services.templateAllowed(template, context) ? {} : { reason: 'Contains metrics unavailable to this demo user.' }) })) };
+    const published = await workspacePublishedCapabilities(services,context);
+    return { templates: dashboardTemplates.map(template => {
+      const compatibility = templateCompatibility(template,published);
+      const allowed = services.templateAllowed(template,context);
+      return { ...template,compatibility,availability: !allowed ? 'restricted' : compatibility.status==='supported' ? 'available' : 'incompatible',
+        ...(!allowed ? { reason: 'Contains metrics unavailable to this user.' } : compatibility.status!=='supported' ? { reason: 'This template requires analytics capabilities that are not available for this workspace.' } : {}) };
+    }) };
   });
   app.get<{ Params: { id: string } }>('/api/dashboard-templates/:id/instantiate', async request => {
     const { context, profile } = await services.session(request.headers);
@@ -18,7 +24,11 @@ export function registerTemplateRoutes(app: FastifyInstance, services: RouteCont
       const template = getDashboardTemplate(request.params.id);
       if (!template) throw new ApiError(404, 'TEMPLATE_NOT_FOUND', 'Unknown dashboard template.');
       if (!services.templateAllowed(template, context)) throw new AuthorizationError('TEMPLATE_FORBIDDEN', 'Template contains unavailable metrics.');
-      const dashboard = services.ensureDashboard(instantiateDashboardTemplate(template, profile, services.clock(), context.locale), context);
+      const published = await workspacePublishedCapabilities(services,context);
+      const compatibility = templateCompatibility(template,published);
+      if (compatibility.status!=='supported') throw new ApiError(409,'TEMPLATE_INCOMPATIBLE',`This template requires analytics capabilities that are not available for this workspace: ${compatibility.missing.join(', ')}.`);
+      const dashboard = services.ensureDashboard(instantiateDashboardTemplate(template, profile, services.clock(), context.locale,published), context);
+      assertPublishedDashboard(dashboard,published,profile.timeZone,services.clock());
       return { dashboard, execution: await services.executor.execute(dashboard, analyticsContext(context), { timeZone: profile.timeZone }) };
     }, request.params.id);
   });

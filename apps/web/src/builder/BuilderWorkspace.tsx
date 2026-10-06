@@ -1,7 +1,8 @@
+import { publishedWidgetAllowed,editorAnalysisAllowed,validPublishedWidgetDraft } from './published-capabilities.ts';
 import { ArrowUp, ArrowDown, X, Undo2, Redo2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { governedPalettes, resolveDashboardLayout, widgetTypes } from '@el-dabboos/domain';
-import type { AnalysisSpec, DashboardPatch, DashboardSeries, DashboardSpec, DashboardWidget, DimensionId, GovernedPalette, Locale, MetricId, ProductMetric, SemanticMetric, TenantProfile, WidgetType } from '@el-dabboos/domain';
+import type { AnalysisSpec, DashboardPatch, DashboardSeries, DashboardSpec, DashboardWidget, DimensionId, GovernedPalette, Locale, MetricId, ProductMetric, PublishedAnalyticsCapabilities, SemanticMetric, TenantProfile, WidgetType } from '@el-dabboos/domain';
 import { dashboardFilterDimensions, dashboardFilterSelection } from '@el-dabboos/application';
 import { DimensionFilterControl } from '../DimensionFilterControl.tsx';
 import type { FilterOptions } from '../DimensionFilterControl.tsx';
@@ -20,7 +21,7 @@ import type { BuilderDragItem } from './drag-item.ts';
 import { applyMetricDrop, createMetricCommand, metricAvailable, metricDropActions, metricDropCopy, metricVisualizationOptions, nextSeriesId } from './metric-drop.ts';
 import type { MetricDropAction } from './metric-drop.ts';
 import { appearanceCopy, copy, paletteLabels } from '../i18n.ts';
-import { analysisAllowed, canAddSeries, commonDimensions, selectableMetric, validWidgetDraft, dashboardPaletteCommand, withWidgetPalette, widgetPaletteCommand, withWidgetMetric } from './model.ts';
+import { canAddSeries, commonDimensions, selectableMetric, validWidgetDraft, dashboardPaletteCommand, withWidgetPalette, widgetPaletteCommand, withWidgetMetric } from './model.ts';
 import type { BuilderCommand, BuilderDocument, BuilderHistory, WidgetPaletteSelection } from './model.ts';
 
 interface Props {
@@ -28,6 +29,7 @@ interface Props {
   execution: DashboardExecutionResult | null;
   catalog: Record<string, SemanticMetric>;
   registry: ProductMetric[];
+  published?: PublishedAnalyticsCapabilities | undefined;
   profile: TenantProfile;
   locale: Locale;
   filterOptions: FilterOptions;
@@ -58,21 +60,25 @@ const labels = {
   },
 };
 const typeName = visualizationNames;
-const makeWidget = (id: string, type: WidgetType, metric: MetricId = 'revenue', usedSeriesIds: readonly string[] = []): DashboardWidget => {
+const makeWidget = (id: string, type: WidgetType, metric: MetricId, catalog: Record<string,SemanticMetric>, usedSeriesIds: readonly string[] = []): DashboardWidget => {
   const series: DashboardSeries[] = [{ id: nextSeriesId(metric, usedSeriesIds), metric }];
   if (type === 'combo') series.push({ id: nextSeriesId(metric, [...usedSeriesIds, series[0]!.id]), metric });
-  return { id, type, series, ...(type === 'bar' ? { presentation: { orientation: 'vertical' } as const } : {}), ...(type === 'kpi' ? {} : { dimension: ['pie', 'treemap', 'bar', 'table'].includes(type) ? 'branch' : 'month' }) };
+  const preferred = ['pie', 'treemap', 'bar', 'table'].includes(type) ? 'branch' : 'month';
+  const dimensions = catalog[metric]?.dimensions ?? [];
+  const dimension = dimensions.includes(preferred) ? preferred : dimensions[0];
+  return { id, type, series, ...(type === 'bar' ? { presentation: { orientation: 'vertical' } as const } : {}), ...(type === 'kpi' ? {} : { ...(dimension ? { dimension } : {}) }) };
 };
+const defaultMetric = (registry: ProductMetric[]) => registry.filter(selectableMetric).find(metric => metric.id==='revenue') ?? registry.filter(selectableMetric)[0];
 const patch = (operation: DashboardPatch['operations'][number]): BuilderCommand => ({ type: 'patch', patch: { schemaVersion: 2, operations: [operation] } });
 
-function WidgetEditor({ initial, adding, base, registry, catalog, locale, onApply, onPalette, onRemove }: {
+function WidgetEditor({ initial, adding, base, registry, catalog, published, locale, onApply, onPalette, onRemove }: {
   initial: DashboardWidget; adding: boolean; base: Omit<DashboardSpec, 'widgets'>; registry: ProductMetric[];
-  catalog: Record<string, SemanticMetric>; locale: Locale; onApply: (widget: DashboardWidget) => void; onPalette: (value: string) => void; onRemove: () => void;
+  catalog: Record<string, SemanticMetric>; published?: PublishedAnalyticsCapabilities | undefined; locale: Locale; onApply: (widget: DashboardWidget) => void; onPalette: (value: string) => void; onRemove: () => void;
 }) {
   const t = labels[locale];
   const available = registry.filter(selectableMetric);
   const [draft, setDraft] = useState<DashboardWidget>(() => structuredClone(initial));
-  const [newMetric, setNewMetric] = useState<MetricId>('revenue');
+  const [newMetric, setNewMetric] = useState<MetricId>(initial.series[0]!.metric);
   const [message, setMessage] = useState('');
   // A palette-only preview must not discard other pending editor controls.
   const initialSignature = JSON.stringify({ ...initial, presentation: { ...initial.presentation, palette: undefined } });
@@ -95,10 +101,10 @@ function WidgetEditor({ initial, adding, base, registry, catalog, locale, onAppl
   const changeAnalysis = (series: DashboardSeries, change: Partial<AnalysisSpec>, remove?: keyof AnalysisSpec) => {
     const analysis = { ...series.analysis, ...change };
     if (remove) delete analysis[remove];
-    if (!analysisAllowed(series.metric, draft.dimension, base.filters.dateRange ?? base.filters.datePreset, analysis) || !validWidgetDraft({ ...draft, series: draft.series.map(item => item.id === series.id ? { ...item, analysis } : item) }, base)) return;
+    if (!editorAnalysisAllowed(draft,series,analysis,{ base,published })) return;
     updateSeries(series.id, old => ({ ...old, ...(Object.keys(analysis).length ? { analysis } : { analysis: undefined }) }));
   };
-  const valid = validWidgetDraft(draft, base);
+  const valid = validPublishedWidgetDraft(draft,base,published);
   const choices = visualizationOptions(draft, base);
   const recommendation = recommendedVisualization(draft, base, catalog);
   const choiceId = draft.type === 'pie' && draft.presentation?.pieVariant === 'donut' ? 'donut' : draft.type === 'bar' && draft.presentation?.orientation !== 'vertical' ? 'horizontal' : draft.type;
@@ -141,7 +147,7 @@ function WidgetEditor({ initial, adding, base, registry, catalog, locale, onAppl
     <div className="builder-series-heading">{t.metric}</div>
     {draft.series.map((series, index) => {
       const analysis = series.analysis ?? {};
-      const allowed = (next: AnalysisSpec) => analysisAllowed(series.metric, draft.dimension, base.filters.dateRange ?? base.filters.datePreset, next) && validWidgetDraft({ ...draft, series: draft.series.map(item => item.id === series.id ? { ...item, analysis: next } : item) }, base);
+      const allowed = (next: AnalysisSpec) => editorAnalysisAllowed(draft,series,next,{ base,published });
       return <div className="builder-series" key={series.id}>
         <div className="builder-series-title"><strong>{index === 0 ? t.primary : `${t.metric} ${index + 1}`}</strong><span>
           <button type="button" disabled={index === 0 || (index === 1 && !!draft.series[0]?.analysis?.topN)} onClick={() => moveSeries(index, -1)} aria-label={t.moveUp}><ArrowUp aria-hidden="true" /></button>
@@ -152,18 +158,7 @@ function WidgetEditor({ initial, adding, base, registry, catalog, locale, onAppl
           {available.map(metric => <option key={metric.id} value={metric.id} disabled={metric.id !== series.metric && (['line', 'area', 'bar', 'combo'].includes(draft.type)) && draft.series.length > 1 && !canAddSeries({ ...draft, series: draft.series.filter(item => item.id !== series.id) }, metric.id, catalog).allowed}>{metric.labels[locale]}</option>)}
         </select>
         {draft.type === 'combo' && <label>{locale === 'ar' ? 'علامة السلسلة' : 'Series mark'}<select value={series.presentation?.mark ?? (index === 0 ? 'bar' : 'line')} onChange={event => updateSeries(series.id, old => ({ ...old, presentation: { mark: event.target.value as 'bar' | 'line' } }))}><option value="bar">{locale === 'ar' ? 'أعمدة' : 'Bar'}</option><option value="line">{locale === 'ar' ? 'خطي' : 'Line'}</option></select></label>}
-        <div className="builder-analysis">
-          <label>{t.comparison}<select value={analysis.comparison ?? ''} onChange={event => changeAnalysis(series, { comparison: event.target.value as AnalysisSpec['comparison'] }, event.target.value ? undefined : 'comparison')}>
-            <option value="">{t.none}</option>{(['previous_period', 'month_over_month', 'year_over_year'] as const).map(value => <option key={value} value={value} disabled={!allowed({ ...analysis, comparison: value })}>{locale === 'ar' ? ({ previous_period: 'الفترة السابقة', month_over_month: 'مقارنة بالشهر السابق', year_over_year: 'مقارنة بالسنة السابقة' }[value]) : value.replaceAll('_', ' ')}</option>)}</select></label>
-          <label>{t.moving}<select value={analysis.movingAverage?.window ?? 0} onChange={event => changeAnalysis(series, event.target.value === '0' ? {} : { movingAverage: { window: Number(event.target.value) } }, event.target.value === '0' ? 'movingAverage' : undefined)}>
-            <option value={0}>{t.none}</option>{[3, 6, 12].map(window => <option key={window} value={window} disabled={!allowed({ ...analysis, movingAverage: { window } })}>{window}</option>)}</select></label>
-          <label className="builder-checkbox"><input type="checkbox" checked={!!analysis.runningTotal} disabled={!analysis.runningTotal && !allowed({ ...analysis, runningTotal: true })} onChange={event => changeAnalysis(series, event.target.checked ? { runningTotal: true } : {}, event.target.checked ? undefined : 'runningTotal')} />{t.running}</label>
-          <label className="builder-checkbox"><input type="checkbox" checked={!!analysis.percentageContribution} disabled={!analysis.percentageContribution && !allowed({ ...analysis, percentageContribution: true })} onChange={event => changeAnalysis(series, event.target.checked ? { percentageContribution: true } : {}, event.target.checked ? undefined : 'percentageContribution')} />{t.contribution}</label>
-          <label className="builder-checkbox"><input type="checkbox" checked={!!analysis.ranking} disabled={!analysis.ranking && !allowed({ ...analysis, ranking: true })} onChange={event => changeAnalysis(series, event.target.checked ? { ranking: true } : {}, event.target.checked ? undefined : 'ranking')} />{t.ranking}</label>
-          {index === 0 && <label>{t.top}<select value={analysis.topN?.direction ?? ''} onChange={event => changeAnalysis(series, event.target.value ? { topN: { direction: event.target.value as 'top' | 'bottom', limit: analysis.topN?.limit ?? 10 } } : {}, event.target.value ? undefined : 'topN')}>
-            <option value="">{t.none}</option><option value="top" disabled={!allowed({ ...analysis, topN: { direction: 'top', limit: 10 } })}>{t.topName}</option><option value="bottom" disabled={!allowed({ ...analysis, topN: { direction: 'bottom', limit: 10 } })}>{t.bottomName}</option></select></label>}
-          {index === 0 && analysis.topN && <label>N<input type="number" min="1" max="100" value={analysis.topN.limit} onChange={event => changeAnalysis(series, { topN: { ...analysis.topN!, limit: Number(event.target.value) } })} /></label>}
-        </div>
+        <SeriesAnalysisControls analysis={analysis} index={index} locale={locale} allowed={allowed} change={(change,remove)=>changeAnalysis(series,change,remove)} />
       </div>;
     })}
     {!['kpi', 'pie', 'treemap'].includes(draft.type) && draft.series.length < (draft.type === 'combo' ? 4 : 8) && <div className="builder-add-series"><select aria-label={t.addSeries} value={newMetric} onChange={event => { setNewMetric(event.target.value as MetricId); setMessage(''); }}>
@@ -174,7 +169,26 @@ function WidgetEditor({ initial, adding, base, registry, catalog, locale, onAppl
   </div>;
 }
 
-export function BuilderWorkspace({ history, execution, catalog, registry, profile, locale, filterOptions, busy, onCommand, onUndo, onRedo }: Props) {
+function SeriesAnalysisControls({ analysis,index,locale,allowed,change }: {
+  analysis: AnalysisSpec; index: number; locale: Locale; allowed: (next: AnalysisSpec)=>boolean;
+  change: (change: Partial<AnalysisSpec>,remove?: keyof AnalysisSpec)=>void;
+}) {
+  const text = labels[locale];
+  return (<div className="builder-analysis">
+          <label>{text.comparison}<select value={analysis.comparison ?? ''} onChange={event => change( { comparison: event.target.value as AnalysisSpec['comparison'] }, event.target.value ? undefined : 'comparison')}>
+            <option value="">{text.none}</option>{(['previous_period', 'month_over_month', 'year_over_year'] as const).map(value => <option key={value} value={value} disabled={!allowed({ ...analysis, comparison: value })}>{locale === 'ar' ? ({ previous_period: 'الفترة السابقة', month_over_month: 'مقارنة بالشهر السابق', year_over_year: 'مقارنة بالسنة السابقة' }[value]) : value.replaceAll('_', ' ')}</option>)}</select></label>
+          <label>{text.moving}<select value={analysis.movingAverage?.window ?? 0} onChange={event => change( event.target.value === '0' ? {} : { movingAverage: { window: Number(event.target.value) } }, event.target.value === '0' ? 'movingAverage' : undefined)}>
+            <option value={0}>{text.none}</option>{[3, 6, 12].map(window => <option key={window} value={window} disabled={!allowed({ ...analysis, movingAverage: { window } })}>{window}</option>)}</select></label>
+          <label className="builder-checkbox"><input type="checkbox" checked={!!analysis.runningTotal} disabled={!analysis.runningTotal && !allowed({ ...analysis, runningTotal: true })} onChange={event => change( event.target.checked ? { runningTotal: true } : {}, event.target.checked ? undefined : 'runningTotal')} />{text.running}</label>
+          <label className="builder-checkbox"><input type="checkbox" checked={!!analysis.percentageContribution} disabled={!analysis.percentageContribution && !allowed({ ...analysis, percentageContribution: true })} onChange={event => change( event.target.checked ? { percentageContribution: true } : {}, event.target.checked ? undefined : 'percentageContribution')} />{text.contribution}</label>
+          <label className="builder-checkbox"><input type="checkbox" checked={!!analysis.ranking} disabled={!analysis.ranking && !allowed({ ...analysis, ranking: true })} onChange={event => change( event.target.checked ? { ranking: true } : {}, event.target.checked ? undefined : 'ranking')} />{text.ranking}</label>
+          {index === 0 && <label>{text.top}<select value={analysis.topN?.direction ?? ''} onChange={event => change( event.target.value ? { topN: { direction: event.target.value as 'top' | 'bottom', limit: analysis.topN?.limit ?? 10 } } : {}, event.target.value ? undefined : 'topN')}>
+            <option value="">{text.none}</option><option value="top" disabled={!allowed({ ...analysis, topN: { direction: 'top', limit: 10 } })}>{text.topName}</option><option value="bottom" disabled={!allowed({ ...analysis, topN: { direction: 'bottom', limit: 10 } })}>{text.bottomName}</option></select></label>}
+          {index === 0 && analysis.topN && <label>N<input type="number" min="1" max="100" value={analysis.topN.limit} onChange={event => change( { topN: { ...analysis.topN!, limit: Number(event.target.value) } })} /></label>}
+        </div>);
+}
+
+export function BuilderWorkspace({ history, execution, catalog, registry, published, profile, locale, filterOptions, busy, onCommand, onUndo, onRedo }: Props) {
   const t = labels[locale];
   const document: BuilderDocument = history.present;
   const spec = document.kind === 'dashboard' ? document.spec : null;
@@ -192,7 +206,8 @@ export function BuilderWorkspace({ history, execution, catalog, registry, profil
   const [addingType, setAddingType] = useState<WidgetType | null>(null);
   const selected = spec?.widgets.find(widget => widget.id === selectedId);
   const dashboardTitle = document.kind === 'dashboard' ? document.spec.title[locale] : document.base.title[locale];
-  const newWidget = useMemo(() => addingType ? makeWidget(nextWidgetId(spec?.widgets ?? []), addingType, 'revenue', spec?.widgets.flatMap(widget => widget.series.map(series => series.id)) ?? []) : null, [addingType, spec?.widgets]);
+  const firstMetric = defaultMetric(registry);
+  const newWidget = useMemo(() => addingType && firstMetric ? makeWidget(nextWidgetId(spec?.widgets ?? []), addingType, firstMetric.id,catalog, spec?.widgets.flatMap(widget => widget.series.map(series => series.id)) ?? []) : null, [addingType, firstMetric, catalog, spec?.widgets]);
   const requestedFilters = base?.filters.dimensions ?? [];
   const setRequestedFilter = (dimension: DimensionId, values: string[]) => {
     if (!base || !spec) return;
@@ -201,6 +216,7 @@ export function BuilderWorkspace({ history, execution, catalog, registry, profil
     onCommand(patch({ op: 'set_filters', filters: { ...base.filters, ...(dimensions.length ? { dimensions } : { dimensions: undefined }) } }));
   };
   const applyWidget = (widget: DashboardWidget) => {
+    if (!base || !publishedWidgetAllowed(widget,base,published)) return;
     if (addingType) { onCommand(spec ? patch({ op: 'add', widget }) : { type: 'add-first', widget }); setAddingType(null); setSelectedId(widget.id); }
     else if (selected) onCommand(patch({ op: 'replace', widgetId: selected.id, widget }));
   };
@@ -215,8 +231,8 @@ export function BuilderWorkspace({ history, execution, catalog, registry, profil
   const dropWidget = (type: WidgetType, position: { x: number; y: number }) => guarded(() => {
     const metric = registry.filter(selectableMetric).find(metric => metric.id === 'revenue') ?? registry.filter(selectableMetric)[0];
     if (!metric) return;
-    const widget = makeWidget(nextWidgetId(spec?.widgets ?? []), type, metric.id, spec?.widgets.flatMap(widget => widget.series.map(series => series.id)) ?? []);
-    if (!validWidgetDraft(widget, base!)) throw new Error('Invalid widget');
+    const widget = makeWidget(nextWidgetId(spec?.widgets ?? []), type, metric.id,catalog, spec?.widgets.flatMap(widget => widget.series.map(series => series.id)) ?? []);
+    if (!validWidgetDraft(widget, base!) || !publishedWidgetAllowed(widget,base!,published)) throw new Error('Invalid widget');
     onCommand(spec ? insertWidget(spec, widget, position) : { type: 'add-first', widget,
       layout: { columns: 12, items: [{ widgetId: widget.id, ...widgetSizes[type], ...position }] } });
     setSelectedId(widget.id); setAddingType(null); setDragItem(null);
@@ -289,7 +305,7 @@ export function BuilderWorkspace({ history, execution, catalog, registry, profil
       </section>
       {base && (selected || newWidget) ? <section className="widget-settings"><h3>{t.selectedWidget}</h3>
         {spec && selected && <WidgetLayoutInspector key={`layout-${selected.id}`} spec={spec} id={selected.id} locale={locale} onChange={layout => onCommand({ type: 'layout', layout })} />}
-        <WidgetEditor key={selected?.id ?? `${newWidget?.id}-${addingType}`} initial={(selected ?? newWidget)!} adding={!!newWidget} base={base} registry={registry} catalog={catalog} locale={locale} onApply={applyWidget} onPalette={value => { if (selected) onCommand(widgetPaletteCommand(selected, value)); }} onRemove={() => removeWidget()} />
+        <WidgetEditor key={selected?.id ?? `${newWidget?.id}-${addingType}`} initial={(selected ?? newWidget)!} adding={!!newWidget} base={base} registry={registry} catalog={catalog} published={published} locale={locale} onApply={applyWidget} onPalette={value => { if (selected) onCommand(widgetPaletteCommand(selected, value)); }} onRemove={() => removeWidget()} />
       </section> : <p>{t.selectWidget}</p>}
     </aside>
   </div>;

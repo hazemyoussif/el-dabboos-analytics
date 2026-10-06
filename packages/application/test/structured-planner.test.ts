@@ -394,3 +394,18 @@ test('relative and historical generation/edit use one compact provider request a
   assert.deepEqual(current.widgets, spec.widgets); assert.deepEqual(current.layout, spec.layout);
   assert.ok(!JSON.stringify(provider.requests).match(/effectiveFilters|sourceAsOf|dataThrough|filterOptions|enforcedFilters/));
 });
+
+test('published capability context narrows dimensions and rejects globally known outputs after planning',async () => {
+  const published: NonNullable<PlannerCapabilities['published']> = { tenantId: profile.id,mode: 'certified',releases: [{ datasetId: 'r1',sourceId: 'any',mappingId: 'm',mappingVersion: '1',certificationReference: 'approved',period: { from: '2026-09-01',to: '2026-09-30' },capabilities: [{ metric: 'order_count',summary: true,dimensions: ['business_line'],analyses: [] }] }] };
+  const allowed: PlannerCapabilities = { metricIds: ['order_count'],templateIds: [],actions: ['ai:generate'],published };
+  const safe = { titleEn: 'Orders',titleAr: 'الطلبات',widgets: [{ series: [{ metric: 'order_count' }] }] };
+  const provider = new SequenceProvider([safe]);
+  const planner = new StructuredDashboardPlanner(provider,{ clock: ()=>now });
+  const result = await planner.generate({ ...request,capabilities: allowed });
+  assert.deepEqual(result.filters.dateRange,published.releases[0]!.period);
+  assert.ok(provider.requests[0]!.messages[0]!.content.includes('"dimensions":["business_line"]'));
+  for (const invalid of [{ ...safe,widgets: [{ series: [{ metric: 'gross_margin' }] }] },{ ...safe,widgets: [{ dimension: 'customer',series: [{ metric: 'order_count' }] }] },{ ...safe,widgets: [{ series: [{ metric: 'order_count',comparison: 'year_over_year' }] }] }]) {
+    const rejected = new StructuredDashboardPlanner(new SequenceProvider([invalid,invalid]),{ clock: ()=>now });
+    await assert.rejects(rejected.generate({ ...request,capabilities: allowed }));
+  }
+});

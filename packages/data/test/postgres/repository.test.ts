@@ -51,7 +51,9 @@ test('repository parity: additive/aggregations, ratios, snapshots, comparison ca
     for (const [i,q] of queries.entries()) await t.test(`case ${i+1}: ${JSON.stringify(q)}`,async () => {
       for (const ctx of [{ tenantId: 'a',locale: 'en' as const },{ tenantId: 'a',locale: 'en' as const,enforcedFilters: [{ dimension: 'branch' as const,values: ['cairo'] }] }]) {
         const expected = executeFacts(facts,q,ctx,{ sourceId: 'postgres',executedAt: clock().toISOString(),sourceAsOf: '2026-10-01T10:00:00.000Z' });
-        assert.deepEqual(await repo.execute(q,ctx),expected);
+        const actual=await repo.execute(q,ctx);
+        expected.metadata.release={datasetId:'release',sourceId:'fixture',mappingId:'synthetic',mappingVersion:'1',certificationReference:'SYNTHETIC TEST ONLY'};
+        assert.deepEqual(actual,expected);
       }
     });
     assert.deepEqual(await repo.listDimensionValues('branch',{ tenantId: 'a',locale: 'en' }),['cairo','giza']);
@@ -108,7 +110,9 @@ test('repository parity: every executable catalog family, inventory/finance snap
         const q: AnalyticsQuery = { metric: metric.id,dateRange: range,...(groupBy ? { groupBy } : {}) };
         const ctx = { tenantId: 'a',locale: 'en' as const };
         const expected = executeFacts(facts,q,ctx,{ sourceId: 'postgres',executedAt: clock().toISOString(),sourceAsOf: '2026-10-01T10:00:00.000Z' });
-        assert.deepEqual(await repo.execute(q,ctx),expected);
+        const actual=await repo.execute(q,ctx);
+        expected.metadata.release={datasetId:'release',sourceId:'fixture',mappingId:'synthetic',mappingVersion:'1',certificationReference:'SYNTHETIC TEST ONLY'};
+        assert.deepEqual(actual,expected);
         if (dimension) {
           const restricted = { ...ctx,enforcedFilters: [{ dimension,values: ['original'] }] };
           assert.deepEqual((await repo.execute(q,restricted)).rows,executeFacts(facts,q,restricted,{ sourceId: 'postgres',executedAt: clock().toISOString() }).rows);

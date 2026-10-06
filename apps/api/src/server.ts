@@ -79,7 +79,7 @@ else if (plannerMode === 'disabled')
     planner = null;
 else if (plannerMode !== 'mock')
     throw new Error('DASHBOARD_PLANNER must be mock, structured, or disabled.');
-const app = await buildApi({ analyticsRepository: repository, dimensionValues: repository, executionConcurrency: config.executionConcurrency,
+const app = await buildApi({ ...(provider==='postgres' ? { publishedCapabilities: repository as PostgresAnalyticsRepository } : {}),analyticsRepository: repository, dimensionValues: repository, executionConcurrency: config.executionConcurrency,
     readiness: { persistence: async () => { await localAuth?.ready(); return controlStorage.ready(); }, analytics: analyticsReady },
     administration: { unitOfWork: administration, directory: administration.directory, profiles: administration.profiles, dataReady,
         authenticate: async (headers) => {

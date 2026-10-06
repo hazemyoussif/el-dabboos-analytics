@@ -10,9 +10,9 @@ const eg = tenantProfiles['demo-eg'];
 const context = { tenantId: 'demo-iq', locale: 'en' } as const;
 const result = (query: AnalyticsQuery, rows: AnalyticsResult['rows']): AnalyticsResult => ({ metric: query.metric, groupBy: query.groupBy ?? null, rows,
   metadata: { sourceId: 'spy', executedAt: fixed().toISOString(), metricType: 'currency', semantics: 'additive' } });
-test('nineteen reusable templates instantiate identically for both markets with symbolic dates', () => {
-  assert.equal(dashboardTemplates.length, 19);
-  assert.equal(new Set(dashboardTemplates.map(t => t.id)).size, 19);
+test('twenty reusable templates instantiate identically for both markets with symbolic dates', () => {
+  assert.equal(dashboardTemplates.length, 20);
+  assert.equal(new Set(dashboardTemplates.map(t => t.id)).size, 20);
   for (const template of dashboardTemplates) {
     const a = instantiateDashboardTemplate(template, iq, fixed(), 'en');
     const b = instantiateDashboardTemplate(template, eg, fixed(), 'ar');

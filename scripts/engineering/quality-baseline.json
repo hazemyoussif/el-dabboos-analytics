@@ -69,12 +69,6 @@
     },
     {
       "file": "apps/web/src/builder/BuilderWorkspace.tsx",
-      "symbol": "WidgetEditor/draft.series.map:callback0:ceab747d78e5",
-      "metric": "complexity",
-      "ceiling": 22
-    },
-    {
-      "file": "apps/web/src/builder/BuilderWorkspace.tsx",
       "symbol": "BuilderWorkspace",
       "metric": "complexity",
       "ceiling": 33

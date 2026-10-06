@@ -1,3 +1,5 @@
+import { assertPublishedQuery } from '@el-dabboos/application';
+import { workspacePublishedCapabilities } from '../published-analytics.ts';
 import type { FastifyInstance } from 'fastify';
 import { validateQuery } from '@el-dabboos/domain';
 import type { AnalyticsQuery } from '@el-dabboos/domain';
@@ -12,6 +14,7 @@ export function registerAnalyticsRoutes(app: FastifyInstance, services: RouteCon
     return services.checked(context, 'analytics.query', async () => {
       const query = request.body as AnalyticsQuery;
       validateQuery(query, analyticsContext(context));
+      assertPublishedQuery(query,await workspacePublishedCapabilities(services,context));
       return services.analytics.execute(query, context);
     });
   });

@@ -7,7 +7,7 @@ test('roles/RLS: forced scope, read-only runtime, immutable history, no DDL or r
   const db = await database();
   try {
     await verifyMartRuntimeRole(db.runtime);
-    assert.equal((await db.runtime.query('SELECT count(*)::int count FROM mart_admin.mart_schema_migrations')).rows[0].count,9);
+    assert.equal((await db.runtime.query('SELECT count(*)::int count FROM mart_admin.mart_schema_migrations')).rows[0].count,10);
     await assert.rejects(db.runtime.query('UPDATE mart_admin.mart_schema_migrations SET name=name'));
     await assert.rejects(verifyMartRuntimeRole(db.ingestor), /read-only/);
     await assert.rejects(verifyMartRuntimeRole(db.migrator), /read-only/);

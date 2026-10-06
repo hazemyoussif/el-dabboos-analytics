@@ -1,7 +1,7 @@
 import { discoverWorkspaceAccess, isPlatformOnlyAccess, selectWorkspaceProfile } from '../admin/workspace-access.ts';
 import { useEffect, useRef, useState } from 'react';
 import type { DashboardExecutionResult } from '@el-dabboos/application';
-import type { AccessControlledDashboardRecord as DashboardRecord, DashboardSpec, Locale, ProductMetric, SemanticMetric, TenantProfile } from '@el-dabboos/domain';
+import type { AccessControlledDashboardRecord as DashboardRecord, DashboardSpec, Locale, ProductMetric, PublishedAnalyticsCapabilities, SemanticMetric, TenantProfile } from '@el-dabboos/domain';
 import { ApiClientError, createSavedDashboard, executeDashboard, getCapabilities, getFilterOptions, getSavedDashboard, getSemanticCatalog,
   executeSavedDashboard, getTemplates, instantiateTemplate, listSavedDashboards, updateSavedDashboard } from '../api/client.ts';
 import type { AccessibleTemplate, ApiSession, DemoUser } from '../api/client.ts';
@@ -30,6 +30,7 @@ export function useWorkspace(authenticatedUser?: DemoUser) {
   const [profiles, setProfiles] = useState<TenantProfile[]>([]);
   const [profile, setProfile] = useState<TenantProfile | null>(null);
   const [catalog, setCatalog] = useState<Record<string, SemanticMetric>>({});
+  const [published, setPublished] = useState<PublishedAnalyticsCapabilities>();
   const [metricRegistry, setMetricRegistry] = useState<ProductMetric[]>([]);
   const [templates, setTemplates] = useState<AccessibleTemplate[]>([]);
   const [savedDashboards, setSavedDashboards] = useState<DashboardRecord[]>([]);
@@ -63,12 +64,12 @@ export function useWorkspace(authenticatedUser?: DemoUser) {
   }) => {
       setDemoUsers(users.users); setProfiles(membership.profiles); setProfile(selected); setLocale(nextLocale); storeTenant(preferences(), selected.id); storeDemoUser(demoSessionPreference(), nextUserId);
       setCatalog(Object.fromEntries(catalogResponse.metrics.map(metric => [metric.id, metric])));
-      setMetricRegistry(catalogResponse.registry); setTemplates(templatesResponse.templates); setFilterOptions(options);
+      setPublished(catalogResponse.published); setMetricRegistry(catalogResponse.registry); setTemplates(templatesResponse.templates); setFilterOptions(options);
       setPermissions(capabilities.permissions); setSavedDashboards(saved.dashboards);
       setActiveTemplateId(first?.id ?? ''); setDocument(opened); setExecution(openedExecution);
   };
   const enterPlatformWorkspace = (nextUserId: string) => {
-    setCatalog({}); setMetricRegistry([]); setTemplates([]); setActiveTemplateId('');
+    setPublished(undefined); setCatalog({}); setMetricRegistry([]); setTemplates([]); setActiveTemplateId('');
     storeDemoUser(demoSessionPreference(), nextUserId); navigate(null);
   };
   const loadWorkspace = async (nextUserId: string, nextTenantId?: string, restoreRoute = true) => {
@@ -96,8 +97,8 @@ export function useWorkspace(authenticatedUser?: DemoUser) {
       const initialCapabilities = await getCapabilities(selectedSession);
       if (!isCurrent(id)) return;
       setProfile(selected); setProfiles(membership.profiles); setLocale(nextLocale); setPermissions(initialCapabilities.permissions);
-      const [catalogResponse, templatesResponse, options, capabilities, saved] = await Promise.all([
-        getSemanticCatalog(selectedSession), getTemplates(selectedSession), getFilterOptions(selectedSession),
+      const [catalogResponse, templatesResponse, capabilities, saved] = await Promise.all([
+        getSemanticCatalog(selectedSession), getTemplates(selectedSession),
         getCapabilities(selectedSession), listSavedDashboards(selectedSession),
       ]);
       const first = templatesResponse.templates.find(template => template.id === activeTemplateId && template.availability === 'available')
@@ -111,7 +112,7 @@ export function useWorkspace(authenticatedUser?: DemoUser) {
         openedExecution = result.execution;
       }
       if (!isCurrent(id)) return;
-      publishWorkspace({ users, membership, selected, nextLocale, nextUserId, catalogResponse, templatesResponse, options, capabilities, saved, first, opened, openedExecution });
+      publishWorkspace({ users, membership, selected, nextLocale, nextUserId, catalogResponse, templatesResponse, options: await getFilterOptions(selectedSession,[...new Set(catalogResponse.metrics.flatMap(metric=>metric.dimensions))]), capabilities, saved, first, opened, openedExecution });
       if (!restoreRoute) navigate(null);
     } catch (cause) {
       if (isCurrent(id)) {
@@ -161,7 +162,7 @@ export function useWorkspace(authenticatedUser?: DemoUser) {
     setLocale(next); storeLocale(preferences(), next);
     if (profile) {
       const id = requestId.current;
-      void getFilterOptions(session(profile, next)).then(options => { if (isCurrent(id)) setFilterOptions(options); })
+      void getFilterOptions(session(profile, next),[...new Set(Object.values(catalog).flatMap(metric=>metric.dimensions))]).then(options => { if (isCurrent(id)) setFilterOptions(options); })
         .catch(() => { if (isCurrent(id)) setFilterOptions({}); });
     }
   };
@@ -194,7 +195,7 @@ export function useWorkspace(authenticatedUser?: DemoUser) {
     catch (cause) { if (isCurrent(id)) setError(cause instanceof Error ? cause.message : String(cause)); }
     finally { if (isCurrent(id)) setLoading(false); }
   };
-  return { locale, userId, demoUsers, permissions, platformPermissions, profiles, profile, catalog, metricRegistry, templates, savedDashboards,
+  return { locale, userId, demoUsers, permissions, platformPermissions, profiles, profile, catalog, published, metricRegistry, templates, savedDashboards,
     navigationRevision, activeTemplateId, document, dashboard, execution, loading, error, mode, dirty, filterOptions, setExecution, setLoading, setError,
     beginRequest, isCurrent, session, loadWorkspace, openTemplate, openSaved, selectLocale, applyWorkingSpec, startManual,
     openGenerated, save, discard, confirmAbandon };

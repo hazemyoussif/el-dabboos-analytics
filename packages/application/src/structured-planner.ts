@@ -1,5 +1,6 @@
 import { applyDashboardPatch, isMetricId, widgetTypes, governedPalettes, semanticCatalog, validateDashboardPatch, validateDashboardSpec } from '@el-dabboos/domain';
 import type { DashboardGenerationRequest, DashboardPatch, DashboardPlanner, DashboardSpec, LLMProvider, Locale, PlannerCapabilities, StructuredOutputRequest, TenantProfile } from '@el-dabboos/domain';
+import { assertPublishedDashboard } from './published-analytics.ts';
 import { compileDashboardEditPlan, dashboardEditPlanSchema, editPlanSchemaIssues, validateDashboardEditPlan } from './edit-plan.ts';
 import { compileDashboardGenerationPlan, GenerationVisualizationError, dashboardGenerationPlanSchema, generationPlanSchemaIssues, validateDashboardGenerationPlan } from './generation-plan.ts';
 import { dashboardEditTargetIndex } from './edit-target-index.ts';
@@ -43,14 +44,14 @@ function authorizedContext(capabilities: PlannerCapabilities, profile: TenantPro
   const allowed = new Set(capabilities.metricIds);
   const metrics = Object.values(semanticCatalog).filter(metric => allowed.has(metric.id)).map(metric => ({
     id: metric.id, labels: metric.labels, descriptions: metric.descriptions, type: metric.type,
-    semantics: metric.semantics, dimensions: metric.dimensions, unit: metric.presentation.unit,
+    semantics: metric.semantics, dimensions: capabilities.published ? [...new Set(capabilities.published.releases.flatMap(release => release.capabilities.filter(capability => capability.metric===metric.id).flatMap(capability => capability.dimensions)))] : metric.dimensions, unit: metric.presentation.unit,
   }));
   const templates = dashboardTemplates.filter(template => capabilities.templateIds.includes(template.id) &&
     template.widgets.every(widget => widget.series.every(series => allowed.has(series.metric)))).map(template => ({
     id: template.id, name: template.name, description: template.description, domain: template.domain,
     tags: template.tags, datePreset: template.datePreset,
   }));
-  return { market: marketContext(profile, clock), preferredMetrics: profile.preferredMetrics ?? {}, metrics, templates, actions: capabilities.actions,
+  return { market: marketContext(profile, clock), preferredMetrics: profile.preferredMetrics ?? {}, metrics, templates,publishedCapabilities: capabilities.published, actions: capabilities.actions,
     visualizations: { types: widgetTypes, governedPalettes, rules: [
       'KPI: one series, no dimension. Line: shared dimension, matching type/unit. Area: ordered date/month/quarter/year, compatible series, no stacking.',
       'Bar: grouped compatible series. orientation vertical or horizontal. No stacking.',
@@ -99,15 +100,17 @@ export class StructuredDashboardPlanner implements DashboardPlanner {
     const now = this.clock();
     const context = authorizedContext(capabilities, request.tenantProfile, () => now);
     const messages: StructuredOutputRequest['messages'] = [
-      { role: 'system', content: `Produce only a DashboardGenerationPlan JSON object. Choose business metrics, dimensions, dates and filters only from the authorized context. Prefer the smallest non-redundant set of widgets and metrics that satisfies the request. Do not add closely related metrics or near-duplicate widgets unless the user explicitly requests them. Include analysis only when explicitly requested: otherwise omit comparisons, moving averages, running totals, percentage contribution, ranking and top N. Omit requestedPresentation entirely when the user did not request presentation; deterministic code supplies visualization defaults. Summary widgets have exactly one series and no dimension; their only explicit type is KPI. Grouped widgets require a dimension and exclude KPI. If presentation was explicitly requested, set its required type and only type-valid options from the schema. When requestedPresentation is emitted, palette is required; use "default" for an explicit type without a requested color. Treat every explicitly requested visualization type, orientation, palette and governed presentation option as required intent. In multi-widget requests attach each option only to the widget it describes. Before returning JSON, verify no explicit presentation adjective from the request was dropped. Do not invent helpful analyses or decorations. For an explicit top N request, set topNDirection='top' and topNLimit=N; for bottom N set topNDirection='bottom' and topNLimit=N. Put the metric used for selection first in the widget series and apply Top-N only to that first relevant series. Enable ranking only when explicitly requested or required by the governed analytics semantics. Never drop an explicit Top-N request. Compact example: "Show the top 5 branches by revenue as horizontal blue bars" means widget intent {"dimension":"branch","series":[{"metric":"revenue","topNDirection":"top","topNLimit":5}],"requestedPresentation":{"type":"bar","orientation":"horizontal","palette":"blue"}}. Never emit raw colors or renderer configuration. Supply bilingual titles. Omit optional fields when unused. Relative language stays a datePreset (last month=previous_month, this month=current_month); never calculate dates for relative periods. Named historical periods use dateFrom/dateTo (September 2026=2026-09-01 to 2026-09-30), never both modes; otherwise omit date fields and code defaults to current_year. Do not generate IDs, grid positions, layout, persistence metadata or tenant/security information. Use only authorized metrics and templates. Keep calculations in the deterministic analytics engine. Do not generate SQL, React, chart-library options, arbitrary expressions, or policy filters. Context: ${JSON.stringify(context)}` },
+      { role: 'system', content: `Produce only a DashboardGenerationPlan JSON object. Choose business metrics, dimensions, dates and filters only from the authorized context. Prefer the smallest non-redundant set of widgets and metrics that satisfies the request. Do not add closely related metrics or near-duplicate widgets unless the user explicitly requests them. Include analysis only when explicitly requested: otherwise omit comparisons, moving averages, running totals, percentage contribution, ranking and top N. Omit requestedPresentation entirely when the user did not request presentation; deterministic code supplies visualization defaults. Summary widgets have exactly one series and no dimension; their only explicit type is KPI. Grouped widgets require a dimension and exclude KPI. If presentation was explicitly requested, set its required type and only type-valid options from the schema. When requestedPresentation is emitted, palette is required; use "default" for an explicit type without a requested color. Treat every explicitly requested visualization type, orientation, palette and governed presentation option as required intent. In multi-widget requests attach each option only to the widget it describes. Before returning JSON, verify no explicit presentation adjective from the request was dropped. Do not invent helpful analyses or decorations. For an explicit top N request, set topNDirection='top' and topNLimit=N; for bottom N set topNDirection='bottom' and topNLimit=N. Put the metric used for selection first in the widget series and apply Top-N only to that first relevant series. Enable ranking only when explicitly requested or required by the governed analytics semantics. Never drop an explicit Top-N request. Compact example: "Show the top 5 branches by revenue as horizontal blue bars" means widget intent {"dimension":"branch","series":[{"metric":"revenue","topNDirection":"top","topNLimit":5}],"requestedPresentation":{"type":"bar","orientation":"horizontal","palette":"blue"}}. Never emit raw colors or renderer configuration. Supply bilingual titles. Omit optional fields when unused. Relative language stays a datePreset (last month=previous_month, this month=current_month); never calculate dates for relative periods. Named historical periods use dateFrom/dateTo (September 2026=2026-09-01 to 2026-09-30), never both modes; otherwise omit date fields and code uses the certified period when supplied, or current_year for synthetic data. Do not generate IDs, grid positions, layout, persistence metadata or tenant/security information. Use only authorized metrics and templates. Keep calculations in the deterministic analytics engine. Do not generate SQL, React, chart-library options, arbitrary expressions, or policy filters. Context: ${JSON.stringify(context)}` },
       { role: 'user', content: request.prompt },
     ];
     const schema = structuredClone(dashboardGenerationPlanSchema);
     schema.$defs.series.properties.metric.enum = [...capabilities.metricIds];
     return this.validated({ messages, locale: request.locale, responseFormat: { name: 'dashboard_generation_plan', jsonSchema: projectProviderSchema(schema), strict: true } }, 'generation', output => {
       validateDashboardGenerationPlan(output);
-      const spec = compileDashboardGenerationPlan(output, request.tenantProfile, request.locale, now);
+      const defaultPeriod = capabilities.published?.mode==='certified' ? capabilities.published.releases[0]?.period : undefined;
+      const spec = compileDashboardGenerationPlan(output, request.tenantProfile, request.locale, now,defaultPeriod);
       assertAllowed(spec, capabilities);
+      if (capabilities.published) assertPublishedDashboard(spec,capabilities.published,request.tenantProfile.timeZone,now);
       return spec;
     });
   }
@@ -129,6 +132,7 @@ export class StructuredDashboardPlanner implements DashboardPlanner {
       validateDashboardPatch(patch);
       const next = applyDashboardPatch(current, patch);
       assertAllowed(next, capabilities);
+      if (capabilities.published) assertPublishedDashboard(next,capabilities.published,tenantProfile.timeZone,this.clock());
       return patch;
     });
   }

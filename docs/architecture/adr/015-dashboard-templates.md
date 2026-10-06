@@ -9,3 +9,5 @@ The application package owns ten versioned-code dashboard templates with stable 
 ## Consequences
 
 The platform remains useful when planning is disabled. Templates are code-governed and cannot yet be edited or persisted by end users. Relative presets are deterministic for a supplied reference instant; fiscal calendars are not modeled.
+
+The catalog now has twenty templates. [ADR 032](032-published-analytics-capabilities.md) governs release-aware requirements, compatibility, certified-period defaults and source-neutral consumer capability inputs. The original richer templates remain available to compatible synthetic or governed datasets.

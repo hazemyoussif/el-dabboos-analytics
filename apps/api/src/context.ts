@@ -13,6 +13,7 @@ export interface ApiDependencies {
     principals?: () => Promise<readonly { id: string; displayName: string }[]>;
     dataReady: (tenantId: string) => Promise<boolean> };
   analyticsRepository: AnalyticsRepository;
+  publishedCapabilities?: import('@el-dabboos/domain').PublishedCapabilityProvider;
   dimensionValues: DimensionValueRepository;
   libraryRepository?: DashboardLibraryRepository;
   dashboardRepository?: DashboardRepository;

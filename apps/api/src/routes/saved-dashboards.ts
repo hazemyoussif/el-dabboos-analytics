@@ -1,6 +1,7 @@
-import { GovernedSavedDashboardService } from '@el-dabboos/application';
+import { assertPublishedDashboard,GovernedSavedDashboardService } from '@el-dabboos/application';
 import type { FastifyInstance } from 'fastify';
 import type { DashboardScope } from '@el-dabboos/domain';
+import { workspacePublishedCapabilities } from '../published-analytics.ts';
 import { analyticsContext } from '../context.ts';
 import type { RouteContext } from '../context.ts';
 import { ApiError, object } from '../errors.ts';
@@ -32,6 +33,7 @@ export function registerSavedDashboardRoutes(app: FastifyInstance, services: Rou
     services.authorize(context, 'dashboard:view', 'analytics:query');
     await services.requireData(context.tenant.tenantId);
     const record = await service().get(request.params.id, context);
+    assertPublishedDashboard(record.spec,await workspacePublishedCapabilities(services,context),profile.timeZone,services.clock());
     return services.checked(context, 'dashboard.execute', () => services.executor.execute(record.spec, analyticsContext(context), { timeZone: profile.timeZone }), record.id);
   });
   app.post('/api/saved-dashboards', async request => {

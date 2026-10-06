@@ -3,8 +3,8 @@ import test from 'node:test';
 import { semanticCatalog, tenantProfiles, validateDashboardSpec, widgetTypes } from '@el-dabboos/domain';
 import { generateSeedFacts, MockAnalyticsRepository } from '@el-dabboos/data';
 import { dashboardTemplates, DashboardExecutor, DemoIdentityProvider, DefaultAuthorizationPolicy, instantiateDashboardTemplate } from '@el-dabboos/application';
-test('all 19 governed templates validate and execute in EN/AR for both demo markets with authorized metrics', async () => {
-  assert.equal(dashboardTemplates.length,19);
+test('all 20 governed templates validate and execute in EN/AR for both demo markets with authorized metrics', async () => {
+  assert.equal(dashboardTemplates.length,20);
   const repository = new MockAnalyticsRepository([...generateSeedFacts('demo-iq'),...generateSeedFacts('demo-eg')]);
   const identity = new DemoIdentityProvider(); const policy = new DefaultAuthorizationPolicy(); const executor = new DashboardExecutor(repository, () => new Date('2026-09-30T12:00:00Z'));
   for (const profile of Object.values(tenantProfiles)) for (const locale of ['en','ar'] as const) for (const template of dashboardTemplates) {

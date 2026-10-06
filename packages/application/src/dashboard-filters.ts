@@ -38,3 +38,7 @@ export function resolveDashboardFilters(defaults: DashboardSpec['filters'], scop
   const dateRange = selection.datePreset ? resolveRelativeDatePreset(selection.datePreset, scope!.timeZone, now) : selection.dateRange;
   return { ...(dateRange ? { dateRange: { ...dateRange } } : {}), ...(selection.dimensions ? { dimensions: structuredClone(selection.dimensions) } : {}) };
 }
+
+export function validateDashboardOverrideDimensions(spec: Pick<DashboardSpec,'widgets'>,overrides?: DashboardFilterOverrides): void {
+  if (overrides?.dimensions?.some(filter => !dashboardFilterDimensions(spec).includes(filter.dimension))) throw new Error('Unsupported dashboard filter dimension');
+}

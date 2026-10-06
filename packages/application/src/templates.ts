@@ -1,6 +1,7 @@
 import type { DashboardSeries, DashboardSpec, DashboardWidget, DateRange, RelativeDatePreset, Locale, LocalizedText, MetricId, TenantProfile, AnalysisSpec, DimensionId } from '@el-dabboos/domain';
 import { validateDashboardSpec } from '@el-dabboos/domain';
 
+import type { PublishedAnalyticsCapabilities } from '@el-dabboos/domain';
 import { resolveRelativeDatePreset } from './relative-date.ts';
 export type DatePreset = RelativeDatePreset;
 export interface DashboardTemplate {
@@ -10,6 +11,7 @@ export interface DashboardTemplate {
   domain: 'executive' | 'sales' | 'crm' | 'finance' | 'customers' | 'inventory' | 'maintenance';
   tags: readonly string[];
   datePreset: DatePreset;
+  periodStrategy?: 'certified';
   layout: DashboardSpec['layout'];
   widgets: DashboardWidget[];
 }
@@ -154,16 +156,27 @@ export const dashboardTemplates: readonly DashboardTemplate[] = [
     widget('equipment-detail', 'table', [series('failure-count', 'failure_count'), series('mtbf', 'mtbf'), series('mttr', 'mttr'), series('maintenance-cost', 'maintenance_cost')], 'equipment'),
     widget('category-reliability', 'table', [series('failure-count', 'failure_count'), series('mtbf', 'mtbf'), series('mttr', 'mttr'), series('maintenance-cost', 'maintenance_cost')], 'equipment_category')
   ] },
+  { id: 'sales-invoicing', name: text('Sales & Invoicing', 'المبيعات والفواتير'), description: text('Certified invoice revenue, refunds and orders.', 'إيرادات الفواتير والإشعارات الدائنة والطلبات المعتمدة.'), domain: 'sales', tags: ['sales','invoicing'],datePreset: 'previous_month',periodStrategy: 'certified',layout: { columns: 4 },widgets: [
+    one('net-invoiced-revenue','kpi','net_invoiced_revenue'),
+    { ...one('posted-invoice-value','kpi','invoiced_revenue'),title: text('Posted Invoice Value','قيمة الفواتير المُرحّلة') },
+    one('refund-value','kpi','refund_value'),one('orders','kpi','order_count'),
+  ] },
+
 ];
 export function getDashboardTemplate(id: string): DashboardTemplate | undefined { return dashboardTemplates.find(template => template.id === id); }
 /** Compatibility export; all calendar arithmetic belongs to the shared resolver. */
 export function resolveDatePreset(preset: DatePreset, profile: TenantProfile, now: Date): DateRange {
   return resolveRelativeDatePreset(preset, profile.timeZone, now);
 }
-export function instantiateDashboardTemplate(template: DashboardTemplate, profile: TenantProfile, _now: Date, locale: Locale = profile.defaultLocale): DashboardSpec {
+export function instantiateDashboardTemplate(template: DashboardTemplate, profile: TenantProfile, _now: Date, locale: Locale = profile.defaultLocale, published?: PublishedAnalyticsCapabilities): DashboardSpec {
   const spec: DashboardSpec = { schemaVersion: 2, id: template.id, title: template.name, locale,
     filters: { datePreset: template.datePreset }, layout: template.layout,
     widgets: structuredClone(template.widgets) };
+  if (template.periodStrategy==='certified') {
+    spec.title = { en: `${profile.labels.en} Sales & Invoicing`,ar: `المبيعات والفواتير — ${profile.labels.ar}` };
+    const period = published?.releases.find(release => template.widgets.every(widget => widget.series.every(series => release.capabilities.some(capability => capability.metric===series.metric && capability.summary))))?.period;
+    if (period) spec.filters = { dateRange: { ...period } };
+  }
   validateDashboardSpec(spec);
   return spec;
 }

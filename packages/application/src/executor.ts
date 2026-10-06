@@ -1,4 +1,4 @@
-import { dashboardFilterDimensions, resolveDashboardFilters } from './dashboard-filters.ts';
+import { validateDashboardOverrideDimensions, resolveDashboardFilters } from './dashboard-filters.ts';
 import type { DashboardExecutionScope, EffectiveDashboardFilters } from './dashboard-filters.ts';
 import { analyticsQueryIdentity, executionConcurrency, normalizeAnalyticsQuery, runBounded } from './query-execution.ts';
 import type { DashboardExecutionOptions } from './query-execution.ts';
@@ -54,7 +54,7 @@ export class DashboardExecutor {
     if (!context.tenantId.trim() || !['en', 'ar'].includes(context.locale)) throw new Error('Invalid analytics context');
     const now = this.clock();
     const effectiveFilters = resolveDashboardFilters(spec.filters, scope, now);
-    if (scope?.overrides?.dimensions?.some(filter => !dashboardFilterDimensions(spec).includes(filter.dimension))) throw new Error('Unsupported dashboard filter dimension');
+    validateDashboardOverrideDimensions(spec,scope?.overrides);
     // All normalized requests are planned before any repository call starts.
     const jobs = new Map<string, { query: AnalyticsQuery; result?: SeriesExecution }>();
     const failure = (error: unknown): SeriesExecution => ({ status: 'error', error: { code: 'SERIES_EXECUTION_FAILED', message: error instanceof Error ? error.message : 'Series failed' } });

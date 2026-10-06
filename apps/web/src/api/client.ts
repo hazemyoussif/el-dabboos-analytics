@@ -1,11 +1,11 @@
 import { apiLocation, validateApiBase } from './api-location.ts';
-import type { DashboardExecutionResult, DashboardTemplate, DashboardFilterOverrides } from '@el-dabboos/application';
+import type { DashboardExecutionResult, templateCompatibility, DashboardTemplate, DashboardFilterOverrides } from '@el-dabboos/application';
 import { categoricalDimensions } from '@el-dabboos/domain';
-import type { AccessControlledDashboardRecord as DashboardRecord, DashboardSpec, DimensionId, Locale, ProductMetric, SemanticMetric, TenantProfile } from '@el-dabboos/domain';
+import type { AccessControlledDashboardRecord as DashboardRecord, DashboardSpec, DimensionId, Locale, ProductMetric, PublishedAnalyticsCapabilities, SemanticMetric, TenantProfile } from '@el-dabboos/domain';
 import type { FilterOptions } from '../builder/BuilderWorkspace.tsx';
 
 export type DemoUser = { id: string; displayName: string };
-export type AccessibleTemplate = DashboardTemplate & { availability: 'available' | 'restricted'; reason?: string };
+export type AccessibleTemplate = DashboardTemplate & { availability: 'available' | 'restricted' | 'incompatible'; reason?: string; compatibility?: ReturnType<typeof templateCompatibility> };
 export interface ApiSession { userId: string; tenantId: string; locale: Locale }
 type ApiError = { error?: { code: string; message: string } };
 export class ApiClientError extends Error {
@@ -24,7 +24,7 @@ export async function request<T>(session: ApiSession, path: string, method: stri
 const demoSession = (userId: string): ApiSession => ({ userId, tenantId: 'demo-iq', locale: 'ar' });
 export const getDemoUsers = (userId: string) => request<{ users: DemoUser[] }>(demoSession(userId), '/api/demo-principals', 'GET');
 export const getTenantProfiles = (userId: string) => request<{ profiles: TenantProfile[]; defaultTenantId: string }>(demoSession(userId), '/api/tenant-profiles', 'GET');
-export const getSemanticCatalog = (session: ApiSession) => request<{ metrics: SemanticMetric[]; registry: ProductMetric[] }>(session, '/api/semantic-catalog', 'GET');
+export const getSemanticCatalog = (session: ApiSession) => request<{ metrics: SemanticMetric[]; registry: ProductMetric[]; published?: PublishedAnalyticsCapabilities }>(session, '/api/semantic-catalog', 'GET');
 export const getTemplates = (session: ApiSession) => request<{ templates: AccessibleTemplate[] }>(session, '/api/dashboard-templates', 'GET');
 export const getCapabilities = (session: ApiSession) => request<{ permissions: string[] }>(session, '/api/demo-capabilities', 'GET');
 export const instantiateTemplate = (session: ApiSession, templateId: string) => request<{ dashboard: DashboardSpec; execution: DashboardExecutionResult }>(session, `/api/dashboard-templates/${encodeURIComponent(templateId)}/instantiate`, 'GET');
@@ -42,8 +42,8 @@ export const getSavedDashboard = (session: ApiSession, id: string) => request<Da
 export const createSavedDashboard = (session: ApiSession, dashboard: DashboardSpec) => request<DashboardRecord>(session, '/api/saved-dashboards', 'POST', { dashboard });
 export const updateSavedDashboard = (session: ApiSession, id: string, dashboard: DashboardSpec, expectedVersion: number) => request<DashboardRecord>(session, `/api/saved-dashboards/${encodeURIComponent(id)}`, 'PUT', { dashboard, expectedVersion });
 export const executeDashboard = (session: ApiSession, dashboard: DashboardSpec, overrides?: DashboardFilterOverrides) => request<DashboardExecutionResult>(session, '/api/dashboards/execute', 'POST', { dashboard, ...(overrides ? { overrides } : {}) });
-export async function getFilterOptions(session: ApiSession): Promise<FilterOptions> {
-  const values = await Promise.all(categoricalDimensions.map(async dimension => {
+export async function getFilterOptions(session: ApiSession,dimensions: readonly DimensionId[] = categoricalDimensions): Promise<FilterOptions> {
+  const values = await Promise.all(dimensions.filter(dimension=>categoricalDimensions.includes(dimension)).map(async dimension => {
     const response = await request<{ dimension: DimensionId; values: Array<{ id: string; label: string }> }>(session, `/api/dimensions/${dimension}/values`, 'GET');
     return [dimension, response.values] as const;
   }));

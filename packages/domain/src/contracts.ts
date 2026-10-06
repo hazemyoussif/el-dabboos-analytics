@@ -87,6 +87,7 @@ export interface AnalyticsResult {
   metadata: {
     sourceId: string;
     executedAt: string;
+    release?: import('./published-capabilities.ts').AnalyticsReleaseProvenance;
     /** Latest event date among tenant facts needed for this metric, independent of the query period. */
     dataThrough?: string;
     /** Source extraction/synchronization timestamp, only when supplied by the adapter. */
@@ -156,7 +157,7 @@ export type DashboardPatch = {
     | { op: 'set_presentation'; presentation: DashboardPresentation | null }
   >;
 };
-export interface PlannerCapabilities { metricIds: readonly MetricId[]; templateIds: readonly string[]; actions: readonly Permission[] }
+export interface PlannerCapabilities { metricIds: readonly MetricId[]; templateIds: readonly string[]; actions: readonly Permission[]; published?: import('./published-capabilities.ts').PublishedAnalyticsCapabilities }
 export interface DashboardGenerationRequest { prompt: string; locale: Locale; context: AnalyticsContext; tenantProfile: TenantProfile; capabilities?: PlannerCapabilities }
 export interface DashboardPlanner {
   generate(request: DashboardGenerationRequest): Promise<DashboardSpec>;

@@ -1,6 +1,6 @@
 import Ajv2020 from 'ajv/dist/2020.js';
 import { defaultDashboardLayout, dimensions, relativeDatePresets, semanticCatalog, validateDashboardSpec, validDateRange, governedPalettes, visualizationIssues } from '@el-dabboos/domain';
-import type { AnalysisSpec, DashboardSchemaIssue, DashboardSpec, DashboardWidget, DimensionId, Locale, MetricId, TenantProfile, WidgetPresentation } from '@el-dabboos/domain';
+import type { AnalysisSpec, DateRange, DashboardSchemaIssue, DashboardSpec, DashboardWidget, DimensionId, Locale, MetricId, TenantProfile, WidgetPresentation } from '@el-dabboos/domain';
 import { resolveGenerationWidget } from './visualization-intent.ts';
 import type { DatePreset } from './templates.ts';
 
@@ -105,7 +105,7 @@ export class GenerationVisualizationError extends Error {
   constructor(readonly issues: readonly string[]) { super('Invalid dashboard widget or incompatible series'); }
 }
 /** Pure compilation; caller supplies the clock value. Canonical validation remains authoritative. */
-export function compileDashboardGenerationPlan(plan: DashboardGenerationPlan, _profile: TenantProfile, locale: Locale, _now: Date): DashboardSpec {
+export function compileDashboardGenerationPlan(plan: DashboardGenerationPlan, _profile: TenantProfile, locale: Locale, _now: Date, defaultPeriod?: DateRange): DashboardSpec {
   void _now; // Compatibility argument; relative intent is deliberately not resolved here.
   validateDashboardGenerationPlan(plan);
   plan = preferredGenerationMetrics(plan,_profile);
@@ -126,7 +126,7 @@ export function compileDashboardGenerationPlan(plan: DashboardGenerationPlan, _p
   });
   const spec: DashboardSpec = { schemaVersion: 2, id: 'generated-dashboard', title: { en: plan.titleEn, ar: plan.titleAr }, locale,
     filters: { ...(plan.dateFrom !== undefined && plan.dateTo !== undefined ? { dateRange: { from: plan.dateFrom, to: plan.dateTo } }
-      : { datePreset: plan.datePreset ?? 'current_year' }),
+      : plan.datePreset ? { datePreset: plan.datePreset } : defaultPeriod ? { dateRange: { ...defaultPeriod } } : { datePreset: 'current_year' }),
     ...(plan.filters?.length ? { dimensions: structuredClone(plan.filters) } : {}) }, widgets, layout: defaultDashboardLayout(widgets) };
   try { validateDashboardSpec(spec); }
   catch (error) {

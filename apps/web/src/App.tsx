@@ -36,7 +36,7 @@ export default function App({ authenticatedUser,onLogout,authenticationError }: 
   const planner = useDashboardPlanner(workspace, builder.reset);
   const viewFilters = useDashboardViewFilters(workspace);
   const flow = useDashboardProductFlow(workspace, builder, planner, viewFilters.clearForEdit);
-  const { locale, userId, demoUsers, permissions, profiles, profile, catalog, metricRegistry, templates,
+  const { locale, userId, demoUsers, permissions, profiles, profile, catalog, published, metricRegistry, templates,
     dashboard, document: dashboardDocument, savedDashboards, execution, loading, error, filterOptions, setError } = workspace;
   useEffect(() => { setAdminPage(initialAdministrationPage(workspace)); }, [userId, profile?.id, workspace.platformPermissions.length]);
   const t = copy[locale];
@@ -89,7 +89,7 @@ export default function App({ authenticatedUser,onLogout,authenticationError }: 
           {execution?.metadata.failedSeries ? <div className="partial-note">{t.partial}: {execution.metadata.failedSeries}</div> : null}
           </>} canvas={<>
           {(loading || viewFilters.busy && !builderHistory) && <DashboardSkeleton label={t.loading} />}
-          {!loading && builderHistory && profile && <Suspense fallback={<DashboardSkeleton label={t.loading} />}><BuilderWorkspace history={builderHistory} execution={execution} catalog={catalog} registry={metricRegistry} profile={profile} locale={locale} filterOptions={filterOptions} busy={builder.busy || viewFilters.busy} onCommand={builder.command} onUndo={builder.undo} onRedo={builder.redo} /></Suspense>}
+          {!loading && builderHistory && profile && <Suspense fallback={<DashboardSkeleton label={t.loading} />}><BuilderWorkspace history={builderHistory} execution={execution} catalog={catalog} published={published} registry={metricRegistry} profile={profile} locale={locale} filterOptions={filterOptions} busy={builder.busy || viewFilters.busy} onCommand={builder.command} onUndo={builder.undo} onRedo={builder.redo} /></Suspense>}
           {!loading && !viewFilters.busy && !builderHistory && execution && profile && <DashboardRenderer execution={execution} dashboardOverride={dashboard ?? undefined} catalog={catalog} locale={locale} profile={profile} />}
           {!loading && !builderHistory && !execution && !error && <EmptyState action={<button onClick={flow.launchNew}>{t.newDashboard}</button>}>{t.noDashboard}</EmptyState>}
         </>} />}

@@ -32,7 +32,7 @@ export function useDashboardBuilder(workspace: WorkspaceController) {
   const startManual = () => {
     if (!workspace.profile) return;
     workspace.startManual(); workspace.setLoading(false);
-    setHistory(startBuilder(blankDashboardDraft(workspace.profile, workspace.locale)));
+    setHistory(startBuilder(blankDashboardDraft(workspace.profile, workspace.locale,undefined,workspace.published?.releases[0]?.period)));
   };
   const enter = () => { if (workspace.dashboard) {
     if (workspace.document?.kind === 'template') workspace.applyWorkingSpec(workspace.dashboard);
