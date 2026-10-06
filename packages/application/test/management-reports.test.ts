@@ -23,7 +23,7 @@ test('automatic default selects only a supported report and preserves generic sy
  assert.equal(selectDefaultTemplate([{id:'sales-performance',availability:'incompatible'}],'certified'),undefined);
 });
 test('Finance control metadata stays tenant-scoped, non-executable and pending certification',()=>{
- const review=managementControlReview('el-dabboos-iq');assert.equal(review?.certified,false);assert.equal(review?.identityVerified,false);
+ const review=managementControlReview('el-dabboos-iq');assert.equal(review?.certified,false);assert.equal(review?.identityVerified,true);
  assert.equal(managementControlReview('demo-iq'),null);assert.equal(managementControlReview('other'),null);
  assert.ok(!published.releases.some(release=>release.capabilities.some(capability=>capability.metric==='outstanding_amount')));
 });

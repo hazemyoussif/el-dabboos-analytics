@@ -30,7 +30,7 @@ Sign an exact definition/version/hash and control reference, not a metric name a
 
 ## Finance candidate control — pending confirmation
 
-**CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION.** Cutoff 2026-09-30, IQD. Total and all six buckets exactly reproduce the supplied workbook; 2,217 numeric customer vectors match, but Excel-customer→res_partner.id identity is unverified. Finance owner/date/accepted exceptions are unrecorded. Nothing is business-certified or published.
+**CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION.** Cutoff 2026-09-30, IQD. All 15,519 source-ID customer/bucket cases exactly reproduce the workbook (2,217 customers; zero ambiguous, unmatched or unexpected identities). Installed report metadata was inspected at 2026-10-06T18:20:50.379Z; custom code equivalence is not asserted. Finance owner/date/confirmed policy/accepted exceptions are unrecorded. Nothing is business-certified or published.
 
 | Control output | IQD |
 | --- | --- |
@@ -130,7 +130,7 @@ Confirmed totals / accepted exceptions / control reference: ____________________
 
 ### APP-04
 
-Confirm this exact signed Odoo historical control and cutoff, including accounting-date fallback for missing maturity and unallocated credits; specify any adjustments, accepted exceptions and tolerance. Stable partner identity/source-report verification must still complete.
+Confirm this exact signed Odoo historical control and cutoff, including accounting-date fallback for missing maturity and unallocated credits; specify any adjustments, accepted exceptions and tolerance. The 15,519 identity-aware cases are exact; installed metadata was inspected. Confirm custom-module/report options and record Finance owner, approval date, exact definition version, confirmed totals and accepted exceptions. No Finance approval has been recorded.
 
 | Metric / exact version | Proposed formula / meaning | Control example |
 | --- | --- | --- |

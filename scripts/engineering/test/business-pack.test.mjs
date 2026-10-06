@@ -58,7 +58,7 @@ test('approval binds exact bilingual meaning and source scope, and changes inval
  assert.notEqual(definitionHash({ ...metric, definitionVersion: 2 }, pack), metric.definitionHash);
 });
 function minorUnits(value) { const [whole, fraction = ''] = value.split('.'); return BigInt(whole) * 100n + BigInt((whole.startsWith('-') ? '-' : '') + fraction.padEnd(2, '0')); }
-test('net and gross receivable controls preserve totals, distinct missing-date policy and pending identity', () => {
+test('net and gross receivable controls preserve totals, distinct missing-date policy and pending Finance approval', () => {
  const value = id => minorUnits(record(id).controlValue);
  assert.equal(value('receivables_gross_outstanding_amount') + value('credit_balances'), value('net_aged_receivable'));
  assert.equal(['aged_at_date', 'aged_1_30', 'aged_31_60', 'aged_61_90', 'aged_91_120', 'aged_over_120'].reduce((sum, id) => sum + value(id), 0n), value('net_aged_receivable'));
@@ -66,4 +66,12 @@ test('net and gross receivable controls preserve totals, distinct missing-date p
  assert.match(record('aged_at_date').definition.en, /fallback/u);
  assert.match(record('receivables_current_amount').definition.en, /no missing-date fallback/u);
  for (const metric of pack.metrics.filter(item => item.state === 'reconciled_awaiting_approval')) { assert.equal(metric.published, false); assert.match(metric.notes.en, /unverified|verified/u); }
+});
+test('verified Finance identities remain a pending control rather than certification or publication',()=>{
+ const evidence=pack.financeIdentityEvidence;
+ assert.equal(evidence.identityVerified,true);assert.equal(evidence.readOnly,true);
+ assert.equal(evidence.exactCases,evidence.customerCount*7);assert.equal(evidence.exactCases,15519);
+ for(const field of ['deltaCases','ambiguous','unmatched','unexpected'])assert.equal(evidence[field],0);
+ assert.equal(evidence.financeApproval,'pending');
+ const metric=record('net_aged_receivable');assert.equal(metric.published,false);assert.equal(metric.approvalRecord.owner,null);assert.equal(metric.approvalRecord.approvalDate,null);
 });

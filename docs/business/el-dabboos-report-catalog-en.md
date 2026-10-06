@@ -107,7 +107,7 @@ Executive has six KPI cards. Each grouped report has a three-series invoice/refu
 | Current period | Cutoff September 30, 2026; control sourceAsOf October 6, 2026, 12:53:16.128 UTC. |
 | State | Validation only · reconciled / awaiting approval |
 | Limitations | Numeric total, buckets and 2,217 customer vectors reproduce the workbook; stable identity has no verified bridge. Existing product surface contains status only, not executable receivable values. |
-| Approval / next reconciliation | Restore approved source access for Excel-customer→partner identity and custom report parameter checks; Finance confirms exact definition/control version, totals, credits/fallback or accepted exceptions with named owner/date. Then map, extract immutable snapshots, reconcile each output/pair, certify and explicitly publish. |
+| Approval / next reconciliation | All 15,519 source-ID customer/bucket cases are exact. Finance confirmation of signed credits, missing-maturity fallback, custom report options and exact-version owner/date/exceptions remains required. |
 
 ## Data & Certification Status (data-status)
 
@@ -308,7 +308,7 @@ Six KPI cards for document counts, average invoice value and monetary totals; a 
 
 ## Finance candidate control — pending confirmation
 
-**CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION.** Cutoff 2026-09-30, IQD. Total and all six buckets exactly reproduce the supplied workbook; 2,217 numeric customer vectors match, but Excel-customer→res_partner.id identity is unverified. Finance owner/date/accepted exceptions are unrecorded. Nothing is business-certified or published.
+**CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION.** Cutoff 2026-09-30, IQD. All 15,519 source-ID customer/bucket cases exactly reproduce the workbook (2,217 customers; zero ambiguous, unmatched or unexpected identities). Installed report metadata was inspected at 2026-10-06T18:20:50.379Z; custom code equivalence is not asserted. Finance owner/date/confirmed policy/accepted exceptions are unrecorded. Nothing is business-certified or published.
 
 | Control output | IQD |
 | --- | --- |

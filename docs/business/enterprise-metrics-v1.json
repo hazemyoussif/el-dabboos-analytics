@@ -14615,13 +14615,14 @@
       "sourceClassification": "C",
       "evidenceRefs": [
         "receivables-aging-v1",
-        "odoo-aged-receivable-numeric-replay"
+        "odoo-aged-receivable-numeric-replay",
+        "source-evidence-report-unlock-wave"
       ],
       "approval": "pending",
       "published": false,
       "notes": {
-        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. Numeric customer vectors match without a verified Excel-customer → partner-ID bridge. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
-        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
+        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
+        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
       },
       "controlValue": "1532751636.39",
       "controlDate": "2026-09-30",
@@ -14697,13 +14698,14 @@
       "sourceClassification": "C",
       "evidenceRefs": [
         "receivables-aging-v1",
-        "odoo-aged-receivable-numeric-replay"
+        "odoo-aged-receivable-numeric-replay",
+        "source-evidence-report-unlock-wave"
       ],
       "approval": "pending",
       "published": false,
       "notes": {
-        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. Numeric customer vectors match without a verified Excel-customer → partner-ID bridge. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
-        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
+        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
+        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
       },
       "controlValue": "-173290543.78",
       "controlDate": "2026-09-30",
@@ -14779,13 +14781,14 @@
       "sourceClassification": "C",
       "evidenceRefs": [
         "receivables-aging-v1",
-        "odoo-aged-receivable-numeric-replay"
+        "odoo-aged-receivable-numeric-replay",
+        "source-evidence-report-unlock-wave"
       ],
       "approval": "pending",
       "published": false,
       "notes": {
-        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. Numeric customer vectors match without a verified Excel-customer → partner-ID bridge. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
-        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
+        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
+        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
       },
       "controlValue": "1359461092.61",
       "controlDate": "2026-09-30",
@@ -14861,13 +14864,14 @@
       "sourceClassification": "C",
       "evidenceRefs": [
         "receivables-aging-v1",
-        "odoo-aged-receivable-numeric-replay"
+        "odoo-aged-receivable-numeric-replay",
+        "source-evidence-report-unlock-wave"
       ],
       "approval": "pending",
       "published": false,
       "notes": {
-        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. Numeric customer vectors match without a verified Excel-customer → partner-ID bridge. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
-        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
+        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
+        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
       },
       "controlValue": "759020481.15",
       "controlDate": "2026-09-30",
@@ -14943,13 +14947,14 @@
       "sourceClassification": "C",
       "evidenceRefs": [
         "receivables-aging-v1",
-        "odoo-aged-receivable-numeric-replay"
+        "odoo-aged-receivable-numeric-replay",
+        "source-evidence-report-unlock-wave"
       ],
       "approval": "pending",
       "published": false,
       "notes": {
-        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. Numeric customer vectors match without a verified Excel-customer → partner-ID bridge. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
-        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
+        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
+        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
       },
       "controlValue": "218464001.82",
       "controlDate": "2026-09-30",
@@ -15025,13 +15030,14 @@
       "sourceClassification": "C",
       "evidenceRefs": [
         "receivables-aging-v1",
-        "odoo-aged-receivable-numeric-replay"
+        "odoo-aged-receivable-numeric-replay",
+        "source-evidence-report-unlock-wave"
       ],
       "approval": "pending",
       "published": false,
       "notes": {
-        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. Numeric customer vectors match without a verified Excel-customer → partner-ID bridge. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
-        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
+        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
+        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
       },
       "controlValue": "69135500.55",
       "controlDate": "2026-09-30",
@@ -15107,13 +15113,14 @@
       "sourceClassification": "C",
       "evidenceRefs": [
         "receivables-aging-v1",
-        "odoo-aged-receivable-numeric-replay"
+        "odoo-aged-receivable-numeric-replay",
+        "source-evidence-report-unlock-wave"
       ],
       "approval": "pending",
       "published": false,
       "notes": {
-        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. Numeric customer vectors match without a verified Excel-customer → partner-ID bridge. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
-        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
+        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
+        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
       },
       "controlValue": "25871000.18",
       "controlDate": "2026-09-30",
@@ -15189,13 +15196,14 @@
       "sourceClassification": "C",
       "evidenceRefs": [
         "receivables-aging-v1",
-        "odoo-aged-receivable-numeric-replay"
+        "odoo-aged-receivable-numeric-replay",
+        "source-evidence-report-unlock-wave"
       ],
       "approval": "pending",
       "published": false,
       "notes": {
-        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. Numeric customer vectors match without a verified Excel-customer → partner-ID bridge. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
-        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
+        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
+        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
       },
       "controlValue": "33782500.14",
       "controlDate": "2026-09-30",
@@ -15271,13 +15279,14 @@
       "sourceClassification": "C",
       "evidenceRefs": [
         "receivables-aging-v1",
-        "odoo-aged-receivable-numeric-replay"
+        "odoo-aged-receivable-numeric-replay",
+        "source-evidence-report-unlock-wave"
       ],
       "approval": "pending",
       "published": false,
       "notes": {
-        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. Numeric customer vectors match without a verified Excel-customer → partner-ID bridge. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
-        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
+        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
+        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
       },
       "controlValue": "253187608.77",
       "controlDate": "2026-09-30",
@@ -15353,13 +15362,14 @@
       "sourceClassification": "C",
       "evidenceRefs": [
         "receivables-aging-v1",
-        "odoo-aged-receivable-numeric-replay"
+        "odoo-aged-receivable-numeric-replay",
+        "source-evidence-report-unlock-wave"
       ],
       "approval": "pending",
       "published": false,
       "notes": {
-        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. Numeric customer vectors match without a verified Excel-customer → partner-ID bridge. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
-        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
+        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
+        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
       },
       "controlValue": "760615731.13",
       "controlDate": "2026-09-30",
@@ -15435,13 +15445,14 @@
       "sourceClassification": "C",
       "evidenceRefs": [
         "receivables-aging-v1",
-        "odoo-aged-receivable-numeric-replay"
+        "odoo-aged-receivable-numeric-replay",
+        "source-evidence-report-unlock-wave"
       ],
       "approval": "pending",
       "published": false,
       "notes": {
-        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. Numeric customer vectors match without a verified Excel-customer → partner-ID bridge. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
-        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
+        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
+        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
       },
       "controlValue": "239405751.70",
       "controlDate": "2026-09-30",
@@ -15517,13 +15528,14 @@
       "sourceClassification": "C",
       "evidenceRefs": [
         "receivables-aging-v1",
-        "odoo-aged-receivable-numeric-replay"
+        "odoo-aged-receivable-numeric-replay",
+        "source-evidence-report-unlock-wave"
       ],
       "approval": "pending",
       "published": false,
       "notes": {
-        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. Numeric customer vectors match without a verified Excel-customer → partner-ID bridge. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
-        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
+        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
+        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
       },
       "controlValue": "94315000.66",
       "controlDate": "2026-09-30",
@@ -15599,13 +15611,14 @@
       "sourceClassification": "C",
       "evidenceRefs": [
         "receivables-aging-v1",
-        "odoo-aged-receivable-numeric-replay"
+        "odoo-aged-receivable-numeric-replay",
+        "source-evidence-report-unlock-wave"
       ],
       "approval": "pending",
       "published": false,
       "notes": {
-        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. Numeric customer vectors match without a verified Excel-customer → partner-ID bridge. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
-        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
+        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
+        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
       },
       "controlValue": "227502606.69",
       "controlDate": "2026-09-30",
@@ -15681,13 +15694,14 @@
       "sourceClassification": "C",
       "evidenceRefs": [
         "receivables-aging-v1",
-        "odoo-aged-receivable-numeric-replay"
+        "odoo-aged-receivable-numeric-replay",
+        "source-evidence-report-unlock-wave"
       ],
       "approval": "pending",
       "published": false,
       "notes": {
-        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. Numeric customer vectors match without a verified Excel-customer → partner-ID bridge. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
-        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
+        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
+        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
       },
       "controlValue": "210912546.21",
       "controlDate": "2026-09-30",
@@ -15763,13 +15777,14 @@
       "sourceClassification": "C",
       "evidenceRefs": [
         "receivables-aging-v1",
-        "odoo-aged-receivable-numeric-replay"
+        "odoo-aged-receivable-numeric-replay",
+        "source-evidence-report-unlock-wave"
       ],
       "approval": "pending",
       "published": false,
       "notes": {
-        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. Numeric customer vectors match without a verified Excel-customer → partner-ID bridge. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
-        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
+        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
+        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
       },
       "controlValue": "1319",
       "controlDate": "2026-09-30",
@@ -15845,13 +15860,14 @@
       "sourceClassification": null,
       "evidenceRefs": [
         "receivables-aging-v1",
-        "odoo-aged-receivable-numeric-replay"
+        "odoo-aged-receivable-numeric-replay",
+        "source-evidence-report-unlock-wave"
       ],
       "approval": "pending",
       "published": false,
       "notes": {
-        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. Numeric customer vectors match without a verified Excel-customer → partner-ID bridge. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
-        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
+        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
+        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
       },
       "controlValue": null,
       "controlDate": "2026-09-30",
@@ -15927,13 +15943,14 @@
       "sourceClassification": null,
       "evidenceRefs": [
         "receivables-aging-v1",
-        "odoo-aged-receivable-numeric-replay"
+        "odoo-aged-receivable-numeric-replay",
+        "source-evidence-report-unlock-wave"
       ],
       "approval": "pending",
       "published": false,
       "notes": {
-        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. Numeric customer vectors match without a verified Excel-customer → partner-ID bridge. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
-        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
+        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
+        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
       },
       "controlValue": null,
       "controlDate": "2026-09-30",
@@ -16180,8 +16197,8 @@
         "ar": "الإجمالي والشرائح و2217 متجهاً رقمياً للعملاء تطابق الملف؛ ربط الهوية الثابتة غير مثبت. شاشة المنتج تعرض الحالة فقط ولا تنفذ قيم الذمم."
       },
       "unlock": {
-        "en": "Restore approved source access for Excel-customer→partner identity and custom report parameter checks; Finance confirms exact definition/control version, totals, credits/fallback or accepted exceptions with named owner/date. Then map, extract immutable snapshots, reconcile each output/pair, certify and explicitly publish.",
-        "ar": "استعادة الوصول المعتمد للتحقق من ربط عملاء الملف بهويات الشركاء ومعلمات التقرير المخصص؛ تؤكد المالية نسخة التعريف والضابط والإجماليات والأرصدة الدائنة والتاريخ البديل أو الاستثناءات باسم المالك وتاريخ الاعتماد. ثم تُحدد المدخلات وتُستخرج أرصدة ثابتة وتُطابق المخرجات والأزواج وتُعتمد وتُنشر صراحةً."
+        "en": "All 15,519 source-ID customer/bucket cases are exact. Finance confirmation of signed credits, missing-maturity fallback, custom report options and exact-version owner/date/exceptions remains required.",
+        "ar": "تمت مطابقة 15,519 حالة بهويات الشركاء. ما زال تأكيد المالية للأرصدة الدائنة وبديل الاستحقاق المفقود وخيارات التقرير المخصص ومسؤول وتاريخ واستثناءات نسخة التعريف مطلوباً."
       }
     },
     {
@@ -16810,8 +16827,8 @@
         "overdue_net_percentage"
       ],
       "question": {
-        "en": "Confirm this exact signed Odoo historical control and cutoff, including accounting-date fallback for missing maturity and unallocated credits; specify any adjustments, accepted exceptions and tolerance. Stable partner identity/source-report verification must still complete.",
-        "ar": "هل تؤكدون ضابط أودو التاريخي المحدد بإشاراته وتاريخ قطعه، بما فيه استخدام تاريخ القيد عند فقد الاستحقاق والأرصدة الدائنة غير الموزعة؟ حددوا التعديلات والاستثناءات المقبولة والتفاوت؛ ويظل إثبات هوية الشريك وتقرير المصدر مطلوباً."
+        "en": "Confirm this exact signed Odoo historical control and cutoff, including accounting-date fallback for missing maturity and unallocated credits; specify any adjustments, accepted exceptions and tolerance. The 15,519 identity-aware cases are exact; installed metadata was inspected. Confirm custom-module/report options and record Finance owner, approval date, exact definition version, confirmed totals and accepted exceptions. No Finance approval has been recorded.",
+        "ar": "هل تؤكدون ضابط أودو التاريخي المحدد بإشاراته وتاريخ قطعه، بما فيه استخدام تاريخ القيد عند فقد الاستحقاق والأرصدة الدائنة غير الموزعة؟ حددوا التعديلات والاستثناءات المقبولة والتفاوت؛ تمت مطابقة 15,519 حالة بهويات الشركاء وفحص بيانات التقرير المثبت. يرجى تأكيد خيارات التقرير والوحدات المخصصة وتسجيل مسؤول المالية وتاريخ الاعتماد ونسخة التعريف والإجماليات والاستثناءات المقبولة. لم يُسجل اعتماد المالية."
       },
       "state": "pending"
     },
@@ -17135,5 +17152,20 @@
       "en": "Draft/cancelled documents excluded from value and completed-count measures. Cancelled Orders explicitly counts state cancel by order date. Other source states/returns must be approved before extraction; later source edits require a new frozen release, not rewriting history.",
       "ar": "تُستبعد المسودات والمستندات الملغاة من القيم وعدّ العمليات المكتملة. مؤشر الطلبات الملغاة يعدّ حالة الإلغاء حسب تاريخ الطلب. بقية الحالات والمرتجعات تحتاج اعتماداً قبل الاستخراج؛ تعديل المصدر لاحقاً يتطلب إصداراً ثابتاً جديداً لا إعادة كتابة التاريخ."
     }
+  },
+  "financeIdentityEvidence": {
+    "companyId": 1,
+    "cutoff": "2026-09-30",
+    "identityVerified": true,
+    "readOnly": true,
+    "sourceAsOf": "2026-10-06T18:20:50.379Z",
+    "customerCount": 2217,
+    "exactCases": 15519,
+    "deltaCases": 0,
+    "ambiguous": 0,
+    "unmatched": 0,
+    "unexpected": 0,
+    "financeApproval": "pending",
+    "reference": "source-evidence-report-unlock-wave"
   }
 }

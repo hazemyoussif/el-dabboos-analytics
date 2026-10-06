@@ -60,3 +60,16 @@ Additional deferred criteria:
 5. Confirm unavailable Customer/Product/Margin capabilities remain gated, Finance remains pending, the existing Executive/Business Line/Salesperson reports retain their values and all twelve original acceptance steps still apply. Record visual QA separately from automated/runtime evidence.
 
 No browser session, visual pass, new Finance approval or Luna dispatch is implied by this handoff.
+
+## Fourth task scope — source evidence acquisition and pending Customer activation
+
+Read [source evidence and exact activation proposal](../integration/source-evidence-report-unlock-wave.md). The source tunnel was restored by the user; all 15,519 receivable identity cases now match exactly. Finance validation in EN/AR must show identity verified while **Finance confirmation remains pending**. Metadata inspection is not proof of custom Python equivalence. Verify the newer Finance source check timestamp October 6, 18:20:50 UTC remains separate from the serving sales/invoicing timestamp.
+
+A separate fresh Customer candidate has 10,307 exact technical cases (308 baseline + 9,999 Customer). **Certification/promotion/activation remains pending exact-package approval after automatic review rejection**. Customer remains unavailable in the currently active release. Do not claim a published Customer report until an explicit follow-up records activation and zero-failed-series runtime evidence.
+
+If subsequently approved/activated, append its final release/commit here and test complete stable Customer labels in 1,927 net-invoice groups, 1,923 posted-invoice groups, 111 refund groups and 1,922 order/average groups. The existing Customer template has two grouped charts and a six-metric detail table. No Top-N/ranking/trend or silently truncated 1,000-group result is allowed. Check scroll/readability, sparse refund cells, duplicate display names as distinct identities, natural EN/AR/RTL, all themes and desktop/tablet/mobile. Four earlier executable reports must retain their totals and zero failed series. Finance approval cannot be inferred from Customer activation.
+
+No new Product/Margin/Inventory/Procurement screen is claimed. Visual/browser QA remains Deferred; no Luna dispatch has occurred.
+
+
+The fourth task observed default eight-query fan-out timeouts (including one Average Invoice Value summary on a quiet run). The existing laptop-local execution concurrency is now two; SQL deadlines remain unchanged. Inspect final runtime evidence separately from visual QA, assess loading/retry/latency honestly, and do not claim newly certified Customer execution before its explicit activation check. All earlier acceptance criteria remain required.

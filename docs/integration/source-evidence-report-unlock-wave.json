@@ -1,0 +1,653 @@
+{
+  "tenantId": "el-dabboos-iq",
+  "companyId": 1,
+  "sourceSnapshot": {
+    "database": "accounting",
+    "read_only": "on",
+    "observed_at": "2026-10-06T18:20:50.379Z",
+    "descriptor": "7080771:7080771:"
+  },
+  "sourceEvidenceSha256": "5ce2c181405046ed98a467fa9ce0d426a29d5c2323e68f782c1d7a449437bcd2",
+  "customerRelease": {
+    "label": "TECHNICALLY EXACT — BUSINESS CERTIFICATION AND PROMOTION PENDING USER APPROVAL",
+    "tenantId": "el-dabboos-iq",
+    "companyId": 1,
+    "datasetId": "el-dabboos-customer-release-202609-v2",
+    "mappingVersion": "2",
+    "period": {
+      "from": "2026-09-01",
+      "to": "2026-09-30"
+    },
+    "sourceAsOf": "2026-10-06T18:26:38.764Z",
+    "frozenRevision": "pg-mvcc:91678422fc6305f0c62e42f3c342b42db71cf234a4ba9b1641218e4d08cc60e0",
+    "sourceWrites": 0,
+    "caseCount": 10307,
+    "baselineCases": 308,
+    "customerCases": 9999,
+    "byMetric": {
+      "order_count × summary": {
+        "groups": 1,
+        "sourceRows": 2895,
+        "martRows": 2895,
+        "deltaCases": 0,
+        "approvalState": "established_semantics_exact_package_approval_pending",
+        "certificationState": "not_certified",
+        "publicationState": "unpublished",
+        "runtimeResult": "not_executed_candidate_not_serving"
+      },
+      "order_count × business_line": {
+        "groups": 1,
+        "sourceRows": 2895,
+        "martRows": 2895,
+        "deltaCases": 0,
+        "approvalState": "established_semantics_exact_package_approval_pending",
+        "certificationState": "not_certified",
+        "publicationState": "unpublished",
+        "runtimeResult": "not_executed_candidate_not_serving"
+      },
+      "order_count × salesperson": {
+        "groups": 40,
+        "sourceRows": 2895,
+        "martRows": 2895,
+        "deltaCases": 0,
+        "approvalState": "established_semantics_exact_package_approval_pending",
+        "certificationState": "not_certified",
+        "publicationState": "unpublished",
+        "runtimeResult": "not_executed_candidate_not_serving"
+      },
+      "order_revenue × summary": {
+        "groups": 1,
+        "sourceRows": 2895,
+        "martRows": 2895,
+        "deltaCases": 0,
+        "approvalState": "established_semantics_exact_package_approval_pending",
+        "certificationState": "not_certified",
+        "publicationState": "unpublished",
+        "runtimeResult": "not_executed_candidate_not_serving"
+      },
+      "order_revenue × business_line": {
+        "groups": 1,
+        "sourceRows": 2895,
+        "martRows": 2895,
+        "deltaCases": 0,
+        "approvalState": "established_semantics_exact_package_approval_pending",
+        "certificationState": "not_certified",
+        "publicationState": "unpublished",
+        "runtimeResult": "not_executed_candidate_not_serving"
+      },
+      "order_revenue × salesperson": {
+        "groups": 40,
+        "sourceRows": 2895,
+        "martRows": 2895,
+        "deltaCases": 0,
+        "approvalState": "established_semantics_exact_package_approval_pending",
+        "certificationState": "not_certified",
+        "publicationState": "unpublished",
+        "runtimeResult": "not_executed_candidate_not_serving"
+      },
+      "cancelled_orders × summary": {
+        "groups": 1,
+        "sourceRows": 200,
+        "martRows": 200,
+        "deltaCases": 0,
+        "approvalState": "established_semantics_exact_package_approval_pending",
+        "certificationState": "not_certified",
+        "publicationState": "unpublished",
+        "runtimeResult": "not_executed_candidate_not_serving"
+      },
+      "cancelled_orders × business_line": {
+        "groups": 1,
+        "sourceRows": 200,
+        "martRows": 200,
+        "deltaCases": 0,
+        "approvalState": "established_semantics_exact_package_approval_pending",
+        "certificationState": "not_certified",
+        "publicationState": "unpublished",
+        "runtimeResult": "not_executed_candidate_not_serving"
+      },
+      "cancelled_orders × salesperson": {
+        "groups": 33,
+        "sourceRows": 200,
+        "martRows": 200,
+        "deltaCases": 0,
+        "approvalState": "established_semantics_exact_package_approval_pending",
+        "certificationState": "not_certified",
+        "publicationState": "unpublished",
+        "runtimeResult": "not_executed_candidate_not_serving"
+      },
+      "invoiced_revenue × summary": {
+        "groups": 1,
+        "sourceRows": 2890,
+        "martRows": 2890,
+        "deltaCases": 0,
+        "approvalState": "established_semantics_exact_package_approval_pending",
+        "certificationState": "not_certified",
+        "publicationState": "unpublished",
+        "runtimeResult": "not_executed_candidate_not_serving"
+      },
+      "invoiced_revenue × business_line": {
+        "groups": 1,
+        "sourceRows": 2890,
+        "martRows": 2890,
+        "deltaCases": 0,
+        "approvalState": "established_semantics_exact_package_approval_pending",
+        "certificationState": "not_certified",
+        "publicationState": "unpublished",
+        "runtimeResult": "not_executed_candidate_not_serving"
+      },
+      "invoiced_revenue × salesperson": {
+        "groups": 39,
+        "sourceRows": 2890,
+        "martRows": 2890,
+        "deltaCases": 0,
+        "approvalState": "established_semantics_exact_package_approval_pending",
+        "certificationState": "not_certified",
+        "publicationState": "unpublished",
+        "runtimeResult": "not_executed_candidate_not_serving"
+      },
+      "refund_value × summary": {
+        "groups": 1,
+        "sourceRows": 120,
+        "martRows": 120,
+        "deltaCases": 0,
+        "approvalState": "established_semantics_exact_package_approval_pending",
+        "certificationState": "not_certified",
+        "publicationState": "unpublished",
+        "runtimeResult": "not_executed_candidate_not_serving"
+      },
+      "refund_value × business_line": {
+        "groups": 1,
+        "sourceRows": 120,
+        "martRows": 120,
+        "deltaCases": 0,
+        "approvalState": "established_semantics_exact_package_approval_pending",
+        "certificationState": "not_certified",
+        "publicationState": "unpublished",
+        "runtimeResult": "not_executed_candidate_not_serving"
+      },
+      "refund_value × salesperson": {
+        "groups": 31,
+        "sourceRows": 120,
+        "martRows": 120,
+        "deltaCases": 0,
+        "approvalState": "established_semantics_exact_package_approval_pending",
+        "certificationState": "not_certified",
+        "publicationState": "unpublished",
+        "runtimeResult": "not_executed_candidate_not_serving"
+      },
+      "net_invoiced_revenue × summary": {
+        "groups": 1,
+        "sourceRows": 3010,
+        "martRows": 3010,
+        "deltaCases": 0,
+        "approvalState": "established_semantics_exact_package_approval_pending",
+        "certificationState": "not_certified",
+        "publicationState": "unpublished",
+        "runtimeResult": "not_executed_candidate_not_serving"
+      },
+      "net_invoiced_revenue × business_line": {
+        "groups": 1,
+        "sourceRows": 3010,
+        "martRows": 3010,
+        "deltaCases": 0,
+        "approvalState": "established_semantics_exact_package_approval_pending",
+        "certificationState": "not_certified",
+        "publicationState": "unpublished",
+        "runtimeResult": "not_executed_candidate_not_serving"
+      },
+      "net_invoiced_revenue × salesperson": {
+        "groups": 39,
+        "sourceRows": 3010,
+        "martRows": 3010,
+        "deltaCases": 0,
+        "approvalState": "established_semantics_exact_package_approval_pending",
+        "certificationState": "not_certified",
+        "publicationState": "unpublished",
+        "runtimeResult": "not_executed_candidate_not_serving"
+      },
+      "invoice_count × summary": {
+        "groups": 1,
+        "sourceRows": 2890,
+        "martRows": 2890,
+        "deltaCases": 0,
+        "approvalState": "established_semantics_exact_package_approval_pending",
+        "certificationState": "not_certified",
+        "publicationState": "unpublished",
+        "runtimeResult": "not_executed_candidate_not_serving"
+      },
+      "invoice_count × business_line": {
+        "groups": 1,
+        "sourceRows": 2890,
+        "martRows": 2890,
+        "deltaCases": 0,
+        "approvalState": "established_semantics_exact_package_approval_pending",
+        "certificationState": "not_certified",
+        "publicationState": "unpublished",
+        "runtimeResult": "not_executed_candidate_not_serving"
+      },
+      "invoice_count × salesperson": {
+        "groups": 39,
+        "sourceRows": 2890,
+        "martRows": 2890,
+        "deltaCases": 0,
+        "approvalState": "established_semantics_exact_package_approval_pending",
+        "certificationState": "not_certified",
+        "publicationState": "unpublished",
+        "runtimeResult": "not_executed_candidate_not_serving"
+      },
+      "refund_count × summary": {
+        "groups": 1,
+        "sourceRows": 120,
+        "martRows": 120,
+        "deltaCases": 0,
+        "approvalState": "established_semantics_exact_package_approval_pending",
+        "certificationState": "not_certified",
+        "publicationState": "unpublished",
+        "runtimeResult": "not_executed_candidate_not_serving"
+      },
+      "refund_count × business_line": {
+        "groups": 1,
+        "sourceRows": 120,
+        "martRows": 120,
+        "deltaCases": 0,
+        "approvalState": "established_semantics_exact_package_approval_pending",
+        "certificationState": "not_certified",
+        "publicationState": "unpublished",
+        "runtimeResult": "not_executed_candidate_not_serving"
+      },
+      "refund_count × salesperson": {
+        "groups": 31,
+        "sourceRows": 120,
+        "martRows": 120,
+        "deltaCases": 0,
+        "approvalState": "established_semantics_exact_package_approval_pending",
+        "certificationState": "not_certified",
+        "publicationState": "unpublished",
+        "runtimeResult": "not_executed_candidate_not_serving"
+      },
+      "order_count × customer": {
+        "groups": 1922,
+        "sourceRows": 2895,
+        "martRows": 2895,
+        "deltaCases": 0,
+        "approvalState": "established_semantics_exact_package_approval_pending",
+        "certificationState": "not_certified",
+        "publicationState": "unpublished",
+        "runtimeResult": "not_executed_candidate_not_serving"
+      },
+      "order_revenue × customer": {
+        "groups": 1922,
+        "sourceRows": 2895,
+        "martRows": 2895,
+        "deltaCases": 0,
+        "approvalState": "established_semantics_exact_package_approval_pending",
+        "certificationState": "not_certified",
+        "publicationState": "unpublished",
+        "runtimeResult": "not_executed_candidate_not_serving"
+      },
+      "cancelled_orders × customer": {
+        "groups": 160,
+        "sourceRows": 200,
+        "martRows": 200,
+        "deltaCases": 0,
+        "approvalState": "established_semantics_exact_package_approval_pending",
+        "certificationState": "not_certified",
+        "publicationState": "unpublished",
+        "runtimeResult": "not_executed_candidate_not_serving"
+      },
+      "invoiced_revenue × customer": {
+        "groups": 1923,
+        "sourceRows": 2890,
+        "martRows": 2890,
+        "deltaCases": 0,
+        "approvalState": "established_semantics_exact_package_approval_pending",
+        "certificationState": "not_certified",
+        "publicationState": "unpublished",
+        "runtimeResult": "not_executed_candidate_not_serving"
+      },
+      "refund_value × customer": {
+        "groups": 111,
+        "sourceRows": 120,
+        "martRows": 120,
+        "deltaCases": 0,
+        "approvalState": "established_semantics_exact_package_approval_pending",
+        "certificationState": "not_certified",
+        "publicationState": "unpublished",
+        "runtimeResult": "not_executed_candidate_not_serving"
+      },
+      "net_invoiced_revenue × customer": {
+        "groups": 1927,
+        "sourceRows": 3010,
+        "martRows": 3010,
+        "deltaCases": 0,
+        "approvalState": "established_semantics_exact_package_approval_pending",
+        "certificationState": "not_certified",
+        "publicationState": "unpublished",
+        "runtimeResult": "not_executed_candidate_not_serving"
+      },
+      "invoice_count × customer": {
+        "groups": 1923,
+        "sourceRows": 2890,
+        "martRows": 2890,
+        "deltaCases": 0,
+        "approvalState": "established_semantics_exact_package_approval_pending",
+        "certificationState": "not_certified",
+        "publicationState": "unpublished",
+        "runtimeResult": "not_executed_candidate_not_serving"
+      },
+      "refund_count × customer": {
+        "groups": 111,
+        "sourceRows": 120,
+        "martRows": 120,
+        "deltaCases": 0,
+        "approvalState": "established_semantics_exact_package_approval_pending",
+        "certificationState": "not_certified",
+        "publicationState": "unpublished",
+        "runtimeResult": "not_executed_candidate_not_serving"
+      }
+    },
+    "requestedAction": "Record immutable certification for established meanings and seven derived output certificates, promote the exact frozen release to local staging, then explicitly activate after required checks; preserve the original release and enable Customer Performance.",
+    "financeAgedReceivableApprovalIncluded": false,
+    "newSemanticsApprovalIncluded": false,
+    "certified": false,
+    "promoted": false,
+    "published": false
+  },
+  "finance": {
+    "requiredIdentityCases": 15519,
+    "exact": 15519,
+    "delta": 0,
+    "ambiguous": 0,
+    "unmatched": 0,
+    "unexpected": 0,
+    "total": "1359461092.610000",
+    "certified": false,
+    "published": false,
+    "financeOwner": null,
+    "approvalDate": null,
+    "metadataInspected": true,
+    "customPythonAvailable": false
+  },
+  "product": {
+    "orderHeader": [
+      {
+        "orders": "2895",
+        "total_mismatch": "0",
+        "untaxed_mismatch": "0",
+        "header_total": "1461335500.000000",
+        "lines_total": "1461335500.000000",
+        "header_untaxed": "1461335500.000000",
+        "lines_untaxed": "1461335500.000000"
+      }
+    ],
+    "invoiceHeader": [
+      {
+        "move_type": "out_invoice",
+        "invoices": "2890",
+        "mismatches": "0",
+        "header_value": "1465712000.000000",
+        "lines_value": "1465712000.000000"
+      },
+      {
+        "move_type": "out_refund",
+        "invoices": "120",
+        "mismatches": "0",
+        "header_value": "-18545500.000000",
+        "lines_value": "-18545500.000000"
+      }
+    ],
+    "identityGroups": 401,
+    "invoiceGroups": {
+      "out_invoice": 397,
+      "out_refund": 191
+    },
+    "nullInvoiceProductZeroValueGroups": 2,
+    "orderUomGroups": 421,
+    "incompatibleCategories": 0,
+    "martProductFacts": 0,
+    "published": false
+  },
+  "margin": {
+    "source": [
+      {
+        "orders": "2895",
+        "missing_margin": "0",
+        "zero_denominator": "1",
+        "margin": "697384876.180000",
+        "untaxed": "1461335500.000000",
+        "tax_inclusive": "1461335500.000000",
+        "stored_ratio_mismatches": "0"
+      }
+    ],
+    "lineEquality": [
+      {
+        "orders": "2895",
+        "mismatches": "0"
+      }
+    ],
+    "martInputsPresent": false,
+    "businessApproval": "pending",
+    "published": false
+  },
+  "inventory": {
+    "snapshotAsOf": "2026-10-06T18:20:50.379Z",
+    "usageCoverage": [
+      {
+        "company_id": 1,
+        "usage": "internal",
+        "quants": "1160",
+        "products": "416",
+        "locations": "15",
+        "owned": "0",
+        "packaged": "0",
+        "lot_tracked": "1126",
+        "over_reserved": "51"
+      },
+      {
+        "company_id": 1,
+        "usage": "inventory",
+        "quants": "5580",
+        "products": "1069",
+        "locations": "4",
+        "owned": "0",
+        "packaged": "0",
+        "lot_tracked": "5092",
+        "over_reserved": "1295"
+      },
+      {
+        "company_id": 1,
+        "usage": "production",
+        "quants": "60",
+        "products": "40",
+        "locations": "1",
+        "owned": "0",
+        "packaged": "0",
+        "lot_tracked": "43",
+        "over_reserved": "15"
+      }
+    ],
+    "productLocationUomGroups": 923,
+    "warehouses": 4,
+    "published": false
+  },
+  "procurement": {
+    "source": [
+      {
+        "state": "done",
+        "currency_id": "1",
+        "purchase_orders": "5",
+        "vendors": "4",
+        "commitment_tax_inclusive": "274005.230000",
+        "commitment_untaxed": "274005.230000",
+        "first_date": "2026-09-01 09:51:22",
+        "last_date": "2026-09-22 06:09:00"
+      },
+      {
+        "state": "done",
+        "currency_id": "30",
+        "purchase_orders": "5",
+        "vendors": "5",
+        "commitment_tax_inclusive": "12230296.390000",
+        "commitment_untaxed": "12230296.390000",
+        "first_date": "2026-09-12 14:25:10",
+        "last_date": "2026-09-14 20:10:57"
+      }
+    ],
+    "uomGroups": 20,
+    "fxConfirmed": false,
+    "published": false
+  },
+  "newCertifications": 0,
+  "newPublishedPairs": 0,
+  "autoReview": "Rejected immutable certification and cross-mart promotion pending explicit approval of exact package",
+  "privateEvidenceDirectory": "/home/hazem/.codex/visualizations/2026/10/06/01a11133-5bc7-7b53-826d-2cc96621f508/source-evidence-report-unlock-wave",
+  "proposedDerivedOutputs": [
+    {
+      "metric": "average_confirmed_order_value",
+      "dimension": null,
+      "sourceGroups": 1,
+      "martGroups": 1,
+      "exactOperandCases": 2,
+      "deltaCases": 0,
+      "sourceRowsPerOperand": 2895,
+      "martRowsPerOperand": 2895,
+      "sourceDefinition": "Exact ratio of matching approved additive source operands; zero denominator null; no separately rounded expected ratio",
+      "approvalState": "exact_package_approval_pending",
+      "certificationState": "not_certified",
+      "publicationState": "unpublished",
+      "runtimeResult": "not_executed_candidate_not_serving"
+    },
+    {
+      "metric": "average_confirmed_order_value",
+      "dimension": "business_line",
+      "sourceGroups": 1,
+      "martGroups": 1,
+      "exactOperandCases": 2,
+      "deltaCases": 0,
+      "sourceRowsPerOperand": 2895,
+      "martRowsPerOperand": 2895,
+      "sourceDefinition": "Exact ratio of matching approved additive source operands; zero denominator null; no separately rounded expected ratio",
+      "approvalState": "exact_package_approval_pending",
+      "certificationState": "not_certified",
+      "publicationState": "unpublished",
+      "runtimeResult": "not_executed_candidate_not_serving"
+    },
+    {
+      "metric": "average_confirmed_order_value",
+      "dimension": "salesperson",
+      "sourceGroups": 40,
+      "martGroups": 40,
+      "exactOperandCases": 80,
+      "deltaCases": 0,
+      "sourceRowsPerOperand": 2895,
+      "martRowsPerOperand": 2895,
+      "sourceDefinition": "Exact ratio of matching approved additive source operands; zero denominator null; no separately rounded expected ratio",
+      "approvalState": "exact_package_approval_pending",
+      "certificationState": "not_certified",
+      "publicationState": "unpublished",
+      "runtimeResult": "not_executed_candidate_not_serving"
+    },
+    {
+      "metric": "average_confirmed_order_value",
+      "dimension": "customer",
+      "sourceGroups": 1922,
+      "martGroups": 1922,
+      "exactOperandCases": 3844,
+      "deltaCases": 0,
+      "sourceRowsPerOperand": 2895,
+      "martRowsPerOperand": 2895,
+      "sourceDefinition": "Exact ratio of matching approved additive source operands; zero denominator null; no separately rounded expected ratio",
+      "approvalState": "exact_package_approval_pending",
+      "certificationState": "not_certified",
+      "publicationState": "unpublished",
+      "runtimeResult": "not_executed_candidate_not_serving"
+    },
+    {
+      "metric": "average_invoice_value",
+      "dimension": null,
+      "sourceGroups": 1,
+      "martGroups": 1,
+      "exactOperandCases": 2,
+      "deltaCases": 0,
+      "sourceRowsPerOperand": 2890,
+      "martRowsPerOperand": 2890,
+      "sourceDefinition": "Exact ratio of matching approved additive source operands; zero denominator null; no separately rounded expected ratio",
+      "approvalState": "exact_package_approval_pending",
+      "certificationState": "not_certified",
+      "publicationState": "unpublished",
+      "runtimeResult": "not_executed_candidate_not_serving"
+    },
+    {
+      "metric": "average_invoice_value",
+      "dimension": "business_line",
+      "sourceGroups": 1,
+      "martGroups": 1,
+      "exactOperandCases": 2,
+      "deltaCases": 0,
+      "sourceRowsPerOperand": 2890,
+      "martRowsPerOperand": 2890,
+      "sourceDefinition": "Exact ratio of matching approved additive source operands; zero denominator null; no separately rounded expected ratio",
+      "approvalState": "exact_package_approval_pending",
+      "certificationState": "not_certified",
+      "publicationState": "unpublished",
+      "runtimeResult": "not_executed_candidate_not_serving"
+    },
+    {
+      "metric": "average_invoice_value",
+      "dimension": "salesperson",
+      "sourceGroups": 39,
+      "martGroups": 39,
+      "exactOperandCases": 78,
+      "deltaCases": 0,
+      "sourceRowsPerOperand": 2890,
+      "martRowsPerOperand": 2890,
+      "sourceDefinition": "Exact ratio of matching approved additive source operands; zero denominator null; no separately rounded expected ratio",
+      "approvalState": "exact_package_approval_pending",
+      "certificationState": "not_certified",
+      "publicationState": "unpublished",
+      "runtimeResult": "not_executed_candidate_not_serving"
+    }
+  ],
+  "localExecutionConcurrency": 2,
+  "runtimeStatementTimeoutMs": 15000,
+  "runtimeVerification": {
+    "concurrency": 2,
+    "statementTimeoutMs": 15000,
+    "reports": [
+      {
+        "id": "executive-sales-invoicing",
+        "failedSeries": 0,
+        "milliseconds": 27679,
+        "availability": "supported"
+      },
+      {
+        "id": "business-line-performance",
+        "failedSeries": 0,
+        "milliseconds": 25515,
+        "availability": "supported"
+      },
+      {
+        "id": "salesperson-performance",
+        "failedSeries": 0,
+        "milliseconds": 26023,
+        "availability": "supported"
+      },
+      {
+        "id": "customer-performance",
+        "failedSeries": null,
+        "milliseconds": null,
+        "availability": "unsupported"
+      },
+      {
+        "id": "invoice-refund-operations",
+        "failedSeries": 0,
+        "milliseconds": 51536,
+        "availability": "supported"
+      }
+    ],
+    "initialEightWayRun": "Executive timeouts during builds",
+    "quietEightWayRun": "one Average Invoice Value summary timeout",
+    "isolatedAverageInvoiceValue": "passed in 13093ms",
+    "customerCandidate": "unpublished; not executed"
+  }
+}

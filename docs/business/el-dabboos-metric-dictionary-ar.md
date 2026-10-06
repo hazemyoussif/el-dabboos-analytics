@@ -30,7 +30,7 @@
 
 ## ضابط المالية المرشح — بانتظار التأكيد
 
-**ضابط مرشح — بانتظار تأكيد المالية.** القطع 2026-09-30، بالدينار العراقي. الإجمالي والشرائح الست تطابق الملف تماماً، وكذلك 2217 متجهاً رقمياً للعملاء؛ لكن ربط عميل الملف بهوية الشريك غير مثبت. مسؤول المالية وتاريخ الاعتماد والاستثناءات غير مسجلة. لا اعتماد أعمال ولا نشر.
+**ضابط مرشح — بانتظار تأكيد المالية.** القطع 2026-09-30، بالدينار العراقي. تمت مطابقة 15,519 حالة بهويات الشركاء لـ2,217 عميلاً دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت في 2026-10-06T18:20:50.379Z؛ لا نؤكد تكافؤ منطق الشفرة المخصصة. مسؤول المالية وتاريخ الاعتماد والسياسة المؤكدة والاستثناءات غير مسجلة. لا اعتماد أعمال ولا نشر.
 
 | مخرج الضابط | IQD |
 | --- | --- |
@@ -1582,7 +1582,7 @@
 | المصادقة / النشر | غير معتمد وغير منشور؛ غير متاح للتوليد الاعتيادي بالذكاء الاصطناعي أو المحرر. |
 | مرحلة واحدة للتعريف | تمت المطابقة · بانتظار اعتماد الأعمال |
 | مثال ضابط وليس ثابتاً في التعريف | 1532751636.39 |
-| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
+| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
 
 ### مكونات الأرصدة الدائنة المفتوحة بإشارتها — credit_balances
 
@@ -1612,7 +1612,7 @@
 | المصادقة / النشر | غير معتمد وغير منشور؛ غير متاح للتوليد الاعتيادي بالذكاء الاصطناعي أو المحرر. |
 | مرحلة واحدة للتعريف | تمت المطابقة · بانتظار اعتماد الأعمال |
 | مثال ضابط وليس ثابتاً في التعريف | -173290543.78 |
-| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
+| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
 
 ### صافي الذمم حسب تقرير الأعمار — net_aged_receivable
 
@@ -1642,7 +1642,7 @@
 | المصادقة / النشر | غير معتمد وغير منشور؛ غير متاح للتوليد الاعتيادي بالذكاء الاصطناعي أو المحرر. |
 | مرحلة واحدة للتعريف | تمت المطابقة · بانتظار اعتماد الأعمال |
 | مثال ضابط وليس ثابتاً في التعريف | 1359461092.61 |
-| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
+| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
 
 ### ذمم غير متأخرة في تاريخ التقرير — aged_at_date
 
@@ -1672,7 +1672,7 @@
 | المصادقة / النشر | غير معتمد وغير منشور؛ غير متاح للتوليد الاعتيادي بالذكاء الاصطناعي أو المحرر. |
 | مرحلة واحدة للتعريف | تمت المطابقة · بانتظار اعتماد الأعمال |
 | مثال ضابط وليس ثابتاً في التعريف | 759020481.15 |
-| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
+| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
 
 ### متأخرات من 1 إلى 30 يوماً بالصافي — aged_1_30
 
@@ -1702,7 +1702,7 @@
 | المصادقة / النشر | غير معتمد وغير منشور؛ غير متاح للتوليد الاعتيادي بالذكاء الاصطناعي أو المحرر. |
 | مرحلة واحدة للتعريف | تمت المطابقة · بانتظار اعتماد الأعمال |
 | مثال ضابط وليس ثابتاً في التعريف | 218464001.82 |
-| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
+| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
 
 ### متأخرات من 31 إلى 60 يوماً بالصافي — aged_31_60
 
@@ -1732,7 +1732,7 @@
 | المصادقة / النشر | غير معتمد وغير منشور؛ غير متاح للتوليد الاعتيادي بالذكاء الاصطناعي أو المحرر. |
 | مرحلة واحدة للتعريف | تمت المطابقة · بانتظار اعتماد الأعمال |
 | مثال ضابط وليس ثابتاً في التعريف | 69135500.55 |
-| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
+| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
 
 ### متأخرات من 61 إلى 90 يوماً بالصافي — aged_61_90
 
@@ -1762,7 +1762,7 @@
 | المصادقة / النشر | غير معتمد وغير منشور؛ غير متاح للتوليد الاعتيادي بالذكاء الاصطناعي أو المحرر. |
 | مرحلة واحدة للتعريف | تمت المطابقة · بانتظار اعتماد الأعمال |
 | مثال ضابط وليس ثابتاً في التعريف | 25871000.18 |
-| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
+| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
 
 ### متأخرات من 91 إلى 120 يوماً بالصافي — aged_91_120
 
@@ -1792,7 +1792,7 @@
 | المصادقة / النشر | غير معتمد وغير منشور؛ غير متاح للتوليد الاعتيادي بالذكاء الاصطناعي أو المحرر. |
 | مرحلة واحدة للتعريف | تمت المطابقة · بانتظار اعتماد الأعمال |
 | مثال ضابط وليس ثابتاً في التعريف | 33782500.14 |
-| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
+| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
 
 ### متأخرات تتجاوز 120 يوماً بالصافي — aged_over_120
 
@@ -1822,7 +1822,7 @@
 | المصادقة / النشر | غير معتمد وغير منشور؛ غير متاح للتوليد الاعتيادي بالذكاء الاصطناعي أو المحرر. |
 | مرحلة واحدة للتعريف | تمت المطابقة · بانتظار اعتماد الأعمال |
 | مثال ضابط وليس ثابتاً في التعريف | 253187608.77 |
-| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
+| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
 
 ### ذمم موجبة غير متأخرة — receivables_current_amount
 
@@ -1852,7 +1852,7 @@
 | المصادقة / النشر | غير معتمد وغير منشور؛ غير متاح للتوليد الاعتيادي بالذكاء الاصطناعي أو المحرر. |
 | مرحلة واحدة للتعريف | تمت المطابقة · بانتظار اعتماد الأعمال |
 | مثال ضابط وليس ثابتاً في التعريف | 760615731.13 |
-| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
+| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
 
 ### ذمم موجبة متأخرة من 1 إلى 30 يوماً — receivables_overdue_1_30_amount
 
@@ -1882,7 +1882,7 @@
 | المصادقة / النشر | غير معتمد وغير منشور؛ غير متاح للتوليد الاعتيادي بالذكاء الاصطناعي أو المحرر. |
 | مرحلة واحدة للتعريف | تمت المطابقة · بانتظار اعتماد الأعمال |
 | مثال ضابط وليس ثابتاً في التعريف | 239405751.70 |
-| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
+| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
 
 ### ذمم موجبة متأخرة من 31 إلى 90 يوماً — receivables_overdue_31_90_amount
 
@@ -1912,7 +1912,7 @@
 | المصادقة / النشر | غير معتمد وغير منشور؛ غير متاح للتوليد الاعتيادي بالذكاء الاصطناعي أو المحرر. |
 | مرحلة واحدة للتعريف | تمت المطابقة · بانتظار اعتماد الأعمال |
 | مثال ضابط وليس ثابتاً في التعريف | 94315000.66 |
-| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
+| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
 
 ### ذمم موجبة متأخرة أكثر من 90 يوماً — receivables_overdue_over_90_amount
 
@@ -1942,7 +1942,7 @@
 | المصادقة / النشر | غير معتمد وغير منشور؛ غير متاح للتوليد الاعتيادي بالذكاء الاصطناعي أو المحرر. |
 | مرحلة واحدة للتعريف | تمت المطابقة · بانتظار اعتماد الأعمال |
 | مثال ضابط وليس ثابتاً في التعريف | 227502606.69 |
-| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
+| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
 
 ### قيمة الذمم ذات الاستحقاق المفقود — receivables_missing_due_date_amount
 
@@ -1972,7 +1972,7 @@
 | المصادقة / النشر | غير معتمد وغير منشور؛ غير متاح للتوليد الاعتيادي بالذكاء الاصطناعي أو المحرر. |
 | مرحلة واحدة للتعريف | تمت المطابقة · بانتظار اعتماد الأعمال |
 | مثال ضابط وليس ثابتاً في التعريف | 210912546.21 |
-| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
+| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
 
 ### عدد مكونات الذمم ذات الاستحقاق المفقود — receivables_missing_due_date_count
 
@@ -2002,7 +2002,7 @@
 | المصادقة / النشر | غير معتمد وغير منشور؛ غير متاح للتوليد الاعتيادي بالذكاء الاصطناعي أو المحرر. |
 | مرحلة واحدة للتعريف | تمت المطابقة · بانتظار اعتماد الأعمال |
 | مثال ضابط وليس ثابتاً في التعريف | 1319 |
-| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
+| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
 
 ### إجمالي المتأخرات بالصافي — total_overdue_net
 
@@ -2032,7 +2032,7 @@
 | المصادقة / النشر | غير معتمد وغير منشور؛ غير متاح للتوليد الاعتيادي بالذكاء الاصطناعي أو المحرر. |
 | مرحلة واحدة للتعريف | مُعرّف · بانتظار المطابقة |
 | مثال ضابط وليس ثابتاً في التعريف | — |
-| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
+| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
 
 ### نسبة المتأخرات بالصافي — overdue_net_percentage
 
@@ -2062,7 +2062,7 @@
 | المصادقة / النشر | غير معتمد وغير منشور؛ غير متاح للتوليد الاعتيادي بالذكاء الاصطناعي أو المحرر. |
 | مرحلة واحدة للتعريف | مُعرّف · بانتظار المطابقة |
 | مثال ضابط وليس ثابتاً في التعريف | — |
-| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تتطابق المتجهات الرقمية للعملاء دون إثبات ربط عميل الملف بهوية شريك أودو. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
+| القيود المعروفة | ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي. |
 
 ## العملاء
 
@@ -6387,23 +6387,23 @@
 | expiring_quantity_30_days | proposal/control | unresolved / observed_at / stock_lot.expiration_date / current positive internal quant / lot | proposal; no exact output reconciliation |
 | expiring_quantity_60_days | proposal/control | unresolved / observed_at / stock_lot.expiration_date / current positive internal quant / lot | proposal; no exact output reconciliation |
 | expiring_quantity_90_days | proposal/control | unresolved / observed_at / stock_lot.expiration_date / current positive internal quant / lot | proposal; no exact output reconciliation |
-| receivables_gross_outstanding_amount | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay |
-| credit_balances | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay |
-| net_aged_receivable | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay |
-| aged_at_date | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay |
-| aged_1_30 | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay |
-| aged_31_60 | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay |
-| aged_61_90 | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay |
-| aged_91_120 | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay |
-| aged_over_120 | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay |
-| receivables_current_amount | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay |
-| receivables_overdue_1_30_amount | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay |
-| receivables_overdue_31_90_amount | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay |
-| receivables_overdue_over_90_amount | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay |
-| receivables_missing_due_date_amount | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay |
-| receivables_missing_due_date_count | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay |
-| total_overdue_net | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay |
-| overdue_net_percentage | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay |
+| receivables_gross_outstanding_amount | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
+| credit_balances | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
+| net_aged_receivable | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
+| aged_at_date | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
+| aged_1_30 | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
+| aged_31_60 | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
+| aged_61_90 | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
+| aged_91_120 | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
+| aged_over_120 | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
+| receivables_current_amount | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
+| receivables_overdue_1_30_amount | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
+| receivables_overdue_31_90_amount | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
+| receivables_overdue_over_90_amount | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
+| receivables_missing_due_date_amount | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
+| receivables_missing_due_date_count | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
+| total_overdue_net | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
+| overdue_net_percentage | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
 
 ## الأدلة والمراجع التشغيلية
 
