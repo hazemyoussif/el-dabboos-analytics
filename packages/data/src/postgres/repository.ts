@@ -7,6 +7,7 @@ import type { PublishedReconciliationCoverage,PublishedDerivedCoverage } from '.
 import type { PublishedAnalyticsCapabilities } from '@el-dabboos/domain';
 import { selectQueryKeys,querySlots } from './query-slots.ts';
 import { aggregateQuerySlots } from './query-aggregate.ts';
+import { queryDimensionLabels } from './query-labels.ts';
 import { queryMetadata } from './query-metadata.ts';
 import { analyzeRows } from './query-analysis.ts';
 import { certifiedMapping } from './mapping-releases.ts';
@@ -72,7 +73,8 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository, Dimensi
       let rows: AnalyticsRow[] = keys.map((key,i) => { const v = values[i] ?? null; if (!comparison) return { key,value: v }; const p = priors[i] ?? null; const changes = compare(v,p); return semantics.kind === 'comparison_derived' ? { key,value: changes.percentageChange } : { key,value: v,...changes }; });
       rows = analyzeRows(rows,query,!!comparison);
       const metadata = await queryMetadata(client,query,context,mapping,this.options);
-      return { metric: query.metric,groupBy: query.groupBy ?? null,rows,metadata };
+      const dimensionLabels=await queryDimensionLabels(client,query,sql,keys,context.locale);
+      return { metric: query.metric,groupBy: query.groupBy ?? null,rows,metadata:{...metadata,...(Object.keys(dimensionLabels).length?{dimensionLabels}:{})} };
     },true,this.options.statementTimeoutMs ?? 15000);
   }
   async listDimensionValues(dimension: DimensionId, context: AnalyticsContext): Promise<string[]> {

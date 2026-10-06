@@ -3,9 +3,10 @@ import test from 'node:test';
 import { semanticCatalog, tenantProfiles, validateDashboardSpec, widgetTypes } from '@el-dabboos/domain';
 import { generateSeedFacts, MockAnalyticsRepository } from '@el-dabboos/data';
 import { dashboardTemplates, DashboardExecutor, DemoIdentityProvider, DefaultAuthorizationPolicy, instantiateDashboardTemplate } from '@el-dabboos/application';
-test('all 20 governed templates validate and execute in EN/AR for both demo markets with authorized metrics', async () => {
-  assert.equal(dashboardTemplates.length,20);
-  const repository = new MockAnalyticsRepository([...generateSeedFacts('demo-iq'),...generateSeedFacts('demo-eg')]);
+test('all governed templates validate and execute in EN/AR for both demo markets with authorized metrics', async () => {
+  assert.equal(dashboardTemplates.length,24);
+  const managementFacts=Object.values(tenantProfiles).flatMap(profile=>(['order_revenue','order_count','net_invoiced_revenue','invoiced_revenue','refund_value'] as const).map(measureId=>({tenantId:profile.id,measureId,date:'2026-08-15',value:10,dimensions:{business_line:'synthetic-line',salesperson:'synthetic-rep',customer:'synthetic-customer'}})));
+  const repository = new MockAnalyticsRepository([...generateSeedFacts('demo-iq'),...generateSeedFacts('demo-eg'),...managementFacts]);
   const identity = new DemoIdentityProvider(); const policy = new DefaultAuthorizationPolicy(); const executor = new DashboardExecutor(repository, () => new Date('2026-09-30T12:00:00Z'));
   for (const profile of Object.values(tenantProfiles)) for (const locale of ['en','ar'] as const) for (const template of dashboardTemplates) {
     const spec = instantiateDashboardTemplate(template,profile,new Date('2026-09-30T12:00:00Z'),locale); validateDashboardSpec(spec);

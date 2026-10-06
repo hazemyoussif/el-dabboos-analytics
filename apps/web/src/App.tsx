@@ -1,3 +1,5 @@
+import { useManagementReports } from './reports/useManagementReports.ts';
+import { ManagementArea,ManagementNavigation,ReportStatus,managementTitle,workspaceDataMode } from './reports/ManagementReports.tsx';
 import type { AuthUser } from './auth/client.ts';
 import { AccountControls,AuthenticationNotice } from './auth/AccountControls.tsx';
 import { WorkspaceContent, WorkspaceAdministrationNavigation, workspaceNavigationPermissions, initialAdministrationPage } from './admin/WorkspaceAdministration.tsx';
@@ -39,11 +41,12 @@ export default function App({ authenticatedUser,onLogout,authenticationError }: 
   const { locale, userId, demoUsers, permissions, profiles, profile, catalog, published, metricRegistry, templates,
     dashboard, document: dashboardDocument, savedDashboards, execution, loading, error, filterOptions, setError } = workspace;
   useEffect(() => { setAdminPage(initialAdministrationPage(workspace)); }, [userId, profile?.id, workspace.platformPermissions.length]);
+  const management=useManagementReports(workspace,flow,()=>{setAdminPage(null);setDrawerOpen(false);});
   const t = copy[locale];
   const displayError = plannerDisplayError(error, planner.errorCode, locale);
   const builderHistory = builder.history;
   const activeDashboard = builderHistory?.present.kind === 'dashboard' ? builderHistory.present.spec : dashboard;
-  const activeTitle = builderHistory?.present.kind === 'empty' ? builderHistory.present.base.title[locale] : activeDashboard?.title[locale] ?? t.noDashboard;
+  const activeTitle = managementTitle(management.page,locale,builderHistory?.present.kind === 'empty' ? builderHistory.present.base.title[locale] : activeDashboard?.title[locale] ?? t.noDashboard);
   const isCreating = showCreationPanel(flow.panel);
   const statusText = flow.status === 'template' ? t.templateBadge : flow.status === 'saved' ? t.savedDashboard
     : flow.status === 'modified' ? t.modified : t.unsaved;
@@ -59,8 +62,9 @@ export default function App({ authenticatedUser,onLogout,authenticationError }: 
   const period = execution?.metadata.effectiveFilters?.dateRange;
   const periodSelection = builder.history || showAiEditor(flow.panel) ? activeDashboard?.filters : viewFilters.selection;
   return <div className="app-shell">
-    <WorkspaceNavigation {...workspaceNavigationPermissions(workspace)} locale={locale} onNew={flow.launchNew} onTemplates={() => flow.enterCreation('choose-template')} drawerOpen={drawerOpen} onDrawerClose={() => setDrawerOpen(false)}>
+    <WorkspaceNavigation {...workspaceNavigationPermissions(workspace)} locale={locale} onNew={()=>{management.close();flow.launchNew();}} onTemplates={() => {management.close();flow.enterCreation('choose-template');}} dataMode={workspaceDataMode(published)} drawerOpen={drawerOpen} onDrawerClose={() => setDrawerOpen(false)}>
       <WorkspaceAdministrationNavigation workspace={workspace} page={adminPage} onPage={setAdminPage} closeDrawer={() => setDrawerOpen(false)} />
+      {<ManagementNavigation published={published} allowed={permissions.includes('analytics:query')} templates={templates} locale={locale} activeId={management.page??workspace.activeTemplateId} onSelect={management.select}/>}
       <DashboardLibrary key={`${userId}-${profile?.id}`} records={savedDashboards} userId={userId} locale={locale} controller={library} loading={loading} activeId={dashboardDocument?.kind === 'saved' ? dashboardDocument.record.id : undefined} onOpen={id => { setAdminPage(null); flow.openSaved(id); setDrawerOpen(false); }} />
     </WorkspaceNavigation>
     <main className="main-content">
@@ -70,6 +74,7 @@ export default function App({ authenticatedUser,onLogout,authenticationError }: 
           <div className="topbar-control"><span>{t.language}</span><div className="language-toggle" role="group" aria-label={t.language}><button className={locale === 'en' ? 'selected' : ''} onClick={() => workspace.selectLocale('en' as Locale)}>EN</button><button className={locale === 'ar' ? 'selected' : ''} onClick={() => workspace.selectLocale('ar' as Locale)}>عربي</button></div></div></div></header>
       <div className="page-content">
         <WorkspaceContent page={adminPage} workspace={workspace}><>
+        <ManagementArea page={management.page} locale={locale} profile={profile} published={published} metadata={metadata} review={management.review} reviewLoading={management.loading} reviewError={management.error} onRetry={()=>void management.reload()}>
         <DashboardCreationPanel panel={flow.panel} locale={locale} profile={profile} templates={templates} prompt={planner.prompt} onPrompt={planner.setPrompt}
           activity={planner} loading={loading} canGenerate={permissions.includes('ai:generate')} onChooseAi={() => flow.enterCreation('create-ai')}
           onBlank={flow.blank} onChooseTemplate={() => flow.enterCreation('choose-template')} onTemplate={id => profile && flow.openTemplate(id, profile, locale)}
@@ -77,7 +82,7 @@ export default function App({ authenticatedUser,onLogout,authenticationError }: 
         {!isCreating && <details className="catalog-panel"><summary>{t.metricCatalog} · {metricRegistry.filter(item => item.availability === 'available').length} {t.available} · {metricRegistry.filter(item => item.availability === 'planned').length} {t.planned}</summary><div className="catalog-list">{metricRegistry.map(item => <div key={item.id} className="catalog-metric"><span>{item.labels[locale]}</span><span className={item.availability === 'available' ? 'metric-available' : 'metric-planned'}>{item.availability === 'available' ? t.available : t.planned}</span></div>)}</div></details>}
         <AuthenticationNotice message={authenticationError} />
         {displayError && <div className="global-error" role="alert"><AlertCircle aria-hidden="true" />{displayError}<button onClick={() => setError(null)} aria-label={locale === 'ar' ? 'إغلاق' : 'Dismiss'}><X aria-hidden="true" /></button></div>}
-        {!isCreating && <DashboardSection header={<div className="dashboard-title-row"><div><div className="eyebrow eyebrow-light">{breadcrumb}</div><h2>{activeTitle}</h2>{flow.status && <span className={`save-status ${flow.status === 'modified' || flow.status === 'unsaved' ? 'dirty' : ''}`}>{statusText}</span>}</div>
+        {!isCreating && <DashboardSection header={<div className="dashboard-title-row"><div><div className="eyebrow eyebrow-light">{breadcrumb}</div><h2>{activeTitle}</h2><ReportStatus published={published} locale={locale} dashboard={activeDashboard}/>{flow.status && <span className={`save-status ${flow.status === 'modified' || flow.status === 'unsaved' ? 'dirty' : ''}`}>{statusText}</span>}</div>
           <DashboardActions locale={locale} status={flow.status} actions={flow.actions} editing={!!builderHistory} loading={loading || builder.busy || viewFilters.busy}
             canCreate={permissions.includes('dashboard:create')} canEdit={permissions.includes('dashboard:edit')}
             onNew={flow.launchNew} onUseTemplate={flow.useTemplate} onEdit={flow.editManual} onEditAi={flow.editAi} onView={flow.view}
@@ -95,6 +100,7 @@ export default function App({ authenticatedUser,onLogout,authenticationError }: 
         </>} />}
 
         {flow.nameDialog && <DashboardNameDialog key={`${flow.nameDialog.operation}-${locale}`} spec={flow.nameDialog.spec} locale={locale} busy={loading} onConfirm={spec => void flow.confirmName(spec)} onClose={() => flow.setNameDialog(null)} />}
+        </ManagementArea>
         </></WorkspaceContent>
         <footer className="footer">© {new Date().getFullYear()} El Dabboos · {locale === 'ar' ? 'منصة تحليلات تجريبية' : 'Analytics prototype'}</footer>
       </div>

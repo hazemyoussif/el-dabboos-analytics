@@ -2,6 +2,7 @@ import type { DashboardSeries, DashboardSpec, DashboardWidget, DateRange, Relati
 import { validateDashboardSpec } from '@el-dabboos/domain';
 
 import type { PublishedAnalyticsCapabilities } from '@el-dabboos/domain';
+import { managementTemplates,supportedTemplatePeriod } from './management-templates.ts';
 import { resolveRelativeDatePreset } from './relative-date.ts';
 export type DatePreset = RelativeDatePreset;
 export interface DashboardTemplate {
@@ -23,6 +24,7 @@ const one = (id: string, type: DashboardWidget['type'], metric: MetricId, dimens
   widget(id, type, [series(metric, metric, analysis)], dimension);
 
 export const dashboardTemplates: readonly DashboardTemplate[] = [
+  ...managementTemplates,
   { id: 'executive-overview', name: text('Executive Overview', 'نظرة تنفيذية'), description: text('A concise view of sales, margin, collections and reliability.', 'ملخص للمبيعات والهامش والتحصيل والاعتمادية.'), domain: 'executive', tags: ['leadership', 'overview'], datePreset: 'current_year', layout: { columns: 3 }, widgets: [
     one('revenue', 'kpi', 'revenue'), one('gross-margin', 'kpi', 'gross_margin'), one('outstanding', 'kpi', 'outstanding_amount'),
     widget('revenue-profit', 'line', [series('revenue', 'revenue', { comparison: 'year_over_year' }), series('gross-profit', 'gross_profit')], 'month'),
@@ -173,8 +175,8 @@ export function instantiateDashboardTemplate(template: DashboardTemplate, profil
     filters: { datePreset: template.datePreset }, layout: template.layout,
     widgets: structuredClone(template.widgets) };
   if (template.periodStrategy==='certified') {
-    spec.title = { en: `${profile.labels.en} Sales & Invoicing`,ar: `المبيعات والفواتير — ${profile.labels.ar}` };
-    const period = published?.releases.find(release => template.widgets.every(widget => widget.series.every(series => release.capabilities.some(capability => capability.metric===series.metric && capability.summary))))?.period;
+    if(template.id==='sales-invoicing') spec.title = { en: `${profile.labels.en} Sales & Invoicing`,ar: `المبيعات والفواتير — ${profile.labels.ar}` };
+    const period = published ? supportedTemplatePeriod(template,published) : undefined;
     if (period) spec.filters = { dateRange: { ...period } };
   }
   validateDashboardSpec(spec);

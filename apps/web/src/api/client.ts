@@ -25,7 +25,7 @@ const demoSession = (userId: string): ApiSession => ({ userId, tenantId: 'demo-i
 export const getDemoUsers = (userId: string) => request<{ users: DemoUser[] }>(demoSession(userId), '/api/demo-principals', 'GET');
 export const getTenantProfiles = (userId: string) => request<{ profiles: TenantProfile[]; defaultTenantId: string }>(demoSession(userId), '/api/tenant-profiles', 'GET');
 export const getSemanticCatalog = (session: ApiSession) => request<{ metrics: SemanticMetric[]; registry: ProductMetric[]; published?: PublishedAnalyticsCapabilities }>(session, '/api/semantic-catalog', 'GET');
-export const getTemplates = (session: ApiSession) => request<{ templates: AccessibleTemplate[] }>(session, '/api/dashboard-templates', 'GET');
+export const getTemplates = (session: ApiSession) => request<{ templates: AccessibleTemplate[]; defaultTemplateId?:string }>(session, '/api/dashboard-templates', 'GET');
 export const getCapabilities = (session: ApiSession) => request<{ permissions: string[] }>(session, '/api/demo-capabilities', 'GET');
 export const instantiateTemplate = (session: ApiSession, templateId: string) => request<{ dashboard: DashboardSpec; execution: DashboardExecutionResult }>(session, `/api/dashboard-templates/${encodeURIComponent(templateId)}/instantiate`, 'GET');
 export const generateDashboard = (session: ApiSession, prompt: string) => request<{ dashboard: DashboardSpec; execution: DashboardExecutionResult }>(session, '/api/dashboards/generate', 'POST', { prompt });
@@ -57,3 +57,5 @@ export const setDashboardPreference = (session: ApiSession, id: string, value: {
 
 export const getAdministrationCapabilities = (userId: string) => request<{ platformPermissions: string[] }>(demoSession(userId), "/api/administration-capabilities", "GET");
 export const executeSavedDashboard = (session: ApiSession, id: string) => request<DashboardExecutionResult>(session, `/api/saved-dashboards/${encodeURIComponent(id)}/execute`, "POST");
+
+export const getManagementControlReview=(session:ApiSession)=>request<{review:import('@el-dabboos/application').ManagementControlReview|null}>(session,'/api/management-control-review','GET');

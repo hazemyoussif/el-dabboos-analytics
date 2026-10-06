@@ -5,7 +5,7 @@ import { EmptyState, Notice } from './presentation/Feedback.tsx';
 import type { DashboardExecutionResult, WidgetExecution } from '@el-dabboos/application';
 import { resolveDashboardLayout } from '@el-dabboos/domain';
 import type { DashboardSpec, DashboardWidget, GovernedPalette, Locale, SemanticMetric, TenantProfile } from '@el-dabboos/domain';
-import { copy, formatKey } from './i18n.ts';
+import { copy, formatKey,formatDimensionLabel } from './i18n.ts';
 import { AreaContent } from './rendering/AreaContent.tsx';
 import { PieContent } from './rendering/PieContent.tsx';
 import { TreemapContent } from './rendering/TreemapContent.tsx';
@@ -33,8 +33,10 @@ export function WidgetCard({ widget, dashboardPalette, entry, catalog, locale, p
     return result?.status === 'error' ? [result.error.message] : [];
   });
   if (!entry || entry.status === 'error') return <article className="widget widget-error"><div className="widget-heading"><h3>{title}</h3><AlertCircle aria-hidden="true" /></div><Notice tone="danger">{failures.join(' · ') || t.failed}</Notice></article>;
+  const dimensionLabels=Object.assign({},...Object.values(entry.seriesResults).map(series=>series.status==='success'?series.result.metadata.dimensionLabels??{}:{})) as Record<string,string>;
+  const keyLabel=(key:string|null)=>key!==null&&dimensionLabels[key]?formatDimensionLabel(dimensionLabels[key]!,widget.dimension,locale):formatKey(key,widget.dimension,locale,profile);
   const data: ChartRow[] = entry.alignedRows.map((row,index) => {
-    const item: ChartRow = { label: formatKey(row.key, widget.dimension, locale, profile), _row: index };
+    const item: ChartRow = { label: keyLabel(row.key), _row: index };
     for (const series of widget.series) {
       item[valueKey(series.id)] = row.series[series.id]?.value ?? null;
       if (row.series[series.id]?.comparisonValue !== undefined) item[comparisonKey(series.id)] = row.series[series.id]?.comparisonValue ?? null;
@@ -43,7 +45,7 @@ export function WidgetCard({ widget, dashboardPalette, entry, catalog, locale, p
   });
   const formatSeries = (seriesId: string, value: number | null) => formatSeriesValue(widget, catalog, locale, profile, seriesId, value);
   const hasData = entry.alignedRows.some(row => Object.values(row.series).some(value => value !== null && value.value !== null));
-  const props = { theme, widget, entry, catalog, locale, profile, labels, formatSeries, data };
+  const props = { theme, widget, entry, catalog, locale, profile, labels, formatSeries, data, keyLabel };
   const Content = renderers[widget.type];
   const content = !hasData ? <EmptyState>{t.empty}</EmptyState> : <Content {...props} />;
   const summary = widget.type !== 'kpi' && widget.type !== 'table' && <details className="chart-summary"><summary>{locale === 'ar' ? 'عرض قيم الرسم' : 'View chart values'}</summary><TableContent {...props} /></details>;

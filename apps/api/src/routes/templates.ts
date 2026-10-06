@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { AuthorizationError, templateCompatibility,assertPublishedDashboard,dashboardTemplates, getDashboardTemplate, instantiateDashboardTemplate } from '@el-dabboos/application';
+import { AuthorizationError, selectDefaultTemplate, templateCompatibility,assertPublishedDashboard,dashboardTemplates, getDashboardTemplate, instantiateDashboardTemplate } from '@el-dabboos/application';
 import { workspacePublishedCapabilities } from '../published-analytics.ts';
 import { analyticsContext } from '../context.ts';
 import type { RouteContext } from '../context.ts';
@@ -9,12 +9,13 @@ export function registerTemplateRoutes(app: FastifyInstance, services: RouteCont
   app.get('/api/dashboard-templates', async request => {
     const { context } = await services.session(request.headers); services.authorize(context, 'dashboard:view');
     const published = await workspacePublishedCapabilities(services,context);
-    return { templates: dashboardTemplates.map(template => {
+    const templates = dashboardTemplates.map(template => {
       const compatibility = templateCompatibility(template,published);
       const allowed = services.templateAllowed(template,context);
       return { ...template,compatibility,availability: !allowed ? 'restricted' : compatibility.status==='supported' ? 'available' : 'incompatible',
         ...(!allowed ? { reason: 'Contains metrics unavailable to this user.' } : compatibility.status!=='supported' ? { reason: 'This template requires analytics capabilities that are not available for this workspace.' } : {}) };
-    }) };
+    });
+    return { templates,defaultTemplateId:selectDefaultTemplate(templates,published.mode) };
   });
   app.get<{ Params: { id: string } }>('/api/dashboard-templates/:id/instantiate', async request => {
     const { context, profile } = await services.session(request.headers);

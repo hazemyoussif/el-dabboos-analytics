@@ -9,6 +9,7 @@ export async function aggregateQuerySlots(client: PoolClient,query: AnalyticsQue
   const baseSemantics = semanticCatalog[base].semantics;
   const timeGrouping = !!query.groupBy && timeDimensions.includes(query.groupBy);
   if (!slots.length) return [];
+  if (baseSemantics.kind!=='snapshot' && query.groupBy && !timeGrouping && slots.every(slot=>slot.from===slots[0]!.from && slot.to===slots[0]!.to)) return groupedEventValues(client,query,sql,slots,baseSemantics);
   const parameters = [...sql.params]; const slotParam = bind(parameters,JSON.stringify(slots));
   const snapshot = baseSemantics.kind === 'snapshot';
   const group = query.groupBy && !(snapshot && timeGrouping) ? `AND (slot.match_key IS NULL OR ${dimensionSql(query.groupBy)}=slot.match_key)` : '';
@@ -33,4 +34,26 @@ function aggregateExpression(semantics: MetricSemantics,parameters: unknown[],ag
   if (semantics.kind==='distinct_count') return `count(DISTINCT nullif(${dimensionSql(semantics.dimension)},'unassigned'))::text AS value`;
   const operation = { sum: 'sum',count: 'count',average: 'avg',min: 'min',max: 'max' }[aggregation];
   return `coalesce(${snapshot ? 'sum' : operation}(value),${snapshot ? 'NULL' : '0'})::text AS value`;
+}
+
+/** Aggregate categorical groups in one pass; never rescan the authorized ledger once per customer/rep. */
+async function groupedEventValues(client:PoolClient,query:AnalyticsQuery,sql:QuerySqlScope,slots:QuerySlot[],semantics:MetricSemantics):Promise<(number|null)[]> {
+ const parameters=[...sql.params];
+ const reduced=aggregateExpression(semantics,parameters,query.aggregation??'sum',false);
+ const range=slots[0]!;
+ const from=range.from?`AND f.business_date>=${bind(parameters,range.from)}::date`:'';
+ const to=range.to?`AND f.business_date<=${bind(parameters,range.to)}::date`:'';
+ const grouping=dimensionSql(query.groupBy!);
+ const result=await client.query(`SELECT ${grouping} key,${reduced} FROM mart.canonical_facts f WHERE ${sql.scope} AND ${sql.predicates} ${from} ${to} GROUP BY ${grouping}`,parameters);
+ const values=new Map(result.rows.map(row=>[row.key,row]));
+ return slots.map(slot=>{
+  const row=values.get(slot.match_key);
+  if(query.aggregation==='average'||semantics.kind==='ratio'||semantics.kind==='duration_derived') {
+   const denominator=numericOutput(row?.denominator??'0')!;
+   if(denominator===0)return query.aggregation==='average'?0:null;
+   const scale=semantics.kind==='ratio'||semantics.kind==='duration_derived'?semantics.scale:1;
+   return numericOutput(row?.numerator??'0')!/denominator*scale;
+  }
+  return numericOutput(row?.value??'0');
+ });
 }

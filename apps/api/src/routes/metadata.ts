@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { publishedCatalog } from '@el-dabboos/application';
+import { managementControlReview,publishedCatalog } from '@el-dabboos/application';
 import { categoricalDimensions,DimensionDiscoveryLimitError,UncertifiedDimensionError } from '@el-dabboos/domain';
 import type { DimensionId } from '@el-dabboos/domain';
 import { workspacePublishedCapabilities } from '../published-analytics.ts';
@@ -8,6 +8,11 @@ import type { RouteContext } from '../context.ts';
 import { ApiError } from '../errors.ts';
 
 export function registerMetadataRoutes(app: FastifyInstance, services: RouteContext): void {
+  app.get('/api/management-control-review',async request=>{
+    const { context }=await services.session(request.headers);
+    services.authorize(context,'dashboard:view','analytics:query');
+    return {review:managementControlReview(context.tenant.tenantId)};
+  });
   app.get('/api/semantic-catalog', async request => {
     const { context } = await services.session(request.headers); services.authorize(context, 'analytics:query');
     return publishedCatalog(context,await workspacePublishedCapabilities(services,context));

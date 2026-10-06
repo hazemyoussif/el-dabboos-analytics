@@ -29,3 +29,6 @@ export { bootstrapAdministration, provisionTenantAdministrator, provisionAssignm
 export * from './staging-bootstrap.ts';
 export * from './authentication.ts';
 export * from './published-analytics.ts';
+
+export * from './management-templates.ts';
+export * from './management-reviews.ts';

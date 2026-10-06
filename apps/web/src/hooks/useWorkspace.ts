@@ -34,7 +34,7 @@ export function useWorkspace(authenticatedUser?: DemoUser) {
   const [metricRegistry, setMetricRegistry] = useState<ProductMetric[]>([]);
   const [templates, setTemplates] = useState<AccessibleTemplate[]>([]);
   const [savedDashboards, setSavedDashboards] = useState<DashboardRecord[]>([]);
-  const [activeTemplateId, setActiveTemplateId] = useState('sales-performance');
+  const [activeTemplateId, setActiveTemplateId] = useState('');
   const [document, setDocument] = useState<DashboardDocument | null>(null);
   const [execution, setExecution] = useState<DashboardExecutionResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -101,7 +101,7 @@ export function useWorkspace(authenticatedUser?: DemoUser) {
         getSemanticCatalog(selectedSession), getTemplates(selectedSession),
         getCapabilities(selectedSession), listSavedDashboards(selectedSession),
       ]);
-      const first = templatesResponse.templates.find(template => template.id === activeTemplateId && template.availability === 'available')
+      const first = templatesResponse.templates.find(template => template.id === templatesResponse.defaultTemplateId && template.availability === 'available')
         ?? templatesResponse.templates.find(template => template.availability === 'available');
       let opened: DashboardDocument | null = resolved ? savedDocument(resolved.record) : null;
       let openedExecution: DashboardExecutionResult | null = null;

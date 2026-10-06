@@ -86,6 +86,8 @@ export interface AnalyticsResult {
   rows: AnalyticsRow[];
   metadata: {
     sourceId: string;
+    /** Display labels only; row keys remain the stable canonical identity. */
+    dimensionLabels?: Record<string,string>;
     executedAt: string;
     release?: import('./published-capabilities.ts').AnalyticsReleaseProvenance;
     /** Latest event date among tenant facts needed for this metric, independent of the query period. */
