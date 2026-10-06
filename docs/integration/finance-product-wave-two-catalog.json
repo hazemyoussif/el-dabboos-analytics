@@ -8760,7 +8760,7 @@
     "companyId": 1,
     "reportingCutoff": "2026-09-30",
     "reportingCurrency": "IQD",
-    "sourceAsOf": "2026-10-06T12:44:27.764Z",
+    "sourceAsOf": "2026-10-06T12:53:16.128Z",
     "gross": "1532751636.390000",
     "buckets": {
       "current": "760615731.130000",
@@ -8802,7 +8802,35 @@
       "receivables_missing_due_date_amount",
       "receivables_missing_due_date_count"
     ],
-    "existingGenericMetricSemanticsChanged": false
+    "existingGenericMetricSemanticsChanged": false,
+    "controlSha256": "a8f6a00eab4fef2b1b9ff8924ba1a4dd89847c3c86ed83a57aa651d799751848",
+    "verification": {
+      "frozenInstall": "PASS",
+      "lint": "PASS",
+      "architecture": "PASS (0 diagnostics)",
+      "quality": "PASS (0 diagnostics)",
+      "typecheck": "PASS full monorepo",
+      "unitApi": {
+        "pass": 617,
+        "fail": 0,
+        "skipped": 0
+      },
+      "postgres": {
+        "pass": 112,
+        "fail": 0,
+        "skipped": 0
+      },
+      "finalIndependentSqlTest": {
+        "pass": 1,
+        "fail": 0,
+        "skipped": 0
+      },
+      "build": "PASS; existing chunk-size warning",
+      "diff": "PASS",
+      "browser": "Dashboard not run: no publication; artifact preview timed out; content/completeness verified",
+      "preservedSeptemberFingerprintsAndBindings": true,
+      "financeConfirmation": "PENDING"
+    }
   },
   "discoveryCommit": "0ebbe20"
 }

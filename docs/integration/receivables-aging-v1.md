@@ -70,7 +70,7 @@ node --experimental-transform-types --disable-warning=ExperimentalWarning \
   scripts/integration/odoo-receivables-control.mjs operator-env /tmp/private-new-review-directory
 ```
 
-Label: **CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION**. Company 1; cutoff **2026-09-30**; sourceAsOf **2026-10-06T12:44:27.764Z**. No Finance owner/date or authoritative confirmed total is fabricated.
+Label: **CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION**. Company 1; cutoff **2026-09-30**; sourceAsOf **2026-10-06T12:53:16.128Z**. No Finance owner/date or authoritative confirmed total is fabricated.
 
 | Candidate output | IQD amount | Open components |
 | --- | ---: | ---: |
