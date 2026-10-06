@@ -30,3 +30,17 @@ Automated baseline at handoff: 628 unit/API and 114 PostgreSQL tests, zero failu
 Record numbered Blocker/High/Medium/Low findings with file/screen evidence and the smallest justified fix. Do not redesign unrelated screens. Recheck affected states after fixes and run appropriate tests plus required gates. Capture privacy-conscious screenshots for management and report exactly which acceptance steps passed, failed or remain blocked. Do not mark a pending Finance metric certified as part of QA.
 
 Append the next task's scope, final commit(s), changed surfaces, additional controls and its deferred browser criteria before beginning the combined run.
+
+## Second task scope — enterprise expansion and bilingual approvals
+
+The second task starts at `e5ea6a1` and adds the [business package](../business/README.md): six EN/AR Markdown documents generated from a validated documentation-only definition source, 204 definition records, 17 current/planned report specifications and 19 exact-version decision forms. Find its final local commit with `git log` (`docs(business): add bilingual enterprise metric approval pack`). **No new UI screen, executable template, metric, capability or publication is added in this second task.** All twelve original Odoo/environment edits and `.archify/` remain preserved. The combined browser scope is therefore the twelve-step acceptance sequence above.
+
+Additional review cases:
+
+1. Verify product navigation still exposes only the established reports; proposed Product/Order Margin/Inventory/Expiry/Procurement specifications must not appear as executable/certified dashboard choices or AI/manual capabilities.
+2. Compare each live report's period, six exact series, General/39 salesperson groups and status with the bilingual report catalog. Receivables remains validation-only and pending.
+3. Review EN/AR business docs in the chosen management viewing/export tool: Arabic reading direction, table wrapping and formulas must be understandable. Do not assume browser Markdown rendering proves a printable PDF layout; no DOCX/PDF was generated or visually certified.
+4. Confirm both approval packs preserve established decisions, distinguish refund value/count percentages, signed net Odoo fallback aging versus gross v1 missing-date buckets, and Order Margin versus Accounting Gross Profit. Completed approvals must identify exact definition version/hash, named owner/date/control/accepted exceptions before operator recording.
+5. Check documentation lifecycle counts (10 certified, 15 numerically reconciled/pending, 97 defined/pending reconciliation, 50 discovered, 32 unavailable) are **definition counts**, not runtime capability counts. Candidate dimensions are not certified pair permissions. Marketing/CRM/routes/branch limitations describe source/capture gaps.
+
+Second-task automated evidence: 634 unit/API and 114 isolated PostgreSQL tests; all required engineering/build gates; bilingual render/reference/hash and financial bucket invariants. Read-only actual-mart executions preserve zero failed series; eleven staging history fingerprints unchanged; approved Odoo tunnel unavailable, so no new source extraction or publication. HTTPS health/local auth-state checks pass; authenticated login/browser/theme/responsive QA remains **Deferred**. No Luna task was dispatched; this document is the concrete handoff for the later requested run.
