@@ -18,6 +18,11 @@ test('statement scope preserves runtime visibility, unbound/pending exclusion, t
   await cp(migrationDirectory,baseline,{recursive:true});
   await rm(new URL('017_statement_serving_scope.sql',baseline));
   await rm(new URL('018_derived_exact_sets.sql',baseline));
+  await rm(new URL('019_runtime_proof_access_paths.sql',baseline));
+  await rm(new URL('020_runtime_certificate_sets.sql',baseline));
+  await rm(new URL('021_certified_proof_results.sql',baseline));
+  await rm(new URL('022_proof_result_invalidation.sql',baseline));
+  await rm(new URL('023_empty_proof_invalidation.sql',baseline));
   await migratePostgres(db.migrator,baseline);
   for(const tenant of ['a','b','unbound']) {
    await deploy(db.migrator,mapping(tenant));

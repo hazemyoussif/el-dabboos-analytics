@@ -18,7 +18,7 @@ export async function aggregateQuerySlots(client: PoolClient,query: AnalyticsQue
   const agg = query.aggregation ?? 'sum';
   const average = !snapshot && agg === 'average';
   const reduced = aggregateExpression(baseSemantics,parameters,agg,snapshot);
-  const result = await client.query(`SELECT slot.key,aggregate_values.* FROM jsonb_to_recordset(${slotParam}::jsonb) AS slot(key text,"from" date,"to" date,match_key text)
+  const result = slots.length===1 ? await singleSlotValues(client,query,sql,slots[0]!,baseSemantics) : await client.query(`SELECT slot.key,aggregate_values.* FROM jsonb_to_recordset(${slotParam}::jsonb) AS slot(key text,"from" date,"to" date,match_key text)
     CROSS JOIN LATERAL (SELECT ${reduced} FROM ${input} f WHERE ${sql.scope} AND ${sql.predicates} ${range} ${group}) aggregate_values`,parameters);
   const map = new Map(result.rows.map(row => [row.key,row]));
   return slots.map(slot => {
@@ -26,6 +26,19 @@ export async function aggregateQuerySlots(client: PoolClient,query: AnalyticsQue
     if (average || baseSemantics.kind === 'ratio' || baseSemantics.kind === 'duration_derived') { const denom = numericOutput(row.denominator)!; return denom === 0 ? (average ? 0 : null) : numericOutput(row.numerator)!/denom*(baseSemantics.kind === 'ratio' || baseSemantics.kind === 'duration_derived' ? baseSemantics.scale : 1); }
     return numericOutput(row.value);
   });
+}
+
+/** A single KPI/period needs no parameterized lateral ledger scan. */
+async function singleSlotValues(client:PoolClient,query:AnalyticsQuery,sql:QuerySqlScope,slot:QuerySlot,semantics:MetricSemantics) {
+ const parameters=[...sql.params];
+ const snapshot=snapshotBasis(semantics);
+ const from=snapshot?null:bind(parameters,slot.from);const to=bind(parameters,slot.to);
+ const range=snapshot?'':`AND (${from}::date IS NULL OR f.business_date>=${from}::date) AND (${to}::date IS NULL OR f.business_date<=${to}::date)`;
+ const input=snapshot?`(SELECT DISTINCT ON (measure_id,entity_id) * FROM mart.canonical_facts WHERE tenant_id=$1 AND dataset_id=$2 AND measure_id=ANY($3::text[]) AND (${to}::date IS NULL OR business_date<=${to}::date) ORDER BY measure_id,entity_id,business_date DESC)`:'mart.canonical_facts';
+ const timeGrouping=!!query.groupBy&&timeDimensions.includes(query.groupBy);
+ const group=query.groupBy&&!(snapshot&&timeGrouping)&&slot.match_key!==null?`AND ${dimensionSql(query.groupBy)}=${bind(parameters,slot.match_key)}`:'';
+ const reduced=aggregateExpression(semantics,parameters,query.aggregation??'sum',snapshot);
+ return client.query(`SELECT ${bind(parameters,slot.key)}::text key,${reduced} FROM ${input} f WHERE ${sql.scope} AND ${sql.predicates} ${range} ${group}`,parameters);
 }
 
 function aggregateExpression(semantics: MetricSemantics,parameters: unknown[],aggregation: AdditiveAggregation,snapshot: boolean): string {

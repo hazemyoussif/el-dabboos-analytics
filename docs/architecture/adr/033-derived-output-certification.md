@@ -17,3 +17,7 @@ Ratios are calculated from aggregate canonical operands. They are never extracte
 This narrow extension does not append new source reconciliation cases to the original approved case set, approve new business meanings, or broaden analyses. Newly observed month/customer controls remain technical evidence pending a new governed release/evidence lifecycle. No historical source revision is fabricated to attach a fresh query to an old retained PostgreSQL snapshot. New order-margin or receivable inputs require business approval and an explicitly bounded extraction; current residuals cannot become historic September balances.
 
 The Wave 1 user request conditionally authorizes established unambiguous average recipes; its exact reference is recorded on the new output attestations. It does not approve margin, receivable credit policies or refund percentage meanings. [Wave 1 report](../../integration/odoo-certification-wave-one.md) records the live execution and pending candidates. No finance approval or external report is invented.
+
+## Runtime proof reuse
+
+[ADR 034](034-verified-certification-results.md) retains these exact guards while allowing offline verified positive results to be reused until any proof dependency changes. Transactional invalidation and full-proof fallback preserve the post-certification unexpected-group refusal.

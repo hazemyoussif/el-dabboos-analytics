@@ -57,11 +57,20 @@ test('approved positive ratios reconcile operands, weight totals, preserve group
   await releases.approve({tenantId:'a',datasetId:'release',caseIds,reference:'SYNTHETIC-POSITIVE',approvedAt:clock().toISOString()});
   await tenantTransaction(db.migrator,'a',client=>client.query("INSERT INTO mart.serving_bindings VALUES('a','release')"));
   for(const grouping of [null,'salesperson'] as const) await new PostgresDerivedMetricCertification(db.migrator).record({tenantId:'a',datasetId:'release',mappingVersion:'1',reference:`SYNTHETIC-RATIO-${grouping??'summary'}`,metric:'average_confirmed_order_value',grouping,from:'2026-01-01',to:'2026-01-31',caseIds:controls.filter(control=>control.grouping===grouping).map(control=>control.caseId),approvalReference:'SYNTHETIC',approvedAt:clock().toISOString(),businessSemantics:'Governed confirmed-order ratio',technicalReference:'synthetic'});
+  await tenantTransaction(db.migrator,'a',client=>client.query("SELECT mart.refresh_proof_results('a','release')"));
+  assert.equal((await tenantTransaction(db.migrator,'a',client=>client.query('SELECT count(*)::int count FROM mart.derived_proof_results'))).rows[0].count,2);
   const repo=new PostgresAnalyticsRepository(db.runtime,{reportingCurrencies:{a:'IQD'}});const query={metric:'average_confirmed_order_value' as const,dateRange:{from:'2026-01-01',to:'2026-01-31'}};const context={tenantId:'a',locale:'en' as const};
   assert.equal((await repo.execute(query,context)).rows[0]!.value,15);
   assert.deepEqual((await repo.execute({...query,groupBy:'salesperson'},context)).rows,[{key:'one',value:10},{key:'two',value:20}]);
   assert.equal((await repo.execute(query,context)).metadata.release!.outputCertificationReference,'SYNTHETIC-RATIO-summary');
-  await new PostgresMartWriter(db.migrator,{a:['fixture-company']},clock).commit(batch('unexpected',1),[{facts:[fact('three',{measureId:'order_revenue',value:'0.000000',businessDate:'2026-01-15',batchId:'unexpected',dimensions:{salesperson:'three'}})]}],{...evidence,completeness:'complete_scope'});
+  await tenantTransaction(db.runtime,'a',async client=>{
+   const published=await client.query('SELECT * FROM mart.published_derived_coverage($1,$2)',['a','release']);
+   await new PostgresMartWriter(db.migrator,{a:['fixture-company']},clock).commit(batch('unexpected',1),[{facts:[fact('three',{measureId:'order_revenue',value:'0.000000',businessDate:'2026-01-15',batchId:'unexpected',dimensions:{salesperson:'three'}})]}],{...evidence,completeness:'complete_scope'});
+   // The in-flight repeatable-read request retains both its old facts and proof.
+   assert.deepEqual((await client.query('SELECT * FROM mart.published_derived_coverage($1,$2)',['a','release'])).rows,published.rows);
+   assert.equal((await client.query("SELECT count(*)::int count FROM mart.canonical_facts WHERE measure_id='order_revenue'")).rows[0].count,2);
+  },true);
+  assert.equal((await tenantTransaction(db.migrator,'a',client=>client.query('SELECT count(*)::int count FROM mart.derived_proof_results'))).rows[0].count,0);
   const changed=await repo.getPublishedCapabilities(context);
   assert.equal(changed.releases[0]!.capabilities.some(capability=>capability.metric==='average_confirmed_order_value'),false);
   await assert.rejects(repo.execute({...query,groupBy:'salesperson'},context),/Uncertified/);
