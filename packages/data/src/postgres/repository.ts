@@ -15,6 +15,7 @@ import { certifiedMapping } from './mapping-releases.ts';
 import { dimensionSql, filterSql } from './sql.ts';
 
 export interface PostgresRepositoryOptions {
+  storedProofsOnly?:boolean;
   reportingCurrencies: Readonly<Record<string,string>>;
   /** Trusted metadata configuration, resolved freshly; never a query/client currency. */
   reportingCurrency?: (tenantId: string) => Promise<string | null>; clock?: () => Date;
@@ -37,6 +38,7 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository, Dimensi
   }
   async getPublishedCapabilities(context: AnalyticsContext): Promise<PublishedAnalyticsCapabilities> {
     return tenantTransaction(this.pool,context.tenantId,async client => {
+      if(this.options.storedProofsOnly)await client.query("SELECT set_config('mart.stored_proofs_only','on',true)");
       if (!(await client.query('SELECT 1 FROM mart.serving_bindings WHERE tenant_id=$1',[context.tenantId])).rowCount) return { tenantId: context.tenantId,mode: 'certified',releases: [] };
       const mapping = await this.release(client,context);
       const coverage = (await client.query<PublishedReconciliationCoverage>('SELECT * FROM mart.published_reconciliation_coverage($1,$2)',[context.tenantId,mapping.datasetId])).rows;
@@ -46,6 +48,7 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository, Dimensi
   }
   async isDataReady(tenantId: string): Promise<boolean> {
     return tenantTransaction(this.pool, tenantId, async client => {
+      if(this.options.storedProofsOnly)await client.query("SELECT set_config('mart.stored_proofs_only','on',true)");
       if (!(await client.query("SELECT 1 FROM mart.serving_bindings b JOIN mart.mapping_releases m USING (tenant_id,dataset_id) WHERE b.tenant_id=$1 AND m.approval_status='approved'", [tenantId])).rowCount) return false;
       await this.release(client, { tenantId, locale: 'en' }); return true;
     });
@@ -54,8 +57,9 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository, Dimensi
     validateQuery(query,context);
     if (query.dateRange && (Date.parse(query.dateRange.to)-Date.parse(query.dateRange.from))/86400000+1 > (this.options.maxDateSpanDays ?? 3660)) throw new Error('Date span exceeds technical bound');
     return tenantTransaction(this.pool,context.tenantId,async client => {
+      if(this.options.storedProofsOnly)await client.query("SELECT set_config('mart.stored_proofs_only','on',true)");
       const mapping = await this.release(client,context);
-      if (requiresPublishedOutput(query)) {
+      if (this.options.storedProofsOnly || requiresPublishedOutput(query)) {
         const coverage=(await client.query<PublishedReconciliationCoverage>('SELECT * FROM mart.published_reconciliation_coverage($1,$2)',[context.tenantId,mapping.datasetId])).rows;
         const derived=await readDerivedCoverage(client,context.tenantId,mapping.datasetId,{metrics:semanticCatalog[query.metric].semantics.kind==='ratio'?[query.metric]:[],groupings:[null,query.groupBy ?? null,...(context.enforcedFilters ?? []).map(filter=>filter.dimension)]});
         if (publishedQueryIssues(query,projectPublishedRelease(mapping,coverage,context,derived)).length) throw new Error('Uncertified derived metric/dimension capability');
@@ -84,6 +88,7 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository, Dimensi
   async listDimensionOptions(dimension: DimensionId, context: AnalyticsContext): Promise<Array<{id:string;label?:string}>> {
     if (!context.tenantId.trim() || !categoricalDimensions.includes(dimension)) throw new Error('Unsupported dimension');
     return tenantTransaction(this.pool,context.tenantId,async client => {
+      if(this.options.storedProofsOnly)await client.query("SELECT set_config('mart.stored_proofs_only','on',true)");
       const mapping = await this.release(client,context);
       // Use only inputs of a metric certified for both discovery and every policy dimension.
       const eligible = mapping.capabilities.filter(capability => capability.dimensions.includes(dimension) && (context.enforcedFilters ?? []).every(filter => capability.dimensions.includes(filter.dimension)));

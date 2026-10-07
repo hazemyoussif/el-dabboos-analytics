@@ -58,6 +58,8 @@ export interface OperationalRunSummary {
 }
 export interface AnalyticsOperationalStatus {
   tenantId:string; freshnessTargetSeconds:number;
+  trustedServingRevision?:string|null;pendingCandidateRun?:string|null;freshnessAgeSeconds?:number|null;
+  latestFailure?:{runId:string;kind:string;failedAt:string}|null;
   cursor:AnalyticsCursor|null; latest:OperationalRunSummary[]; lastSuccessfulSync:OperationalRunSummary|null;
   trustedCertificationRelease:string|null; historicalCoverage:{reference:string;from:string;to:string}|null;
 }

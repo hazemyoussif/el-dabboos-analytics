@@ -66,7 +66,7 @@ async function discoverCandidate(transaction:AnalyticsOperationalTransaction,sco
  if(cursor && Date.parse(cursor.cutoff)>Date.parse(source.cutoff))throw new Error('Source cutoff cannot regress');
  const ingested=request.kind==='sync'?await transaction.ingest(source,cursor):undefined;
  const changes=request.kind==='sweep'?await transaction.sweep(source):ingested?.changes??[];
- const recordsChanged=ingested?.recordsChanged??changes.length;
+ const recordsChanged=ingested?.recordsChanged??new Set(changes.map(change=>JSON.stringify([change.next.sourceId,change.next.sourceObject,change.next.sourceRecordId]))).size;
  validateCandidate(request,source,ingested,changes);
  return {ingested,changes,recordsChanged};
 }

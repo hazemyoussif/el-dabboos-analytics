@@ -1,0 +1,29 @@
+import { createHash } from 'node:crypto';
+import type { PoolClient } from 'pg';
+import { validateProductionFact } from '@el-dabboos/domain';
+import type { ProductionFact,SourceMapping } from '@el-dabboos/domain';
+import { productionFactFromRow } from '../postgres/records.ts';
+import { operationalFactKey } from './facts.ts';
+import type { OperationalBaseline } from './contracts.ts';
+/** Bounded baseline import copies certified facts into new history without changing originals. */
+export async function copyBaselineFacts(client:PoolClient,baseline:OperationalBaseline,mappings:SourceMapping[]) {
+ await client.query('DECLARE operational_baseline NO SCROLL CURSOR FOR SELECT f.*,f.business_date::text business_date,f.rate_date::text rate_date FROM mart.canonical_facts f WHERE tenant_id=$1 AND dataset_id=ANY($2::text[]) ORDER BY f.dataset_id,f.business_date,f.source_object,f.source_record_id,f.measure_id',[baseline.tenantId,baseline.datasets]);
+ let count=0;
+ try {
+  while(true) {
+   const rows=(await client.query('FETCH FORWARD 500 FROM operational_baseline')).rows;if(!rows.length)break;
+   const facts=rows.map(row=>normalizeBaselineFact(productionFactFromRow(row,mappings.find(mapping=>mapping.datasetId===row.dataset_id)!),baseline));
+   await insertBaselinePage(client,baseline.tenantId,facts);count+=rows.length;
+  }
+ }finally{await client.query('CLOSE operational_baseline');}
+ return count;
+}
+function normalizeBaselineFact(fact:ProductionFact,baseline:OperationalBaseline) {
+ const mapping=baseline.mappings.find(mapping=>mapping.measures.some(rule=>rule.measureId===fact.measureId&&rule.sourceObject===fact.sourceObject));if(!mapping)throw new Error('Baseline definition conflict');
+ const normalized={...fact,datasetId:mapping.datasetId,mappingId:mapping.mappingId,mappingVersion:mapping.mappingVersion};validateProductionFact(normalized,mapping);return normalized;
+}
+async function insertBaselinePage(client:PoolClient,tenantId:string,facts:ProductionFact[]) {
+ const records=facts.map(fact=>({key:operationalFactKey(fact),revision:createHash('sha256').update(JSON.stringify(fact)).digest('hex'),payload:fact}));
+ await client.query(`INSERT INTO mart.analytics_fact_revisions SELECT $1,record.key,record.revision,record.payload FROM jsonb_to_recordset($2::jsonb) record(key text,revision text,payload jsonb)`,[tenantId,JSON.stringify(records)]);
+ await client.query(`INSERT INTO mart.analytics_fact_heads(tenant_id,fact_key,revision_id) SELECT $1,record.key,record.revision FROM jsonb_to_recordset($2::jsonb) record(key text,revision text)`,[tenantId,JSON.stringify(records)]);
+}
