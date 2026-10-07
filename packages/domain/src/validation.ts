@@ -66,7 +66,8 @@ function validateMetricUse(metric: unknown, groupBy: unknown, analysis: unknown,
   if (typeof metric !== 'string' || !isMetricId(metric)) throw new Error('Unknown metric');
   if (groupBy !== undefined && (typeof groupBy !== 'string' || !isDimensionId(groupBy) || !semanticCatalog[metric].dimensions.includes(groupBy))) throw new Error('Unsupported dimension');
   if (filters !== undefined && (!Array.isArray(filters) || filters.some(f => !validFilter(f) || !semanticCatalog[metric].dimensions.includes(f.dimension)))) throw new Error('Unsupported filter');
-  if (semanticCatalog[metric].semantics.kind === 'snapshot' && Array.isArray(filters) && filters.some(f => timeDimensions.includes(f.dimension))) throw new Error('Snapshot time scope must use dateRange');
+  const semantics = semanticCatalog[metric].semantics;
+  if ((semantics.kind === 'snapshot' || semantics.kind === 'ratio' && semantics.basis === 'snapshot') && Array.isArray(filters) && filters.some(f => timeDimensions.includes(f.dimension))) throw new Error('Snapshot time scope must use dateRange');
   validateAnalysis(analysis, metric, groupBy as DimensionId | undefined, dateRange);
 }
 export function validWidget(v: unknown, dateRange?: DateRange | RelativeDatePreset, filters?: unknown): v is DashboardWidget {

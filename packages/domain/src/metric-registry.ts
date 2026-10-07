@@ -7,6 +7,7 @@ export type ProductMetric =
   | { id: string; availability: 'planned'; domain: MetricDomain; labels: LocalizedText; reason: string };
 const domainFor = (id: MetricId): MetricDomain => {
   if (['opportunity_count', 'pipeline_value', 'weighted_pipeline', 'win_rate'].includes(id)) return 'crm';
+  if (id.startsWith('aged_') || ['net_aged_receivable','total_overdue_receivable','overdue_receivable_percentage','gross_open_receivable_components','credit_balances'].includes(id)) return 'finance';
   if (['invoiced_amount', 'collected_amount', 'outstanding_amount', 'overdue_amount'].includes(id)) return 'finance';
   if (['stock_on_hand', 'inventory_value', 'low_stock_count'].includes(id)) return 'inventory';
   if (['maintenance_requests', 'failure_count', 'mtbf', 'mttr', 'maintenance_cost'].includes(id)) return 'maintenance';

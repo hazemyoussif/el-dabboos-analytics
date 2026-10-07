@@ -4,12 +4,13 @@ export type MetricId =
   | 'revenue' | 'net_revenue' | 'order_count' | 'units_sold' | 'average_order_value'
   | 'gross_profit' | 'gross_margin' | 'sales_growth' | 'opportunity_count'
   | 'pipeline_value' | 'weighted_pipeline' | 'win_rate' | 'invoiced_amount'
+  | 'net_aged_receivable' | 'aged_at_date' | 'aged_1_30' | 'aged_31_60' | 'aged_61_90' | 'aged_91_120' | 'aged_over_120' | 'total_overdue_receivable' | 'overdue_receivable_percentage' | 'gross_open_receivable_components' | 'credit_balances'
   | 'collected_amount' | 'outstanding_amount' | 'overdue_amount'
   | 'stock_on_hand' | 'inventory_value' | 'low_stock_count'
   | 'maintenance_requests' | 'failure_count' | 'mtbf' | 'mttr' | 'maintenance_cost'
   | 'customers_served' | 'order_revenue' | 'net_invoiced_revenue' | 'invoiced_revenue' | 'refund_value'
   | 'invoice_count' | 'refund_count' | 'cancelled_orders' | 'average_invoice_value' | 'average_confirmed_order_value';
-export type DerivedMetricId = 'average_order_value' | 'gross_margin' | 'sales_growth' | 'win_rate' | 'mtbf' | 'mttr' | 'average_invoice_value' | 'average_confirmed_order_value' | 'customers_served';
+export type DerivedMetricId = 'overdue_receivable_percentage' | 'average_order_value' | 'gross_margin' | 'sales_growth' | 'win_rate' | 'mtbf' | 'mttr' | 'average_invoice_value' | 'average_confirmed_order_value' | 'customers_served';
 export type InternalMeasureId = 'won_opportunity_count' | 'closed_opportunity_count' | 'operating_hours' | 'repair_hours' | 'completed_repair_count';
 export type FactMeasureId = Exclude<MetricId, DerivedMetricId> | InternalMeasureId;
 export type DimensionId = 'date' | 'month' | 'quarter' | 'year' | 'customer' | 'branch'
@@ -20,15 +21,28 @@ export type MetricType = 'currency' | 'number' | 'percentage' | 'duration';
 export type MetricSemantics =
   | { kind: 'distinct_count'; measure: FactMeasureId; dimension: DimensionId }
   | { kind: 'additive'; measure: FactMeasureId }
-  | { kind: 'ratio'; numerator: FactMeasureId; denominator: FactMeasureId; scale: number }
+  | { kind: 'ratio'; numerator: FactMeasureId; denominator: FactMeasureId; scale: number; basis?: 'snapshot' }
   | { kind: 'snapshot'; measure: FactMeasureId }
   | { kind: 'comparison_derived'; base: MetricId; defaultComparison: ComparisonPeriod }
   | { kind: 'duration_derived'; numerator: FactMeasureId; denominator: FactMeasureId; scale: number };
 export interface LocalizedText { en: string; ar: string }
+export interface MetricHelp {
+  shortDefinition: LocalizedText;
+  definition: LocalizedText;
+  formula: LocalizedText;
+  inclusionSummary: LocalizedText;
+  exclusionSummary: LocalizedText;
+  dateBasis: LocalizedText;
+  metricType: 'event' | 'snapshot' | 'derived';
+  aggregationBehavior: LocalizedText;
+  refundCreditBehavior: LocalizedText;
+  definitionVersion: number;
+}
 export interface SemanticMetric {
   id: MetricId;
   labels: LocalizedText;
   descriptions: LocalizedText;
+  help: MetricHelp;
   synonyms: { en: readonly string[]; ar: readonly string[] };
   dialectSynonyms?: { iq?: readonly string[]; eg?: readonly string[] };
   type: MetricType;

@@ -1,3 +1,4 @@
+import { metricHelp } from './metric-help.ts';
 import type { DimensionId, FactMeasureId, MetricId, MetricSemantics, SemanticMetric } from './contracts.ts';
 
 export const dimensions: readonly DimensionId[] = [
@@ -17,6 +18,17 @@ const maintenance: DimensionId[] = [...time, 'equipment', 'equipment_category', 
 
 /** These recipes use canonical measures only; source adapters map physical data to them. */
 const semantics: Record<MetricId, MetricSemantics> = {
+  net_aged_receivable: { kind: 'snapshot', measure: 'net_aged_receivable' },
+  aged_at_date: { kind: 'snapshot', measure: 'aged_at_date' },
+  aged_1_30: { kind: 'snapshot', measure: 'aged_1_30' },
+  aged_31_60: { kind: 'snapshot', measure: 'aged_31_60' },
+  aged_61_90: { kind: 'snapshot', measure: 'aged_61_90' },
+  aged_91_120: { kind: 'snapshot', measure: 'aged_91_120' },
+  aged_over_120: { kind: 'snapshot', measure: 'aged_over_120' },
+  total_overdue_receivable: { kind: 'snapshot', measure: 'total_overdue_receivable' },
+  gross_open_receivable_components: { kind: 'snapshot', measure: 'gross_open_receivable_components' },
+  credit_balances: { kind: 'snapshot', measure: 'credit_balances' },
+  overdue_receivable_percentage: {kind: 'ratio', numerator: 'total_overdue_receivable', denominator: 'net_aged_receivable', scale: 100, basis: 'snapshot'},
   customers_served: { kind: 'distinct_count',measure: 'order_count',dimension: 'customer' },
   order_revenue: { kind: 'additive',measure: 'order_revenue' },
   net_invoiced_revenue: { kind: 'additive',measure: 'net_invoiced_revenue' },
@@ -54,6 +66,17 @@ const semantics: Record<MetricId, MetricSemantics> = {
 };
 type Definition = [MetricId, string, string, SemanticMetric['type'], DimensionId[], string[], string[]];
 const definitions: Definition[] = [
+  ['net_aged_receivable', 'Net Aged Receivable', 'صافي الذمم المدينة حسب العمر', 'currency', ['customer'], [], []],
+  ['aged_at_date', 'At-Date Receivable', 'الذمم غير المتأخرة عند القطع', 'currency', ['customer'], [], []],
+  ['aged_1_30', '1–30 Overdue', 'متأخر من ١ إلى ٣٠ يوماً', 'currency', ['customer'], [], []],
+  ['aged_31_60', '31–60 Overdue', 'متأخر من ٣١ إلى ٦٠ يوماً', 'currency', ['customer'], [], []],
+  ['aged_61_90', '61–90 Overdue', 'متأخر من ٦١ إلى ٩٠ يوماً', 'currency', ['customer'], [], []],
+  ['aged_91_120', '91–120 Overdue', 'متأخر من ٩١ إلى ١٢٠ يوماً', 'currency', ['customer'], [], []],
+  ['aged_over_120', 'Older than 120', 'متأخر أكثر من ١٢٠ يوماً', 'currency', ['customer'], [], []],
+  ['total_overdue_receivable', 'Total Overdue', 'إجمالي الذمم المتأخرة', 'currency', ['customer'], [], []],
+  ['gross_open_receivable_components', 'Gross Open Receivable Components', 'مكونات الذمم المفتوحة الإجمالية', 'currency', ['customer'], [], []],
+  ['credit_balances', 'Credit Balances', 'الأرصدة الدائنة', 'currency', ['customer'], [], []],
+  ['overdue_receivable_percentage', 'Overdue %', 'نسبة الذمم المتأخرة', 'percentage', ['customer'], [], []],
   ['customers_served','Customers / outlets served','العملاء / المنافذ المخدومة','number',sales,[],[]],
   ['order_revenue','Order revenue','إيرادات الطلبات','currency',transactions,[],['قيمة الطلبات']],
   ['net_invoiced_revenue','Net invoiced revenue','صافي إيرادات الفواتير','currency',transactions,[],['صافي الفواتير']],
@@ -97,10 +120,10 @@ const dialectSynonyms: Partial<Record<MetricId, { iq?: readonly string[]; eg?: r
 };
 export const semanticCatalog: Readonly<Record<MetricId, SemanticMetric>> = Object.fromEntries(
   definitions.map(([id, en, ar, type, supportedDimensions, enSynonyms, arSynonyms]) => [id, {
-    id, labels: { en, ar }, descriptions: { en: `${en} across the selected period and filters.`, ar: `${ar} خلال الفترة والفلاتر المحددة.` },
+    id, labels: { en, ar }, descriptions: metricHelp(id, {en, ar}, semantics[id]).shortDefinition,
     synonyms: { en: enSynonyms, ar: arSynonyms },
     ...(dialectSynonyms[id] ? { dialectSynonyms: dialectSynonyms[id] } : {}),
-    type, semantics: semantics[id],
+    type, semantics: semantics[id], help: metricHelp(id, {en, ar}, semantics[id]),
     dimensions: supportedDimensions,
     presentation: { decimals: type === 'number' ? 0 : 2, ...(type === 'duration' ? { unit: 'hours' } : type === 'percentage' ? { unit: '%' } : {}) },
   }]),

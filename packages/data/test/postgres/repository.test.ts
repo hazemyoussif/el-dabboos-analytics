@@ -109,8 +109,8 @@ test('repository parity: every executable catalog family, inventory/finance snap
       for (const groupBy of [undefined,'month' as const,dimension]) {
         const q: AnalyticsQuery = { metric: metric.id,dateRange: range,...(groupBy ? { groupBy } : {}) };
         const ctx = { tenantId: 'a',locale: 'en' as const };
-        if (['average_confirmed_order_value','average_invoice_value'].includes(metric.id)) {
-          await assert.rejects(repo.execute(q,ctx),/Uncertified derived/);
+        if (['average_confirmed_order_value','average_invoice_value','net_aged_receivable','total_overdue_receivable','gross_open_receivable_components','credit_balances','overdue_receivable_percentage'].includes(metric.id) || metric.id.startsWith('aged_')) {
+          await assert.rejects(repo.execute(q,ctx),/Uncertified derived|Unsupported dimension/);
           continue;
         }
         const expected = executeFacts(facts,q,ctx,{ sourceId: 'postgres',executedAt: clock().toISOString(),sourceAsOf: '2026-10-01T10:00:00.000Z' });

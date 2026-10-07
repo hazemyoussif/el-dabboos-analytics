@@ -9,9 +9,9 @@ export async function aggregateQuerySlots(client: PoolClient,query: AnalyticsQue
   const baseSemantics = semanticCatalog[base].semantics;
   const timeGrouping = !!query.groupBy && timeDimensions.includes(query.groupBy);
   if (!slots.length) return [];
-  if (baseSemantics.kind!=='snapshot' && query.groupBy && !timeGrouping && slots.every(slot=>slot.from===slots[0]!.from && slot.to===slots[0]!.to)) return groupedEventValues(client,query,sql,slots,baseSemantics);
+  const snapshot = snapshotBasis(baseSemantics);
+  if (query.groupBy && !timeGrouping && slots.every(slot=>slot.from===slots[0]!.from && slot.to===slots[0]!.to)) return groupedValues(client,query,sql,slots,baseSemantics);
   const parameters = [...sql.params]; const slotParam = bind(parameters,JSON.stringify(slots));
-  const snapshot = baseSemantics.kind === 'snapshot';
   const group = query.groupBy && !(snapshot && timeGrouping) ? `AND (slot.match_key IS NULL OR ${dimensionSql(query.groupBy)}=slot.match_key)` : '';
   const range = snapshot ? '' : 'AND (slot."from" IS NULL OR f.business_date>=slot."from") AND (slot."to" IS NULL OR f.business_date<=slot."to")';
   const input = snapshot ? `(SELECT DISTINCT ON (measure_id,entity_id) * FROM mart.canonical_facts WHERE tenant_id=$1 AND dataset_id=$2 AND measure_id=ANY($3::text[]) AND (slot."to" IS NULL OR business_date<=slot."to") ORDER BY measure_id,entity_id,business_date DESC)` : 'mart.canonical_facts';
@@ -37,14 +37,16 @@ function aggregateExpression(semantics: MetricSemantics,parameters: unknown[],ag
 }
 
 /** Aggregate categorical groups in one pass; never rescan the authorized ledger once per customer/rep. */
-async function groupedEventValues(client:PoolClient,query:AnalyticsQuery,sql:QuerySqlScope,slots:QuerySlot[],semantics:MetricSemantics):Promise<(number|null)[]> {
+async function groupedValues(client:PoolClient,query:AnalyticsQuery,sql:QuerySqlScope,slots:QuerySlot[],semantics:MetricSemantics):Promise<(number|null)[]> {
  const parameters=[...sql.params];
- const reduced=aggregateExpression(semantics,parameters,query.aggregation??'sum',false);
+ const snapshot = semantics.kind === 'snapshot' || semantics.kind === 'ratio' && semantics.basis === 'snapshot';
+ const reduced=aggregateExpression(semantics,parameters,query.aggregation??'sum',snapshot);
  const range=slots[0]!;
- const from=range.from?`AND f.business_date>=${bind(parameters,range.from)}::date`:'';
+ const from=!snapshot && range.from?`AND f.business_date>=${bind(parameters,range.from)}::date`:'';
  const to=range.to?`AND f.business_date<=${bind(parameters,range.to)}::date`:'';
+ const input = snapshot ? `(SELECT DISTINCT ON (measure_id,entity_id) * FROM mart.canonical_facts WHERE tenant_id=$1 AND dataset_id=$2 AND measure_id=ANY($3::text[]) ${range.to ? `AND business_date<=${bind(parameters,range.to)}::date` : ''} ORDER BY measure_id,entity_id,business_date DESC)` : 'mart.canonical_facts';
  const grouping=dimensionSql(query.groupBy!);
- const result=await client.query(`SELECT ${grouping} key,${reduced} FROM mart.canonical_facts f WHERE ${sql.scope} AND ${sql.predicates} ${from} ${to} GROUP BY ${grouping}`,parameters);
+ const result=await client.query(`SELECT ${grouping} key,${reduced} FROM ${input} f WHERE ${sql.scope} AND ${sql.predicates} ${from} ${to} GROUP BY ${grouping}`,parameters);
  const values=new Map(result.rows.map(row=>[row.key,row]));
  return slots.map(slot=>{
   const row=values.get(slot.match_key);
@@ -57,3 +59,5 @@ async function groupedEventValues(client:PoolClient,query:AnalyticsQuery,sql:Que
   return numericOutput(row?.value??'0');
  });
 }
+
+function snapshotBasis(semantics: MetricSemantics) { return semantics.kind === 'snapshot' || semantics.kind === 'ratio' && semantics.basis === 'snapshot'; }

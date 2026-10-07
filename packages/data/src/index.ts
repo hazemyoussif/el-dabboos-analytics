@@ -40,3 +40,4 @@ export * from './postgres/readiness.ts';
 export * from './auth/control-authentication.ts';
 export * from './postgres/release-certification.ts';
 export * from './postgres/release-promotion.ts';
+export * from './receivable-aging.ts';

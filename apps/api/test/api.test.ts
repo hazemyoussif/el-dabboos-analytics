@@ -49,7 +49,7 @@ test('query endpoint rejects SQL, planned metrics and malformed JSON', async () 
 });
 test('same Sales Performance template executes under both markets without duplication', async () => {
   const templates = (await app.inject({ method: 'GET', url: '/api/dashboard-templates', headers: iq })).json().templates;
-  assert.equal(templates.length, 25);
+  assert.equal(templates.length, 26);
   const iraq = (await app.inject({ method: 'GET', url: '/api/dashboard-templates/sales-performance/instantiate', headers: iq })).json();
   const egypt = (await app.inject({ method: 'GET', url: '/api/dashboard-templates/sales-performance/instantiate', headers: eg })).json();
   assert.equal(iraq.dashboard.id, egypt.dashboard.id);

@@ -651,42 +651,6 @@
     },
     {
       "file": "packages/data/src/engine.ts",
-      "symbol": "currentKeys/facts.filter:callback0/binding:f",
-      "metric": "shortNames",
-      "ceiling": 2
-    },
-    {
-      "file": "packages/data/src/engine.ts",
-      "symbol": "currentKeys/source.filter:callback0/binding:f",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/engine.ts",
-      "symbol": "currentKeys/source.filter(f => filtered(f, query, context) && (semantics.kind === 'snapshot' || inRange(f, query.dateRange)))\n    .map:callback0/binding:f",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/engine.ts",
-      "symbol": "currentKeys/source.filter(f => filtered(f, query, context) && (semantics.kind === 'snapshot' || inRange(f, query.dateRange)))\n    .map(f => dimension(f, groupBy)).filter:callback0/binding:k",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/engine.ts",
-      "symbol": "currentKeys/facts.filter(f => f.measureId === semantics.measure && filtered(f, query, context))\n      .map:callback0/binding:f",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/engine.ts",
-      "symbol": "currentKeys/facts.filter(f => f.measureId === semantics.measure && filtered(f, query, context))\n      .map(f => dimension(f, groupBy)).filter:callback0/binding:k",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/engine.ts",
       "symbol": "average/values.filter:callback0/binding:v",
       "metric": "shortNames",
       "ceiling": 1

@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import { createHash } from 'node:crypto';
 import type { PoolClient } from 'pg';
 import { validateSourceMapping } from '@el-dabboos/domain';
@@ -19,7 +20,7 @@ export async function readReleaseRows(client: PoolClient,scope: Pick<ReleaseTran
     if (rows.length>100000) throw new Error('Release promotion row limit exceeded');
     tables[table] = rows.map(row => row.payload as string);
   }
-  if (JSON.stringify(tables).length>128*1024*1024) throw new Error('Release promotion byte limit exceeded');
+  if (releasePayloadBytes(tables)>128*1024*1024) throw new Error('Release promotion byte limit exceeded');
   return tables;
 }
 export function releaseFingerprint(tables: Record<string,string[]>): string {
@@ -49,4 +50,10 @@ export async function insertReleaseRows(client: PoolClient,transfer: ReleaseTran
 function pendingMapping(payload: string): string {
   const mapping = JSON.parse(payload);
   return JSON.stringify([{ ...mapping,approval_status: 'pending',approval_reference: null,approved_at: null,approval_case_ids: [] }]);
+}
+
+/** UTF-8 bytes of the immutable JSON records plus framing, without quoting every JSON record a second time. */
+export function releasePayloadBytes(tables: Record<string, readonly string[]>): number {
+  const framing = JSON.stringify(Object.fromEntries(Object.keys(tables).map(table => [table,[]])));
+  return Buffer.byteLength(framing,'utf8') + Object.values(tables).reduce((total,rows) => total + Math.max(0,rows.length-1) + rows.reduce((bytes,row) => bytes + Buffer.byteLength(row,'utf8'),0),0);
 }

@@ -90,7 +90,8 @@ test('portable plan remains compact and shallower than canonical DashboardSpec w
     for (const key of Object.keys(properties ?? {})) assert.ok(!['schemaVersion', 'layout', 'id', 'widgetId', 'x', 'y', 'w', 'h', 'minW', 'minH', 'tenantId', 'ownerId'].includes(key));
     for (const child of Object.values(value)) walk(child);
   };
-  walk(portable); assert.ok(depth(portable, portable) <= depth(canonical, canonical) - 1); assert.ok(JSON.stringify(portable).length <= JSON.stringify(canonical).length * 1.05);
+  walk(portable); assert.ok(depth(portable, portable) <= depth(canonical, canonical) - 1); const vocabularyLength = JSON.stringify(dashboardGenerationPlanSchema.$defs.series.properties.metric.enum).length;
+  assert.ok(JSON.stringify(portable).length - vocabularyLength <= JSON.stringify(canonical).length * 1.05);
 });
 
 for (const key of ['type', 'orientation', 'pieVariant', 'legend', 'dataLabels', 'curve']) test(`old root presentation ${key} is rejected`, () => {

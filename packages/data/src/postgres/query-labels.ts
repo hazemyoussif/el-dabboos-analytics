@@ -12,7 +12,8 @@ export async function queryDimensionLabels(client:PoolClient,query:AnalyticsQuer
  const labelParameter=bind(parameters,field);
  const from=query.dateRange?`AND f.business_date>=${bind(parameters,query.dateRange.from)}::date`:'';
  const to=query.dateRange?`AND f.business_date<=${bind(parameters,query.dateRange.to)}::date`:'';
- const result=await client.query(`SELECT ${identity} identity,min(nullif(f.transaction_evidence->'labels'->>${labelParameter},'')) label FROM mart.canonical_facts f WHERE ${scope.scope} AND ${scope.predicates} AND ${identity}=ANY(${keyParameter}::text[]) ${from} ${to} GROUP BY ${identity} HAVING count(DISTINCT nullif(f.transaction_evidence->'labels'->>${labelParameter},''))=1`,parameters);
+ const label = `nullif(coalesce(f.display_labels->>${labelParameter},f.transaction_evidence->'labels'->>${labelParameter}),'')`;
+ const result=await client.query(`SELECT ${identity} identity,min(${label}) label FROM mart.canonical_facts f WHERE ${scope.scope} AND ${scope.predicates} AND ${identity}=ANY(${keyParameter}::text[]) ${from} ${to} GROUP BY ${identity} HAVING count(DISTINCT ${label})=1`,parameters);
  return Object.fromEntries(result.rows.filter(row=>row.label).map(row=>[row.identity,sourceDisplayLabel(row.label,locale)]));
 }
 

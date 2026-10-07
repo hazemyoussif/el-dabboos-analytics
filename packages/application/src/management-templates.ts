@@ -26,6 +26,7 @@ export const managementTemplates:readonly DashboardTemplate[]=[
  groupedReport('salesperson-performance',text('Salesperson Performance','أداء مندوبي المبيعات'),'salesperson','sales'),
  groupedReport('customer-performance',text('Customer Performance','أداء العملاء'),'customer','customers'),
  invoiceOperationsReport(),
+ receivablesReport(),
 ];
 export function supportedTemplatePeriod(template:DashboardTemplate,published:PublishedAnalyticsCapabilities) {
  return published.releases.find(release=>template.widgets.every(widget=>widget.series.every(item=>!publishedQueryIssues({metric:item.metric,...(widget.dimension?{groupBy:widget.dimension}:{}),...(item.analysis?{analysis:item.analysis}:{}),...(release.period?{dateRange:release.period}:{})},{...published,releases:[release]}).length)))?.period;
@@ -33,4 +34,12 @@ export function supportedTemplatePeriod(template:DashboardTemplate,published:Pub
 export function selectDefaultTemplate(templates:readonly {id:string;availability:string}[],mode:PublishedAnalyticsCapabilities['mode']) {
  const preferred=mode==='certified'?'executive-sales-invoicing':'sales-performance';
  return templates.find(template=>template.id===preferred && template.availability==='available')?.id??templates.find(template=>template.availability==='available')?.id;
+}
+
+function receivablesReport(): DashboardTemplate {
+ const metrics: MetricId[] = ['net_aged_receivable','aged_at_date','aged_1_30','aged_31_60','aged_61_90','aged_91_120','aged_over_120','total_overdue_receivable','overdue_receivable_percentage','gross_open_receivable_components','credit_balances'];
+ return {id:'receivables-aging',name:text('Receivables & Aging','الذمم المدينة وأعمار الديون'),description:text('Certified signed receivables at a fixed cutoff.','الذمم المدينة الموقّعة المعتمدة عند تاريخ قطع ثابت.'),domain:'finance',tags:['management'],datePreset:'previous_month',periodStrategy:'certified',layout:{columns:3},widgets:[
+  ...metrics.map(metric=>({id:metric,type:'kpi' as const,series:series([metric])})),
+  {id:'customer-aging',type:'table',dimension:'customer',series:series(metrics.slice(0,7)),title:text('Customer Aging','أعمار ذمم العملاء')},
+ ]};
 }

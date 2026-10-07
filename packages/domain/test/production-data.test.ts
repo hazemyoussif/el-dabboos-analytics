@@ -62,6 +62,7 @@ for (const [label, patch] of Object.entries({
   blankTenant: { tenantId: ' ' }, unknownMeasure: { measureId: 'made_up' }, derivedMeasure: { measureId: 'gross_margin' }, invalidDate: { businessDate: '2025-02-29' },
   infinity: { value: Infinity }, nan: { value: NaN }, floatingNumber: { value: 100 }, extraPrecision: { value: '100.0000001' }, overflow: { value: '1000000000000000000000000.000000' },
   blankSource: { sourceRecordId: '' }, unknownDimension: { dimensions: { postal_code: 'x' } }, uncertifiedDimension: { dimensions: { branch: 'x', product: 'p' } },
+  unknownDisplayLabel: {displayLabels:{sourceSecret:'not permitted'}}, blankDisplayLabel: {displayLabels:{customer:' '}}, oversizedDisplayLabel: {displayLabels:{customer:'x'.repeat(501)}},
   missingDimension: { dimensions: {} }, absentCurrency: { currency: undefined }, unknownField: { rawPayload: {} }, invalidTimestamp: { sourceAsOf: '2026-02-30T00:00:00.000Z' },
 })) test(`strict production validator rejects ${label}`, () => assert.throws(() => validateProductionFact({ ...fact, ...patch }, mapping)));
 
@@ -97,8 +98,8 @@ test('reconciliation stays reported until explicit approved tolerance, then comp
   assert.throws(() => reconciliationStatus({ ...approved, batchIds: [] }), /reconciliation_batches/);
 });
 test('migration measure vocabulary matches canonical inputs and current view excludes tombstones', () => {
-  const sql = readFileSync(new URL('../../data/migrations/postgres/001_production_foundation.sql', import.meta.url), 'utf8') + readFileSync(new URL('../../data/migrations/postgres/007_transaction_metrics.sql', import.meta.url),'utf8');
-  const ids = [...sql.matchAll(/\('([a-z_]+)','(?:event|snapshot)',(?:true|false)\)/g)].map(m => m[1]);
+  const sql = readFileSync(new URL('../../data/migrations/postgres/001_production_foundation.sql', import.meta.url), 'utf8') + readFileSync(new URL('../../data/migrations/postgres/007_transaction_metrics.sql', import.meta.url),'utf8') + readFileSync(new URL('../../data/migrations/postgres/013_receivable_metrics.sql', import.meta.url),'utf8');
+  const ids = [...sql.matchAll(/\('([a-z0-9_]+)','(?:event|snapshot)',(?:true|false)\)/g)].map(m => m[1]);
   assert.deepEqual(ids.sort(), [...factMeasureIds].sort());
   assert.match(sql, /r.status = 'active' AND b.status = 'committed'/);
 });

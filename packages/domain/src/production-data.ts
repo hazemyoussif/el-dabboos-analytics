@@ -78,6 +78,8 @@ export interface ProductionFact {
   status: 'active' | 'tombstone';
   currency?: CurrencyLineage;
   transaction?: TransactionEvidence;
+  /** Display evidence only; stable dimensions remain the identity and authorization boundary. */
+  displayLabels?: Partial<Record<'customer' | 'salesperson' | 'businessLine', string>>;
 }
 export interface IngestionBatch extends SourceScope {
   batchId: string; datasetId: string; mappingId: string; mappingVersion: string; adapterVersion: string;
@@ -156,7 +158,7 @@ export function certifiedDimensions(mapping: SourceMapping, metric: MetricId): r
 }
 export function validateProductionFact(value: unknown, mapping: SourceMapping): asserts value is ProductionFact {
   validateSourceMapping(mapping);
-  shape(value, ['tenantId','datasetId','measureId','kind','businessDate','value','dimensions','sourceId','sourceObject','sourceRecordId','componentId','sourceVersion','sourceRevision','mappingId','mappingVersion','batchId','sourceAsOf','frozenRevision','status'], ['entityId','sourceUpdatedAt','currency','transaction']);
+  shape(value, ['tenantId','datasetId','measureId','kind','businessDate','value','dimensions','sourceId','sourceObject','sourceRecordId','componentId','sourceVersion','sourceRevision','mappingId','mappingVersion','batchId','sourceAsOf','frozenRevision','status'], ['entityId','sourceUpdatedAt','currency','transaction','displayLabels']);
   for (const key of ['tenantId','datasetId','sourceId','sourceObject','sourceRecordId','componentId','sourceVersion','mappingId','mappingVersion','batchId','frozenRevision']) if (!text(value[key])) fail('identity');
   for (const key of ['tenantId','datasetId','sourceId','mappingId','mappingVersion'] as const) if (value[key] !== mapping[key]) fail('mapping_scope');
   if (typeof value.measureId !== 'string' || !isFactMeasureId(value.measureId)) fail('invalid_measure');
@@ -170,6 +172,7 @@ export function validateProductionFact(value: unknown, mapping: SourceMapping): 
   if (!['active','tombstone'].includes(String(value.status))) fail('status');
   if (!object(value.dimensions) || Object.entries(value.dimensions).some(([d, v]) => !Object.hasOwn(rule.dimensionMappings, d) || !text(v))) fail('capability');
   if (value.transaction!==undefined) validateTransactionEvidence(value.transaction as TransactionEvidence);
+  validateDisplayLabels(value.displayLabels);
   // Certified categorical attribution is required, never silently absent or defaulted.
   if (Object.keys(rule.dimensionMappings).some(d => !Object.hasOwn(value.dimensions as object, d))) fail('missing_dimension');
   if (!monetary(value.measureId)) { if (value.currency !== undefined) fail('unexpected_currency'); return; }
@@ -260,4 +263,9 @@ export function validateFactBatch(value: unknown, facts: readonly ProductionFact
     current.set(id, f);
   }
   validateSnapshotUniqueness(facts);
+}
+
+function validateDisplayLabels(labels: unknown): void {
+  if (labels === undefined) return;
+  if (!object(labels) || Object.entries(labels).some(([key,value]) => !['customer','salesperson','businessLine'].includes(key) || typeof value !== 'string' || !value.trim() || value.length > 500)) fail('display_labels');
 }

@@ -6,16 +6,16 @@ import { database,enabled } from './support.ts';
 test('grouped management queries aggregate one authorized scope with labels separate from identity',{skip:!enabled},async()=>{
  const fixture=await database(false);const client=await fixture.admin.connect();
  try {
-  await client.query(`CREATE SCHEMA mart;CREATE TABLE mart.canonical_facts(tenant_id text,dataset_id text,measure_id text,business_date date,value numeric,salesperson text,transaction_evidence jsonb);
+  await client.query(`CREATE SCHEMA mart;CREATE TABLE mart.canonical_facts(tenant_id text,dataset_id text,measure_id text,business_date date,value numeric,salesperson text,transaction_evidence jsonb,display_labels jsonb);
    INSERT INTO mart.canonical_facts VALUES
-   ('one','approved','order_revenue','2026-09-01',100,'rep1','{"labels":{"salesperson":"Synthetic Rep"}}'),
-   ('one','approved','order_revenue','2026-09-02',200,'rep1','{"labels":{"salesperson":"Synthetic Rep"}}'),
-   ('one','approved','order_count','2026-09-01',1,'rep1','{"labels":{"salesperson":"Synthetic Rep"}}'),
-   ('one','approved','order_count','2026-09-02',1,'rep1','{"labels":{"salesperson":"Synthetic Rep"}}'),
-   ('one','approved','order_revenue','2026-09-02',30,'rep2','{"labels":{"salesperson":"Duplicate Name"}}'),
-   ('one','approved','order_revenue','2026-09-03',50,'rep2','{"labels":{"salesperson":"Changed Name"}}'),
-   ('one','approved','order_revenue','2026-10-01',1000,'rep1','{"labels":{"salesperson":"Later Name"}}'),
-   ('other','approved','order_revenue','2026-09-01',9000,'rep1','{"labels":{"salesperson":"Private Other"}}');`);
+   ('one','approved','order_revenue','2026-09-01',100,'rep1','{"labels":{"salesperson":"Synthetic Rep"}}',NULL),
+   ('one','approved','order_revenue','2026-09-02',200,'rep1','{"labels":{"salesperson":"Synthetic Rep"}}',NULL),
+   ('one','approved','order_count','2026-09-01',1,'rep1','{"labels":{"salesperson":"Synthetic Rep"}}',NULL),
+   ('one','approved','order_count','2026-09-02',1,'rep1','{"labels":{"salesperson":"Synthetic Rep"}}',NULL),
+   ('one','approved','order_revenue','2026-09-02',30,'rep2','{"labels":{"salesperson":"Duplicate Name"}}',NULL),
+   ('one','approved','order_revenue','2026-09-03',50,'rep2','{"labels":{"salesperson":"Changed Name"}}',NULL),
+   ('one','approved','order_revenue','2026-10-01',1000,'rep1','{"labels":{"salesperson":"Later Name"}}',NULL),
+   ('other','approved','order_revenue','2026-09-01',9000,'rep1','{"labels":{"salesperson":"Private Other"}}',NULL);`);
   const slots=['rep1','rep2'].map(key=>({key,match_key:key,from:'2026-09-01',to:'2026-09-30'}));
   const scope={params:['one','approved',['order_revenue']],scope:'f.tenant_id=$1 AND f.dataset_id=$2 AND f.measure_id=ANY($3::text[])',predicates:'true',maxGroups:100};
   const query={metric:'order_revenue' as const,groupBy:'salesperson' as const,dateRange:{from:'2026-09-01',to:'2026-09-30'}};

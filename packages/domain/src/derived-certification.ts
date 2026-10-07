@@ -30,7 +30,7 @@ export function reconcileDerivedRatio(metric: MetricId,cases: readonly Reconcili
   }
   return [...groups].map(([groupKey,group]) => {
     const numerator=group.get(recipe.numerator);const denominator=group.get(recipe.denominator);
-    if (!numerator || !denominator || !isCanonicalDecimal(denominator.actualValue) || BigInt(denominator.actualValue.replace('.',''))<0n) throw new Error('Missing/invalid ratio denominator');
+    if (!numerator || !denominator || !isCanonicalDecimal(denominator.actualValue) || recipe.basis !== 'snapshot' && BigInt(denominator.actualValue.replace('.',''))<0n) throw new Error('Missing/invalid ratio denominator');
     return { groupKey,numerator: numerator.actualValue,denominator: denominator.actualValue,value: BigInt(denominator.actualValue.replace('.',''))===0n ? null : { numerator: numerator.actualValue,denominator: denominator.actualValue,scale: recipe.scale } };
   });
 }

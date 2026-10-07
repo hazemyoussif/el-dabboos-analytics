@@ -8,9 +8,9 @@ const metrics=['net_invoiced_revenue','invoiced_revenue','refund_value','order_r
 const published:PublishedAnalyticsCapabilities={tenantId:'demo-iq',mode:'certified',releases:[{datasetId:'approved',sourceId:'any-source',mappingId:'approved-definition',mappingVersion:'1',certificationReference:'approved',period,capabilities:metrics.map(metric=>({metric,summary:true,dimensions:['business_line','salesperson'],analyses:[]}))}]};
 test('management reports require exact pairs, covered periods and no inferred time or ranking analyses',()=>{
  for(const template of managementTemplates) {
-  assert.equal(templateCompatibility(template,published).status,template.id==='customer-performance'?'unsupported':'supported');
+  assert.equal(templateCompatibility(template,published).status,['customer-performance','receivables-aging'].includes(template.id)?'unsupported':'supported');
   const dashboard=instantiateDashboardTemplate(template,tenantProfiles['demo-iq'],new Date('2026-11-01'),'ar',published);
-  if(template.id!=='customer-performance')assert.deepEqual(dashboard.filters.dateRange,period);
+  if(!['customer-performance','receivables-aging'].includes(template.id))assert.deepEqual(dashboard.filters.dateRange,period);
   assert.ok(dashboard.widgets.every(widget=>widget.series.every(series=>!series.analysis)));
  }
  const unpaired={...published,releases:published.releases.map(release=>({...release,capabilities:release.capabilities.map(capability=>({...capability,dimensions:[]}))}))};

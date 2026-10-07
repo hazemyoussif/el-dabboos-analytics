@@ -45,8 +45,9 @@ function evaluate(facts: readonly AnalyticsFact[], metricId: MetricId, query: An
   if (semantics.kind === 'distinct_count') return new Set(facts.filter(fact => fact.measureId===semantics.measure && matches(fact)).map(fact => fact.dimensions[semantics.dimension]).filter(value => value!==undefined && value!=='unassigned')).size;
   if (semantics.kind === 'additive') return measure(semantics.measure, metricId === query.metric ? query.aggregation ?? 'sum' : 'sum');
   if (semantics.kind === 'ratio' || semantics.kind === 'duration_derived') {
-    const denominator = measure(semantics.denominator);
-    return denominator === 0 ? null : measure(semantics.numerator) / denominator * semantics.scale;
+    const operand = (id: FactMeasureId) => semantics.kind === 'ratio' && semantics.basis === 'snapshot' ? latestSnapshots(facts, id, range?.to).filter(fact => filtered(fact, query, context) && (key === null || !groupBy || isTime(groupBy) || dimension(fact, groupBy) === key)).reduce((sum, fact) => sum + fact.value, 0) : measure(id);
+    const denominator = operand(semantics.denominator);
+    return denominator === 0 ? null : operand(semantics.numerator) / denominator * semantics.scale;
   }
   if (semantics.kind === 'snapshot') {
     const snapshots = latestSnapshots(facts, semantics.measure, range?.to).filter(f => filtered(f, query, context) &&
@@ -59,15 +60,16 @@ function currentKeys(facts: readonly AnalyticsFact[], query: AnalyticsQuery, con
   if (!query.groupBy) return [null];
   const groupBy = query.groupBy;
   const semantics = semanticCatalog[query.metric].semantics;
-  const source = semantics.kind === 'snapshot'
-    ? latestSnapshots(facts, semantics.measure, query.dateRange?.to)
-    : facts.filter(f => inRange(f, query.dateRange));
-  const keys = new Set(source.filter(f => filtered(f, query, context) && (semantics.kind === 'snapshot' || inRange(f, query.dateRange)))
-    .map(f => dimension(f, groupBy)).filter((k): k is string => k !== undefined));
-  if (semantics.kind === 'snapshot' && isTime(groupBy)) {
+  const snapshot = semantics.kind === 'snapshot' || semantics.kind === 'ratio' && semantics.basis === 'snapshot';
+  const source = snapshot
+    ? requiredMeasures(query.metric).flatMap(measure => latestSnapshots(facts, measure, query.dateRange?.to))
+    : facts.filter(fact => inRange(fact, query.dateRange));
+  const keys = new Set(source.filter(fact => filtered(fact, query, context) && (snapshot || inRange(fact, query.dateRange)))
+    .map(fact => dimension(fact, groupBy)).filter((key): key is string => key !== undefined));
+  if (snapshot && isTime(groupBy)) {
     if (query.dateRange) return periodKeys(query.dateRange, groupBy);
-    return [...new Set(facts.filter(f => f.measureId === semantics.measure && filtered(f, query, context))
-      .map(f => dimension(f, groupBy)).filter((k): k is string => k !== undefined))].sort();
+    return [...new Set(facts.filter(fact => requiredMeasures(query.metric).includes(fact.measureId) && filtered(fact, query, context))
+      .map(fact => dimension(fact, groupBy)).filter((key): key is string => key !== undefined))].sort();
   }
   return [...keys].sort();
 }

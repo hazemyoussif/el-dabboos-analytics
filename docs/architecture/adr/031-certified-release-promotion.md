@@ -25,3 +25,5 @@ Promotion does not activate serving. A separate authorized bind operation requir
 ## Verification
 
 Synthetic PostgreSQL tests cover authorized exact approval, failure refusal, immutable audited events, pending serving refusal, exact atomic transfer, rollback, idempotency, explicit binding and cross-tenant runtime isolation. Tests use only the disposable foundation_test database and never load developer configuration. Operational pilot and authenticated browser evidence are reported separately.
+
+October 7 Finance delivery clarification: the unchanged 128 MiB budget measures UTF-8 bytes of PostgreSQL JSON records plus array/object framing. It does not count records after quoting their JSON text a second time as JavaScript strings. The fingerprint remains over the exact fixed table manifest; 100,000 rows per table and atomic promotion/CAS guards remain unchanged. Larger actual payloads still require the separately reviewed streaming implementation.

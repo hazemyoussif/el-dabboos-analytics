@@ -6,7 +6,8 @@ import { bind,dimensionSql } from './sql.ts';
 export interface QuerySqlScope { params: unknown[]; scope: string; predicates: string; maxGroups: number }
 export interface QuerySlot { key: string|null; from: string|null; to: string|null; match_key: string|null }
 export async function selectQueryKeys(client: PoolClient,query: AnalyticsQuery,sql: QuerySqlScope): Promise<(string|null)[]> {
-  const snapshot = semanticCatalog[query.metric].semantics.kind==='snapshot';
+  const semantics = semanticCatalog[query.metric].semantics;
+  const snapshot = semantics.kind === 'snapshot' || semantics.kind === 'ratio' && semantics.basis === 'snapshot';
   const timeGrouping = !!query.groupBy && timeDimensions.includes(query.groupBy);
   let keys: (string|null)[];
   if (!query.groupBy) keys = [null];
