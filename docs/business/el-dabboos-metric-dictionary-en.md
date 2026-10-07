@@ -2,19 +2,19 @@
 
 Business definition pack v1 · Company 1 · Iraq · IQD · Prepared October 6, 2026.
 
-**Approval preparation only.** Documentation does not approve, certify or publish a metric. Existing published metrics remain governed by their exact release. New approvals are pending; no approver or date is fabricated.
+**Approval preparation only.** Documentation does not approve, certify or publish a metric. Existing published metrics remain governed by their exact release. The standing Finance decision is recorded below; certification and publication still require exact technical evidence.
 
 Discovery evidence: 170 candidates, 28 dimensions, 13 domains, 893 physical tables and 269 relevant models. This pack adds explicit business proposals; its 204 entries are definition records, not 204 executable metrics. Counts below describe each definition once, including separately versioned net and gross receivable policies.
 
 | Lifecycle | Definitions |
 | --- | --- |
-| Certified | 10 |
-| Reconciled · Awaiting Business Approval | 15 |
-| Defined · Awaiting Reconciliation | 97 |
+| Certified | 21 |
+| Reconciled · Awaiting Business Approval | 6 |
+| Defined · Awaiting Reconciliation | 95 |
 | Discovered | 50 |
 | Unavailable / Insufficient Source Data | 32 |
 
-Certified here means an existing certified definition with published September summaries and Business Line/Salesperson pairs only. Other candidate dimensions are not certified. “Defined” means a written proposal, not an approved meaning. “Reconciled” may be numerical control evidence with identity gaps, explicitly disclosed below. Discovery A/B classifications establish source ingredients only.
+Certified means an explicitly published exact definition, period and grouping. September event summaries retain their Business Line/Salesperson pairs. Signed aging is published only at September 30 with the Customer pairs listed per metric; gross components and credits are summary-only. Candidate dimensions are not permissions. Defined means a proposal; discovery establishes source ingredients only.
 
 Lifecycle: Discovered → Defined → Reconciled → exact-version business approval → certification → explicit publication. Unavailable identifies insufficient capture or source evidence. A generic canonical ID does not certify its Odoo mapping or a grouping.
 
@@ -26,27 +26,46 @@ Existing decisions, retained without reopening:
 
 - Business Line is official; Company 1 is Phase 1 Iraq; reporting currency IQD.
 
+## Finance standing metric-design approval
+
+Finance · 2026-10-07 · standing metric-design approval
+
+Financially correct and technically reconciled Finance metrics. Finance adopts analytics definitions where financially correct.
+
+- Unresolved policy choices still require explicit Finance confirmation.
+
+- Accounting correctness must be demonstrated.
+
+- Exact technical reconciliation remains mandatory.
+
+- Gross profit/margin, inventory valuation, FX, purchase spend and cost allocation are not automatically approved.
+
+A metric is not product-ready until its business definition, formula/date semantics, EN/AR localization and metric-help metadata are complete. Certification requires separate exact technical evidence. Material semantic changes require a new definition version.
+
 An event contributes once within a period: Order Revenue/Count use the order date in Asia/Baghdad; invoices use invoice issue date; each refund uses its own issue date. A snapshot describes the position at one cutoff: receivables, stock and inventory value. Sum positions at the same cutoff; never sum daily snapshots into monthly revenue. Reporting period, snapshot cutoff and source extraction timestamp are different. September sales freshness is October 5 at 14:54:58.149 UTC; the receivable control freshness is October 6 at 12:53:16.128 UTC.
 
-## Finance candidate control — pending confirmation
+## Signed receivable cutoff — exact Finance publication
 
-**CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION.** Cutoff 2026-09-30, IQD. All 15,519 source-ID customer/bucket cases exactly reproduce the workbook (2,217 customers; zero ambiguous, unmatched or unexpected identities). Installed report metadata was inspected at 2026-10-06T18:20:50.379Z; custom code equivalence is not asserted. Finance owner/date/confirmed policy/accepted exceptions are unrecorded. Nothing is business-certified or published.
+**CERTIFIED AND LOCALLY PUBLISHED.** Finance standing approval October 7, 2026; cutoff September 30, 2026, IQD. All 15,519 source-ID cases are exact across 2,217 customers; zero ambiguous, unmatched, unexpected or mismatched cases. Existing release certification and explicit publication govern this scope.
 
-| Control output | IQD |
+`el-dabboos-finance-202609-v6` · `finance-standing-20261007-receivables-v1`
+
+| Exact cutoff output | IQD |
 | --- | --- |
 | Gross Open Receivable Components | 1532751636.39 |
-| Signed Open Credit Components | -173290543.78 |
+| Credit Balances | -173290543.78 |
 | Net Aged Receivable | 1359461092.61 |
 | At-Date Receivable | 759020481.15 |
-| 1–30 Days Overdue (Net) | 218464001.82 |
-| 31–60 Days Overdue (Net) | 69135500.55 |
-| 61–90 Days Overdue (Net) | 25871000.18 |
-| 91–120 Days Overdue (Net) | 33782500.14 |
-| Over 120 Days Overdue (Net) | 253187608.77 |
+| 1–30 Overdue | 218464001.82 |
+| 31–60 Overdue | 69135500.55 |
+| 61–90 Overdue | 25871000.18 |
+| 91–120 Overdue | 33782500.14 |
+| Older than 120 | 253187608.77 |
+| Total Overdue | 600440611.46 |
 
-The signed net report uses maturity, falling back to accounting date when absent; due on cutoff belongs in At Date. Gross receivables-aging-v1 instead keeps missing maturity in its own bucket and unapplied credits/advances separate, with no allocation. These policies are not interchangeable. Historical reconstruction uses original balance minus debit-side plus credit-side partial settlements with max_date ≤ cutoff, preserving post-cutoff payments and individual installments. Applied credits reduce residual through accounting settlement; unapplied credits are not assigned by the application.
+Historical residual includes only settlements effective through cutoff; later payments do not erase history. Maturity date falls back to accounting date when missing; due on cutoff belongs in At Date. Signed credits remain in their own buckets with no allocation. Total Overdue sums the five overdue buckets; Overdue % divides aggregate overdue by aggregate net, with null for zero denominator.
 
-Gross v1: current 760,615,731.13; 1–30 239,405,751.70; 31–90 94,315,000.66; >90 227,502,606.69; missing maturity 210,912,546.21 IQD (1,319 components). 3,864 positive components / 2,039 known customers; 1,324 partially settled components, residual 623,244,340.38; 1,378 credit/advance components −173,290,543.78. Rejects/ambiguous components: 0 in the preserved extraction; identity verification still pending.
+Gross-positive aging v1 with a separate missing-maturity bucket remains an alternative unpublished policy. Its summary gross total is supported, but its alternate buckets and any arbitrary credit allocation are not admitted. Installed metadata inspection does not establish general custom-Python equivalence. Other dates/dimensions still need exact evidence and any unresolved policy needs explicit Finance confirmation.
 
 ## Sales
 
@@ -57,25 +76,26 @@ Gross v1: current 760,615,731.13; 1–30 239,405,751.70; 31–90 94,315,000.66; 
 | English / Arabic name | Order Count / عدد الطلبات |
 | Canonical ID | `order_count` |
 | Version / definition hash | 1 / `edeadf667c18c2e0f76df6d1a8145b8301e7d546c1d6acb759df81c8c781bec4` |
+| Metric help version | 1 |
 | Business purpose | Support decisions on sales using the named measure and explicit scope. Order Count |
-| Definition | count confirmed orders |
-| Formula / proposed formula | count confirmed orders |
+| Definition | Number of confirmed sales orders; each order is counted once. |
+| Formula / proposed formula | Count confirmed orders |
 | Event / snapshot | Event / period-derived measure: defined business window. |
-| Business date | Order date converted from UTC to Asia/Baghdad; September 1–30, 2026 inclusive. |
-| Source concept / Odoo calculation | count confirmed orders Confirmed sales orders, with cancelled orders counted separately. |
+| Business date | Order date in the tenant business timezone. |
+| Source concept / Odoo calculation | Number of confirmed sales orders; each order is counted once. Confirmed sales orders, with cancelled orders counted separately. |
 | Grain | One eligible document; ratio uses matching sums/counts of those documents. |
 | Aggregation | Sum eligible contributions at the named grain; ratios use matching numerator/denominator totals, distinct counts deduplicate identities, durations require an approved weighting rule. Snapshots select one eligible state per stable position at cutoff and sum across positions only. Never sum percentages or daily balances. |
 | Currency / unit | Document count |
 | Signs | Preserve source signs; posted invoice/refund values have explicit polarity. Refund Value is positive magnitude; Net Invoiced Revenue subtracts it. Negative stock and signed credits remain visible. No blanket absolute-value transform. |
 | Included states | Confirmed sales orders, with cancelled orders counted separately. |
-| Excluded / cancellation | Draft/cancelled documents excluded from value and completed-count measures. Cancelled Orders explicitly counts state cancel by order date. Other source states/returns must be approved before extraction; later source edits require a new frozen release, not rewriting history. |
-| Refund / settlement | Order measures are not reduced by unrelated invoices/credit notes; invoicing recognizes each posted refund on its own issue date. Product/receipt returns require signed line/movement lineage; no header amount repeated per line. Snapshot settlements include only those effective by cutoff. |
+| Excluded / cancellation | Draft and cancelled documents are excluded. |
+| Refund / settlement | Posted refunds reduce net invoiced revenue on their own invoice date. Refund Value shows their positive magnitude. Order metrics remain separate. |
 | Null / Unassigned | No missing monetary, quantity, identity or date value becomes zero silently. Ratios with zero denominator are undefined. Missing owner/Business Line maps to governed Unassigned where supported; missing customer/product identity is an exception, never display-name matching. No arbitrary attribution. |
 | Published dimensions | business_line, salesperson |
 | Candidate dimensions (not permissions) | salesperson, sales_team, customer, business_line, warehouse, time |
-| Technical evidence | Existing exact release controls and derived-output approvals where applicable; no new evidence added. |
+| Technical evidence | Exact linked release controls and derived-output approvals where applicable; see the metric approval reference and published scope. |
 | Business approval | Existing established approval; do not reopen. Registry/reference remains authoritative. |
-| Certification / publication | Existing certified/published September summary and exact Business Line/Salesperson pairs only. |
+| Certification / publication | Certified/published summary; exact grouping permissions: business_line, salesperson. September event period. |
 | One lifecycle state | Certified |
 | Control example, not a definition constant | 2895 |
 | Known limitations | Existing approved count; preserve local business date and state scope. |
@@ -87,25 +107,26 @@ Gross v1: current 760,615,731.13; 1–30 239,405,751.70; 31–90 94,315,000.66; 
 | English / Arabic name | Order Revenue / قيمة طلبات البيع |
 | Canonical ID | `order_revenue` |
 | Version / definition hash | 1 / `51d3a9a7c2da2dd49a8c6aa5b21aaf6c2f732152f9791d8e6c25187406baab9b` |
+| Metric help version | 1 |
 | Business purpose | Support decisions on sales using the named measure and explicit scope. Order Revenue |
-| Definition | sum confirmed tax-inclusive amount_total |
-| Formula / proposed formula | sum confirmed tax-inclusive amount_total |
+| Definition | Total value of confirmed sales orders, including document tax. |
+| Formula / proposed formula | Confirmed Order Revenue |
 | Event / snapshot | Event / period-derived measure: defined business window. |
-| Business date | Order date converted from UTC to Asia/Baghdad; September 1–30, 2026 inclusive. |
-| Source concept / Odoo calculation | sum confirmed tax-inclusive amount_total Confirmed sales orders, with cancelled orders counted separately. |
+| Business date | Order date in the tenant business timezone. |
+| Source concept / Odoo calculation | Total value of confirmed sales orders, including document tax. Confirmed sales orders, with cancelled orders counted separately. |
 | Grain | One eligible document; ratio uses matching sums/counts of those documents. |
 | Aggregation | Sum eligible contributions at the named grain; ratios use matching numerator/denominator totals, distinct counts deduplicate identities, durations require an approved weighting rule. Snapshots select one eligible state per stable position at cutoff and sum across positions only. Never sum percentages or daily balances. |
 | Currency / unit | IQD; order value includes tax, invoice/refund value excludes tax. |
 | Signs | Preserve source signs; posted invoice/refund values have explicit polarity. Refund Value is positive magnitude; Net Invoiced Revenue subtracts it. Negative stock and signed credits remain visible. No blanket absolute-value transform. |
 | Included states | Confirmed sales orders, with cancelled orders counted separately. |
-| Excluded / cancellation | Draft/cancelled documents excluded from value and completed-count measures. Cancelled Orders explicitly counts state cancel by order date. Other source states/returns must be approved before extraction; later source edits require a new frozen release, not rewriting history. |
-| Refund / settlement | Order measures are not reduced by unrelated invoices/credit notes; invoicing recognizes each posted refund on its own issue date. Product/receipt returns require signed line/movement lineage; no header amount repeated per line. Snapshot settlements include only those effective by cutoff. |
+| Excluded / cancellation | Draft and cancelled documents are excluded. |
+| Refund / settlement | Posted refunds reduce net invoiced revenue on their own invoice date. Refund Value shows their positive magnitude. Order metrics remain separate. |
 | Null / Unassigned | No missing monetary, quantity, identity or date value becomes zero silently. Ratios with zero denominator are undefined. Missing owner/Business Line maps to governed Unassigned where supported; missing customer/product identity is an exception, never display-name matching. No arbitrary attribution. |
 | Published dimensions | business_line, salesperson |
 | Candidate dimensions (not permissions) | salesperson, sales_team, customer, business_line, warehouse, time |
-| Technical evidence | Existing exact release controls and derived-output approvals where applicable; no new evidence added. |
+| Technical evidence | Exact linked release controls and derived-output approvals where applicable; see the metric approval reference and published scope. |
 | Business approval | Existing established approval; do not reopen. Registry/reference remains authoritative. |
-| Certification / publication | Existing certified/published September summary and exact Business Line/Salesperson pairs only. |
+| Certification / publication | Certified/published summary; exact grouping permissions: business_line, salesperson. September event period. |
 | One lifecycle state | Certified |
 | Control example, not a definition constant | 1461335500 |
 | Known limitations | Source order value; distinct from invoice revenue and generic revenue. |
@@ -177,25 +198,26 @@ Gross v1: current 760,615,731.13; 1–30 239,405,751.70; 31–90 94,315,000.66; 
 | English / Arabic name | Average Confirmed Order Value / متوسط قيمة الطلب المؤكد |
 | Canonical ID | `average_confirmed_order_value` |
 | Version / definition hash | 1 / `efe25f2f595061f2573c22a04e85ca1d1f8e243e2652075242dfe504d4050f19` |
+| Metric help version | 1 |
 | Business purpose | Support decisions on sales using the named measure and explicit scope. Average Confirmed Order Value |
-| Definition | Confirmed tax-inclusive Order Revenue / confirmed Order Count; weighted ratio of totals. |
-| Formula / proposed formula | Confirmed tax-inclusive Order Revenue / confirmed Order Count; weighted ratio of totals. |
+| Definition | Confirmed Order Revenue divided by confirmed Order Count. |
+| Formula / proposed formula | Confirmed Order Revenue ÷ Confirmed Order Count |
 | Event / snapshot | Event / period-derived measure: defined business window. |
-| Business date | Order date converted from UTC to Asia/Baghdad; September 1–30, 2026 inclusive. |
-| Source concept / Odoo calculation | Confirmed tax-inclusive Order Revenue / confirmed Order Count; weighted ratio of totals. Confirmed sales orders, with cancelled orders counted separately. |
+| Business date | Order date in the tenant business timezone. |
+| Source concept / Odoo calculation | Confirmed Order Revenue divided by confirmed Order Count. Confirmed sales orders, with cancelled orders counted separately. |
 | Grain | One eligible document; ratio uses matching sums/counts of those documents. |
 | Aggregation | Sum eligible contributions at the named grain; ratios use matching numerator/denominator totals, distinct counts deduplicate identities, durations require an approved weighting rule. Snapshots select one eligible state per stable position at cutoff and sum across positions only. Never sum percentages or daily balances. |
 | Currency / unit | IQD; order value includes tax, invoice/refund value excludes tax. |
 | Signs | Preserve source signs; posted invoice/refund values have explicit polarity. Refund Value is positive magnitude; Net Invoiced Revenue subtracts it. Negative stock and signed credits remain visible. No blanket absolute-value transform. |
 | Included states | Confirmed sales orders, with cancelled orders counted separately. |
-| Excluded / cancellation | Draft/cancelled documents excluded from value and completed-count measures. Cancelled Orders explicitly counts state cancel by order date. Other source states/returns must be approved before extraction; later source edits require a new frozen release, not rewriting history. |
-| Refund / settlement | Order measures are not reduced by unrelated invoices/credit notes; invoicing recognizes each posted refund on its own issue date. Product/receipt returns require signed line/movement lineage; no header amount repeated per line. Snapshot settlements include only those effective by cutoff. |
+| Excluded / cancellation | Draft and cancelled documents are excluded. |
+| Refund / settlement | Posted refunds reduce net invoiced revenue on their own invoice date. Refund Value shows their positive magnitude. Order metrics remain separate. |
 | Null / Unassigned | No missing monetary, quantity, identity or date value becomes zero silently. Ratios with zero denominator are undefined. Missing owner/Business Line maps to governed Unassigned where supported; missing customer/product identity is an exception, never display-name matching. No arbitrary attribution. |
 | Published dimensions | business_line, salesperson |
 | Candidate dimensions (not permissions) | salesperson, sales_team, customer, business_line, warehouse, time |
-| Technical evidence | Existing exact release controls and derived-output approvals where applicable; no new evidence added. |
+| Technical evidence | Exact linked release controls and derived-output approvals where applicable; see the metric approval reference and published scope. |
 | Business approval | Existing established approval; do not reopen. Registry/reference remains authoritative. |
-| Certification / publication | Existing certified/published September summary and exact Business Line/Salesperson pairs only. |
+| Certification / publication | Certified/published summary; exact grouping permissions: business_line, salesperson. September event period. |
 | One lifecycle state | Certified |
 | Control example, not a definition constant | 1461335500 / 2895 |
 | Known limitations | Zero denominator returns null; ratio of totals. |
@@ -357,25 +379,26 @@ Gross v1: current 760,615,731.13; 1–30 239,405,751.70; 31–90 94,315,000.66; 
 | English / Arabic name | Cancelled Orders / الطلبات الملغاة |
 | Canonical ID | `cancelled_orders` |
 | Version / definition hash | 1 / `5ee489a3ea7d055b884d8d80d99af2ce0d727d8e3e1bd68993026a6818aeab3a` |
+| Metric help version | 1 |
 | Business purpose | Support decisions on sales using the named measure and explicit scope. Cancelled Orders |
-| Definition | count state cancel |
-| Formula / proposed formula | count state cancel |
+| Definition | Number of cancelled sales orders by order date. |
+| Formula / proposed formula | Count cancelled orders |
 | Event / snapshot | Event / period-derived measure: defined business window. |
-| Business date | Order date converted from UTC to Asia/Baghdad; September 1–30, 2026 inclusive. |
-| Source concept / Odoo calculation | count state cancel Confirmed sales orders, with cancelled orders counted separately. |
+| Business date | Order date in the tenant business timezone. |
+| Source concept / Odoo calculation | Number of cancelled sales orders by order date. Confirmed sales orders, with cancelled orders counted separately. |
 | Grain | One eligible document; ratio uses matching sums/counts of those documents. |
 | Aggregation | Sum eligible contributions at the named grain; ratios use matching numerator/denominator totals, distinct counts deduplicate identities, durations require an approved weighting rule. Snapshots select one eligible state per stable position at cutoff and sum across positions only. Never sum percentages or daily balances. |
 | Currency / unit | Document count |
 | Signs | Preserve source signs; posted invoice/refund values have explicit polarity. Refund Value is positive magnitude; Net Invoiced Revenue subtracts it. Negative stock and signed credits remain visible. No blanket absolute-value transform. |
 | Included states | Confirmed sales orders, with cancelled orders counted separately. |
-| Excluded / cancellation | Draft/cancelled documents excluded from value and completed-count measures. Cancelled Orders explicitly counts state cancel by order date. Other source states/returns must be approved before extraction; later source edits require a new frozen release, not rewriting history. |
-| Refund / settlement | Order measures are not reduced by unrelated invoices/credit notes; invoicing recognizes each posted refund on its own issue date. Product/receipt returns require signed line/movement lineage; no header amount repeated per line. Snapshot settlements include only those effective by cutoff. |
+| Excluded / cancellation | Non-cancelled orders are excluded. |
+| Refund / settlement | Posted refunds reduce net invoiced revenue on their own invoice date. Refund Value shows their positive magnitude. Order metrics remain separate. |
 | Null / Unassigned | Count each cancelled order once; missing salesperson/Business Line uses governed Unassigned. Event date remains original Baghdad order date, not cancellation time. |
 | Published dimensions | business_line, salesperson |
 | Candidate dimensions (not permissions) | salesperson, sales_team, customer, business_line, warehouse, time |
-| Technical evidence | Existing exact release controls and derived-output approvals where applicable; no new evidence added. |
+| Technical evidence | Exact linked release controls and derived-output approvals where applicable; see the metric approval reference and published scope. |
 | Business approval | Existing established approval; do not reopen. Registry/reference remains authoritative. |
-| Certification / publication | Existing certified/published September summary and exact Business Line/Salesperson pairs only. |
+| Certification / publication | Certified/published summary; exact grouping permissions: business_line, salesperson. September event period. |
 | One lifecycle state | Certified |
 | Control example, not a definition constant | 200 |
 | Known limitations | 200 September cancellations; do not mix with confirmed orders. |
@@ -539,25 +562,26 @@ Gross v1: current 760,615,731.13; 1–30 239,405,751.70; 31–90 94,315,000.66; 
 | English / Arabic name | Posted Invoice Value / قيمة الفواتير المُرحّلة |
 | Canonical ID | `invoiced_revenue` |
 | Version / definition hash | 1 / `cb2795748c081ce2775a2ab6af8b20c20e182a6bea265df3f76389c60583bcee` |
+| Metric help version | 1 |
 | Business purpose | Support decisions on invoicing using the named measure and explicit scope. Posted Invoice Value |
-| Definition | sum posted out_invoice untaxed signed |
-| Formula / proposed formula | sum posted out_invoice untaxed signed |
+| Definition | Value of posted customer invoices, excluding refunds. |
+| Formula / proposed formula | Posted Invoice Value |
 | Event / snapshot | Event / period-derived measure: defined business window. |
-| Business date | Invoice issue date; each credit note on its own issue date, September 1–30, 2026 inclusive. |
-| Source concept / Odoo calculation | sum posted out_invoice untaxed signed Posted customer invoices and posted credit notes; supplier bills excluded. |
+| Business date | Document invoice date; each refund uses its own issue date. |
+| Source concept / Odoo calculation | Value of posted customer invoices, excluding refunds. Posted customer invoices and posted credit notes; supplier bills excluded. |
 | Grain | One eligible document; ratio uses matching sums/counts of those documents. |
 | Aggregation | Sum eligible contributions at the named grain; ratios use matching numerator/denominator totals, distinct counts deduplicate identities, durations require an approved weighting rule. Snapshots select one eligible state per stable position at cutoff and sum across positions only. Never sum percentages or daily balances. |
 | Currency / unit | IQD; order value includes tax, invoice/refund value excludes tax. |
 | Signs | Preserve source signs; posted invoice/refund values have explicit polarity. Refund Value is positive magnitude; Net Invoiced Revenue subtracts it. Negative stock and signed credits remain visible. No blanket absolute-value transform. |
 | Included states | Posted customer invoices and posted credit notes; supplier bills excluded. |
-| Excluded / cancellation | Draft/cancelled documents excluded from value and completed-count measures. Cancelled Orders explicitly counts state cancel by order date. Other source states/returns must be approved before extraction; later source edits require a new frozen release, not rewriting history. |
-| Refund / settlement | Order measures are not reduced by unrelated invoices/credit notes; invoicing recognizes each posted refund on its own issue date. Product/receipt returns require signed line/movement lineage; no header amount repeated per line. Snapshot settlements include only those effective by cutoff. |
+| Excluded / cancellation | Draft and cancelled documents are excluded. |
+| Refund / settlement | Posted refunds reduce net invoiced revenue on their own invoice date. Refund Value shows their positive magnitude. Order metrics remain separate. |
 | Null / Unassigned | No missing monetary, quantity, identity or date value becomes zero silently. Ratios with zero denominator are undefined. Missing owner/Business Line maps to governed Unassigned where supported; missing customer/product identity is an exception, never display-name matching. No arbitrary attribution. |
 | Published dimensions | business_line, salesperson |
 | Candidate dimensions (not permissions) | customer, commercial_customer, salesperson, business_line, sales_team, state, city, time |
-| Technical evidence | Existing exact release controls and derived-output approvals where applicable; no new evidence added. |
+| Technical evidence | Exact linked release controls and derived-output approvals where applicable; see the metric approval reference and published scope. |
 | Business approval | Existing established approval; do not reopen. Registry/reference remains authoritative. |
-| Certification / publication | Existing certified/published September summary and exact Business Line/Salesperson pairs only. |
+| Certification / publication | Certified/published summary; exact grouping permissions: business_line, salesperson. September event period. |
 | One lifecycle state | Certified |
 | Control example, not a definition constant | 1465712000 |
 | Known limitations | Existing certified 1465712000 IQD; unchanged. |
@@ -569,25 +593,26 @@ Gross v1: current 760,615,731.13; 1–30 239,405,751.70; 31–90 94,315,000.66; 
 | English / Arabic name | Refund Value / قيمة الإشعارات الدائنة |
 | Canonical ID | `refund_value` |
 | Version / definition hash | 1 / `a1bccedb022e17daf8b2db5e99f0613cf23b8d51816be9054c2fb24d2f0f6dac` |
+| Metric help version | 1 |
 | Business purpose | Support decisions on invoicing using the named measure and explicit scope. Refund Value |
-| Definition | negate sum posted out_refund untaxed signed |
-| Formula / proposed formula | negate sum posted out_refund untaxed signed |
+| Definition | Posted customer refunds/credit notes shown as a positive value. |
+| Formula / proposed formula | Positive value of posted credit notes |
 | Event / snapshot | Event / period-derived measure: defined business window. |
-| Business date | Invoice issue date; each credit note on its own issue date, September 1–30, 2026 inclusive. |
-| Source concept / Odoo calculation | negate sum posted out_refund untaxed signed Posted customer invoices and posted credit notes; supplier bills excluded. |
+| Business date | Document invoice date; each refund uses its own issue date. |
+| Source concept / Odoo calculation | Posted customer refunds/credit notes shown as a positive value. Posted customer invoices and posted credit notes; supplier bills excluded. |
 | Grain | One eligible document; ratio uses matching sums/counts of those documents. |
 | Aggregation | Sum eligible contributions at the named grain; ratios use matching numerator/denominator totals, distinct counts deduplicate identities, durations require an approved weighting rule. Snapshots select one eligible state per stable position at cutoff and sum across positions only. Never sum percentages or daily balances. |
 | Currency / unit | IQD; order value includes tax, invoice/refund value excludes tax. |
 | Signs | Preserve source signs; posted invoice/refund values have explicit polarity. Refund Value is positive magnitude; Net Invoiced Revenue subtracts it. Negative stock and signed credits remain visible. No blanket absolute-value transform. |
 | Included states | Posted customer invoices and posted credit notes; supplier bills excluded. |
-| Excluded / cancellation | Draft/cancelled documents excluded from value and completed-count measures. Cancelled Orders explicitly counts state cancel by order date. Other source states/returns must be approved before extraction; later source edits require a new frozen release, not rewriting history. |
-| Refund / settlement | Order measures are not reduced by unrelated invoices/credit notes; invoicing recognizes each posted refund on its own issue date. Product/receipt returns require signed line/movement lineage; no header amount repeated per line. Snapshot settlements include only those effective by cutoff. |
+| Excluded / cancellation | Draft and cancelled documents are excluded. |
+| Refund / settlement | Posted refunds reduce net invoiced revenue on their own invoice date. Refund Value shows their positive magnitude. Order metrics remain separate. |
 | Null / Unassigned | No missing monetary, quantity, identity or date value becomes zero silently. Ratios with zero denominator are undefined. Missing owner/Business Line maps to governed Unassigned where supported; missing customer/product identity is an exception, never display-name matching. No arbitrary attribution. |
 | Published dimensions | business_line, salesperson |
 | Candidate dimensions (not permissions) | customer, commercial_customer, salesperson, business_line, sales_team, state, city, time |
-| Technical evidence | Existing exact release controls and derived-output approvals where applicable; no new evidence added. |
+| Technical evidence | Exact linked release controls and derived-output approvals where applicable; see the metric approval reference and published scope. |
 | Business approval | Existing established approval; do not reopen. Registry/reference remains authoritative. |
-| Certification / publication | Existing certified/published September summary and exact Business Line/Salesperson pairs only. |
+| Certification / publication | Certified/published summary; exact grouping permissions: business_line, salesperson. September event period. |
 | One lifecycle state | Certified |
 | Control example, not a definition constant | 18545500 |
 | Known limitations | Existing certified positive 18545500 IQD; source refunds are negative. |
@@ -599,25 +624,26 @@ Gross v1: current 760,615,731.13; 1–30 239,405,751.70; 31–90 94,315,000.66; 
 | English / Arabic name | Net Invoiced Revenue / صافي إيرادات الفواتير |
 | Canonical ID | `net_invoiced_revenue` |
 | Version / definition hash | 1 / `cb31f7dbab7fc1b166aa94f2bcda990df5163939c0323506c7bd5e14e58982fd` |
+| Metric help version | 1 |
 | Business purpose | Support decisions on invoicing using the named measure and explicit scope. Net Invoiced Revenue |
-| Definition | posted invoice value minus positive refund value |
-| Formula / proposed formula | posted invoice value minus positive refund value |
+| Definition | Posted customer invoices minus posted refunds/credit notes, on each document’s own invoice date. |
+| Formula / proposed formula | Posted Invoice Value − Refund Value |
 | Event / snapshot | Event / period-derived measure: defined business window. |
-| Business date | Invoice issue date; each credit note on its own issue date, September 1–30, 2026 inclusive. |
-| Source concept / Odoo calculation | posted invoice value minus positive refund value Posted customer invoices and posted credit notes; supplier bills excluded. |
+| Business date | Document invoice date; each refund uses its own issue date. |
+| Source concept / Odoo calculation | Posted customer invoices minus posted refunds/credit notes, on each document’s own invoice date. Posted customer invoices and posted credit notes; supplier bills excluded. |
 | Grain | One eligible document; ratio uses matching sums/counts of those documents. |
 | Aggregation | Sum eligible contributions at the named grain; ratios use matching numerator/denominator totals, distinct counts deduplicate identities, durations require an approved weighting rule. Snapshots select one eligible state per stable position at cutoff and sum across positions only. Never sum percentages or daily balances. |
 | Currency / unit | IQD; order value includes tax, invoice/refund value excludes tax. |
 | Signs | Preserve source signs; posted invoice/refund values have explicit polarity. Refund Value is positive magnitude; Net Invoiced Revenue subtracts it. Negative stock and signed credits remain visible. No blanket absolute-value transform. |
 | Included states | Posted customer invoices and posted credit notes; supplier bills excluded. |
-| Excluded / cancellation | Draft/cancelled documents excluded from value and completed-count measures. Cancelled Orders explicitly counts state cancel by order date. Other source states/returns must be approved before extraction; later source edits require a new frozen release, not rewriting history. |
-| Refund / settlement | Order measures are not reduced by unrelated invoices/credit notes; invoicing recognizes each posted refund on its own issue date. Product/receipt returns require signed line/movement lineage; no header amount repeated per line. Snapshot settlements include only those effective by cutoff. |
+| Excluded / cancellation | Draft and cancelled documents are excluded. |
+| Refund / settlement | Posted refunds reduce net invoiced revenue on their own invoice date. Refund Value shows their positive magnitude. Order metrics remain separate. |
 | Null / Unassigned | No missing monetary, quantity, identity or date value becomes zero silently. Ratios with zero denominator are undefined. Missing owner/Business Line maps to governed Unassigned where supported; missing customer/product identity is an exception, never display-name matching. No arbitrary attribution. |
 | Published dimensions | business_line, salesperson |
 | Candidate dimensions (not permissions) | customer, commercial_customer, salesperson, business_line, sales_team, state, city, time |
-| Technical evidence | Existing exact release controls and derived-output approvals where applicable; no new evidence added. |
+| Technical evidence | Exact linked release controls and derived-output approvals where applicable; see the metric approval reference and published scope. |
 | Business approval | Existing established approval; do not reopen. Registry/reference remains authoritative. |
-| Certification / publication | Existing certified/published September summary and exact Business Line/Salesperson pairs only. |
+| Certification / publication | Certified/published summary; exact grouping permissions: business_line, salesperson. September event period. |
 | One lifecycle state | Certified |
 | Control example, not a definition constant | 1447166500 |
 | Known limitations | Existing certified 1447166500 IQD; unchanged. |
@@ -629,25 +655,26 @@ Gross v1: current 760,615,731.13; 1–30 239,405,751.70; 31–90 94,315,000.66; 
 | English / Arabic name | Invoice Count / عدد الفواتير |
 | Canonical ID | `invoice_count` |
 | Version / definition hash | 1 / `459db204da75e1abf41ef72bcfc1836cfaee7f3bcf280f4afe1185684d65a37e` |
+| Metric help version | 1 |
 | Business purpose | Support decisions on invoicing using the named measure and explicit scope. Invoice Count |
-| Definition | count posted out_invoice |
-| Formula / proposed formula | count posted out_invoice |
+| Definition | Number of posted customer invoice documents; refunds excluded. |
+| Formula / proposed formula | Count posted customer invoices |
 | Event / snapshot | Event / period-derived measure: defined business window. |
-| Business date | Invoice issue date; each credit note on its own issue date, September 1–30, 2026 inclusive. |
-| Source concept / Odoo calculation | count posted out_invoice Posted customer invoices and posted credit notes; supplier bills excluded. |
+| Business date | Document invoice date; each refund uses its own issue date. |
+| Source concept / Odoo calculation | Number of posted customer invoice documents; refunds excluded. Posted customer invoices and posted credit notes; supplier bills excluded. |
 | Grain | One eligible document; ratio uses matching sums/counts of those documents. |
 | Aggregation | Sum eligible contributions at the named grain; ratios use matching numerator/denominator totals, distinct counts deduplicate identities, durations require an approved weighting rule. Snapshots select one eligible state per stable position at cutoff and sum across positions only. Never sum percentages or daily balances. |
 | Currency / unit | Document count |
 | Signs | Preserve source signs; posted invoice/refund values have explicit polarity. Refund Value is positive magnitude; Net Invoiced Revenue subtracts it. Negative stock and signed credits remain visible. No blanket absolute-value transform. |
 | Included states | Posted customer invoices and posted credit notes; supplier bills excluded. |
-| Excluded / cancellation | Draft/cancelled documents excluded from value and completed-count measures. Cancelled Orders explicitly counts state cancel by order date. Other source states/returns must be approved before extraction; later source edits require a new frozen release, not rewriting history. |
-| Refund / settlement | Order measures are not reduced by unrelated invoices/credit notes; invoicing recognizes each posted refund on its own issue date. Product/receipt returns require signed line/movement lineage; no header amount repeated per line. Snapshot settlements include only those effective by cutoff. |
+| Excluded / cancellation | Draft and cancelled documents are excluded. |
+| Refund / settlement | Posted refunds reduce net invoiced revenue on their own invoice date. Refund Value shows their positive magnitude. Order metrics remain separate. |
 | Null / Unassigned | No missing monetary, quantity, identity or date value becomes zero silently. Ratios with zero denominator are undefined. Missing owner/Business Line maps to governed Unassigned where supported; missing customer/product identity is an exception, never display-name matching. No arbitrary attribution. |
 | Published dimensions | business_line, salesperson |
 | Candidate dimensions (not permissions) | customer, commercial_customer, salesperson, business_line, sales_team, state, city, time |
-| Technical evidence | Existing exact release controls and derived-output approvals where applicable; no new evidence added. |
+| Technical evidence | Exact linked release controls and derived-output approvals where applicable; see the metric approval reference and published scope. |
 | Business approval | Existing established approval; do not reopen. Registry/reference remains authoritative. |
-| Certification / publication | Existing certified/published September summary and exact Business Line/Salesperson pairs only. |
+| Certification / publication | Certified/published summary; exact grouping permissions: business_line, salesperson. September event period. |
 | One lifecycle state | Certified |
 | Control example, not a definition constant | 2890 |
 | Known limitations | 2890 September invoices. |
@@ -659,25 +686,26 @@ Gross v1: current 760,615,731.13; 1–30 239,405,751.70; 31–90 94,315,000.66; 
 | English / Arabic name | Refund Count / عدد الإشعارات الدائنة |
 | Canonical ID | `refund_count` |
 | Version / definition hash | 1 / `9d16b82f3ecfddc90a98532d983973169e9be7df0898987559d9b031e75d1598` |
+| Metric help version | 1 |
 | Business purpose | Support decisions on invoicing using the named measure and explicit scope. Refund Count |
-| Definition | count posted out_refund |
-| Formula / proposed formula | count posted out_refund |
+| Definition | Number of posted customer credit-note documents. |
+| Formula / proposed formula | Count posted credit notes |
 | Event / snapshot | Event / period-derived measure: defined business window. |
-| Business date | Invoice issue date; each credit note on its own issue date, September 1–30, 2026 inclusive. |
-| Source concept / Odoo calculation | count posted out_refund Posted customer invoices and posted credit notes; supplier bills excluded. |
+| Business date | Document invoice date; each refund uses its own issue date. |
+| Source concept / Odoo calculation | Number of posted customer credit-note documents. Posted customer invoices and posted credit notes; supplier bills excluded. |
 | Grain | One eligible document; ratio uses matching sums/counts of those documents. |
 | Aggregation | Sum eligible contributions at the named grain; ratios use matching numerator/denominator totals, distinct counts deduplicate identities, durations require an approved weighting rule. Snapshots select one eligible state per stable position at cutoff and sum across positions only. Never sum percentages or daily balances. |
 | Currency / unit | Document count |
 | Signs | Preserve source signs; posted invoice/refund values have explicit polarity. Refund Value is positive magnitude; Net Invoiced Revenue subtracts it. Negative stock and signed credits remain visible. No blanket absolute-value transform. |
 | Included states | Posted customer invoices and posted credit notes; supplier bills excluded. |
-| Excluded / cancellation | Draft/cancelled documents excluded from value and completed-count measures. Cancelled Orders explicitly counts state cancel by order date. Other source states/returns must be approved before extraction; later source edits require a new frozen release, not rewriting history. |
-| Refund / settlement | Order measures are not reduced by unrelated invoices/credit notes; invoicing recognizes each posted refund on its own issue date. Product/receipt returns require signed line/movement lineage; no header amount repeated per line. Snapshot settlements include only those effective by cutoff. |
+| Excluded / cancellation | Draft and cancelled documents are excluded. |
+| Refund / settlement | Posted refunds reduce net invoiced revenue on their own invoice date. Refund Value shows their positive magnitude. Order metrics remain separate. |
 | Null / Unassigned | No missing monetary, quantity, identity or date value becomes zero silently. Ratios with zero denominator are undefined. Missing owner/Business Line maps to governed Unassigned where supported; missing customer/product identity is an exception, never display-name matching. No arbitrary attribution. |
 | Published dimensions | business_line, salesperson |
 | Candidate dimensions (not permissions) | customer, commercial_customer, salesperson, business_line, sales_team, state, city, time |
-| Technical evidence | Existing exact release controls and derived-output approvals where applicable; no new evidence added. |
+| Technical evidence | Exact linked release controls and derived-output approvals where applicable; see the metric approval reference and published scope. |
 | Business approval | Existing established approval; do not reopen. Registry/reference remains authoritative. |
-| Certification / publication | Existing certified/published September summary and exact Business Line/Salesperson pairs only. |
+| Certification / publication | Certified/published summary; exact grouping permissions: business_line, salesperson. September event period. |
 | One lifecycle state | Certified |
 | Control example, not a definition constant | 120 |
 | Known limitations | 120 September refunds. |
@@ -689,25 +717,26 @@ Gross v1: current 760,615,731.13; 1–30 239,405,751.70; 31–90 94,315,000.66; 
 | English / Arabic name | Average Invoice Value / متوسط قيمة الفاتورة |
 | Canonical ID | `average_invoice_value` |
 | Version / definition hash | 1 / `2a9de4bfbbc8ffa7bcf901f10db1325ab4a45dacb8642d1364abcae61a906dc4` |
+| Metric help version | 1 |
 | Business purpose | Support decisions on invoicing using the named measure and explicit scope. Average Invoice Value |
-| Definition | posted untaxed invoice value / posted invoice count |
-| Formula / proposed formula | posted untaxed invoice value / posted invoice count |
+| Definition | Posted Invoice Value divided by posted Invoice Count; refunds are excluded. |
+| Formula / proposed formula | Posted Invoice Value ÷ Invoice Count |
 | Event / snapshot | Event / period-derived measure: defined business window. |
-| Business date | Invoice issue date; each credit note on its own issue date, September 1–30, 2026 inclusive. |
-| Source concept / Odoo calculation | posted untaxed invoice value / posted invoice count Posted customer invoices and posted credit notes; supplier bills excluded. |
+| Business date | Document invoice date; each refund uses its own issue date. |
+| Source concept / Odoo calculation | Posted Invoice Value divided by posted Invoice Count; refunds are excluded. Posted customer invoices and posted credit notes; supplier bills excluded. |
 | Grain | One eligible document; ratio uses matching sums/counts of those documents. |
 | Aggregation | Sum eligible contributions at the named grain; ratios use matching numerator/denominator totals, distinct counts deduplicate identities, durations require an approved weighting rule. Snapshots select one eligible state per stable position at cutoff and sum across positions only. Never sum percentages or daily balances. |
 | Currency / unit | IQD; order value includes tax, invoice/refund value excludes tax. |
 | Signs | Preserve source signs; posted invoice/refund values have explicit polarity. Refund Value is positive magnitude; Net Invoiced Revenue subtracts it. Negative stock and signed credits remain visible. No blanket absolute-value transform. |
 | Included states | Posted customer invoices and posted credit notes; supplier bills excluded. |
-| Excluded / cancellation | Draft/cancelled documents excluded from value and completed-count measures. Cancelled Orders explicitly counts state cancel by order date. Other source states/returns must be approved before extraction; later source edits require a new frozen release, not rewriting history. |
-| Refund / settlement | Order measures are not reduced by unrelated invoices/credit notes; invoicing recognizes each posted refund on its own issue date. Product/receipt returns require signed line/movement lineage; no header amount repeated per line. Snapshot settlements include only those effective by cutoff. |
+| Excluded / cancellation | Draft and cancelled documents are excluded. |
+| Refund / settlement | Posted refunds reduce net invoiced revenue on their own invoice date. Refund Value shows their positive magnitude. Order metrics remain separate. |
 | Null / Unassigned | No missing monetary, quantity, identity or date value becomes zero silently. Ratios with zero denominator are undefined. Missing owner/Business Line maps to governed Unassigned where supported; missing customer/product identity is an exception, never display-name matching. No arbitrary attribution. |
 | Published dimensions | business_line, salesperson |
 | Candidate dimensions (not permissions) | customer, commercial_customer, salesperson, business_line, sales_team, state, city, time |
-| Technical evidence | Existing exact release controls and derived-output approvals where applicable; no new evidence added. |
+| Technical evidence | Exact linked release controls and derived-output approvals where applicable; see the metric approval reference and published scope. |
 | Business approval | Existing established approval; do not reopen. Registry/reference remains authoritative. |
-| Certification / publication | Existing certified/published September summary and exact Business Line/Salesperson pairs only. |
+| Certification / publication | Certified/published summary; exact grouping permissions: business_line, salesperson. September event period. |
 | One lifecycle state | Certified |
 | Control example, not a definition constant | 1465712000 / 2890 |
 | Known limitations | Choose untaxed or tax-inclusive definition explicitly. |
@@ -1141,19 +1170,20 @@ Gross v1: current 760,615,731.13; 1–30 239,405,751.70; 31–90 94,315,000.66; 
 | English / Arabic name | Overdue Receivable Candidate / رصيد الذمم المتأخر المقترح |
 | Canonical ID | `overdue_amount` |
 | Version / definition hash | 1 / `69e65a698a8144b1568a64a23416eb16d135018c2cf02d57dfd58ddbc115ae27` |
+| Metric help version | 1 |
 | Business purpose | Support decisions on receivables using the named measure and explicit scope. Overdue Receivable Candidate |
 | Definition | current residual where due before as-of |
 | Formula / proposed formula | current residual where due before as-of |
 | Event / snapshot | Snapshot: one cutoff, never summed across dates. |
-| Business date | One explicit snapshot cutoff. Receivable controls: September 30, 2026. Inventory/expiry: current observation time, not a certified September closing balance. |
+| Business date | Document invoice date; each refund uses its own issue date. |
 | Source concept / Odoo calculation | current residual where due before as-of Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
 | Grain | One receivable maturity/installment component; invoice counts require distinct invoice identity. |
 | Aggregation | Sum eligible contributions at the named grain; ratios use matching numerator/denominator totals, distinct counts deduplicate identities, durations require an approved weighting rule. Snapshots select one eligible state per stable position at cutoff and sum across positions only. Never sum percentages or daily balances. |
 | Currency / unit | Company-ledger IQD, legal receivable includes tax; never sum document-currency USD with IQD. |
 | Signs | Preserve source signs; posted invoice/refund values have explicit polarity. Refund Value is positive magnitude; Net Invoiced Revenue subtracts it. Negative stock and signed credits remain visible. No blanket absolute-value transform. |
 | Included states | Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
-| Excluded / cancellation | Draft/cancelled documents excluded from value and completed-count measures. Cancelled Orders explicitly counts state cancel by order date. Other source states/returns must be approved before extraction; later source edits require a new frozen release, not rewriting history. |
-| Refund / settlement | Order measures are not reduced by unrelated invoices/credit notes; invoicing recognizes each posted refund on its own issue date. Product/receipt returns require signed line/movement lineage; no header amount repeated per line. Snapshot settlements include only those effective by cutoff. |
+| Excluded / cancellation | Draft and cancelled documents are excluded. |
+| Refund / settlement | Posted refunds reduce net invoiced revenue on their own invoice date. Refund Value shows their positive magnitude. Order metrics remain separate. |
 | Null / Unassigned | No missing monetary, quantity, identity or date value becomes zero silently. Ratios with zero denominator are undefined. Missing owner/Business Line maps to governed Unassigned where supported; missing customer/product identity is an exception, never display-name matching. No arbitrary attribution. |
 | Published dimensions | None |
 | Candidate dimensions (not permissions) | customer, commercial_customer, salesperson, business_line, currency, time |
@@ -1558,271 +1588,280 @@ Gross v1: current 760,615,731.13; 1–30 239,405,751.70; 31–90 94,315,000.66; 
 
 | Definition field | Meaning |
 | --- | --- |
-| English / Arabic name | Gross Open Receivable Components / إجمالي مكونات الذمم المفتوحة الموجبة |
-| Canonical ID | Not registered; proposed definition ID only: `receivables_gross_outstanding_amount` |
-| Version / definition hash | receivables-aging-v1 / `ab8d1f90932cbf73b9f183b4103ff9290a40d4109fb6d7e0199eb56a764f54cb` |
+| English / Arabic name | Gross Open Receivable Components / مكونات الذمم المفتوحة الإجمالية |
+| Canonical ID | `gross_open_receivable_components` |
+| Version / definition hash | receivables-aging-v1 / `b7f8b5b16ba131a9ae7c483005832fafe08b90992a96ad193cfd4c8502e5908a` |
+| Metric help version | 1 |
 | Business purpose | Support decisions on receivables using the named measure and explicit scope. Gross Open Receivable Components |
-| Definition | Sum positive reconstructed component residuals; maturity missing stays separate. |
-| Formula / proposed formula | Sum positive reconstructed component residuals; maturity missing stays separate. |
+| Definition | Positive open receivable components before remaining credit balances are netted. Historical residual is reconstructed through cutoff; payments after cutoff do not change that historical balance. |
+| Formula / proposed formula | Positive open receivable components before remaining credit balances are netted. |
 | Event / snapshot | Snapshot: one cutoff, never summed across dates. |
-| Business date | Historical snapshot cutoff September 30, 2026; accounting entries/settlements effective by cutoff only. |
-| Source concept / Odoo calculation | Sum positive reconstructed component residuals; maturity missing stays separate. Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
+| Business date | Inclusive accounting cutoff. Age by maturity date, falling back to journal-item accounting date. Due exactly on cutoff belongs to At Date. |
+| Source concept / Odoo calculation | Positive open receivable components before remaining credit balances are netted. Historical residual is reconstructed through cutoff; payments after cutoff do not change that historical balance. Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
 | Grain | One receivable maturity/installment component; invoice counts require distinct invoice identity. |
-| Aggregation | Sum eligible contributions at the named grain; ratios use matching numerator/denominator totals, distinct counts deduplicate identities, durations require an approved weighting rule. Snapshots select one eligible state per stable position at cutoff and sum across positions only. Never sum percentages or daily balances. |
+| Aggregation | One cutoff; never sum balances across dates. Ratios use aggregates, never summed customer percentages. |
 | Currency / unit | Company-ledger IQD, legal receivable includes tax; never sum document-currency USD with IQD. |
 | Signs | Preserve source signs; posted invoice/refund values have explicit polarity. Refund Value is positive magnitude; Net Invoiced Revenue subtracts it. Negative stock and signed credits remain visible. No blanket absolute-value transform. |
-| Included states | Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
-| Excluded / cancellation | Draft/cancelled documents excluded from value and completed-count measures. Cancelled Orders explicitly counts state cancel by order date. Other source states/returns must be approved before extraction; later source edits require a new frozen release, not rewriting history. |
-| Refund / settlement | Order measures are not reduced by unrelated invoices/credit notes; invoicing recognizes each posted refund on its own issue date. Product/receipt returns require signed line/movement lineage; no header amount repeated per line. Snapshot settlements include only those effective by cutoff. |
+| Included states | Posted customer receivable journal items, including invoice, journal/payment and credit-note balances. |
+| Excluded / cancellation | Draft/cancelled documents, non-receivable accounts, later accounting entries and settlements effective after cutoff. |
+| Refund / settlement | Signed customer credits remain in their own aging buckets; no arbitrary allocation. Gross positive components and credit balances remain distinct. |
 | Null / Unassigned | No missing monetary, quantity, identity or date value becomes zero silently. Ratios with zero denominator are undefined. Missing owner/Business Line maps to governed Unassigned where supported; missing customer/product identity is an exception, never display-name matching. No arbitrary attribution. |
 | Published dimensions | None |
 | Candidate dimensions (not permissions) | customer, commercial_customer, salesperson, business_line, currency, time |
-| Technical evidence | Preserved independent numerical control; partner identity/source-report gaps remain. |
-| Business approval | Pending exact-version decision; owner/date/exceptions unrecorded. |
-| Certification / publication | Not certified; unpublished; unavailable to normal AI/builder generation. |
-| One lifecycle state | Reconciled · Awaiting Business Approval |
+| Technical evidence | Exact linked release controls and derived-output approvals where applicable; see the metric approval reference and published scope. |
+| Business approval | Finance standing approval applied 2026-10-07: finance-standing-20261007-receivables-v1 |
+| Certification / publication | Certified/published summary; exact grouping permissions: none. Cutoff September 30 only. |
+| One lifecycle state | Certified |
 | Control example, not a definition constant | 1532751636.39 |
-| Known limitations | CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances. |
+| Known limitations | Published only at the exact September 30, 2026 cutoff under Finance standing approval dated October 7. Stable customer identity and signed aging are exact; gross/credit components have summary permission only. Alternative gross-positive aging buckets, other dates/dimensions and custom-module equivalence are not certified. |
 
-### Signed Open Credit Components — credit_balances
+### Credit Balances — credit_balances
 
 | Definition field | Meaning |
 | --- | --- |
-| English / Arabic name | Signed Open Credit Components / مكونات الأرصدة الدائنة المفتوحة بإشارتها |
-| Canonical ID | Not registered; proposed definition ID only: `credit_balances` |
-| Version / definition hash | odoo-aged-report-reconstruction-v1 / `629b243ec953fca55a8da4cd596a40a04f2c5709b928e34482f5e8c50b69b8c6` |
-| Business purpose | Support decisions on receivables using the named measure and explicit scope. Signed Open Credit Components |
-| Definition | Sum negative open components without allocating advances to invoice age. |
-| Formula / proposed formula | Sum negative open components without allocating advances to invoice age. |
+| English / Arabic name | Credit Balances / الأرصدة الدائنة |
+| Canonical ID | `credit_balances` |
+| Version / definition hash | odoo-aged-report-reconstruction-v1 / `74bedd03fa03269a685edead64d281f7dddebf372d5c87abb1c82b319895ea95` |
+| Metric help version | 1 |
+| Business purpose | Support decisions on receivables using the named measure and explicit scope. Credit Balances |
+| Definition | Remaining negative open receivable components, shown with their negative sign. Historical residual is reconstructed through cutoff; payments after cutoff do not change that historical balance. |
+| Formula / proposed formula | Remaining negative open receivable components, shown with their negative sign. |
 | Event / snapshot | Snapshot: one cutoff, never summed across dates. |
-| Business date | Historical snapshot cutoff September 30, 2026; accounting entries/settlements effective by cutoff only. |
-| Source concept / Odoo calculation | Sum negative open components without allocating advances to invoice age. Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
+| Business date | Inclusive accounting cutoff. Age by maturity date, falling back to journal-item accounting date. Due exactly on cutoff belongs to At Date. |
+| Source concept / Odoo calculation | Remaining negative open receivable components, shown with their negative sign. Historical residual is reconstructed through cutoff; payments after cutoff do not change that historical balance. Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
 | Grain | One receivable maturity/installment component; invoice counts require distinct invoice identity. |
-| Aggregation | Sum eligible contributions at the named grain; ratios use matching numerator/denominator totals, distinct counts deduplicate identities, durations require an approved weighting rule. Snapshots select one eligible state per stable position at cutoff and sum across positions only. Never sum percentages or daily balances. |
+| Aggregation | One cutoff; never sum balances across dates. Ratios use aggregates, never summed customer percentages. |
 | Currency / unit | Company-ledger IQD, legal receivable includes tax; never sum document-currency USD with IQD. |
 | Signs | Preserve source signs; posted invoice/refund values have explicit polarity. Refund Value is positive magnitude; Net Invoiced Revenue subtracts it. Negative stock and signed credits remain visible. No blanket absolute-value transform. |
-| Included states | Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
-| Excluded / cancellation | Draft/cancelled documents excluded from value and completed-count measures. Cancelled Orders explicitly counts state cancel by order date. Other source states/returns must be approved before extraction; later source edits require a new frozen release, not rewriting history. |
-| Refund / settlement | Order measures are not reduced by unrelated invoices/credit notes; invoicing recognizes each posted refund on its own issue date. Product/receipt returns require signed line/movement lineage; no header amount repeated per line. Snapshot settlements include only those effective by cutoff. |
+| Included states | Posted customer receivable journal items, including invoice, journal/payment and credit-note balances. |
+| Excluded / cancellation | Draft/cancelled documents, non-receivable accounts, later accounting entries and settlements effective after cutoff. |
+| Refund / settlement | Signed customer credits remain in their own aging buckets; no arbitrary allocation. Gross positive components and credit balances remain distinct. |
 | Null / Unassigned | No missing monetary, quantity, identity or date value becomes zero silently. Ratios with zero denominator are undefined. Missing owner/Business Line maps to governed Unassigned where supported; missing customer/product identity is an exception, never display-name matching. No arbitrary attribution. |
 | Published dimensions | None |
 | Candidate dimensions (not permissions) | customer, commercial_customer, salesperson, business_line, currency, time |
-| Technical evidence | Preserved independent numerical control; partner identity/source-report gaps remain. |
-| Business approval | Pending exact-version decision; owner/date/exceptions unrecorded. |
-| Certification / publication | Not certified; unpublished; unavailable to normal AI/builder generation. |
-| One lifecycle state | Reconciled · Awaiting Business Approval |
+| Technical evidence | Exact linked release controls and derived-output approvals where applicable; see the metric approval reference and published scope. |
+| Business approval | Finance standing approval applied 2026-10-07: finance-standing-20261007-receivables-v1 |
+| Certification / publication | Certified/published summary; exact grouping permissions: none. Cutoff September 30 only. |
+| One lifecycle state | Certified |
 | Control example, not a definition constant | -173290543.78 |
-| Known limitations | CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances. |
+| Known limitations | Published only at the exact September 30, 2026 cutoff under Finance standing approval dated October 7. Stable customer identity and signed aging are exact; gross/credit components have summary permission only. Alternative gross-positive aging buckets, other dates/dimensions and custom-module equivalence are not certified. |
 
 ### Net Aged Receivable — net_aged_receivable
 
 | Definition field | Meaning |
 | --- | --- |
-| English / Arabic name | Net Aged Receivable / صافي الذمم حسب تقرير الأعمار |
-| Canonical ID | Not registered; proposed definition ID only: `net_aged_receivable` |
-| Version / definition hash | odoo-aged-report-reconstruction-v1 / `25561db9b16b7017ebb2cfdb45bf5cb15a2bc47c8faefefd5a3aede4b7d72b31` |
+| English / Arabic name | Net Aged Receivable / صافي الذمم المدينة حسب العمر |
+| Canonical ID | `net_aged_receivable` |
+| Version / definition hash | odoo-aged-report-reconstruction-v1 / `742b71fb367dbfff4fd8f82313c5be5c90597ae9e92eac18e809bb2d1e91c359` |
+| Metric help version | 1 |
 | Business purpose | Support decisions on receivables using the named measure and explicit scope. Net Aged Receivable |
-| Definition | Signed gross positive components + signed negative components; net Odoo report definition, separate from gross-aging-v1. |
-| Formula / proposed formula | Signed gross positive components + signed negative components; net Odoo report definition, separate from gross-aging-v1. |
+| Definition | Customer receivables outstanding at cutoff after signed credit balances are netted. Historical residual is reconstructed through cutoff; payments after cutoff do not change that historical balance. |
+| Formula / proposed formula | At Date + 1–30 + 31–60 + 61–90 + 91–120 + >120 = Gross Open Receivable Components + Credit Balances |
 | Event / snapshot | Snapshot: one cutoff, never summed across dates. |
-| Business date | Historical snapshot cutoff September 30, 2026; accounting entries/settlements effective by cutoff only. |
-| Source concept / Odoo calculation | Signed gross positive components + signed negative components; net Odoo report definition, separate from gross-aging-v1. Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
+| Business date | Inclusive accounting cutoff. Age by maturity date, falling back to journal-item accounting date. Due exactly on cutoff belongs to At Date. |
+| Source concept / Odoo calculation | Customer receivables outstanding at cutoff after signed credit balances are netted. Historical residual is reconstructed through cutoff; payments after cutoff do not change that historical balance. Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
 | Grain | One receivable maturity/installment component; invoice counts require distinct invoice identity. |
-| Aggregation | Sum eligible contributions at the named grain; ratios use matching numerator/denominator totals, distinct counts deduplicate identities, durations require an approved weighting rule. Snapshots select one eligible state per stable position at cutoff and sum across positions only. Never sum percentages or daily balances. |
+| Aggregation | One cutoff; never sum balances across dates. Ratios use aggregates, never summed customer percentages. |
 | Currency / unit | Company-ledger IQD, legal receivable includes tax; never sum document-currency USD with IQD. |
 | Signs | Preserve source signs; posted invoice/refund values have explicit polarity. Refund Value is positive magnitude; Net Invoiced Revenue subtracts it. Negative stock and signed credits remain visible. No blanket absolute-value transform. |
-| Included states | Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
-| Excluded / cancellation | Draft/cancelled documents excluded from value and completed-count measures. Cancelled Orders explicitly counts state cancel by order date. Other source states/returns must be approved before extraction; later source edits require a new frozen release, not rewriting history. |
-| Refund / settlement | Order measures are not reduced by unrelated invoices/credit notes; invoicing recognizes each posted refund on its own issue date. Product/receipt returns require signed line/movement lineage; no header amount repeated per line. Snapshot settlements include only those effective by cutoff. |
+| Included states | Posted customer receivable journal items, including invoice, journal/payment and credit-note balances. |
+| Excluded / cancellation | Draft/cancelled documents, non-receivable accounts, later accounting entries and settlements effective after cutoff. |
+| Refund / settlement | Signed customer credits remain in their own aging buckets; no arbitrary allocation. Gross positive components and credit balances remain distinct. |
 | Null / Unassigned | No missing monetary, quantity, identity or date value becomes zero silently. Ratios with zero denominator are undefined. Missing owner/Business Line maps to governed Unassigned where supported; missing customer/product identity is an exception, never display-name matching. No arbitrary attribution. |
-| Published dimensions | None |
+| Published dimensions | customer |
 | Candidate dimensions (not permissions) | customer, commercial_customer, salesperson, business_line, currency, time |
-| Technical evidence | Preserved independent numerical control; partner identity/source-report gaps remain. |
-| Business approval | Pending exact-version decision; owner/date/exceptions unrecorded. |
-| Certification / publication | Not certified; unpublished; unavailable to normal AI/builder generation. |
-| One lifecycle state | Reconciled · Awaiting Business Approval |
+| Technical evidence | Exact linked release controls and derived-output approvals where applicable; see the metric approval reference and published scope. |
+| Business approval | Finance standing approval applied 2026-10-07: finance-standing-20261007-receivables-v1 |
+| Certification / publication | Certified/published summary; exact grouping permissions: customer. Cutoff September 30 only. |
+| One lifecycle state | Certified |
 | Control example, not a definition constant | 1359461092.61 |
-| Known limitations | CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances. |
+| Known limitations | Published only at the exact September 30, 2026 cutoff under Finance standing approval dated October 7. Stable customer identity and signed aging are exact; gross/credit components have summary permission only. Alternative gross-positive aging buckets, other dates/dimensions and custom-module equivalence are not certified. |
 
 ### At-Date Receivable — aged_at_date
 
 | Definition field | Meaning |
 | --- | --- |
-| English / Arabic name | At-Date Receivable / ذمم غير متأخرة في تاريخ التقرير |
-| Canonical ID | Not registered; proposed definition ID only: `aged_at_date` |
-| Version / definition hash | odoo-aged-report-reconstruction-v1 / `0109ae39ed22518b7bebed96299d63909eb79540b5b55144727cdde62c0d40a7` |
+| English / Arabic name | At-Date Receivable / الذمم غير المتأخرة عند القطع |
+| Canonical ID | `aged_at_date` |
+| Version / definition hash | odoo-aged-report-reconstruction-v1 / `a6e25410f1e454021f4b7c6da0843e66eacdbc6672ef045fa62375b2033222c6` |
+| Metric help version | 1 |
 | Business purpose | Support decisions on receivables using the named measure and explicit scope. At-Date Receivable |
-| Definition | Signed residual with effective due date ≥ cutoff; missing maturity uses accounting-date fallback in net Odoo reconstruction only. |
-| Formula / proposed formula | Signed residual with effective due date ≥ cutoff; missing maturity uses accounting-date fallback in net Odoo reconstruction only. |
+| Definition | Signed receivable balances due on or after cutoff, including due today. Historical residual is reconstructed through cutoff; payments after cutoff do not change that historical balance. |
+| Formula / proposed formula | Signed receivable balances due on or after cutoff, including due today. |
 | Event / snapshot | Snapshot: one cutoff, never summed across dates. |
-| Business date | Historical snapshot cutoff September 30, 2026; accounting entries/settlements effective by cutoff only. |
-| Source concept / Odoo calculation | Signed residual with effective due date ≥ cutoff; missing maturity uses accounting-date fallback in net Odoo reconstruction only. Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
+| Business date | Inclusive accounting cutoff. Age by maturity date, falling back to journal-item accounting date. Due exactly on cutoff belongs to At Date. |
+| Source concept / Odoo calculation | Signed receivable balances due on or after cutoff, including due today. Historical residual is reconstructed through cutoff; payments after cutoff do not change that historical balance. Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
 | Grain | One receivable maturity/installment component; invoice counts require distinct invoice identity. |
-| Aggregation | Sum eligible contributions at the named grain; ratios use matching numerator/denominator totals, distinct counts deduplicate identities, durations require an approved weighting rule. Snapshots select one eligible state per stable position at cutoff and sum across positions only. Never sum percentages or daily balances. |
+| Aggregation | One cutoff; never sum balances across dates. Ratios use aggregates, never summed customer percentages. |
 | Currency / unit | Company-ledger IQD, legal receivable includes tax; never sum document-currency USD with IQD. |
 | Signs | Preserve source signs; posted invoice/refund values have explicit polarity. Refund Value is positive magnitude; Net Invoiced Revenue subtracts it. Negative stock and signed credits remain visible. No blanket absolute-value transform. |
-| Included states | Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
-| Excluded / cancellation | Draft/cancelled documents excluded from value and completed-count measures. Cancelled Orders explicitly counts state cancel by order date. Other source states/returns must be approved before extraction; later source edits require a new frozen release, not rewriting history. |
-| Refund / settlement | Order measures are not reduced by unrelated invoices/credit notes; invoicing recognizes each posted refund on its own issue date. Product/receipt returns require signed line/movement lineage; no header amount repeated per line. Snapshot settlements include only those effective by cutoff. |
+| Included states | Posted customer receivable journal items, including invoice, journal/payment and credit-note balances. |
+| Excluded / cancellation | Draft/cancelled documents, non-receivable accounts, later accounting entries and settlements effective after cutoff. |
+| Refund / settlement | Signed customer credits remain in their own aging buckets; no arbitrary allocation. Gross positive components and credit balances remain distinct. |
 | Null / Unassigned | No missing monetary, quantity, identity or date value becomes zero silently. Ratios with zero denominator are undefined. Missing owner/Business Line maps to governed Unassigned where supported; missing customer/product identity is an exception, never display-name matching. No arbitrary attribution. |
-| Published dimensions | None |
+| Published dimensions | customer |
 | Candidate dimensions (not permissions) | customer, commercial_customer, salesperson, business_line, currency, time |
-| Technical evidence | Preserved independent numerical control; partner identity/source-report gaps remain. |
-| Business approval | Pending exact-version decision; owner/date/exceptions unrecorded. |
-| Certification / publication | Not certified; unpublished; unavailable to normal AI/builder generation. |
-| One lifecycle state | Reconciled · Awaiting Business Approval |
+| Technical evidence | Exact linked release controls and derived-output approvals where applicable; see the metric approval reference and published scope. |
+| Business approval | Finance standing approval applied 2026-10-07: finance-standing-20261007-receivables-v1 |
+| Certification / publication | Certified/published summary; exact grouping permissions: customer. Cutoff September 30 only. |
+| One lifecycle state | Certified |
 | Control example, not a definition constant | 759020481.15 |
-| Known limitations | CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances. |
+| Known limitations | Published only at the exact September 30, 2026 cutoff under Finance standing approval dated October 7. Stable customer identity and signed aging are exact; gross/credit components have summary permission only. Alternative gross-positive aging buckets, other dates/dimensions and custom-module equivalence are not certified. |
 
-### 1–30 Days Overdue (Net) — aged_1_30
+### 1–30 Overdue — aged_1_30
 
 | Definition field | Meaning |
 | --- | --- |
-| English / Arabic name | 1–30 Days Overdue (Net) / متأخرات من 1 إلى 30 يوماً بالصافي |
-| Canonical ID | Not registered; proposed definition ID only: `aged_1_30` |
-| Version / definition hash | odoo-aged-report-reconstruction-v1 / `d0f5572a5b129dc8b91ce231a5f495633a00ac7a68bf9893c1ea2ea0c07d420c` |
-| Business purpose | Support decisions on receivables using the named measure and explicit scope. 1–30 Days Overdue (Net) |
-| Definition | Signed residual where effective days overdue are 1–30. |
-| Formula / proposed formula | Signed residual where effective days overdue are 1–30. |
+| English / Arabic name | 1–30 Overdue / متأخر من ١ إلى ٣٠ يوماً |
+| Canonical ID | `aged_1_30` |
+| Version / definition hash | odoo-aged-report-reconstruction-v1 / `6c0b088d24b67ef814c7f67192ac36f59ccd824dfb7cd9bb11a0176ee3f110f0` |
+| Metric help version | 1 |
+| Business purpose | Support decisions on receivables using the named measure and explicit scope. 1–30 Overdue |
+| Definition | Signed receivable balances overdue by 1–30 days at cutoff. Historical residual is reconstructed through cutoff; payments after cutoff do not change that historical balance. |
+| Formula / proposed formula | Signed receivable balances overdue by 1–30 days at cutoff. |
 | Event / snapshot | Snapshot: one cutoff, never summed across dates. |
-| Business date | Historical snapshot cutoff September 30, 2026; accounting entries/settlements effective by cutoff only. |
-| Source concept / Odoo calculation | Signed residual where effective days overdue are 1–30. Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
+| Business date | Inclusive accounting cutoff. Age by maturity date, falling back to journal-item accounting date. Due exactly on cutoff belongs to At Date. |
+| Source concept / Odoo calculation | Signed receivable balances overdue by 1–30 days at cutoff. Historical residual is reconstructed through cutoff; payments after cutoff do not change that historical balance. Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
 | Grain | One receivable maturity/installment component; invoice counts require distinct invoice identity. |
-| Aggregation | Sum eligible contributions at the named grain; ratios use matching numerator/denominator totals, distinct counts deduplicate identities, durations require an approved weighting rule. Snapshots select one eligible state per stable position at cutoff and sum across positions only. Never sum percentages or daily balances. |
+| Aggregation | One cutoff; never sum balances across dates. Ratios use aggregates, never summed customer percentages. |
 | Currency / unit | Company-ledger IQD, legal receivable includes tax; never sum document-currency USD with IQD. |
 | Signs | Preserve source signs; posted invoice/refund values have explicit polarity. Refund Value is positive magnitude; Net Invoiced Revenue subtracts it. Negative stock and signed credits remain visible. No blanket absolute-value transform. |
-| Included states | Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
-| Excluded / cancellation | Draft/cancelled documents excluded from value and completed-count measures. Cancelled Orders explicitly counts state cancel by order date. Other source states/returns must be approved before extraction; later source edits require a new frozen release, not rewriting history. |
-| Refund / settlement | Order measures are not reduced by unrelated invoices/credit notes; invoicing recognizes each posted refund on its own issue date. Product/receipt returns require signed line/movement lineage; no header amount repeated per line. Snapshot settlements include only those effective by cutoff. |
+| Included states | Posted customer receivable journal items, including invoice, journal/payment and credit-note balances. |
+| Excluded / cancellation | Draft/cancelled documents, non-receivable accounts, later accounting entries and settlements effective after cutoff. |
+| Refund / settlement | Signed customer credits remain in their own aging buckets; no arbitrary allocation. Gross positive components and credit balances remain distinct. |
 | Null / Unassigned | No missing monetary, quantity, identity or date value becomes zero silently. Ratios with zero denominator are undefined. Missing owner/Business Line maps to governed Unassigned where supported; missing customer/product identity is an exception, never display-name matching. No arbitrary attribution. |
-| Published dimensions | None |
+| Published dimensions | customer |
 | Candidate dimensions (not permissions) | customer, commercial_customer, salesperson, business_line, currency, time |
-| Technical evidence | Preserved independent numerical control; partner identity/source-report gaps remain. |
-| Business approval | Pending exact-version decision; owner/date/exceptions unrecorded. |
-| Certification / publication | Not certified; unpublished; unavailable to normal AI/builder generation. |
-| One lifecycle state | Reconciled · Awaiting Business Approval |
+| Technical evidence | Exact linked release controls and derived-output approvals where applicable; see the metric approval reference and published scope. |
+| Business approval | Finance standing approval applied 2026-10-07: finance-standing-20261007-receivables-v1 |
+| Certification / publication | Certified/published summary; exact grouping permissions: customer. Cutoff September 30 only. |
+| One lifecycle state | Certified |
 | Control example, not a definition constant | 218464001.82 |
-| Known limitations | CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances. |
+| Known limitations | Published only at the exact September 30, 2026 cutoff under Finance standing approval dated October 7. Stable customer identity and signed aging are exact; gross/credit components have summary permission only. Alternative gross-positive aging buckets, other dates/dimensions and custom-module equivalence are not certified. |
 
-### 31–60 Days Overdue (Net) — aged_31_60
+### 31–60 Overdue — aged_31_60
 
 | Definition field | Meaning |
 | --- | --- |
-| English / Arabic name | 31–60 Days Overdue (Net) / متأخرات من 31 إلى 60 يوماً بالصافي |
-| Canonical ID | Not registered; proposed definition ID only: `aged_31_60` |
-| Version / definition hash | odoo-aged-report-reconstruction-v1 / `aa3b87bda887554b29721cabcd803edf6de933ed69c24977cb4fa4c8ef580e81` |
-| Business purpose | Support decisions on receivables using the named measure and explicit scope. 31–60 Days Overdue (Net) |
-| Definition | Signed residual where effective days overdue are 31–60. |
-| Formula / proposed formula | Signed residual where effective days overdue are 31–60. |
+| English / Arabic name | 31–60 Overdue / متأخر من ٣١ إلى ٦٠ يوماً |
+| Canonical ID | `aged_31_60` |
+| Version / definition hash | odoo-aged-report-reconstruction-v1 / `7dcb5bd89ebceea808aec0c4d8346c9cff8b9d13a738ab2c6cabc9f6d9d6092d` |
+| Metric help version | 1 |
+| Business purpose | Support decisions on receivables using the named measure and explicit scope. 31–60 Overdue |
+| Definition | Signed receivable balances overdue by 31–60 days at cutoff. Historical residual is reconstructed through cutoff; payments after cutoff do not change that historical balance. |
+| Formula / proposed formula | Signed receivable balances overdue by 31–60 days at cutoff. |
 | Event / snapshot | Snapshot: one cutoff, never summed across dates. |
-| Business date | Historical snapshot cutoff September 30, 2026; accounting entries/settlements effective by cutoff only. |
-| Source concept / Odoo calculation | Signed residual where effective days overdue are 31–60. Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
+| Business date | Inclusive accounting cutoff. Age by maturity date, falling back to journal-item accounting date. Due exactly on cutoff belongs to At Date. |
+| Source concept / Odoo calculation | Signed receivable balances overdue by 31–60 days at cutoff. Historical residual is reconstructed through cutoff; payments after cutoff do not change that historical balance. Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
 | Grain | One receivable maturity/installment component; invoice counts require distinct invoice identity. |
-| Aggregation | Sum eligible contributions at the named grain; ratios use matching numerator/denominator totals, distinct counts deduplicate identities, durations require an approved weighting rule. Snapshots select one eligible state per stable position at cutoff and sum across positions only. Never sum percentages or daily balances. |
+| Aggregation | One cutoff; never sum balances across dates. Ratios use aggregates, never summed customer percentages. |
 | Currency / unit | Company-ledger IQD, legal receivable includes tax; never sum document-currency USD with IQD. |
 | Signs | Preserve source signs; posted invoice/refund values have explicit polarity. Refund Value is positive magnitude; Net Invoiced Revenue subtracts it. Negative stock and signed credits remain visible. No blanket absolute-value transform. |
-| Included states | Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
-| Excluded / cancellation | Draft/cancelled documents excluded from value and completed-count measures. Cancelled Orders explicitly counts state cancel by order date. Other source states/returns must be approved before extraction; later source edits require a new frozen release, not rewriting history. |
-| Refund / settlement | Order measures are not reduced by unrelated invoices/credit notes; invoicing recognizes each posted refund on its own issue date. Product/receipt returns require signed line/movement lineage; no header amount repeated per line. Snapshot settlements include only those effective by cutoff. |
+| Included states | Posted customer receivable journal items, including invoice, journal/payment and credit-note balances. |
+| Excluded / cancellation | Draft/cancelled documents, non-receivable accounts, later accounting entries and settlements effective after cutoff. |
+| Refund / settlement | Signed customer credits remain in their own aging buckets; no arbitrary allocation. Gross positive components and credit balances remain distinct. |
 | Null / Unassigned | No missing monetary, quantity, identity or date value becomes zero silently. Ratios with zero denominator are undefined. Missing owner/Business Line maps to governed Unassigned where supported; missing customer/product identity is an exception, never display-name matching. No arbitrary attribution. |
-| Published dimensions | None |
+| Published dimensions | customer |
 | Candidate dimensions (not permissions) | customer, commercial_customer, salesperson, business_line, currency, time |
-| Technical evidence | Preserved independent numerical control; partner identity/source-report gaps remain. |
-| Business approval | Pending exact-version decision; owner/date/exceptions unrecorded. |
-| Certification / publication | Not certified; unpublished; unavailable to normal AI/builder generation. |
-| One lifecycle state | Reconciled · Awaiting Business Approval |
+| Technical evidence | Exact linked release controls and derived-output approvals where applicable; see the metric approval reference and published scope. |
+| Business approval | Finance standing approval applied 2026-10-07: finance-standing-20261007-receivables-v1 |
+| Certification / publication | Certified/published summary; exact grouping permissions: customer. Cutoff September 30 only. |
+| One lifecycle state | Certified |
 | Control example, not a definition constant | 69135500.55 |
-| Known limitations | CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances. |
+| Known limitations | Published only at the exact September 30, 2026 cutoff under Finance standing approval dated October 7. Stable customer identity and signed aging are exact; gross/credit components have summary permission only. Alternative gross-positive aging buckets, other dates/dimensions and custom-module equivalence are not certified. |
 
-### 61–90 Days Overdue (Net) — aged_61_90
+### 61–90 Overdue — aged_61_90
 
 | Definition field | Meaning |
 | --- | --- |
-| English / Arabic name | 61–90 Days Overdue (Net) / متأخرات من 61 إلى 90 يوماً بالصافي |
-| Canonical ID | Not registered; proposed definition ID only: `aged_61_90` |
-| Version / definition hash | odoo-aged-report-reconstruction-v1 / `a3084fa4878dc6a69141529f93078736930bcc6f6ba388387b8403f07180aa0d` |
-| Business purpose | Support decisions on receivables using the named measure and explicit scope. 61–90 Days Overdue (Net) |
-| Definition | Signed residual where effective days overdue are 61–90. |
-| Formula / proposed formula | Signed residual where effective days overdue are 61–90. |
+| English / Arabic name | 61–90 Overdue / متأخر من ٦١ إلى ٩٠ يوماً |
+| Canonical ID | `aged_61_90` |
+| Version / definition hash | odoo-aged-report-reconstruction-v1 / `2e52737b9a436e7fb0fb0138c1ef053bf1ea8677c6ebe379264e00e5e496c929` |
+| Metric help version | 1 |
+| Business purpose | Support decisions on receivables using the named measure and explicit scope. 61–90 Overdue |
+| Definition | Signed receivable balances overdue by 61–90 days at cutoff. Historical residual is reconstructed through cutoff; payments after cutoff do not change that historical balance. |
+| Formula / proposed formula | Signed receivable balances overdue by 61–90 days at cutoff. |
 | Event / snapshot | Snapshot: one cutoff, never summed across dates. |
-| Business date | Historical snapshot cutoff September 30, 2026; accounting entries/settlements effective by cutoff only. |
-| Source concept / Odoo calculation | Signed residual where effective days overdue are 61–90. Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
+| Business date | Inclusive accounting cutoff. Age by maturity date, falling back to journal-item accounting date. Due exactly on cutoff belongs to At Date. |
+| Source concept / Odoo calculation | Signed receivable balances overdue by 61–90 days at cutoff. Historical residual is reconstructed through cutoff; payments after cutoff do not change that historical balance. Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
 | Grain | One receivable maturity/installment component; invoice counts require distinct invoice identity. |
-| Aggregation | Sum eligible contributions at the named grain; ratios use matching numerator/denominator totals, distinct counts deduplicate identities, durations require an approved weighting rule. Snapshots select one eligible state per stable position at cutoff and sum across positions only. Never sum percentages or daily balances. |
+| Aggregation | One cutoff; never sum balances across dates. Ratios use aggregates, never summed customer percentages. |
 | Currency / unit | Company-ledger IQD, legal receivable includes tax; never sum document-currency USD with IQD. |
 | Signs | Preserve source signs; posted invoice/refund values have explicit polarity. Refund Value is positive magnitude; Net Invoiced Revenue subtracts it. Negative stock and signed credits remain visible. No blanket absolute-value transform. |
-| Included states | Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
-| Excluded / cancellation | Draft/cancelled documents excluded from value and completed-count measures. Cancelled Orders explicitly counts state cancel by order date. Other source states/returns must be approved before extraction; later source edits require a new frozen release, not rewriting history. |
-| Refund / settlement | Order measures are not reduced by unrelated invoices/credit notes; invoicing recognizes each posted refund on its own issue date. Product/receipt returns require signed line/movement lineage; no header amount repeated per line. Snapshot settlements include only those effective by cutoff. |
+| Included states | Posted customer receivable journal items, including invoice, journal/payment and credit-note balances. |
+| Excluded / cancellation | Draft/cancelled documents, non-receivable accounts, later accounting entries and settlements effective after cutoff. |
+| Refund / settlement | Signed customer credits remain in their own aging buckets; no arbitrary allocation. Gross positive components and credit balances remain distinct. |
 | Null / Unassigned | No missing monetary, quantity, identity or date value becomes zero silently. Ratios with zero denominator are undefined. Missing owner/Business Line maps to governed Unassigned where supported; missing customer/product identity is an exception, never display-name matching. No arbitrary attribution. |
-| Published dimensions | None |
+| Published dimensions | customer |
 | Candidate dimensions (not permissions) | customer, commercial_customer, salesperson, business_line, currency, time |
-| Technical evidence | Preserved independent numerical control; partner identity/source-report gaps remain. |
-| Business approval | Pending exact-version decision; owner/date/exceptions unrecorded. |
-| Certification / publication | Not certified; unpublished; unavailable to normal AI/builder generation. |
-| One lifecycle state | Reconciled · Awaiting Business Approval |
+| Technical evidence | Exact linked release controls and derived-output approvals where applicable; see the metric approval reference and published scope. |
+| Business approval | Finance standing approval applied 2026-10-07: finance-standing-20261007-receivables-v1 |
+| Certification / publication | Certified/published summary; exact grouping permissions: customer. Cutoff September 30 only. |
+| One lifecycle state | Certified |
 | Control example, not a definition constant | 25871000.18 |
-| Known limitations | CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances. |
+| Known limitations | Published only at the exact September 30, 2026 cutoff under Finance standing approval dated October 7. Stable customer identity and signed aging are exact; gross/credit components have summary permission only. Alternative gross-positive aging buckets, other dates/dimensions and custom-module equivalence are not certified. |
 
-### 91–120 Days Overdue (Net) — aged_91_120
+### 91–120 Overdue — aged_91_120
 
 | Definition field | Meaning |
 | --- | --- |
-| English / Arabic name | 91–120 Days Overdue (Net) / متأخرات من 91 إلى 120 يوماً بالصافي |
-| Canonical ID | Not registered; proposed definition ID only: `aged_91_120` |
-| Version / definition hash | odoo-aged-report-reconstruction-v1 / `82b5a2d56f1918bfcec27062c43074d467e7ffddcaccc1d835da53febd9ced1f` |
-| Business purpose | Support decisions on receivables using the named measure and explicit scope. 91–120 Days Overdue (Net) |
-| Definition | Signed residual where effective days overdue are 91–120. |
-| Formula / proposed formula | Signed residual where effective days overdue are 91–120. |
+| English / Arabic name | 91–120 Overdue / متأخر من ٩١ إلى ١٢٠ يوماً |
+| Canonical ID | `aged_91_120` |
+| Version / definition hash | odoo-aged-report-reconstruction-v1 / `3ca10aeb39dfda5177888fbcb017378f3cce20ec7627937163bb8bb2245f5cda` |
+| Metric help version | 1 |
+| Business purpose | Support decisions on receivables using the named measure and explicit scope. 91–120 Overdue |
+| Definition | Signed receivable balances overdue by 91–120 days at cutoff. Historical residual is reconstructed through cutoff; payments after cutoff do not change that historical balance. |
+| Formula / proposed formula | Signed receivable balances overdue by 91–120 days at cutoff. |
 | Event / snapshot | Snapshot: one cutoff, never summed across dates. |
-| Business date | Historical snapshot cutoff September 30, 2026; accounting entries/settlements effective by cutoff only. |
-| Source concept / Odoo calculation | Signed residual where effective days overdue are 91–120. Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
+| Business date | Inclusive accounting cutoff. Age by maturity date, falling back to journal-item accounting date. Due exactly on cutoff belongs to At Date. |
+| Source concept / Odoo calculation | Signed receivable balances overdue by 91–120 days at cutoff. Historical residual is reconstructed through cutoff; payments after cutoff do not change that historical balance. Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
 | Grain | One receivable maturity/installment component; invoice counts require distinct invoice identity. |
-| Aggregation | Sum eligible contributions at the named grain; ratios use matching numerator/denominator totals, distinct counts deduplicate identities, durations require an approved weighting rule. Snapshots select one eligible state per stable position at cutoff and sum across positions only. Never sum percentages or daily balances. |
+| Aggregation | One cutoff; never sum balances across dates. Ratios use aggregates, never summed customer percentages. |
 | Currency / unit | Company-ledger IQD, legal receivable includes tax; never sum document-currency USD with IQD. |
 | Signs | Preserve source signs; posted invoice/refund values have explicit polarity. Refund Value is positive magnitude; Net Invoiced Revenue subtracts it. Negative stock and signed credits remain visible. No blanket absolute-value transform. |
-| Included states | Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
-| Excluded / cancellation | Draft/cancelled documents excluded from value and completed-count measures. Cancelled Orders explicitly counts state cancel by order date. Other source states/returns must be approved before extraction; later source edits require a new frozen release, not rewriting history. |
-| Refund / settlement | Order measures are not reduced by unrelated invoices/credit notes; invoicing recognizes each posted refund on its own issue date. Product/receipt returns require signed line/movement lineage; no header amount repeated per line. Snapshot settlements include only those effective by cutoff. |
+| Included states | Posted customer receivable journal items, including invoice, journal/payment and credit-note balances. |
+| Excluded / cancellation | Draft/cancelled documents, non-receivable accounts, later accounting entries and settlements effective after cutoff. |
+| Refund / settlement | Signed customer credits remain in their own aging buckets; no arbitrary allocation. Gross positive components and credit balances remain distinct. |
 | Null / Unassigned | No missing monetary, quantity, identity or date value becomes zero silently. Ratios with zero denominator are undefined. Missing owner/Business Line maps to governed Unassigned where supported; missing customer/product identity is an exception, never display-name matching. No arbitrary attribution. |
-| Published dimensions | None |
+| Published dimensions | customer |
 | Candidate dimensions (not permissions) | customer, commercial_customer, salesperson, business_line, currency, time |
-| Technical evidence | Preserved independent numerical control; partner identity/source-report gaps remain. |
-| Business approval | Pending exact-version decision; owner/date/exceptions unrecorded. |
-| Certification / publication | Not certified; unpublished; unavailable to normal AI/builder generation. |
-| One lifecycle state | Reconciled · Awaiting Business Approval |
+| Technical evidence | Exact linked release controls and derived-output approvals where applicable; see the metric approval reference and published scope. |
+| Business approval | Finance standing approval applied 2026-10-07: finance-standing-20261007-receivables-v1 |
+| Certification / publication | Certified/published summary; exact grouping permissions: customer. Cutoff September 30 only. |
+| One lifecycle state | Certified |
 | Control example, not a definition constant | 33782500.14 |
-| Known limitations | CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances. |
+| Known limitations | Published only at the exact September 30, 2026 cutoff under Finance standing approval dated October 7. Stable customer identity and signed aging are exact; gross/credit components have summary permission only. Alternative gross-positive aging buckets, other dates/dimensions and custom-module equivalence are not certified. |
 
-### Over 120 Days Overdue (Net) — aged_over_120
+### Older than 120 — aged_over_120
 
 | Definition field | Meaning |
 | --- | --- |
-| English / Arabic name | Over 120 Days Overdue (Net) / متأخرات تتجاوز 120 يوماً بالصافي |
-| Canonical ID | Not registered; proposed definition ID only: `aged_over_120` |
-| Version / definition hash | odoo-aged-report-reconstruction-v1 / `7c0057b92c12aff22f3f588e5f78b435c21d3fb7928be0955cfecdfe1b311268` |
-| Business purpose | Support decisions on receivables using the named measure and explicit scope. Over 120 Days Overdue (Net) |
-| Definition | Signed residual where effective days overdue exceed 120. |
-| Formula / proposed formula | Signed residual where effective days overdue exceed 120. |
+| English / Arabic name | Older than 120 / متأخر أكثر من ١٢٠ يوماً |
+| Canonical ID | `aged_over_120` |
+| Version / definition hash | odoo-aged-report-reconstruction-v1 / `50dc4f50fbd334a2adb95b45670e909c93771ec55db4c485b2fb580e907eba2b` |
+| Metric help version | 1 |
+| Business purpose | Support decisions on receivables using the named measure and explicit scope. Older than 120 |
+| Definition | Signed receivable balances overdue by more than 120 days at cutoff. Historical residual is reconstructed through cutoff; payments after cutoff do not change that historical balance. |
+| Formula / proposed formula | Signed receivable balances overdue by more than 120 days at cutoff. |
 | Event / snapshot | Snapshot: one cutoff, never summed across dates. |
-| Business date | Historical snapshot cutoff September 30, 2026; accounting entries/settlements effective by cutoff only. |
-| Source concept / Odoo calculation | Signed residual where effective days overdue exceed 120. Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
+| Business date | Inclusive accounting cutoff. Age by maturity date, falling back to journal-item accounting date. Due exactly on cutoff belongs to At Date. |
+| Source concept / Odoo calculation | Signed receivable balances overdue by more than 120 days at cutoff. Historical residual is reconstructed through cutoff; payments after cutoff do not change that historical balance. Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
 | Grain | One receivable maturity/installment component; invoice counts require distinct invoice identity. |
-| Aggregation | Sum eligible contributions at the named grain; ratios use matching numerator/denominator totals, distinct counts deduplicate identities, durations require an approved weighting rule. Snapshots select one eligible state per stable position at cutoff and sum across positions only. Never sum percentages or daily balances. |
+| Aggregation | One cutoff; never sum balances across dates. Ratios use aggregates, never summed customer percentages. |
 | Currency / unit | Company-ledger IQD, legal receivable includes tax; never sum document-currency USD with IQD. |
 | Signs | Preserve source signs; posted invoice/refund values have explicit polarity. Refund Value is positive magnitude; Net Invoiced Revenue subtracts it. Negative stock and signed credits remain visible. No blanket absolute-value transform. |
-| Included states | Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
-| Excluded / cancellation | Draft/cancelled documents excluded from value and completed-count measures. Cancelled Orders explicitly counts state cancel by order date. Other source states/returns must be approved before extraction; later source edits require a new frozen release, not rewriting history. |
-| Refund / settlement | Order measures are not reduced by unrelated invoices/credit notes; invoicing recognizes each posted refund on its own issue date. Product/receipt returns require signed line/movement lineage; no header amount repeated per line. Snapshot settlements include only those effective by cutoff. |
+| Included states | Posted customer receivable journal items, including invoice, journal/payment and credit-note balances. |
+| Excluded / cancellation | Draft/cancelled documents, non-receivable accounts, later accounting entries and settlements effective after cutoff. |
+| Refund / settlement | Signed customer credits remain in their own aging buckets; no arbitrary allocation. Gross positive components and credit balances remain distinct. |
 | Null / Unassigned | No missing monetary, quantity, identity or date value becomes zero silently. Ratios with zero denominator are undefined. Missing owner/Business Line maps to governed Unassigned where supported; missing customer/product identity is an exception, never display-name matching. No arbitrary attribution. |
-| Published dimensions | None |
+| Published dimensions | customer |
 | Candidate dimensions (not permissions) | customer, commercial_customer, salesperson, business_line, currency, time |
-| Technical evidence | Preserved independent numerical control; partner identity/source-report gaps remain. |
-| Business approval | Pending exact-version decision; owner/date/exceptions unrecorded. |
-| Certification / publication | Not certified; unpublished; unavailable to normal AI/builder generation. |
-| One lifecycle state | Reconciled · Awaiting Business Approval |
+| Technical evidence | Exact linked release controls and derived-output approvals where applicable; see the metric approval reference and published scope. |
+| Business approval | Finance standing approval applied 2026-10-07: finance-standing-20261007-receivables-v1 |
+| Certification / publication | Certified/published summary; exact grouping permissions: customer. Cutoff September 30 only. |
+| One lifecycle state | Certified |
 | Control example, not a definition constant | 253187608.77 |
-| Known limitations | CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances. |
+| Known limitations | Published only at the exact September 30, 2026 cutoff under Finance standing approval dated October 7. Stable customer identity and signed aging are exact; gross/credit components have summary permission only. Alternative gross-positive aging buckets, other dates/dimensions and custom-module equivalence are not certified. |
 
 ### Current Gross Receivables — receivables_current_amount
 
@@ -2004,65 +2043,67 @@ Gross v1: current 760,615,731.13; 1–30 239,405,751.70; 31–90 94,315,000.66; 
 | Control example, not a definition constant | 1319 |
 | Known limitations | CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances. |
 
-### Total Overdue (Net) — total_overdue_net
+### Total Overdue — total_overdue_net
 
 | Definition field | Meaning |
 | --- | --- |
-| English / Arabic name | Total Overdue (Net) / إجمالي المتأخرات بالصافي |
-| Canonical ID | Not registered; proposed definition ID only: `total_overdue_net` |
-| Version / definition hash | 1 / `c2d7495544b987fdaaccf36843b633338bec10ebbb24ab3a991b88cec2b3d969` |
-| Business purpose | Support decisions on receivables using the named measure and explicit scope. Total Overdue (Net) |
-| Definition | Sum net 1–30, 31–60, 61–90, 91–120 and >120 buckets; derived candidate 600,440,611.46 IQD. |
-| Formula / proposed formula | Sum net 1–30, 31–60, 61–90, 91–120 and >120 buckets; derived candidate 600,440,611.46 IQD. |
+| English / Arabic name | Total Overdue / إجمالي الذمم المتأخرة |
+| Canonical ID | `total_overdue_receivable` |
+| Version / definition hash | 1 / `c58acecc08e48c13e570c70e639ed8d4ff92a85b2aac6d27e7ffb3b3d8b6e046` |
+| Metric help version | 1 |
+| Business purpose | Support decisions on receivables using the named measure and explicit scope. Total Overdue |
+| Definition | Sum of the five signed overdue buckets at the same cutoff. Historical residual is reconstructed through cutoff; payments after cutoff do not change that historical balance. |
+| Formula / proposed formula | 1–30 + 31–60 + 61–90 + 91–120 + >120 |
 | Event / snapshot | Snapshot: one cutoff, never summed across dates. |
-| Business date | Historical snapshot cutoff September 30, 2026; accounting entries/settlements effective by cutoff only. |
-| Source concept / Odoo calculation | Sum net 1–30, 31–60, 61–90, 91–120 and >120 buckets; derived candidate 600,440,611.46 IQD. Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
+| Business date | Inclusive accounting cutoff. Age by maturity date, falling back to journal-item accounting date. Due exactly on cutoff belongs to At Date. |
+| Source concept / Odoo calculation | Sum of the five signed overdue buckets at the same cutoff. Historical residual is reconstructed through cutoff; payments after cutoff do not change that historical balance. Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
 | Grain | One receivable maturity/installment component; invoice counts require distinct invoice identity. |
-| Aggregation | Sum eligible contributions at the named grain; ratios use matching numerator/denominator totals, distinct counts deduplicate identities, durations require an approved weighting rule. Snapshots select one eligible state per stable position at cutoff and sum across positions only. Never sum percentages or daily balances. |
+| Aggregation | One cutoff; never sum balances across dates. Ratios use aggregates, never summed customer percentages. |
 | Currency / unit | Company-ledger IQD, legal receivable includes tax; never sum document-currency USD with IQD. |
 | Signs | Preserve source signs; posted invoice/refund values have explicit polarity. Refund Value is positive magnitude; Net Invoiced Revenue subtracts it. Negative stock and signed credits remain visible. No blanket absolute-value transform. |
-| Included states | Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
-| Excluded / cancellation | Draft/cancelled documents excluded from value and completed-count measures. Cancelled Orders explicitly counts state cancel by order date. Other source states/returns must be approved before extraction; later source edits require a new frozen release, not rewriting history. |
-| Refund / settlement | Order measures are not reduced by unrelated invoices/credit notes; invoicing recognizes each posted refund on its own issue date. Product/receipt returns require signed line/movement lineage; no header amount repeated per line. Snapshot settlements include only those effective by cutoff. |
+| Included states | Posted customer receivable journal items, including invoice, journal/payment and credit-note balances. |
+| Excluded / cancellation | Draft/cancelled documents, non-receivable accounts, later accounting entries and settlements effective after cutoff. |
+| Refund / settlement | Signed customer credits remain in their own aging buckets; no arbitrary allocation. Gross positive components and credit balances remain distinct. |
 | Null / Unassigned | No missing monetary, quantity, identity or date value becomes zero silently. Ratios with zero denominator are undefined. Missing owner/Business Line maps to governed Unassigned where supported; missing customer/product identity is an exception, never display-name matching. No arbitrary attribution. |
-| Published dimensions | None |
+| Published dimensions | customer |
 | Candidate dimensions (not permissions) | customer, commercial_customer, salesperson, business_line, currency, time |
-| Technical evidence | Discovery profiles / proposal only, not exact source-to-mart reconciliation. See technical reference. |
-| Business approval | Pending exact-version decision; owner/date/exceptions unrecorded. |
-| Certification / publication | Not certified; unpublished; unavailable to normal AI/builder generation. |
-| One lifecycle state | Defined · Awaiting Reconciliation |
-| Control example, not a definition constant | — |
-| Known limitations | CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances. |
+| Technical evidence | Exact linked release controls and derived-output approvals where applicable; see the metric approval reference and published scope. |
+| Business approval | Finance standing approval applied 2026-10-07: finance-standing-20261007-receivables-v1 |
+| Certification / publication | Certified/published summary; exact grouping permissions: customer. Cutoff September 30 only. |
+| One lifecycle state | Certified |
+| Control example, not a definition constant | 600440611.46 |
+| Known limitations | Published only at the exact September 30, 2026 cutoff under Finance standing approval dated October 7. Stable customer identity and signed aging are exact; gross/credit components have summary permission only. Alternative gross-positive aging buckets, other dates/dimensions and custom-module equivalence are not certified. |
 
-### Overdue Percentage (Net) — overdue_net_percentage
+### Overdue % — overdue_net_percentage
 
 | Definition field | Meaning |
 | --- | --- |
-| English / Arabic name | Overdue Percentage (Net) / نسبة المتأخرات بالصافي |
-| Canonical ID | Not registered; proposed definition ID only: `overdue_net_percentage` |
-| Version / definition hash | 1 / `039e17662bdc8f913ce12a1929d71d616e55fb8c597f43bc51dd1b6ca4102685` |
-| Business purpose | Support decisions on receivables using the named measure and explicit scope. Overdue Percentage (Net) |
-| Definition | 100 × net total overdue / net aged receivable; net credits can make percentages unusual. No approved ratio yet. |
-| Formula / proposed formula | 100 × net total overdue / net aged receivable; net credits can make percentages unusual. No approved ratio yet. |
+| English / Arabic name | Overdue % / نسبة الذمم المتأخرة |
+| Canonical ID | `overdue_receivable_percentage` |
+| Version / definition hash | 1 / `7879bb81eec5243cd715a3ccb5efa99bb14d09261168e16792d1b5a648c6be41` |
+| Metric help version | 1 |
+| Business purpose | Support decisions on receivables using the named measure and explicit scope. Overdue % |
+| Definition | Total Overdue divided by Net Aged Receivable; zero denominator gives no value. Historical residual is reconstructed through cutoff; payments after cutoff do not change that historical balance. |
+| Formula / proposed formula | Total Overdue ÷ Net Aged Receivable × 100 |
 | Event / snapshot | Snapshot: one cutoff, never summed across dates. |
-| Business date | Historical snapshot cutoff September 30, 2026; accounting entries/settlements effective by cutoff only. |
-| Source concept / Odoo calculation | 100 × net total overdue / net aged receivable; net credits can make percentages unusual. No approved ratio yet. Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
+| Business date | Inclusive accounting cutoff. Age by maturity date, falling back to journal-item accounting date. Due exactly on cutoff belongs to At Date. |
+| Source concept / Odoo calculation | Total Overdue divided by Net Aged Receivable; zero denominator gives no value. Historical residual is reconstructed through cutoff; payments after cutoff do not change that historical balance. Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
 | Grain | One receivable maturity/installment component; invoice counts require distinct invoice identity. |
-| Aggregation | Sum eligible contributions at the named grain; ratios use matching numerator/denominator totals, distinct counts deduplicate identities, durations require an approved weighting rule. Snapshots select one eligible state per stable position at cutoff and sum across positions only. Never sum percentages or daily balances. |
+| Aggregation | One cutoff; never sum balances across dates. Ratios use aggregates, never summed customer percentages. |
 | Currency / unit | Percentage (%), computed from matching totals; cohort and zero-denominator rules require exact-version approval. |
 | Signs | Preserve source signs; posted invoice/refund values have explicit polarity. Refund Value is positive magnitude; Net Invoiced Revenue subtracts it. Negative stock and signed credits remain visible. No blanket absolute-value transform. |
-| Included states | Posted receivable ledger components, including eligible opening entries; no draft/cancelled entries. Candidate policies remain separate. |
-| Excluded / cancellation | Draft/cancelled documents excluded from value and completed-count measures. Cancelled Orders explicitly counts state cancel by order date. Other source states/returns must be approved before extraction; later source edits require a new frozen release, not rewriting history. |
-| Refund / settlement | Order measures are not reduced by unrelated invoices/credit notes; invoicing recognizes each posted refund on its own issue date. Product/receipt returns require signed line/movement lineage; no header amount repeated per line. Snapshot settlements include only those effective by cutoff. |
+| Included states | Posted customer receivable journal items, including invoice, journal/payment and credit-note balances. |
+| Excluded / cancellation | Draft/cancelled documents, non-receivable accounts, later accounting entries and settlements effective after cutoff. |
+| Refund / settlement | Signed customer credits remain in their own aging buckets; no arbitrary allocation. Gross positive components and credit balances remain distinct. |
 | Null / Unassigned | No missing monetary, quantity, identity or date value becomes zero silently. Ratios with zero denominator are undefined. Missing owner/Business Line maps to governed Unassigned where supported; missing customer/product identity is an exception, never display-name matching. No arbitrary attribution. |
-| Published dimensions | None |
+| Published dimensions | customer |
 | Candidate dimensions (not permissions) | customer, commercial_customer, salesperson, business_line, currency, time |
-| Technical evidence | Discovery profiles / proposal only, not exact source-to-mart reconciliation. See technical reference. |
-| Business approval | Pending exact-version decision; owner/date/exceptions unrecorded. |
-| Certification / publication | Not certified; unpublished; unavailable to normal AI/builder generation. |
-| One lifecycle state | Defined · Awaiting Reconciliation |
+| Technical evidence | Exact linked release controls and derived-output approvals where applicable; see the metric approval reference and published scope. |
+| Business approval | Finance standing approval applied 2026-10-07: finance-standing-20261007-receivables-v1 |
+| Certification / publication | Certified/published summary; exact grouping permissions: customer. Cutoff September 30 only. |
+| One lifecycle state | Certified |
 | Control example, not a definition constant | — |
-| Known limitations | CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances. |
+| Known limitations | Published only at the exact September 30, 2026 cutoff under Finance standing approval dated October 7. Stable customer identity and signed aging are exact; gross/credit components have summary permission only. Alternative gross-positive aging buckets, other dates/dimensions and custom-module equivalence are not certified. |
 
 ## Customers
 
@@ -2645,19 +2686,20 @@ Gross v1: current 760,615,731.13; 1–30 239,405,751.70; 31–90 94,315,000.66; 
 | English / Arabic name | Net Units Sold / صافي الكميات المباعة |
 | Canonical ID | `units_sold` |
 | Version / definition hash | 1 / `e0d5465e98420f4ef6d97ca9243be00c6bd6c6cf58412ac4e455f0376c493a93` |
+| Metric help version | 1 |
 | Business purpose | Support decisions on products using the named measure and explicit scope. Net Units Sold |
 | Definition | signed posted product-line quantity normalized within UOM category |
 | Formula / proposed formula | signed posted product-line quantity normalized within UOM category |
 | Event / snapshot | Event / period-derived measure: defined business window. |
-| Business date | Invoice issue date; order date only for explicitly named order-product measures. |
+| Business date | Document invoice date; each refund uses its own issue date. |
 | Source concept / Odoo calculation | signed posted product-line quantity normalized within UOM category Eligible posted customer product lines, separating credit notes; service, display, downpayment and rounding scope must reconcile to headers. |
 | Grain | One product line then aggregate by stable product ID; never copy whole invoice/order totals to each product. |
 | Aggregation | Sum eligible contributions at the named grain; ratios use matching numerator/denominator totals, distinct counts deduplicate identities, durations require an approved weighting rule. Snapshots select one eligible state per stable position at cutoff and sum across positions only. Never sum percentages or daily balances. |
 | Currency / unit | Compatible product-base UOM; never a mixed-unit total. |
 | Signs | Preserve source signs; posted invoice/refund values have explicit polarity. Refund Value is positive magnitude; Net Invoiced Revenue subtracts it. Negative stock and signed credits remain visible. No blanket absolute-value transform. |
 | Included states | Eligible posted customer product lines, separating credit notes; service, display, downpayment and rounding scope must reconcile to headers. |
-| Excluded / cancellation | Draft/cancelled documents excluded from value and completed-count measures. Cancelled Orders explicitly counts state cancel by order date. Other source states/returns must be approved before extraction; later source edits require a new frozen release, not rewriting history. |
-| Refund / settlement | Order measures are not reduced by unrelated invoices/credit notes; invoicing recognizes each posted refund on its own issue date. Product/receipt returns require signed line/movement lineage; no header amount repeated per line. Snapshot settlements include only those effective by cutoff. |
+| Excluded / cancellation | Draft and cancelled documents are excluded. |
+| Refund / settlement | Posted refunds reduce net invoiced revenue on their own invoice date. Refund Value shows their positive magnitude. Order metrics remain separate. |
 | Null / Unassigned | No missing monetary, quantity, identity or date value becomes zero silently. Ratios with zero denominator are undefined. Missing owner/Business Line maps to governed Unassigned where supported; missing customer/product identity is an exception, never display-name matching. No arbitrary attribution. |
 | Published dimensions | None |
 | Candidate dimensions (not permissions) | product, product_category, brand, customer, salesperson, business_line, uom, time |
@@ -3489,19 +3531,20 @@ Gross v1: current 760,615,731.13; 1–30 239,405,751.70; 31–90 94,315,000.66; 
 | English / Arabic name | Stock On Hand / كمية المخزون الفعلية |
 | Canonical ID | `stock_on_hand` |
 | Version / definition hash | 1 / `02a51d6fdb21d386440ef40922819c9c96ac24e80601d3c4cba9ddc3b792332a` |
+| Metric help version | 1 |
 | Business purpose | Support decisions on inventory using the named measure and explicit scope. Stock On Hand |
 | Definition | sum current internal-location quants by compatible base UOM |
 | Formula / proposed formula | sum current internal-location quants by compatible base UOM |
 | Event / snapshot | Snapshot: one cutoff, never summed across dates. |
-| Business date | One explicit snapshot cutoff. Receivable controls: September 30, 2026. Inventory/expiry: current observation time, not a certified September closing balance. |
+| Business date | Document invoice date; each refund uses its own issue date. |
 | Source concept / Odoo calculation | sum current internal-location quants by compatible base UOM Current internal positions; owner/consignment and location hierarchy require approval. Keep negative positions visible. Movements are a separate event measure. |
 | Grain | Product/location/lot/package/owner stock position; movement metrics use distinct movements. |
 | Aggregation | Sum eligible contributions at the named grain; ratios use matching numerator/denominator totals, distinct counts deduplicate identities, durations require an approved weighting rule. Snapshots select one eligible state per stable position at cutoff and sum across positions only. Never sum percentages or daily balances. |
 | Currency / unit | Compatible product-base UOM; never a mixed-unit total. |
 | Signs | Preserve source signs; posted invoice/refund values have explicit polarity. Refund Value is positive magnitude; Net Invoiced Revenue subtracts it. Negative stock and signed credits remain visible. No blanket absolute-value transform. |
 | Included states | Current internal positions; owner/consignment and location hierarchy require approval. Keep negative positions visible. Movements are a separate event measure. |
-| Excluded / cancellation | Draft/cancelled documents excluded from value and completed-count measures. Cancelled Orders explicitly counts state cancel by order date. Other source states/returns must be approved before extraction; later source edits require a new frozen release, not rewriting history. |
-| Refund / settlement | Order measures are not reduced by unrelated invoices/credit notes; invoicing recognizes each posted refund on its own issue date. Product/receipt returns require signed line/movement lineage; no header amount repeated per line. Snapshot settlements include only those effective by cutoff. |
+| Excluded / cancellation | Draft and cancelled documents are excluded. |
+| Refund / settlement | Posted refunds reduce net invoiced revenue on their own invoice date. Refund Value shows their positive magnitude. Order metrics remain separate. |
 | Null / Unassigned | No missing monetary, quantity, identity or date value becomes zero silently. Ratios with zero denominator are undefined. Missing owner/Business Line maps to governed Unassigned where supported; missing customer/product identity is an exception, never display-name matching. No arbitrary attribution. |
 | Published dimensions | None |
 | Candidate dimensions (not permissions) | warehouse, location, product, product_category, lot, uom, time |
@@ -3669,19 +3712,20 @@ Gross v1: current 760,615,731.13; 1–30 239,405,751.70; 31–90 94,315,000.66; 
 | English / Arabic name | Inventory Value / قيمة المخزون |
 | Canonical ID | `inventory_value` |
 | Version / definition hash | 1 / `f8d7bce8f61a05853b8c96a8518a4afb4b95affc2d6f3914e7ddc652483cab3f` |
+| Metric help version | 1 |
 | Business purpose | Support decisions on inventory using the named measure and explicit scope. Inventory Value |
 | Definition | approved current layer valuation reconciled to stock/accounting |
 | Formula / proposed formula | approved current layer valuation reconciled to stock/accounting |
 | Event / snapshot | Snapshot: one cutoff, never summed across dates. |
-| Business date | One explicit snapshot cutoff. Receivable controls: September 30, 2026. Inventory/expiry: current observation time, not a certified September closing balance. |
+| Business date | Document invoice date; each refund uses its own issue date. |
 | Source concept / Odoo calculation | approved current layer valuation reconciled to stock/accounting Current internal positions; owner/consignment and location hierarchy require approval. Keep negative positions visible. Movements are a separate event measure. |
 | Grain | Product/location/lot/package/owner stock position; movement metrics use distinct movements. |
 | Aggregation | Sum eligible contributions at the named grain; ratios use matching numerator/denominator totals, distinct counts deduplicate identities, durations require an approved weighting rule. Snapshots select one eligible state per stable position at cutoff and sum across positions only. Never sum percentages or daily balances. |
 | Currency / unit | Compatible base UOM; IQD valuation only after attributable cost/currency controls. |
 | Signs | Preserve source signs; posted invoice/refund values have explicit polarity. Refund Value is positive magnitude; Net Invoiced Revenue subtracts it. Negative stock and signed credits remain visible. No blanket absolute-value transform. |
 | Included states | Current internal positions; owner/consignment and location hierarchy require approval. Keep negative positions visible. Movements are a separate event measure. |
-| Excluded / cancellation | Draft/cancelled documents excluded from value and completed-count measures. Cancelled Orders explicitly counts state cancel by order date. Other source states/returns must be approved before extraction; later source edits require a new frozen release, not rewriting history. |
-| Refund / settlement | Order measures are not reduced by unrelated invoices/credit notes; invoicing recognizes each posted refund on its own issue date. Product/receipt returns require signed line/movement lineage; no header amount repeated per line. Snapshot settlements include only those effective by cutoff. |
+| Excluded / cancellation | Draft and cancelled documents are excluded. |
+| Refund / settlement | Posted refunds reduce net invoiced revenue on their own invoice date. Refund Value shows their positive magnitude. Order metrics remain separate. |
 | Null / Unassigned | No missing monetary, quantity, identity or date value becomes zero silently. Ratios with zero denominator are undefined. Missing owner/Business Line maps to governed Unassigned where supported; missing customer/product identity is an exception, never display-name matching. No arbitrary attribution. |
 | Published dimensions | None |
 | Candidate dimensions (not permissions) | warehouse, location, product, product_category, lot, uom, time |
@@ -5085,19 +5129,20 @@ Gross v1: current 760,615,731.13; 1–30 239,405,751.70; 31–90 94,315,000.66; 
 | English / Arabic name | Opportunity Count / عدد الفرص البيعية |
 | Canonical ID | `opportunity_count` |
 | Version / definition hash | 1 / `1482a94b5498033b192c3327b4dbde6dd142f5bf205bcb8f8487dab41f722437` |
+| Metric help version | 1 |
 | Business purpose | Support decisions on crm using the named measure and explicit scope. Opportunity Count |
 | Definition | count opportunities |
 | Formula / proposed formula | count opportunities |
 | Event / snapshot | Event / period-derived measure: defined business window. |
-| Business date | Approved opened/closed dates, not an unspecified global date. |
+| Business date | Document invoice date; each refund uses its own issue date. |
 | Source concept / Odoo calculation | count opportunities Eligible opportunity stages and active/closed population require owner definitions; one inactive opportunity cannot support a reliable pipeline. |
 | Grain | One lead/opportunity; conversion requires direct order linkage. |
 | Aggregation | Sum eligible contributions at the named grain; ratios use matching numerator/denominator totals, distinct counts deduplicate identities, durations require an approved weighting rule. Snapshots select one eligible state per stable position at cutoff and sum across positions only. Never sum percentages or daily balances. |
 | Currency / unit | Counts, days and separately normalized expected value. |
 | Signs | Preserve source signs; posted invoice/refund values have explicit polarity. Refund Value is positive magnitude; Net Invoiced Revenue subtracts it. Negative stock and signed credits remain visible. No blanket absolute-value transform. |
 | Included states | Eligible opportunity stages and active/closed population require owner definitions; one inactive opportunity cannot support a reliable pipeline. |
-| Excluded / cancellation | Draft/cancelled documents excluded from value and completed-count measures. Cancelled Orders explicitly counts state cancel by order date. Other source states/returns must be approved before extraction; later source edits require a new frozen release, not rewriting history. |
-| Refund / settlement | Order measures are not reduced by unrelated invoices/credit notes; invoicing recognizes each posted refund on its own issue date. Product/receipt returns require signed line/movement lineage; no header amount repeated per line. Snapshot settlements include only those effective by cutoff. |
+| Excluded / cancellation | Draft and cancelled documents are excluded. |
+| Refund / settlement | Posted refunds reduce net invoiced revenue on their own invoice date. Refund Value shows their positive magnitude. Order metrics remain separate. |
 | Null / Unassigned | No missing monetary, quantity, identity or date value becomes zero silently. Ratios with zero denominator are undefined. Missing owner/Business Line maps to governed Unassigned where supported; missing customer/product identity is an exception, never display-name matching. No arbitrary attribution. |
 | Published dimensions | None |
 | Candidate dimensions (not permissions) | salesperson, sales_team, stage, campaign, source, medium, time |
@@ -5175,19 +5220,20 @@ Gross v1: current 760,615,731.13; 1–30 239,405,751.70; 31–90 94,315,000.66; 
 | English / Arabic name | Opportunity Win Rate / نسبة الفوز بالفرص |
 | Canonical ID | `win_rate` |
 | Version / definition hash | 1 / `bc2c62ebea44241b5aa9fa485cd091cc39a399a43a358fbbb304651fba5eae8d` |
+| Metric help version | 1 |
 | Business purpose | Support decisions on crm using the named measure and explicit scope. Opportunity Win Rate |
 | Definition | won / approved closed opportunity cohort |
 | Formula / proposed formula | won / approved closed opportunity cohort |
 | Event / snapshot | Event / period-derived measure: defined business window. |
-| Business date | Approved opened/closed dates, not an unspecified global date. |
+| Business date | Document invoice date; each refund uses its own issue date. |
 | Source concept / Odoo calculation | won / approved closed opportunity cohort Eligible opportunity stages and active/closed population require owner definitions; one inactive opportunity cannot support a reliable pipeline. |
 | Grain | One lead/opportunity; conversion requires direct order linkage. |
 | Aggregation | Sum eligible contributions at the named grain; ratios use matching numerator/denominator totals, distinct counts deduplicate identities, durations require an approved weighting rule. Snapshots select one eligible state per stable position at cutoff and sum across positions only. Never sum percentages or daily balances. |
 | Currency / unit | Percentage (%), computed from matching totals; cohort and zero-denominator rules require exact-version approval. |
 | Signs | Preserve source signs; posted invoice/refund values have explicit polarity. Refund Value is positive magnitude; Net Invoiced Revenue subtracts it. Negative stock and signed credits remain visible. No blanket absolute-value transform. |
 | Included states | Eligible opportunity stages and active/closed population require owner definitions; one inactive opportunity cannot support a reliable pipeline. |
-| Excluded / cancellation | Draft/cancelled documents excluded from value and completed-count measures. Cancelled Orders explicitly counts state cancel by order date. Other source states/returns must be approved before extraction; later source edits require a new frozen release, not rewriting history. |
-| Refund / settlement | Order measures are not reduced by unrelated invoices/credit notes; invoicing recognizes each posted refund on its own issue date. Product/receipt returns require signed line/movement lineage; no header amount repeated per line. Snapshot settlements include only those effective by cutoff. |
+| Excluded / cancellation | Draft and cancelled documents are excluded. |
+| Refund / settlement | Posted refunds reduce net invoiced revenue on their own invoice date. Refund Value shows their positive magnitude. Order metrics remain separate. |
 | Null / Unassigned | No missing monetary, quantity, identity or date value becomes zero silently. Ratios with zero denominator are undefined. Missing owner/Business Line maps to governed Unassigned where supported; missing customer/product identity is an exception, never display-name matching. No arbitrary attribution. |
 | Published dimensions | None |
 | Candidate dimensions (not permissions) | salesperson, sales_team, stage, campaign, source, medium, time |
@@ -5205,19 +5251,20 @@ Gross v1: current 760,615,731.13; 1–30 239,405,751.70; 31–90 94,315,000.66; 
 | English / Arabic name | Pipeline Value / قيمة الفرص المفتوحة |
 | Canonical ID | `pipeline_value` |
 | Version / definition hash | 1 / `7fd82e52be5e8ba4576aeb5d1dd3bbf0f597115884da363991e2189c84491983` |
+| Metric help version | 1 |
 | Business purpose | Support decisions on crm using the named measure and explicit scope. Pipeline Value |
 | Definition | sum approved active opportunity expected value |
 | Formula / proposed formula | sum approved active opportunity expected value |
 | Event / snapshot | Event / period-derived measure: defined business window. |
-| Business date | Approved opened/closed dates, not an unspecified global date. |
+| Business date | Document invoice date; each refund uses its own issue date. |
 | Source concept / Odoo calculation | sum approved active opportunity expected value Eligible opportunity stages and active/closed population require owner definitions; one inactive opportunity cannot support a reliable pipeline. |
 | Grain | One lead/opportunity; conversion requires direct order linkage. |
 | Aggregation | Sum eligible contributions at the named grain; ratios use matching numerator/denominator totals, distinct counts deduplicate identities, durations require an approved weighting rule. Snapshots select one eligible state per stable position at cutoff and sum across positions only. Never sum percentages or daily balances. |
 | Currency / unit | Counts, days and separately normalized expected value. |
 | Signs | Preserve source signs; posted invoice/refund values have explicit polarity. Refund Value is positive magnitude; Net Invoiced Revenue subtracts it. Negative stock and signed credits remain visible. No blanket absolute-value transform. |
 | Included states | Eligible opportunity stages and active/closed population require owner definitions; one inactive opportunity cannot support a reliable pipeline. |
-| Excluded / cancellation | Draft/cancelled documents excluded from value and completed-count measures. Cancelled Orders explicitly counts state cancel by order date. Other source states/returns must be approved before extraction; later source edits require a new frozen release, not rewriting history. |
-| Refund / settlement | Order measures are not reduced by unrelated invoices/credit notes; invoicing recognizes each posted refund on its own issue date. Product/receipt returns require signed line/movement lineage; no header amount repeated per line. Snapshot settlements include only those effective by cutoff. |
+| Excluded / cancellation | Draft and cancelled documents are excluded. |
+| Refund / settlement | Posted refunds reduce net invoiced revenue on their own invoice date. Refund Value shows their positive magnitude. Order metrics remain separate. |
 | Null / Unassigned | No missing monetary, quantity, identity or date value becomes zero silently. Ratios with zero denominator are undefined. Missing owner/Business Line maps to governed Unassigned where supported; missing customer/product identity is an exception, never display-name matching. No arbitrary attribution. |
 | Published dimensions | None |
 | Candidate dimensions (not permissions) | salesperson, sales_team, stage, campaign, source, medium, time |
@@ -6387,23 +6434,23 @@ Names below are inspected source references, not runnable mappings. A proposed I
 | expiring_quantity_30_days | proposal/control | unresolved / observed_at / stock_lot.expiration_date / current positive internal quant / lot | proposal; no exact output reconciliation |
 | expiring_quantity_60_days | proposal/control | unresolved / observed_at / stock_lot.expiration_date / current positive internal quant / lot | proposal; no exact output reconciliation |
 | expiring_quantity_90_days | proposal/control | unresolved / observed_at / stock_lot.expiration_date / current positive internal quant / lot | proposal; no exact output reconciliation |
-| receivables_gross_outstanding_amount | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
-| credit_balances | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
-| net_aged_receivable | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
-| aged_at_date | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
-| aged_1_30 | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
-| aged_31_60 | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
-| aged_61_90 | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
-| aged_91_120 | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
-| aged_over_120 | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
+| receivables_gross_outstanding_amount | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave, finance-metric-definitions-delivery |
+| credit_balances | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave, finance-metric-definitions-delivery |
+| net_aged_receivable | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave, finance-metric-definitions-delivery |
+| aged_at_date | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave, finance-metric-definitions-delivery |
+| aged_1_30 | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave, finance-metric-definitions-delivery |
+| aged_31_60 | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave, finance-metric-definitions-delivery |
+| aged_61_90 | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave, finance-metric-definitions-delivery |
+| aged_91_120 | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave, finance-metric-definitions-delivery |
+| aged_over_120 | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave, finance-metric-definitions-delivery |
 | receivables_current_amount | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
 | receivables_overdue_1_30_amount | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
 | receivables_overdue_31_90_amount | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
 | receivables_overdue_over_90_amount | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
 | receivables_missing_due_date_amount | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
 | receivables_missing_due_date_count | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
-| total_overdue_net | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
-| overdue_net_percentage | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave |
+| total_overdue_net | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave, finance-metric-definitions-delivery |
+| overdue_net_percentage | proposal/control | account_move_line.balance, account_move_line.date, account_move_line.date_maturity, account_move_line.partner_id, account_partial_reconcile.amount, account_partial_reconcile.max_date, account_partial_reconcile.debit_move_id, account_partial_reconcile.credit_move_id / cutoff 2026-09-30; max_date <= cutoff; sourceAsOf 2026-10-06T12:53:16.128Z / receivable ledger line | receivables-aging-v1, odoo-aged-receivable-numeric-replay, source-evidence-report-unlock-wave, finance-metric-definitions-delivery |
 
 ## Evidence and operating references
 
@@ -6415,6 +6462,6 @@ Names below are inspected source references, not runnable mappings. A proposed I
 
 - [Current local reports](../integration/local-management-reports-v1.md) · [Luna QA handoff](../qa/local-management-pack-luna-handoff.md)
 
-- [Versioned definition source](enterprise-metrics-v1.json)
+- [Versioned definition source](enterprise-metrics-v1.json) · [Finance publication and metric-help delivery](../integration/finance-metric-definitions-delivery.md)
 
-Private workbook and customer extracts remain outside Git. Documents contain aggregate examples only. Tunnel unavailable on October 6: no new source extraction, approval, certification or publication. Existing local authentication and AI/manual publication guards unchanged. Visual/browser QA deferred to Luna; no visual pass claimed.
+Private workbook and customer extracts remain outside Git. Documents contain aggregate examples only. Finance publication reuses exact frozen evidence through the existing local lifecycle; no new source writes or extraction. Authentication and AI/manual publication guards remain unchanged. Visual/browser QA is deferred to Luna; no visual pass claimed.

@@ -38,7 +38,7 @@ export function metricHelp(id: MetricId, labels: LocalizedText, semantics: Metri
  const definition = content?.definition ?? meanings[id];
  if (!definition) throw new Error(`Metric help missing: ${id}`);
  const metricType = semantics.kind === 'snapshot' ? 'snapshot' : ['additive','distinct_count'].includes(semantics.kind) ? 'event' : 'derived';
- return { shortDefinition: definition, definition, formula: content?.formula ?? definition,
+ return { shortDefinition: content?.shortDefinition ?? definition, definition, formula: content?.formula ?? definition,
   inclusionSummary: content?.inclusionSummary ?? text('Eligible canonical contributions under the governed source mapping.', 'المساهمات المعتمدة المؤهلة وفق ربط المصدر المحكوم.'),
   exclusionSummary: content?.exclusionSummary ?? text('Ineligible source states and records outside the authorized scope.', 'حالات المصدر غير المؤهلة والسجلات خارج النطاق المصرح به.'),
   dateBasis: content?.dateBasis ?? (metricType === 'snapshot' ? text('Selected cutoff date.', 'تاريخ القطع المختار.') : text('Governed business recognition date within the reporting period.', 'تاريخ الاعتراف بالأعمال المعتمد ضمن فترة التقرير.')),

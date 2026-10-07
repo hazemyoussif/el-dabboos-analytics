@@ -14569,23 +14569,23 @@
     {
       "id": "receivables_gross_outstanding_amount",
       "discoveryId": null,
-      "canonicalId": null,
+      "canonicalId": "gross_open_receivable_components",
       "definitionVersion": "receivables-aging-v1",
       "domain": "receivables",
       "name": {
         "en": "Gross Open Receivable Components",
-        "ar": "إجمالي مكونات الذمم المفتوحة الموجبة"
+        "ar": "مكونات الذمم المفتوحة الإجمالية"
       },
       "definition": {
-        "en": "Sum positive reconstructed component residuals; maturity missing stays separate.",
-        "ar": "مجموع الأرصدة المتبقية الموجبة المعاد بناؤها للمكونات؛ الاستحقاق المفقود منفصل."
+        "en": "Positive open receivable components before remaining credit balances are netted. Historical residual is reconstructed through cutoff; payments after cutoff do not change that historical balance.",
+        "ar": "مكونات الذمم المفتوحة الموجبة قبل احتساب الأرصدة الدائنة المتبقية. يُعاد بناء الرصيد المتبقي حتى القطع؛ الدفعات اللاحقة لا تغير ذلك الرصيد التاريخي."
       },
       "formula": {
-        "en": "Sum positive reconstructed component residuals; maturity missing stays separate.",
-        "ar": "مجموع الأرصدة المتبقية الموجبة المعاد بناؤها للمكونات؛ الاستحقاق المفقود منفصل."
+        "en": "Positive open receivable components before remaining credit balances are netted.",
+        "ar": "مكونات الذمم المفتوحة الموجبة قبل احتساب الأرصدة الدائنة المتبقية."
       },
       "kind": "snapshot",
-      "state": "reconciled_awaiting_approval",
+      "state": "certified",
       "dimensions": [
         "customer",
         "commercial_customer",
@@ -14616,29 +14616,30 @@
       "evidenceRefs": [
         "receivables-aging-v1",
         "odoo-aged-receivable-numeric-replay",
-        "source-evidence-report-unlock-wave"
+        "source-evidence-report-unlock-wave",
+        "finance-metric-definitions-delivery"
       ],
-      "approval": "pending",
-      "published": false,
+      "approval": "standing_finance",
+      "published": true,
       "notes": {
-        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
-        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
+        "en": "Published only at the exact September 30, 2026 cutoff under Finance standing approval dated October 7. Stable customer identity and signed aging are exact; gross/credit components have summary permission only. Alternative gross-positive aging buckets, other dates/dimensions and custom-module equivalence are not certified.",
+        "ar": "منشور فقط عند قطع 30 سبتمبر 2026 المحدد بموجب اعتماد المالية الدائم بتاريخ 7 أكتوبر. هويات العملاء والأعمار الموقّعة مطابقة تماماً؛ مكونات الإجمالي والأرصدة الدائنة مصرح بإجمالياتها فقط. شرائح الأعمار الموجبة البديلة والتواريخ والأبعاد الأخرى وتكافؤ الوحدات المخصصة غير معتمدة."
       },
       "controlValue": "1532751636.39",
       "controlDate": "2026-09-30",
       "approvalRecord": {
         "definitionVersion": "receivables-aging-v1",
-        "owner": null,
-        "approvalDate": null,
-        "status": "pending",
-        "confirmedTotals": null,
-        "acceptedExceptions": null,
-        "reference": null
+        "owner": "Finance",
+        "approvalDate": "2026-10-07",
+        "status": "standing_approval_applied",
+        "confirmedTotals": "1532751636.39",
+        "acceptedExceptions": "None: exact value/count tolerance zero; unsupported scope excluded",
+        "reference": "finance-standing-20261007-receivables-v1"
       },
-      "definitionHash": "ab8d1f90932cbf73b9f183b4103ff9290a40d4109fb6d7e0199eb56a764f54cb",
+      "definitionHash": "b7f8b5b16ba131a9ae7c483005832fafe08b90992a96ad193cfd4c8502e5908a",
       "businessDate": {
-        "en": "Historical snapshot cutoff September 30, 2026; accounting entries/settlements effective by cutoff only.",
-        "ar": "رصيد تاريخي عند قطع 30 سبتمبر 2026؛ القيود والتسويات الفعّالة حتى القطع فقط."
+        "en": "Inclusive accounting cutoff. Age by maturity date, falling back to journal-item accounting date. Due exactly on cutoff belongs to At Date.",
+        "ar": "قطع محاسبي شامل. العمر حسب تاريخ الاستحقاق، مع الرجوع إلى تاريخ القيد عند غيابه. المستحق في يوم القطع يدخل في شريحة غير المتأخر."
       },
       "grain": {
         "en": "One receivable maturity/installment component; invoice counts require distinct invoice identity.",
@@ -14647,28 +14648,40 @@
       "unit": {
         "en": "Company-ledger IQD, legal receivable includes tax; never sum document-currency USD with IQD.",
         "ar": "الدينار العراقي وفق دفتر الشركة، والرصيد القانوني يشمل الضريبة؛ لا تُجمع مبالغ الدولار بعملة المستند مع الدينار."
+      },
+      "aggregation": {
+        "en": "One cutoff; never sum balances across dates. Ratios use aggregates, never summed customer percentages.",
+        "ar": "تاريخ قطع واحد؛ لا تُجمع الأرصدة عبر التواريخ. النسب من الإجماليات وليست مجموع نسب العملاء."
+      },
+      "refundPolicy": {
+        "en": "Signed customer credits remain in their own aging buckets; no arbitrary allocation. Gross positive components and credit balances remain distinct.",
+        "ar": "الأرصدة الدائنة الموقّعة تبقى في شرائح أعمارها دون تخصيص اعتباطي. المكونات الموجبة الإجمالية مستقلة عن الأرصدة الدائنة."
+      },
+      "cancelPolicy": {
+        "en": "Draft/cancelled documents, non-receivable accounts, later accounting entries and settlements effective after cutoff.",
+        "ar": "المسودات والمستندات الملغاة والحسابات غير المدينة والقيود والتسويات الفعّالة بعد القطع."
       }
     },
     {
       "id": "credit_balances",
       "discoveryId": null,
-      "canonicalId": null,
+      "canonicalId": "credit_balances",
       "definitionVersion": "odoo-aged-report-reconstruction-v1",
       "domain": "receivables",
       "name": {
-        "en": "Signed Open Credit Components",
-        "ar": "مكونات الأرصدة الدائنة المفتوحة بإشارتها"
+        "en": "Credit Balances",
+        "ar": "الأرصدة الدائنة"
       },
       "definition": {
-        "en": "Sum negative open components without allocating advances to invoice age.",
-        "ar": "مجموع المكونات المفتوحة السالبة دون توزيع الدفعات المقدمة على أعمار الفواتير."
+        "en": "Remaining negative open receivable components, shown with their negative sign. Historical residual is reconstructed through cutoff; payments after cutoff do not change that historical balance.",
+        "ar": "مكونات الذمم المفتوحة السالبة المتبقية، معروضة بإشارتها السالبة. يُعاد بناء الرصيد المتبقي حتى القطع؛ الدفعات اللاحقة لا تغير ذلك الرصيد التاريخي."
       },
       "formula": {
-        "en": "Sum negative open components without allocating advances to invoice age.",
-        "ar": "مجموع المكونات المفتوحة السالبة دون توزيع الدفعات المقدمة على أعمار الفواتير."
+        "en": "Remaining negative open receivable components, shown with their negative sign.",
+        "ar": "مكونات الذمم المفتوحة السالبة المتبقية، معروضة بإشارتها السالبة."
       },
       "kind": "snapshot",
-      "state": "reconciled_awaiting_approval",
+      "state": "certified",
       "dimensions": [
         "customer",
         "commercial_customer",
@@ -14699,29 +14712,30 @@
       "evidenceRefs": [
         "receivables-aging-v1",
         "odoo-aged-receivable-numeric-replay",
-        "source-evidence-report-unlock-wave"
+        "source-evidence-report-unlock-wave",
+        "finance-metric-definitions-delivery"
       ],
-      "approval": "pending",
-      "published": false,
+      "approval": "standing_finance",
+      "published": true,
       "notes": {
-        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
-        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
+        "en": "Published only at the exact September 30, 2026 cutoff under Finance standing approval dated October 7. Stable customer identity and signed aging are exact; gross/credit components have summary permission only. Alternative gross-positive aging buckets, other dates/dimensions and custom-module equivalence are not certified.",
+        "ar": "منشور فقط عند قطع 30 سبتمبر 2026 المحدد بموجب اعتماد المالية الدائم بتاريخ 7 أكتوبر. هويات العملاء والأعمار الموقّعة مطابقة تماماً؛ مكونات الإجمالي والأرصدة الدائنة مصرح بإجمالياتها فقط. شرائح الأعمار الموجبة البديلة والتواريخ والأبعاد الأخرى وتكافؤ الوحدات المخصصة غير معتمدة."
       },
       "controlValue": "-173290543.78",
       "controlDate": "2026-09-30",
       "approvalRecord": {
         "definitionVersion": "odoo-aged-report-reconstruction-v1",
-        "owner": null,
-        "approvalDate": null,
-        "status": "pending",
-        "confirmedTotals": null,
-        "acceptedExceptions": null,
-        "reference": null
+        "owner": "Finance",
+        "approvalDate": "2026-10-07",
+        "status": "standing_approval_applied",
+        "confirmedTotals": "-173290543.78",
+        "acceptedExceptions": "None: exact value/count tolerance zero; unsupported scope excluded",
+        "reference": "finance-standing-20261007-receivables-v1"
       },
-      "definitionHash": "629b243ec953fca55a8da4cd596a40a04f2c5709b928e34482f5e8c50b69b8c6",
+      "definitionHash": "74bedd03fa03269a685edead64d281f7dddebf372d5c87abb1c82b319895ea95",
       "businessDate": {
-        "en": "Historical snapshot cutoff September 30, 2026; accounting entries/settlements effective by cutoff only.",
-        "ar": "رصيد تاريخي عند قطع 30 سبتمبر 2026؛ القيود والتسويات الفعّالة حتى القطع فقط."
+        "en": "Inclusive accounting cutoff. Age by maturity date, falling back to journal-item accounting date. Due exactly on cutoff belongs to At Date.",
+        "ar": "قطع محاسبي شامل. العمر حسب تاريخ الاستحقاق، مع الرجوع إلى تاريخ القيد عند غيابه. المستحق في يوم القطع يدخل في شريحة غير المتأخر."
       },
       "grain": {
         "en": "One receivable maturity/installment component; invoice counts require distinct invoice identity.",
@@ -14730,28 +14744,40 @@
       "unit": {
         "en": "Company-ledger IQD, legal receivable includes tax; never sum document-currency USD with IQD.",
         "ar": "الدينار العراقي وفق دفتر الشركة، والرصيد القانوني يشمل الضريبة؛ لا تُجمع مبالغ الدولار بعملة المستند مع الدينار."
+      },
+      "aggregation": {
+        "en": "One cutoff; never sum balances across dates. Ratios use aggregates, never summed customer percentages.",
+        "ar": "تاريخ قطع واحد؛ لا تُجمع الأرصدة عبر التواريخ. النسب من الإجماليات وليست مجموع نسب العملاء."
+      },
+      "refundPolicy": {
+        "en": "Signed customer credits remain in their own aging buckets; no arbitrary allocation. Gross positive components and credit balances remain distinct.",
+        "ar": "الأرصدة الدائنة الموقّعة تبقى في شرائح أعمارها دون تخصيص اعتباطي. المكونات الموجبة الإجمالية مستقلة عن الأرصدة الدائنة."
+      },
+      "cancelPolicy": {
+        "en": "Draft/cancelled documents, non-receivable accounts, later accounting entries and settlements effective after cutoff.",
+        "ar": "المسودات والمستندات الملغاة والحسابات غير المدينة والقيود والتسويات الفعّالة بعد القطع."
       }
     },
     {
       "id": "net_aged_receivable",
       "discoveryId": null,
-      "canonicalId": null,
+      "canonicalId": "net_aged_receivable",
       "definitionVersion": "odoo-aged-report-reconstruction-v1",
       "domain": "receivables",
       "name": {
         "en": "Net Aged Receivable",
-        "ar": "صافي الذمم حسب تقرير الأعمار"
+        "ar": "صافي الذمم المدينة حسب العمر"
       },
       "definition": {
-        "en": "Signed gross positive components + signed negative components; net Odoo report definition, separate from gross-aging-v1.",
-        "ar": "مجموع المكونات الموجبة والمكونات السالبة بإشارتها؛ تعريف التقرير الصافي منفصل عن أعمار الإجمالي الموجب."
+        "en": "Customer receivables outstanding at cutoff after signed credit balances are netted. Historical residual is reconstructed through cutoff; payments after cutoff do not change that historical balance.",
+        "ar": "ذمم العملاء القائمة عند القطع بعد احتساب الأرصدة الدائنة بإشاراتها. يُعاد بناء الرصيد المتبقي حتى القطع؛ الدفعات اللاحقة لا تغير ذلك الرصيد التاريخي."
       },
       "formula": {
-        "en": "Signed gross positive components + signed negative components; net Odoo report definition, separate from gross-aging-v1.",
-        "ar": "مجموع المكونات الموجبة والمكونات السالبة بإشارتها؛ تعريف التقرير الصافي منفصل عن أعمار الإجمالي الموجب."
+        "en": "At Date + 1–30 + 31–60 + 61–90 + 91–120 + >120 = Gross Open Receivable Components + Credit Balances",
+        "ar": "عند القطع + ١–٣٠ + ٣١–٦٠ + ٦١–٩٠ + ٩١–١٢٠ + أكثر من ١٢٠ = المكونات الإجمالية + الأرصدة الدائنة"
       },
       "kind": "snapshot",
-      "state": "reconciled_awaiting_approval",
+      "state": "certified",
       "dimensions": [
         "customer",
         "commercial_customer",
@@ -14760,7 +14786,9 @@
         "currency",
         "time"
       ],
-      "publishedDimensions": [],
+      "publishedDimensions": [
+        "customer"
+      ],
       "sourceFields": [
         "account_move_line.balance",
         "account_move_line.date",
@@ -14782,29 +14810,30 @@
       "evidenceRefs": [
         "receivables-aging-v1",
         "odoo-aged-receivable-numeric-replay",
-        "source-evidence-report-unlock-wave"
+        "source-evidence-report-unlock-wave",
+        "finance-metric-definitions-delivery"
       ],
-      "approval": "pending",
-      "published": false,
+      "approval": "standing_finance",
+      "published": true,
       "notes": {
-        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
-        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
+        "en": "Published only at the exact September 30, 2026 cutoff under Finance standing approval dated October 7. Stable customer identity and signed aging are exact; gross/credit components have summary permission only. Alternative gross-positive aging buckets, other dates/dimensions and custom-module equivalence are not certified.",
+        "ar": "منشور فقط عند قطع 30 سبتمبر 2026 المحدد بموجب اعتماد المالية الدائم بتاريخ 7 أكتوبر. هويات العملاء والأعمار الموقّعة مطابقة تماماً؛ مكونات الإجمالي والأرصدة الدائنة مصرح بإجمالياتها فقط. شرائح الأعمار الموجبة البديلة والتواريخ والأبعاد الأخرى وتكافؤ الوحدات المخصصة غير معتمدة."
       },
       "controlValue": "1359461092.61",
       "controlDate": "2026-09-30",
       "approvalRecord": {
         "definitionVersion": "odoo-aged-report-reconstruction-v1",
-        "owner": null,
-        "approvalDate": null,
-        "status": "pending",
-        "confirmedTotals": null,
-        "acceptedExceptions": null,
-        "reference": null
+        "owner": "Finance",
+        "approvalDate": "2026-10-07",
+        "status": "standing_approval_applied",
+        "confirmedTotals": "1359461092.61",
+        "acceptedExceptions": "None: exact value/count tolerance zero; unsupported scope excluded",
+        "reference": "finance-standing-20261007-receivables-v1"
       },
-      "definitionHash": "25561db9b16b7017ebb2cfdb45bf5cb15a2bc47c8faefefd5a3aede4b7d72b31",
+      "definitionHash": "742b71fb367dbfff4fd8f82313c5be5c90597ae9e92eac18e809bb2d1e91c359",
       "businessDate": {
-        "en": "Historical snapshot cutoff September 30, 2026; accounting entries/settlements effective by cutoff only.",
-        "ar": "رصيد تاريخي عند قطع 30 سبتمبر 2026؛ القيود والتسويات الفعّالة حتى القطع فقط."
+        "en": "Inclusive accounting cutoff. Age by maturity date, falling back to journal-item accounting date. Due exactly on cutoff belongs to At Date.",
+        "ar": "قطع محاسبي شامل. العمر حسب تاريخ الاستحقاق، مع الرجوع إلى تاريخ القيد عند غيابه. المستحق في يوم القطع يدخل في شريحة غير المتأخر."
       },
       "grain": {
         "en": "One receivable maturity/installment component; invoice counts require distinct invoice identity.",
@@ -14813,28 +14842,40 @@
       "unit": {
         "en": "Company-ledger IQD, legal receivable includes tax; never sum document-currency USD with IQD.",
         "ar": "الدينار العراقي وفق دفتر الشركة، والرصيد القانوني يشمل الضريبة؛ لا تُجمع مبالغ الدولار بعملة المستند مع الدينار."
+      },
+      "aggregation": {
+        "en": "One cutoff; never sum balances across dates. Ratios use aggregates, never summed customer percentages.",
+        "ar": "تاريخ قطع واحد؛ لا تُجمع الأرصدة عبر التواريخ. النسب من الإجماليات وليست مجموع نسب العملاء."
+      },
+      "refundPolicy": {
+        "en": "Signed customer credits remain in their own aging buckets; no arbitrary allocation. Gross positive components and credit balances remain distinct.",
+        "ar": "الأرصدة الدائنة الموقّعة تبقى في شرائح أعمارها دون تخصيص اعتباطي. المكونات الموجبة الإجمالية مستقلة عن الأرصدة الدائنة."
+      },
+      "cancelPolicy": {
+        "en": "Draft/cancelled documents, non-receivable accounts, later accounting entries and settlements effective after cutoff.",
+        "ar": "المسودات والمستندات الملغاة والحسابات غير المدينة والقيود والتسويات الفعّالة بعد القطع."
       }
     },
     {
       "id": "aged_at_date",
       "discoveryId": null,
-      "canonicalId": null,
+      "canonicalId": "aged_at_date",
       "definitionVersion": "odoo-aged-report-reconstruction-v1",
       "domain": "receivables",
       "name": {
         "en": "At-Date Receivable",
-        "ar": "ذمم غير متأخرة في تاريخ التقرير"
+        "ar": "الذمم غير المتأخرة عند القطع"
       },
       "definition": {
-        "en": "Signed residual with effective due date ≥ cutoff; missing maturity uses accounting-date fallback in net Odoo reconstruction only.",
-        "ar": "الرصيد بإشارته حيث الاستحقاق الفعّال في تاريخ القطع أو بعده؛ يُستخدم تاريخ القيد عند فقد الاستحقاق في إعادة بناء تقرير أودو الصافي فقط."
+        "en": "Signed receivable balances due on or after cutoff, including due today. Historical residual is reconstructed through cutoff; payments after cutoff do not change that historical balance.",
+        "ar": "أرصدة الذمم الموقّعة المستحقة في تاريخ القطع أو بعده، بما فيها المستحقة اليوم. يُعاد بناء الرصيد المتبقي حتى القطع؛ الدفعات اللاحقة لا تغير ذلك الرصيد التاريخي."
       },
       "formula": {
-        "en": "Signed residual with effective due date ≥ cutoff; missing maturity uses accounting-date fallback in net Odoo reconstruction only.",
-        "ar": "الرصيد بإشارته حيث الاستحقاق الفعّال في تاريخ القطع أو بعده؛ يُستخدم تاريخ القيد عند فقد الاستحقاق في إعادة بناء تقرير أودو الصافي فقط."
+        "en": "Signed receivable balances due on or after cutoff, including due today.",
+        "ar": "أرصدة الذمم الموقّعة المستحقة في تاريخ القطع أو بعده، بما فيها المستحقة اليوم."
       },
       "kind": "snapshot",
-      "state": "reconciled_awaiting_approval",
+      "state": "certified",
       "dimensions": [
         "customer",
         "commercial_customer",
@@ -14843,7 +14884,9 @@
         "currency",
         "time"
       ],
-      "publishedDimensions": [],
+      "publishedDimensions": [
+        "customer"
+      ],
       "sourceFields": [
         "account_move_line.balance",
         "account_move_line.date",
@@ -14865,29 +14908,30 @@
       "evidenceRefs": [
         "receivables-aging-v1",
         "odoo-aged-receivable-numeric-replay",
-        "source-evidence-report-unlock-wave"
+        "source-evidence-report-unlock-wave",
+        "finance-metric-definitions-delivery"
       ],
-      "approval": "pending",
-      "published": false,
+      "approval": "standing_finance",
+      "published": true,
       "notes": {
-        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
-        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
+        "en": "Published only at the exact September 30, 2026 cutoff under Finance standing approval dated October 7. Stable customer identity and signed aging are exact; gross/credit components have summary permission only. Alternative gross-positive aging buckets, other dates/dimensions and custom-module equivalence are not certified.",
+        "ar": "منشور فقط عند قطع 30 سبتمبر 2026 المحدد بموجب اعتماد المالية الدائم بتاريخ 7 أكتوبر. هويات العملاء والأعمار الموقّعة مطابقة تماماً؛ مكونات الإجمالي والأرصدة الدائنة مصرح بإجمالياتها فقط. شرائح الأعمار الموجبة البديلة والتواريخ والأبعاد الأخرى وتكافؤ الوحدات المخصصة غير معتمدة."
       },
       "controlValue": "759020481.15",
       "controlDate": "2026-09-30",
       "approvalRecord": {
         "definitionVersion": "odoo-aged-report-reconstruction-v1",
-        "owner": null,
-        "approvalDate": null,
-        "status": "pending",
-        "confirmedTotals": null,
-        "acceptedExceptions": null,
-        "reference": null
+        "owner": "Finance",
+        "approvalDate": "2026-10-07",
+        "status": "standing_approval_applied",
+        "confirmedTotals": "759020481.15",
+        "acceptedExceptions": "None: exact value/count tolerance zero; unsupported scope excluded",
+        "reference": "finance-standing-20261007-receivables-v1"
       },
-      "definitionHash": "0109ae39ed22518b7bebed96299d63909eb79540b5b55144727cdde62c0d40a7",
+      "definitionHash": "a6e25410f1e454021f4b7c6da0843e66eacdbc6672ef045fa62375b2033222c6",
       "businessDate": {
-        "en": "Historical snapshot cutoff September 30, 2026; accounting entries/settlements effective by cutoff only.",
-        "ar": "رصيد تاريخي عند قطع 30 سبتمبر 2026؛ القيود والتسويات الفعّالة حتى القطع فقط."
+        "en": "Inclusive accounting cutoff. Age by maturity date, falling back to journal-item accounting date. Due exactly on cutoff belongs to At Date.",
+        "ar": "قطع محاسبي شامل. العمر حسب تاريخ الاستحقاق، مع الرجوع إلى تاريخ القيد عند غيابه. المستحق في يوم القطع يدخل في شريحة غير المتأخر."
       },
       "grain": {
         "en": "One receivable maturity/installment component; invoice counts require distinct invoice identity.",
@@ -14896,28 +14940,40 @@
       "unit": {
         "en": "Company-ledger IQD, legal receivable includes tax; never sum document-currency USD with IQD.",
         "ar": "الدينار العراقي وفق دفتر الشركة، والرصيد القانوني يشمل الضريبة؛ لا تُجمع مبالغ الدولار بعملة المستند مع الدينار."
+      },
+      "aggregation": {
+        "en": "One cutoff; never sum balances across dates. Ratios use aggregates, never summed customer percentages.",
+        "ar": "تاريخ قطع واحد؛ لا تُجمع الأرصدة عبر التواريخ. النسب من الإجماليات وليست مجموع نسب العملاء."
+      },
+      "refundPolicy": {
+        "en": "Signed customer credits remain in their own aging buckets; no arbitrary allocation. Gross positive components and credit balances remain distinct.",
+        "ar": "الأرصدة الدائنة الموقّعة تبقى في شرائح أعمارها دون تخصيص اعتباطي. المكونات الموجبة الإجمالية مستقلة عن الأرصدة الدائنة."
+      },
+      "cancelPolicy": {
+        "en": "Draft/cancelled documents, non-receivable accounts, later accounting entries and settlements effective after cutoff.",
+        "ar": "المسودات والمستندات الملغاة والحسابات غير المدينة والقيود والتسويات الفعّالة بعد القطع."
       }
     },
     {
       "id": "aged_1_30",
       "discoveryId": null,
-      "canonicalId": null,
+      "canonicalId": "aged_1_30",
       "definitionVersion": "odoo-aged-report-reconstruction-v1",
       "domain": "receivables",
       "name": {
-        "en": "1–30 Days Overdue (Net)",
-        "ar": "متأخرات من 1 إلى 30 يوماً بالصافي"
+        "en": "1–30 Overdue",
+        "ar": "متأخر من ١ إلى ٣٠ يوماً"
       },
       "definition": {
-        "en": "Signed residual where effective days overdue are 1–30.",
-        "ar": "الرصيد بإشارته حيث أيام التأخر الفعّالة من 1 إلى 30."
+        "en": "Signed receivable balances overdue by 1–30 days at cutoff. Historical residual is reconstructed through cutoff; payments after cutoff do not change that historical balance.",
+        "ar": "أرصدة الذمم الموقّعة المتأخرة ١–٣٠ يوماً عند القطع. يُعاد بناء الرصيد المتبقي حتى القطع؛ الدفعات اللاحقة لا تغير ذلك الرصيد التاريخي."
       },
       "formula": {
-        "en": "Signed residual where effective days overdue are 1–30.",
-        "ar": "الرصيد بإشارته حيث أيام التأخر الفعّالة من 1 إلى 30."
+        "en": "Signed receivable balances overdue by 1–30 days at cutoff.",
+        "ar": "أرصدة الذمم الموقّعة المتأخرة ١–٣٠ يوماً عند القطع."
       },
       "kind": "snapshot",
-      "state": "reconciled_awaiting_approval",
+      "state": "certified",
       "dimensions": [
         "customer",
         "commercial_customer",
@@ -14926,7 +14982,9 @@
         "currency",
         "time"
       ],
-      "publishedDimensions": [],
+      "publishedDimensions": [
+        "customer"
+      ],
       "sourceFields": [
         "account_move_line.balance",
         "account_move_line.date",
@@ -14948,29 +15006,30 @@
       "evidenceRefs": [
         "receivables-aging-v1",
         "odoo-aged-receivable-numeric-replay",
-        "source-evidence-report-unlock-wave"
+        "source-evidence-report-unlock-wave",
+        "finance-metric-definitions-delivery"
       ],
-      "approval": "pending",
-      "published": false,
+      "approval": "standing_finance",
+      "published": true,
       "notes": {
-        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
-        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
+        "en": "Published only at the exact September 30, 2026 cutoff under Finance standing approval dated October 7. Stable customer identity and signed aging are exact; gross/credit components have summary permission only. Alternative gross-positive aging buckets, other dates/dimensions and custom-module equivalence are not certified.",
+        "ar": "منشور فقط عند قطع 30 سبتمبر 2026 المحدد بموجب اعتماد المالية الدائم بتاريخ 7 أكتوبر. هويات العملاء والأعمار الموقّعة مطابقة تماماً؛ مكونات الإجمالي والأرصدة الدائنة مصرح بإجمالياتها فقط. شرائح الأعمار الموجبة البديلة والتواريخ والأبعاد الأخرى وتكافؤ الوحدات المخصصة غير معتمدة."
       },
       "controlValue": "218464001.82",
       "controlDate": "2026-09-30",
       "approvalRecord": {
         "definitionVersion": "odoo-aged-report-reconstruction-v1",
-        "owner": null,
-        "approvalDate": null,
-        "status": "pending",
-        "confirmedTotals": null,
-        "acceptedExceptions": null,
-        "reference": null
+        "owner": "Finance",
+        "approvalDate": "2026-10-07",
+        "status": "standing_approval_applied",
+        "confirmedTotals": "218464001.82",
+        "acceptedExceptions": "None: exact value/count tolerance zero; unsupported scope excluded",
+        "reference": "finance-standing-20261007-receivables-v1"
       },
-      "definitionHash": "d0f5572a5b129dc8b91ce231a5f495633a00ac7a68bf9893c1ea2ea0c07d420c",
+      "definitionHash": "6c0b088d24b67ef814c7f67192ac36f59ccd824dfb7cd9bb11a0176ee3f110f0",
       "businessDate": {
-        "en": "Historical snapshot cutoff September 30, 2026; accounting entries/settlements effective by cutoff only.",
-        "ar": "رصيد تاريخي عند قطع 30 سبتمبر 2026؛ القيود والتسويات الفعّالة حتى القطع فقط."
+        "en": "Inclusive accounting cutoff. Age by maturity date, falling back to journal-item accounting date. Due exactly on cutoff belongs to At Date.",
+        "ar": "قطع محاسبي شامل. العمر حسب تاريخ الاستحقاق، مع الرجوع إلى تاريخ القيد عند غيابه. المستحق في يوم القطع يدخل في شريحة غير المتأخر."
       },
       "grain": {
         "en": "One receivable maturity/installment component; invoice counts require distinct invoice identity.",
@@ -14979,28 +15038,40 @@
       "unit": {
         "en": "Company-ledger IQD, legal receivable includes tax; never sum document-currency USD with IQD.",
         "ar": "الدينار العراقي وفق دفتر الشركة، والرصيد القانوني يشمل الضريبة؛ لا تُجمع مبالغ الدولار بعملة المستند مع الدينار."
+      },
+      "aggregation": {
+        "en": "One cutoff; never sum balances across dates. Ratios use aggregates, never summed customer percentages.",
+        "ar": "تاريخ قطع واحد؛ لا تُجمع الأرصدة عبر التواريخ. النسب من الإجماليات وليست مجموع نسب العملاء."
+      },
+      "refundPolicy": {
+        "en": "Signed customer credits remain in their own aging buckets; no arbitrary allocation. Gross positive components and credit balances remain distinct.",
+        "ar": "الأرصدة الدائنة الموقّعة تبقى في شرائح أعمارها دون تخصيص اعتباطي. المكونات الموجبة الإجمالية مستقلة عن الأرصدة الدائنة."
+      },
+      "cancelPolicy": {
+        "en": "Draft/cancelled documents, non-receivable accounts, later accounting entries and settlements effective after cutoff.",
+        "ar": "المسودات والمستندات الملغاة والحسابات غير المدينة والقيود والتسويات الفعّالة بعد القطع."
       }
     },
     {
       "id": "aged_31_60",
       "discoveryId": null,
-      "canonicalId": null,
+      "canonicalId": "aged_31_60",
       "definitionVersion": "odoo-aged-report-reconstruction-v1",
       "domain": "receivables",
       "name": {
-        "en": "31–60 Days Overdue (Net)",
-        "ar": "متأخرات من 31 إلى 60 يوماً بالصافي"
+        "en": "31–60 Overdue",
+        "ar": "متأخر من ٣١ إلى ٦٠ يوماً"
       },
       "definition": {
-        "en": "Signed residual where effective days overdue are 31–60.",
-        "ar": "الرصيد بإشارته حيث أيام التأخر الفعّالة من 31 إلى 60."
+        "en": "Signed receivable balances overdue by 31–60 days at cutoff. Historical residual is reconstructed through cutoff; payments after cutoff do not change that historical balance.",
+        "ar": "أرصدة الذمم الموقّعة المتأخرة ٣١–٦٠ يوماً عند القطع. يُعاد بناء الرصيد المتبقي حتى القطع؛ الدفعات اللاحقة لا تغير ذلك الرصيد التاريخي."
       },
       "formula": {
-        "en": "Signed residual where effective days overdue are 31–60.",
-        "ar": "الرصيد بإشارته حيث أيام التأخر الفعّالة من 31 إلى 60."
+        "en": "Signed receivable balances overdue by 31–60 days at cutoff.",
+        "ar": "أرصدة الذمم الموقّعة المتأخرة ٣١–٦٠ يوماً عند القطع."
       },
       "kind": "snapshot",
-      "state": "reconciled_awaiting_approval",
+      "state": "certified",
       "dimensions": [
         "customer",
         "commercial_customer",
@@ -15009,7 +15080,9 @@
         "currency",
         "time"
       ],
-      "publishedDimensions": [],
+      "publishedDimensions": [
+        "customer"
+      ],
       "sourceFields": [
         "account_move_line.balance",
         "account_move_line.date",
@@ -15031,29 +15104,30 @@
       "evidenceRefs": [
         "receivables-aging-v1",
         "odoo-aged-receivable-numeric-replay",
-        "source-evidence-report-unlock-wave"
+        "source-evidence-report-unlock-wave",
+        "finance-metric-definitions-delivery"
       ],
-      "approval": "pending",
-      "published": false,
+      "approval": "standing_finance",
+      "published": true,
       "notes": {
-        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
-        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
+        "en": "Published only at the exact September 30, 2026 cutoff under Finance standing approval dated October 7. Stable customer identity and signed aging are exact; gross/credit components have summary permission only. Alternative gross-positive aging buckets, other dates/dimensions and custom-module equivalence are not certified.",
+        "ar": "منشور فقط عند قطع 30 سبتمبر 2026 المحدد بموجب اعتماد المالية الدائم بتاريخ 7 أكتوبر. هويات العملاء والأعمار الموقّعة مطابقة تماماً؛ مكونات الإجمالي والأرصدة الدائنة مصرح بإجمالياتها فقط. شرائح الأعمار الموجبة البديلة والتواريخ والأبعاد الأخرى وتكافؤ الوحدات المخصصة غير معتمدة."
       },
       "controlValue": "69135500.55",
       "controlDate": "2026-09-30",
       "approvalRecord": {
         "definitionVersion": "odoo-aged-report-reconstruction-v1",
-        "owner": null,
-        "approvalDate": null,
-        "status": "pending",
-        "confirmedTotals": null,
-        "acceptedExceptions": null,
-        "reference": null
+        "owner": "Finance",
+        "approvalDate": "2026-10-07",
+        "status": "standing_approval_applied",
+        "confirmedTotals": "69135500.55",
+        "acceptedExceptions": "None: exact value/count tolerance zero; unsupported scope excluded",
+        "reference": "finance-standing-20261007-receivables-v1"
       },
-      "definitionHash": "aa3b87bda887554b29721cabcd803edf6de933ed69c24977cb4fa4c8ef580e81",
+      "definitionHash": "7dcb5bd89ebceea808aec0c4d8346c9cff8b9d13a738ab2c6cabc9f6d9d6092d",
       "businessDate": {
-        "en": "Historical snapshot cutoff September 30, 2026; accounting entries/settlements effective by cutoff only.",
-        "ar": "رصيد تاريخي عند قطع 30 سبتمبر 2026؛ القيود والتسويات الفعّالة حتى القطع فقط."
+        "en": "Inclusive accounting cutoff. Age by maturity date, falling back to journal-item accounting date. Due exactly on cutoff belongs to At Date.",
+        "ar": "قطع محاسبي شامل. العمر حسب تاريخ الاستحقاق، مع الرجوع إلى تاريخ القيد عند غيابه. المستحق في يوم القطع يدخل في شريحة غير المتأخر."
       },
       "grain": {
         "en": "One receivable maturity/installment component; invoice counts require distinct invoice identity.",
@@ -15062,28 +15136,40 @@
       "unit": {
         "en": "Company-ledger IQD, legal receivable includes tax; never sum document-currency USD with IQD.",
         "ar": "الدينار العراقي وفق دفتر الشركة، والرصيد القانوني يشمل الضريبة؛ لا تُجمع مبالغ الدولار بعملة المستند مع الدينار."
+      },
+      "aggregation": {
+        "en": "One cutoff; never sum balances across dates. Ratios use aggregates, never summed customer percentages.",
+        "ar": "تاريخ قطع واحد؛ لا تُجمع الأرصدة عبر التواريخ. النسب من الإجماليات وليست مجموع نسب العملاء."
+      },
+      "refundPolicy": {
+        "en": "Signed customer credits remain in their own aging buckets; no arbitrary allocation. Gross positive components and credit balances remain distinct.",
+        "ar": "الأرصدة الدائنة الموقّعة تبقى في شرائح أعمارها دون تخصيص اعتباطي. المكونات الموجبة الإجمالية مستقلة عن الأرصدة الدائنة."
+      },
+      "cancelPolicy": {
+        "en": "Draft/cancelled documents, non-receivable accounts, later accounting entries and settlements effective after cutoff.",
+        "ar": "المسودات والمستندات الملغاة والحسابات غير المدينة والقيود والتسويات الفعّالة بعد القطع."
       }
     },
     {
       "id": "aged_61_90",
       "discoveryId": null,
-      "canonicalId": null,
+      "canonicalId": "aged_61_90",
       "definitionVersion": "odoo-aged-report-reconstruction-v1",
       "domain": "receivables",
       "name": {
-        "en": "61–90 Days Overdue (Net)",
-        "ar": "متأخرات من 61 إلى 90 يوماً بالصافي"
+        "en": "61–90 Overdue",
+        "ar": "متأخر من ٦١ إلى ٩٠ يوماً"
       },
       "definition": {
-        "en": "Signed residual where effective days overdue are 61–90.",
-        "ar": "الرصيد بإشارته حيث أيام التأخر الفعّالة من 61 إلى 90."
+        "en": "Signed receivable balances overdue by 61–90 days at cutoff. Historical residual is reconstructed through cutoff; payments after cutoff do not change that historical balance.",
+        "ar": "أرصدة الذمم الموقّعة المتأخرة ٦١–٩٠ يوماً عند القطع. يُعاد بناء الرصيد المتبقي حتى القطع؛ الدفعات اللاحقة لا تغير ذلك الرصيد التاريخي."
       },
       "formula": {
-        "en": "Signed residual where effective days overdue are 61–90.",
-        "ar": "الرصيد بإشارته حيث أيام التأخر الفعّالة من 61 إلى 90."
+        "en": "Signed receivable balances overdue by 61–90 days at cutoff.",
+        "ar": "أرصدة الذمم الموقّعة المتأخرة ٦١–٩٠ يوماً عند القطع."
       },
       "kind": "snapshot",
-      "state": "reconciled_awaiting_approval",
+      "state": "certified",
       "dimensions": [
         "customer",
         "commercial_customer",
@@ -15092,7 +15178,9 @@
         "currency",
         "time"
       ],
-      "publishedDimensions": [],
+      "publishedDimensions": [
+        "customer"
+      ],
       "sourceFields": [
         "account_move_line.balance",
         "account_move_line.date",
@@ -15114,29 +15202,30 @@
       "evidenceRefs": [
         "receivables-aging-v1",
         "odoo-aged-receivable-numeric-replay",
-        "source-evidence-report-unlock-wave"
+        "source-evidence-report-unlock-wave",
+        "finance-metric-definitions-delivery"
       ],
-      "approval": "pending",
-      "published": false,
+      "approval": "standing_finance",
+      "published": true,
       "notes": {
-        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
-        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
+        "en": "Published only at the exact September 30, 2026 cutoff under Finance standing approval dated October 7. Stable customer identity and signed aging are exact; gross/credit components have summary permission only. Alternative gross-positive aging buckets, other dates/dimensions and custom-module equivalence are not certified.",
+        "ar": "منشور فقط عند قطع 30 سبتمبر 2026 المحدد بموجب اعتماد المالية الدائم بتاريخ 7 أكتوبر. هويات العملاء والأعمار الموقّعة مطابقة تماماً؛ مكونات الإجمالي والأرصدة الدائنة مصرح بإجمالياتها فقط. شرائح الأعمار الموجبة البديلة والتواريخ والأبعاد الأخرى وتكافؤ الوحدات المخصصة غير معتمدة."
       },
       "controlValue": "25871000.18",
       "controlDate": "2026-09-30",
       "approvalRecord": {
         "definitionVersion": "odoo-aged-report-reconstruction-v1",
-        "owner": null,
-        "approvalDate": null,
-        "status": "pending",
-        "confirmedTotals": null,
-        "acceptedExceptions": null,
-        "reference": null
+        "owner": "Finance",
+        "approvalDate": "2026-10-07",
+        "status": "standing_approval_applied",
+        "confirmedTotals": "25871000.18",
+        "acceptedExceptions": "None: exact value/count tolerance zero; unsupported scope excluded",
+        "reference": "finance-standing-20261007-receivables-v1"
       },
-      "definitionHash": "a3084fa4878dc6a69141529f93078736930bcc6f6ba388387b8403f07180aa0d",
+      "definitionHash": "2e52737b9a436e7fb0fb0138c1ef053bf1ea8677c6ebe379264e00e5e496c929",
       "businessDate": {
-        "en": "Historical snapshot cutoff September 30, 2026; accounting entries/settlements effective by cutoff only.",
-        "ar": "رصيد تاريخي عند قطع 30 سبتمبر 2026؛ القيود والتسويات الفعّالة حتى القطع فقط."
+        "en": "Inclusive accounting cutoff. Age by maturity date, falling back to journal-item accounting date. Due exactly on cutoff belongs to At Date.",
+        "ar": "قطع محاسبي شامل. العمر حسب تاريخ الاستحقاق، مع الرجوع إلى تاريخ القيد عند غيابه. المستحق في يوم القطع يدخل في شريحة غير المتأخر."
       },
       "grain": {
         "en": "One receivable maturity/installment component; invoice counts require distinct invoice identity.",
@@ -15145,28 +15234,40 @@
       "unit": {
         "en": "Company-ledger IQD, legal receivable includes tax; never sum document-currency USD with IQD.",
         "ar": "الدينار العراقي وفق دفتر الشركة، والرصيد القانوني يشمل الضريبة؛ لا تُجمع مبالغ الدولار بعملة المستند مع الدينار."
+      },
+      "aggregation": {
+        "en": "One cutoff; never sum balances across dates. Ratios use aggregates, never summed customer percentages.",
+        "ar": "تاريخ قطع واحد؛ لا تُجمع الأرصدة عبر التواريخ. النسب من الإجماليات وليست مجموع نسب العملاء."
+      },
+      "refundPolicy": {
+        "en": "Signed customer credits remain in their own aging buckets; no arbitrary allocation. Gross positive components and credit balances remain distinct.",
+        "ar": "الأرصدة الدائنة الموقّعة تبقى في شرائح أعمارها دون تخصيص اعتباطي. المكونات الموجبة الإجمالية مستقلة عن الأرصدة الدائنة."
+      },
+      "cancelPolicy": {
+        "en": "Draft/cancelled documents, non-receivable accounts, later accounting entries and settlements effective after cutoff.",
+        "ar": "المسودات والمستندات الملغاة والحسابات غير المدينة والقيود والتسويات الفعّالة بعد القطع."
       }
     },
     {
       "id": "aged_91_120",
       "discoveryId": null,
-      "canonicalId": null,
+      "canonicalId": "aged_91_120",
       "definitionVersion": "odoo-aged-report-reconstruction-v1",
       "domain": "receivables",
       "name": {
-        "en": "91–120 Days Overdue (Net)",
-        "ar": "متأخرات من 91 إلى 120 يوماً بالصافي"
+        "en": "91–120 Overdue",
+        "ar": "متأخر من ٩١ إلى ١٢٠ يوماً"
       },
       "definition": {
-        "en": "Signed residual where effective days overdue are 91–120.",
-        "ar": "الرصيد بإشارته حيث أيام التأخر الفعّالة من 91 إلى 120."
+        "en": "Signed receivable balances overdue by 91–120 days at cutoff. Historical residual is reconstructed through cutoff; payments after cutoff do not change that historical balance.",
+        "ar": "أرصدة الذمم الموقّعة المتأخرة ٩١–١٢٠ يوماً عند القطع. يُعاد بناء الرصيد المتبقي حتى القطع؛ الدفعات اللاحقة لا تغير ذلك الرصيد التاريخي."
       },
       "formula": {
-        "en": "Signed residual where effective days overdue are 91–120.",
-        "ar": "الرصيد بإشارته حيث أيام التأخر الفعّالة من 91 إلى 120."
+        "en": "Signed receivable balances overdue by 91–120 days at cutoff.",
+        "ar": "أرصدة الذمم الموقّعة المتأخرة ٩١–١٢٠ يوماً عند القطع."
       },
       "kind": "snapshot",
-      "state": "reconciled_awaiting_approval",
+      "state": "certified",
       "dimensions": [
         "customer",
         "commercial_customer",
@@ -15175,7 +15276,9 @@
         "currency",
         "time"
       ],
-      "publishedDimensions": [],
+      "publishedDimensions": [
+        "customer"
+      ],
       "sourceFields": [
         "account_move_line.balance",
         "account_move_line.date",
@@ -15197,29 +15300,30 @@
       "evidenceRefs": [
         "receivables-aging-v1",
         "odoo-aged-receivable-numeric-replay",
-        "source-evidence-report-unlock-wave"
+        "source-evidence-report-unlock-wave",
+        "finance-metric-definitions-delivery"
       ],
-      "approval": "pending",
-      "published": false,
+      "approval": "standing_finance",
+      "published": true,
       "notes": {
-        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
-        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
+        "en": "Published only at the exact September 30, 2026 cutoff under Finance standing approval dated October 7. Stable customer identity and signed aging are exact; gross/credit components have summary permission only. Alternative gross-positive aging buckets, other dates/dimensions and custom-module equivalence are not certified.",
+        "ar": "منشور فقط عند قطع 30 سبتمبر 2026 المحدد بموجب اعتماد المالية الدائم بتاريخ 7 أكتوبر. هويات العملاء والأعمار الموقّعة مطابقة تماماً؛ مكونات الإجمالي والأرصدة الدائنة مصرح بإجمالياتها فقط. شرائح الأعمار الموجبة البديلة والتواريخ والأبعاد الأخرى وتكافؤ الوحدات المخصصة غير معتمدة."
       },
       "controlValue": "33782500.14",
       "controlDate": "2026-09-30",
       "approvalRecord": {
         "definitionVersion": "odoo-aged-report-reconstruction-v1",
-        "owner": null,
-        "approvalDate": null,
-        "status": "pending",
-        "confirmedTotals": null,
-        "acceptedExceptions": null,
-        "reference": null
+        "owner": "Finance",
+        "approvalDate": "2026-10-07",
+        "status": "standing_approval_applied",
+        "confirmedTotals": "33782500.14",
+        "acceptedExceptions": "None: exact value/count tolerance zero; unsupported scope excluded",
+        "reference": "finance-standing-20261007-receivables-v1"
       },
-      "definitionHash": "82b5a2d56f1918bfcec27062c43074d467e7ffddcaccc1d835da53febd9ced1f",
+      "definitionHash": "3ca10aeb39dfda5177888fbcb017378f3cce20ec7627937163bb8bb2245f5cda",
       "businessDate": {
-        "en": "Historical snapshot cutoff September 30, 2026; accounting entries/settlements effective by cutoff only.",
-        "ar": "رصيد تاريخي عند قطع 30 سبتمبر 2026؛ القيود والتسويات الفعّالة حتى القطع فقط."
+        "en": "Inclusive accounting cutoff. Age by maturity date, falling back to journal-item accounting date. Due exactly on cutoff belongs to At Date.",
+        "ar": "قطع محاسبي شامل. العمر حسب تاريخ الاستحقاق، مع الرجوع إلى تاريخ القيد عند غيابه. المستحق في يوم القطع يدخل في شريحة غير المتأخر."
       },
       "grain": {
         "en": "One receivable maturity/installment component; invoice counts require distinct invoice identity.",
@@ -15228,28 +15332,40 @@
       "unit": {
         "en": "Company-ledger IQD, legal receivable includes tax; never sum document-currency USD with IQD.",
         "ar": "الدينار العراقي وفق دفتر الشركة، والرصيد القانوني يشمل الضريبة؛ لا تُجمع مبالغ الدولار بعملة المستند مع الدينار."
+      },
+      "aggregation": {
+        "en": "One cutoff; never sum balances across dates. Ratios use aggregates, never summed customer percentages.",
+        "ar": "تاريخ قطع واحد؛ لا تُجمع الأرصدة عبر التواريخ. النسب من الإجماليات وليست مجموع نسب العملاء."
+      },
+      "refundPolicy": {
+        "en": "Signed customer credits remain in their own aging buckets; no arbitrary allocation. Gross positive components and credit balances remain distinct.",
+        "ar": "الأرصدة الدائنة الموقّعة تبقى في شرائح أعمارها دون تخصيص اعتباطي. المكونات الموجبة الإجمالية مستقلة عن الأرصدة الدائنة."
+      },
+      "cancelPolicy": {
+        "en": "Draft/cancelled documents, non-receivable accounts, later accounting entries and settlements effective after cutoff.",
+        "ar": "المسودات والمستندات الملغاة والحسابات غير المدينة والقيود والتسويات الفعّالة بعد القطع."
       }
     },
     {
       "id": "aged_over_120",
       "discoveryId": null,
-      "canonicalId": null,
+      "canonicalId": "aged_over_120",
       "definitionVersion": "odoo-aged-report-reconstruction-v1",
       "domain": "receivables",
       "name": {
-        "en": "Over 120 Days Overdue (Net)",
-        "ar": "متأخرات تتجاوز 120 يوماً بالصافي"
+        "en": "Older than 120",
+        "ar": "متأخر أكثر من ١٢٠ يوماً"
       },
       "definition": {
-        "en": "Signed residual where effective days overdue exceed 120.",
-        "ar": "الرصيد بإشارته حيث أيام التأخر الفعّالة تزيد على 120."
+        "en": "Signed receivable balances overdue by more than 120 days at cutoff. Historical residual is reconstructed through cutoff; payments after cutoff do not change that historical balance.",
+        "ar": "أرصدة الذمم الموقّعة المتأخرة أكثر من ١٢٠ يوماً عند القطع. يُعاد بناء الرصيد المتبقي حتى القطع؛ الدفعات اللاحقة لا تغير ذلك الرصيد التاريخي."
       },
       "formula": {
-        "en": "Signed residual where effective days overdue exceed 120.",
-        "ar": "الرصيد بإشارته حيث أيام التأخر الفعّالة تزيد على 120."
+        "en": "Signed receivable balances overdue by more than 120 days at cutoff.",
+        "ar": "أرصدة الذمم الموقّعة المتأخرة أكثر من ١٢٠ يوماً عند القطع."
       },
       "kind": "snapshot",
-      "state": "reconciled_awaiting_approval",
+      "state": "certified",
       "dimensions": [
         "customer",
         "commercial_customer",
@@ -15258,7 +15374,9 @@
         "currency",
         "time"
       ],
-      "publishedDimensions": [],
+      "publishedDimensions": [
+        "customer"
+      ],
       "sourceFields": [
         "account_move_line.balance",
         "account_move_line.date",
@@ -15280,29 +15398,30 @@
       "evidenceRefs": [
         "receivables-aging-v1",
         "odoo-aged-receivable-numeric-replay",
-        "source-evidence-report-unlock-wave"
+        "source-evidence-report-unlock-wave",
+        "finance-metric-definitions-delivery"
       ],
-      "approval": "pending",
-      "published": false,
+      "approval": "standing_finance",
+      "published": true,
       "notes": {
-        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
-        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
+        "en": "Published only at the exact September 30, 2026 cutoff under Finance standing approval dated October 7. Stable customer identity and signed aging are exact; gross/credit components have summary permission only. Alternative gross-positive aging buckets, other dates/dimensions and custom-module equivalence are not certified.",
+        "ar": "منشور فقط عند قطع 30 سبتمبر 2026 المحدد بموجب اعتماد المالية الدائم بتاريخ 7 أكتوبر. هويات العملاء والأعمار الموقّعة مطابقة تماماً؛ مكونات الإجمالي والأرصدة الدائنة مصرح بإجمالياتها فقط. شرائح الأعمار الموجبة البديلة والتواريخ والأبعاد الأخرى وتكافؤ الوحدات المخصصة غير معتمدة."
       },
       "controlValue": "253187608.77",
       "controlDate": "2026-09-30",
       "approvalRecord": {
         "definitionVersion": "odoo-aged-report-reconstruction-v1",
-        "owner": null,
-        "approvalDate": null,
-        "status": "pending",
-        "confirmedTotals": null,
-        "acceptedExceptions": null,
-        "reference": null
+        "owner": "Finance",
+        "approvalDate": "2026-10-07",
+        "status": "standing_approval_applied",
+        "confirmedTotals": "253187608.77",
+        "acceptedExceptions": "None: exact value/count tolerance zero; unsupported scope excluded",
+        "reference": "finance-standing-20261007-receivables-v1"
       },
-      "definitionHash": "7c0057b92c12aff22f3f588e5f78b435c21d3fb7928be0955cfecdfe1b311268",
+      "definitionHash": "50dc4f50fbd334a2adb95b45670e909c93771ec55db4c485b2fb580e907eba2b",
       "businessDate": {
-        "en": "Historical snapshot cutoff September 30, 2026; accounting entries/settlements effective by cutoff only.",
-        "ar": "رصيد تاريخي عند قطع 30 سبتمبر 2026؛ القيود والتسويات الفعّالة حتى القطع فقط."
+        "en": "Inclusive accounting cutoff. Age by maturity date, falling back to journal-item accounting date. Due exactly on cutoff belongs to At Date.",
+        "ar": "قطع محاسبي شامل. العمر حسب تاريخ الاستحقاق، مع الرجوع إلى تاريخ القيد عند غيابه. المستحق في يوم القطع يدخل في شريحة غير المتأخر."
       },
       "grain": {
         "en": "One receivable maturity/installment component; invoice counts require distinct invoice identity.",
@@ -15311,6 +15430,18 @@
       "unit": {
         "en": "Company-ledger IQD, legal receivable includes tax; never sum document-currency USD with IQD.",
         "ar": "الدينار العراقي وفق دفتر الشركة، والرصيد القانوني يشمل الضريبة؛ لا تُجمع مبالغ الدولار بعملة المستند مع الدينار."
+      },
+      "aggregation": {
+        "en": "One cutoff; never sum balances across dates. Ratios use aggregates, never summed customer percentages.",
+        "ar": "تاريخ قطع واحد؛ لا تُجمع الأرصدة عبر التواريخ. النسب من الإجماليات وليست مجموع نسب العملاء."
+      },
+      "refundPolicy": {
+        "en": "Signed customer credits remain in their own aging buckets; no arbitrary allocation. Gross positive components and credit balances remain distinct.",
+        "ar": "الأرصدة الدائنة الموقّعة تبقى في شرائح أعمارها دون تخصيص اعتباطي. المكونات الموجبة الإجمالية مستقلة عن الأرصدة الدائنة."
+      },
+      "cancelPolicy": {
+        "en": "Draft/cancelled documents, non-receivable accounts, later accounting entries and settlements effective after cutoff.",
+        "ar": "المسودات والمستندات الملغاة والحسابات غير المدينة والقيود والتسويات الفعّالة بعد القطع."
       }
     },
     {
@@ -15814,23 +15945,23 @@
     {
       "id": "total_overdue_net",
       "discoveryId": null,
-      "canonicalId": null,
+      "canonicalId": "total_overdue_receivable",
       "definitionVersion": 1,
       "domain": "receivables",
       "name": {
-        "en": "Total Overdue (Net)",
-        "ar": "إجمالي المتأخرات بالصافي"
+        "en": "Total Overdue",
+        "ar": "إجمالي الذمم المتأخرة"
       },
       "definition": {
-        "en": "Sum net 1–30, 31–60, 61–90, 91–120 and >120 buckets; derived candidate 600,440,611.46 IQD.",
-        "ar": "مجموع شرائح الصافي من 1–30 إلى أكثر من 120؛ قيمة مرشحة مشتقة 600,440,611.46 دينار."
+        "en": "Sum of the five signed overdue buckets at the same cutoff. Historical residual is reconstructed through cutoff; payments after cutoff do not change that historical balance.",
+        "ar": "مجموع شرائح التأخر الخمس الموقّعة عند تاريخ القطع نفسه. يُعاد بناء الرصيد المتبقي حتى القطع؛ الدفعات اللاحقة لا تغير ذلك الرصيد التاريخي."
       },
       "formula": {
-        "en": "Sum net 1–30, 31–60, 61–90, 91–120 and >120 buckets; derived candidate 600,440,611.46 IQD.",
-        "ar": "مجموع شرائح الصافي من 1–30 إلى أكثر من 120؛ قيمة مرشحة مشتقة 600,440,611.46 دينار."
+        "en": "1–30 + 31–60 + 61–90 + 91–120 + >120",
+        "ar": "١–٣٠ + ٣١–٦٠ + ٦١–٩٠ + ٩١–١٢٠ + أكثر من ١٢٠"
       },
       "kind": "snapshot",
-      "state": "defined_awaiting_reconciliation",
+      "state": "certified",
       "dimensions": [
         "customer",
         "commercial_customer",
@@ -15839,7 +15970,9 @@
         "currency",
         "time"
       ],
-      "publishedDimensions": [],
+      "publishedDimensions": [
+        "customer"
+      ],
       "sourceFields": [
         "account_move_line.balance",
         "account_move_line.date",
@@ -15861,29 +15994,30 @@
       "evidenceRefs": [
         "receivables-aging-v1",
         "odoo-aged-receivable-numeric-replay",
-        "source-evidence-report-unlock-wave"
+        "source-evidence-report-unlock-wave",
+        "finance-metric-definitions-delivery"
       ],
-      "approval": "pending",
-      "published": false,
+      "approval": "standing_finance",
+      "published": true,
       "notes": {
-        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
-        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
+        "en": "Published only at the exact September 30, 2026 cutoff under Finance standing approval dated October 7. Stable customer identity and signed aging are exact; gross/credit components have summary permission only. Alternative gross-positive aging buckets, other dates/dimensions and custom-module equivalence are not certified.",
+        "ar": "منشور فقط عند قطع 30 سبتمبر 2026 المحدد بموجب اعتماد المالية الدائم بتاريخ 7 أكتوبر. هويات العملاء والأعمار الموقّعة مطابقة تماماً؛ مكونات الإجمالي والأرصدة الدائنة مصرح بإجمالياتها فقط. شرائح الأعمار الموجبة البديلة والتواريخ والأبعاد الأخرى وتكافؤ الوحدات المخصصة غير معتمدة."
       },
-      "controlValue": null,
+      "controlValue": "600440611.46",
       "controlDate": "2026-09-30",
       "approvalRecord": {
         "definitionVersion": 1,
-        "owner": null,
-        "approvalDate": null,
-        "status": "pending",
-        "confirmedTotals": null,
-        "acceptedExceptions": null,
-        "reference": null
+        "owner": "Finance",
+        "approvalDate": "2026-10-07",
+        "status": "standing_approval_applied",
+        "confirmedTotals": "600440611.46",
+        "acceptedExceptions": "None: exact value/count tolerance zero; unsupported scope excluded",
+        "reference": "finance-standing-20261007-receivables-v1"
       },
-      "definitionHash": "c2d7495544b987fdaaccf36843b633338bec10ebbb24ab3a991b88cec2b3d969",
+      "definitionHash": "c58acecc08e48c13e570c70e639ed8d4ff92a85b2aac6d27e7ffb3b3d8b6e046",
       "businessDate": {
-        "en": "Historical snapshot cutoff September 30, 2026; accounting entries/settlements effective by cutoff only.",
-        "ar": "رصيد تاريخي عند قطع 30 سبتمبر 2026؛ القيود والتسويات الفعّالة حتى القطع فقط."
+        "en": "Inclusive accounting cutoff. Age by maturity date, falling back to journal-item accounting date. Due exactly on cutoff belongs to At Date.",
+        "ar": "قطع محاسبي شامل. العمر حسب تاريخ الاستحقاق، مع الرجوع إلى تاريخ القيد عند غيابه. المستحق في يوم القطع يدخل في شريحة غير المتأخر."
       },
       "grain": {
         "en": "One receivable maturity/installment component; invoice counts require distinct invoice identity.",
@@ -15892,28 +16026,40 @@
       "unit": {
         "en": "Company-ledger IQD, legal receivable includes tax; never sum document-currency USD with IQD.",
         "ar": "الدينار العراقي وفق دفتر الشركة، والرصيد القانوني يشمل الضريبة؛ لا تُجمع مبالغ الدولار بعملة المستند مع الدينار."
+      },
+      "aggregation": {
+        "en": "One cutoff; never sum balances across dates. Ratios use aggregates, never summed customer percentages.",
+        "ar": "تاريخ قطع واحد؛ لا تُجمع الأرصدة عبر التواريخ. النسب من الإجماليات وليست مجموع نسب العملاء."
+      },
+      "refundPolicy": {
+        "en": "Signed customer credits remain in their own aging buckets; no arbitrary allocation. Gross positive components and credit balances remain distinct.",
+        "ar": "الأرصدة الدائنة الموقّعة تبقى في شرائح أعمارها دون تخصيص اعتباطي. المكونات الموجبة الإجمالية مستقلة عن الأرصدة الدائنة."
+      },
+      "cancelPolicy": {
+        "en": "Draft/cancelled documents, non-receivable accounts, later accounting entries and settlements effective after cutoff.",
+        "ar": "المسودات والمستندات الملغاة والحسابات غير المدينة والقيود والتسويات الفعّالة بعد القطع."
       }
     },
     {
       "id": "overdue_net_percentage",
       "discoveryId": null,
-      "canonicalId": null,
+      "canonicalId": "overdue_receivable_percentage",
       "definitionVersion": 1,
       "domain": "receivables",
       "name": {
-        "en": "Overdue Percentage (Net)",
-        "ar": "نسبة المتأخرات بالصافي"
+        "en": "Overdue %",
+        "ar": "نسبة الذمم المتأخرة"
       },
       "definition": {
-        "en": "100 × net total overdue / net aged receivable; net credits can make percentages unusual. No approved ratio yet.",
-        "ar": "إجمالي المتأخرات بالصافي ÷ صافي الذمم × 100؛ قد تُنتج الأرصدة الدائنة نسباً غير معتادة. النسبة غير معتمدة بعد."
+        "en": "Total Overdue divided by Net Aged Receivable; zero denominator gives no value. Historical residual is reconstructed through cutoff; payments after cutoff do not change that historical balance.",
+        "ar": "إجمالي الذمم المتأخرة مقسوماً على صافي الذمم حسب العمر؛ لا تُحسب النسبة عند مقام صفري. يُعاد بناء الرصيد المتبقي حتى القطع؛ الدفعات اللاحقة لا تغير ذلك الرصيد التاريخي."
       },
       "formula": {
-        "en": "100 × net total overdue / net aged receivable; net credits can make percentages unusual. No approved ratio yet.",
-        "ar": "إجمالي المتأخرات بالصافي ÷ صافي الذمم × 100؛ قد تُنتج الأرصدة الدائنة نسباً غير معتادة. النسبة غير معتمدة بعد."
+        "en": "Total Overdue ÷ Net Aged Receivable × 100",
+        "ar": "إجمالي الذمم المتأخرة ÷ صافي الذمم حسب العمر × ١٠٠"
       },
       "kind": "snapshot",
-      "state": "defined_awaiting_reconciliation",
+      "state": "certified",
       "dimensions": [
         "customer",
         "commercial_customer",
@@ -15922,7 +16068,9 @@
         "currency",
         "time"
       ],
-      "publishedDimensions": [],
+      "publishedDimensions": [
+        "customer"
+      ],
       "sourceFields": [
         "account_move_line.balance",
         "account_move_line.date",
@@ -15944,29 +16092,30 @@
       "evidenceRefs": [
         "receivables-aging-v1",
         "odoo-aged-receivable-numeric-replay",
-        "source-evidence-report-unlock-wave"
+        "source-evidence-report-unlock-wave",
+        "finance-metric-definitions-delivery"
       ],
-      "approval": "pending",
-      "published": false,
+      "approval": "standing_finance",
+      "published": true,
       "notes": {
-        "en": "CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION. The verified source-ID bridge and all 15,519 customer/bucket cases match exactly (2,217 customers; no ambiguous, unmatched or unexpected identities). Installed report metadata was inspected; custom Python equivalence and report-policy confirmation remain Finance decisions. No business certification/publication. Historical residual = original balance − debit-side partial amounts + credit-side partial amounts effective by cutoff, rounded at observed IQD 0.001 precision; post-cutoff payments do not erase historic balances.",
-        "ar": "ضابط مرشح — بانتظار تأكيد المالية. تم إثبات ربط الملف بهوية الشريك ومطابقة 15,519 حالة لـ2,217 عميلاً، دون هويات ملتبسة أو مفقودة أو زائدة. تم فحص بيانات التقرير المثبت؛ ويظل تأكيد منطق الوحدات المخصصة وخيارات التقرير من اختصاص المالية. لا اعتماد أعمال ولا نشر. الرصيد التاريخي = الرصيد الأصلي − تسويات جانب المدين + تسويات جانب الدائن الفعّالة حتى القطع، مع التقريب وفق دقة الدينار المرصودة 0.001؛ دفعات ما بعد القطع لا تمحو الرصيد التاريخي."
+        "en": "Published only at the exact September 30, 2026 cutoff under Finance standing approval dated October 7. Stable customer identity and signed aging are exact; gross/credit components have summary permission only. Alternative gross-positive aging buckets, other dates/dimensions and custom-module equivalence are not certified.",
+        "ar": "منشور فقط عند قطع 30 سبتمبر 2026 المحدد بموجب اعتماد المالية الدائم بتاريخ 7 أكتوبر. هويات العملاء والأعمار الموقّعة مطابقة تماماً؛ مكونات الإجمالي والأرصدة الدائنة مصرح بإجمالياتها فقط. شرائح الأعمار الموجبة البديلة والتواريخ والأبعاد الأخرى وتكافؤ الوحدات المخصصة غير معتمدة."
       },
       "controlValue": null,
       "controlDate": "2026-09-30",
       "approvalRecord": {
         "definitionVersion": 1,
-        "owner": null,
-        "approvalDate": null,
-        "status": "pending",
-        "confirmedTotals": null,
-        "acceptedExceptions": null,
-        "reference": null
+        "owner": "Finance",
+        "approvalDate": "2026-10-07",
+        "status": "standing_approval_applied",
+        "confirmedTotals": "Ratio of exact certified totals; zero denominator null",
+        "acceptedExceptions": "None: exact value/count tolerance zero; unsupported scope excluded",
+        "reference": "finance-standing-20261007-receivables-v1"
       },
-      "definitionHash": "039e17662bdc8f913ce12a1929d71d616e55fb8c597f43bc51dd1b6ca4102685",
+      "definitionHash": "7879bb81eec5243cd715a3ccb5efa99bb14d09261168e16792d1b5a648c6be41",
       "businessDate": {
-        "en": "Historical snapshot cutoff September 30, 2026; accounting entries/settlements effective by cutoff only.",
-        "ar": "رصيد تاريخي عند قطع 30 سبتمبر 2026؛ القيود والتسويات الفعّالة حتى القطع فقط."
+        "en": "Inclusive accounting cutoff. Age by maturity date, falling back to journal-item accounting date. Due exactly on cutoff belongs to At Date.",
+        "ar": "قطع محاسبي شامل. العمر حسب تاريخ الاستحقاق، مع الرجوع إلى تاريخ القيد عند غيابه. المستحق في يوم القطع يدخل في شريحة غير المتأخر."
       },
       "grain": {
         "en": "One receivable maturity/installment component; invoice counts require distinct invoice identity.",
@@ -15975,6 +16124,18 @@
       "unit": {
         "en": "Percentage (%), computed from matching totals; cohort and zero-denominator rules require exact-version approval.",
         "ar": "نسبة مئوية من إجماليات متطابقة؛ المجموعة والمقام الصفري يتطلبان اعتماد النسخة المحددة."
+      },
+      "aggregation": {
+        "en": "One cutoff; never sum balances across dates. Ratios use aggregates, never summed customer percentages.",
+        "ar": "تاريخ قطع واحد؛ لا تُجمع الأرصدة عبر التواريخ. النسب من الإجماليات وليست مجموع نسب العملاء."
+      },
+      "refundPolicy": {
+        "en": "Signed customer credits remain in their own aging buckets; no arbitrary allocation. Gross positive components and credit balances remain distinct.",
+        "ar": "الأرصدة الدائنة الموقّعة تبقى في شرائح أعمارها دون تخصيص اعتباطي. المكونات الموجبة الإجمالية مستقلة عن الأرصدة الدائنة."
+      },
+      "cancelPolicy": {
+        "en": "Draft/cancelled documents, non-receivable accounts, later accounting entries and settlements effective after cutoff.",
+        "ar": "المسودات والمستندات الملغاة والحسابات غير المدينة والقيود والتسويات الفعّالة بعد القطع."
       }
     }
   ],
@@ -16155,8 +16316,8 @@
     {
       "id": "finance-receivables",
       "name": {
-        "en": "Receivables & Aging Validation",
-        "ar": "التحقق من الذمم وأعمار الديون"
+        "en": "Receivables & Aging",
+        "ar": "الذمم المدينة وأعمار الديون"
       },
       "metrics": [
         "net_aged_receivable",
@@ -16169,13 +16330,12 @@
         "total_overdue_net",
         "overdue_net_percentage",
         "receivables_gross_outstanding_amount",
-        "credit_balances",
-        "receivables_missing_due_date_amount"
+        "credit_balances"
       ],
       "dimensions": [
         "customer"
       ],
-      "state": "validation_pending",
+      "state": "executable_certified",
       "audience": {
         "en": "Finance",
         "ar": "المالية"
@@ -16193,12 +16353,16 @@
         "ar": "تاريخ الرصيد 30 سبتمبر 2026؛ مصدر الضابط كما في 6 أكتوبر 2026، 12:53:16.128 بالتوقيت العالمي."
       },
       "limitations": {
-        "en": "Numeric total, buckets and 2,217 customer vectors reproduce the workbook; stable identity has no verified bridge. Existing product surface contains status only, not executable receivable values.",
-        "ar": "الإجمالي والشرائح و2217 متجهاً رقمياً للعملاء تطابق الملف؛ ربط الهوية الثابتة غير مثبت. شاشة المنتج تعرض الحالة فقط ولا تنفذ قيم الذمم."
+        "en": "Eleven certified summary metrics; complete Customer Aging for seven source buckets/total. Nine exact Customer metric pairs also admit Total Overdue and Overdue %. Gross and Credits are summary-only. Fixed cutoff; no other date, trend or grouping.",
+        "ar": "أحد عشر مؤشراً إجمالياً معتمداً؛ أعمار العملاء كاملة للشرائح والإجمالي السبعة. تسعة أزواج مؤشرات حسب العميل تشمل أيضاً إجمالي المتأخرات ونسبتها. الإجمالي الموجب والأرصدة الدائنة إجماليات فقط. القطع ثابت دون تاريخ أو اتجاه أو تجميع آخر."
       },
       "unlock": {
-        "en": "All 15,519 source-ID customer/bucket cases are exact. Finance confirmation of signed credits, missing-maturity fallback, custom report options and exact-version owner/date/exceptions remains required.",
-        "ar": "تمت مطابقة 15,519 حالة بهويات الشركاء. ما زال تأكيد المالية للأرصدة الدائنة وبديل الاستحقاق المفقود وخيارات التقرير المخصص ومسؤول وتاريخ واستثناءات نسخة التعريف مطلوباً."
+        "en": "Published via exact reconciliation, existing release certification, derived-output controls, promotion and serving-binding compare-and-swap. Finance standing approval recorded October 7, 2026.",
+        "ar": "منشور عبر المطابقة التامة ومصادقة الإصدار وضوابط المخرجات المشتقة والترقية واستبدال ربط العرض المشروط. سُجل اعتماد المالية الدائم في 7 أكتوبر 2026."
+      },
+      "presentation": {
+        "en": "Eleven KPI cards and one seven-metric Customer Aging table with all 2,217 identities. The four earlier reports remain executable.",
+        "ar": "إحدى عشرة بطاقة مؤشر وجدول أعمار للعملاء بسبعة مؤشرات وجميع الهويات البالغ عددها 2217. التقارير الأربعة السابقة تبقى تنفيذية."
       }
     },
     {
@@ -16827,10 +16991,10 @@
         "overdue_net_percentage"
       ],
       "question": {
-        "en": "Confirm this exact signed Odoo historical control and cutoff, including accounting-date fallback for missing maturity and unallocated credits; specify any adjustments, accepted exceptions and tolerance. The 15,519 identity-aware cases are exact; installed metadata was inspected. Confirm custom-module/report options and record Finance owner, approval date, exact definition version, confirmed totals and accepted exceptions. No Finance approval has been recorded.",
-        "ar": "هل تؤكدون ضابط أودو التاريخي المحدد بإشاراته وتاريخ قطعه، بما فيه استخدام تاريخ القيد عند فقد الاستحقاق والأرصدة الدائنة غير الموزعة؟ حددوا التعديلات والاستثناءات المقبولة والتفاوت؛ تمت مطابقة 15,519 حالة بهويات الشركاء وفحص بيانات التقرير المثبت. يرجى تأكيد خيارات التقرير والوحدات المخصصة وتسجيل مسؤول المالية وتاريخ الاعتماد ونسخة التعريف والإجماليات والاستثناءات المقبولة. لم يُسجل اعتماد المالية."
+        "en": "Recorded: Finance standing approval dated October 7 applies to this exact published signed-cutoff family. Exact identity/evidence, maturity-date fallback, signed credits, aggregate overdue ratio and zero-denominator null are demonstrated. Other custom report options or policy changes still require explicit Finance confirmation.",
+        "ar": "مسجل: ينطبق اعتماد المالية الدائم بتاريخ 7 أكتوبر على مجموعة الأرصدة الموقّعة المنشورة عند القطع المحدد. ثبتت الهوية والدليل وبديل تاريخ الاستحقاق والأرصدة الدائنة ونسبة المتأخرات من الإجماليات والقيمة غير المتاحة عند المقام الصفري. خيارات التقرير المخصص الأخرى أو تغييرات السياسة تتطلب تأكيداً صريحاً من المالية."
       },
-      "state": "pending"
+      "state": "standing_approval_recorded"
     },
     {
       "id": "APP-05",
@@ -16849,8 +17013,8 @@
         "credit_balances"
       ],
       "question": {
-        "en": "Confirm receivables-aging-v1 gross-positive component control, separate missing-date bucket with no fallback and separate signed credits. Do not treat approval of the net Odoo report as approval of this different policy.",
-        "ar": "هل تؤكدون ضابط أعمار الذمم للإجمالي الموجب وفق النسخة الأولى، مع شريحة مستقلة للاستحقاق المفقود دون تاريخ بديل وأرصدة دائنة منفصلة؟ اعتماد تقرير أودو الصافي لا يعتمد هذه السياسة المختلفة تلقائياً."
+        "en": "Gross-positive and credit summary totals are already certified under the standing decision. Explicit Finance confirmation is still required for the alternative gross-aging-v1 bucket policy, its separate missing-maturity bucket without fallback, and any allocation change. Signed net aging approval does not certify these alternate buckets.",
+        "ar": "إجماليات المكونات الموجبة والأرصدة الدائنة معتمدة بالفعل بموجب القرار الدائم. تتطلب سياسة شرائح أعمار الإجمالي الموجب البديلة ذات شريحة الاستحقاق المفقود المنفصلة دون بديل وأي تغيير في التخصيص تأكيداً صريحاً من المالية. اعتماد الأعمار الصافية الموقّعة لا يعتمد هذه الشرائح البديلة."
       },
       "state": "pending"
     },
@@ -17165,7 +17329,51 @@
     "ambiguous": 0,
     "unmatched": 0,
     "unexpected": 0,
-    "financeApproval": "pending",
+    "financeApproval": "standing_approval_applied_to_exact_published_family",
     "reference": "source-evidence-report-unlock-wave"
+  },
+  "financeStandingApproval": {
+    "approverGroup": "Finance",
+    "decisionType": "standing metric-design approval",
+    "date": "2026-10-07",
+    "scope": {
+      "en": "Financially correct and technically reconciled Finance metrics. Finance adopts analytics definitions where financially correct.",
+      "ar": "المؤشرات المالية الصحيحة محاسبياً والمطابقة فنياً. تعتمد المالية تعريفات التحليلات متى كانت صحيحة مالياً."
+    },
+    "limitations": {
+      "en": [
+        "Unresolved policy choices still require explicit Finance confirmation.",
+        "Accounting correctness must be demonstrated.",
+        "Exact technical reconciliation remains mandatory.",
+        "Gross profit/margin, inventory valuation, FX, purchase spend and cost allocation are not automatically approved."
+      ],
+      "ar": [
+        "الخيارات السياساتيّة غير المحسومة تتطلب تأكيداً صريحاً من المالية.",
+        "يجب إثبات الصحة المحاسبية.",
+        "تبقى المطابقة الفنية التامة إلزامية.",
+        "الربح والهامش المحاسبيان وتقييم المخزون والعملات والإنفاق الشرائي وتوزيع التكاليف لا تُعتمد تلقائياً."
+      ]
+    }
+  },
+  "financePublication": {
+    "datasetId": "el-dabboos-finance-202609-v6",
+    "certificationReference": "finance-standing-20261007-receivables-v1",
+    "cutoff": "2026-09-30",
+    "identityCases": 15519,
+    "customerCount": 2217,
+    "releaseCases": 18054,
+    "metrics": [
+      "net_aged_receivable",
+      "aged_at_date",
+      "aged_1_30",
+      "aged_31_60",
+      "aged_61_90",
+      "aged_91_120",
+      "aged_over_120",
+      "total_overdue_receivable",
+      "overdue_receivable_percentage",
+      "gross_open_receivable_components",
+      "credit_balances"
+    ]
   }
 }

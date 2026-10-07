@@ -2,19 +2,19 @@
 
 Business definition pack v1 · Company 1 · Iraq · IQD · Prepared October 6, 2026.
 
-**Approval preparation only.** Documentation does not approve, certify or publish a metric. Existing published metrics remain governed by their exact release. New approvals are pending; no approver or date is fabricated.
+**Approval preparation only.** Documentation does not approve, certify or publish a metric. Existing published metrics remain governed by their exact release. The standing Finance decision is recorded below; certification and publication still require exact technical evidence.
 
 Discovery evidence: 170 candidates, 28 dimensions, 13 domains, 893 physical tables and 269 relevant models. This pack adds explicit business proposals; its 204 entries are definition records, not 204 executable metrics. Counts below describe each definition once, including separately versioned net and gross receivable policies.
 
 | Lifecycle | Definitions |
 | --- | --- |
-| Certified | 10 |
-| Reconciled · Awaiting Business Approval | 15 |
-| Defined · Awaiting Reconciliation | 97 |
+| Certified | 21 |
+| Reconciled · Awaiting Business Approval | 6 |
+| Defined · Awaiting Reconciliation | 95 |
 | Discovered | 50 |
 | Unavailable / Insufficient Source Data | 32 |
 
-Certified here means an existing certified definition with published September summaries and Business Line/Salesperson pairs only. Other candidate dimensions are not certified. “Defined” means a written proposal, not an approved meaning. “Reconciled” may be numerical control evidence with identity gaps, explicitly disclosed below. Discovery A/B classifications establish source ingredients only.
+Certified means an explicitly published exact definition, period and grouping. September event summaries retain their Business Line/Salesperson pairs. Signed aging is published only at September 30 with the Customer pairs listed per metric; gross components and credits are summary-only. Candidate dimensions are not permissions. Defined means a proposal; discovery establishes source ingredients only.
 
 Lifecycle: Discovered → Defined → Reconciled → exact-version business approval → certification → explicit publication. Unavailable identifies insufficient capture or source evidence. A generic canonical ID does not certify its Odoo mapping or a grouping.
 
@@ -25,6 +25,22 @@ Existing decisions, retained without reopening:
 - Refunds recognized on each credit note’s own issue date.
 
 - Business Line is official; Company 1 is Phase 1 Iraq; reporting currency IQD.
+
+## Finance standing metric-design approval
+
+Finance · 2026-10-07 · standing metric-design approval
+
+Financially correct and technically reconciled Finance metrics. Finance adopts analytics definitions where financially correct.
+
+- Unresolved policy choices still require explicit Finance confirmation.
+
+- Accounting correctness must be demonstrated.
+
+- Exact technical reconciliation remains mandatory.
+
+- Gross profit/margin, inventory valuation, FX, purchase spend and cost allocation are not automatically approved.
+
+A metric is not product-ready until its business definition, formula/date semantics, EN/AR localization and metric-help metadata are complete. Certification requires separate exact technical evidence. Material semantic changes require a new definition version.
 
 An event contributes once within a period: Order Revenue/Count use the order date in Asia/Baghdad; invoices use invoice issue date; each refund uses its own issue date. A snapshot describes the position at one cutoff: receivables, stock and inventory value. Sum positions at the same cutoff; never sum daily snapshots into monthly revenue. Reporting period, snapshot cutoff and source extraction timestamp are different. September sales freshness is October 5 at 14:54:58.149 UTC; the receivable control freshness is October 6 at 12:53:16.128 UTC.
 
@@ -94,20 +110,22 @@ Executive has six KPI cards. Each grouped report has a three-series invoice/refu
 | Limitations | Wave 1 source/mart comparisons for existing inputs include customer controls, but no customer pair was admitted to the release. Customer identities are not names; no is_company filter. New cohort/concentration definitions remain proposals. |
 | Approval / next reconciliation | When approved tunnel is available, validate provenance/completeness of preserved exact September customer controls, link immutable input cases and distinct/ratio outputs, obtain required output approval, promote exact customer pairs and verify runtime isolation. Do not infer publication from an exact aggregate. |
 
-## Receivables & Aging Validation (finance-receivables)
+## Receivables & Aging (finance-receivables)
 
 | Item | Business description |
 | --- | --- |
 | Purpose | Confirm historical customer debt and signed credits. |
 | Users | Finance |
 | Questions | What was owed at cutoff, when was it due, and what policy explains credits/missing dates? |
-| Metrics | Net Aged Receivable (`net_aged_receivable`); At-Date Receivable (`aged_at_date`); 1–30 Days Overdue (Net) (`aged_1_30`); 31–60 Days Overdue (Net) (`aged_31_60`); 61–90 Days Overdue (Net) (`aged_61_90`); 91–120 Days Overdue (Net) (`aged_91_120`); Over 120 Days Overdue (Net) (`aged_over_120`); Total Overdue (Net) (`total_overdue_net`); Overdue Percentage (Net) (`overdue_net_percentage`); Gross Open Receivable Components (`receivables_gross_outstanding_amount`); Signed Open Credit Components (`credit_balances`); Missing Due Date Amount (`receivables_missing_due_date_amount`) |
+| Metrics | Net Aged Receivable (`net_aged_receivable`); At-Date Receivable (`aged_at_date`); 1–30 Overdue (`aged_1_30`); 31–60 Overdue (`aged_31_60`); 61–90 Overdue (`aged_61_90`); 91–120 Overdue (`aged_91_120`); Older than 120 (`aged_over_120`); Total Overdue (`total_overdue_net`); Overdue % (`overdue_net_percentage`); Gross Open Receivable Components (`receivables_gross_outstanding_amount`); Credit Balances (`credit_balances`) |
 | Dimensions | customer |
 | Date basis | Snapshot cutoff September 30, 2026; current residual observations are October snapshots, not September close. Collections use an approved settlement/cash date still to be selected. |
 | Current period | Cutoff September 30, 2026; control sourceAsOf October 6, 2026, 12:53:16.128 UTC. |
-| State | Validation only · reconciled / awaiting approval |
-| Limitations | Numeric total, buckets and 2,217 customer vectors reproduce the workbook; stable identity has no verified bridge. Existing product surface contains status only, not executable receivable values. |
-| Approval / next reconciliation | All 15,519 source-ID customer/bucket cases are exact. Finance confirmation of signed credits, missing-maturity fallback, custom report options and exact-version owner/date/exceptions remains required. |
+| State | Executable · Certified exact series |
+| Limitations | Eleven certified summary metrics; complete Customer Aging for seven source buckets/total. Nine exact Customer metric pairs also admit Total Overdue and Overdue %. Gross and Credits are summary-only. Fixed cutoff; no other date, trend or grouping. |
+| Approval / next reconciliation | Published via exact reconciliation, existing release certification, derived-output controls, promotion and serving-binding compare-and-swap. Finance standing approval recorded October 7, 2026. |
+
+Eleven KPI cards and one seven-metric Customer Aging table with all 2,217 identities. The four earlier reports remain executable.
 
 ## Data & Certification Status (data-status)
 
@@ -306,25 +324,28 @@ Executive has six KPI cards. Each grouped report has a three-series invoice/refu
 
 Six KPI cards for document counts, average invoice value and monetary totals; a six-metric Salesperson detail table. All values come from the analytics runtime.
 
-## Finance candidate control — pending confirmation
+## Signed receivable cutoff — exact Finance publication
 
-**CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION.** Cutoff 2026-09-30, IQD. All 15,519 source-ID customer/bucket cases exactly reproduce the workbook (2,217 customers; zero ambiguous, unmatched or unexpected identities). Installed report metadata was inspected at 2026-10-06T18:20:50.379Z; custom code equivalence is not asserted. Finance owner/date/confirmed policy/accepted exceptions are unrecorded. Nothing is business-certified or published.
+**CERTIFIED AND LOCALLY PUBLISHED.** Finance standing approval October 7, 2026; cutoff September 30, 2026, IQD. All 15,519 source-ID cases are exact across 2,217 customers; zero ambiguous, unmatched, unexpected or mismatched cases. Existing release certification and explicit publication govern this scope.
 
-| Control output | IQD |
+`el-dabboos-finance-202609-v6` · `finance-standing-20261007-receivables-v1`
+
+| Exact cutoff output | IQD |
 | --- | --- |
 | Gross Open Receivable Components | 1532751636.39 |
-| Signed Open Credit Components | -173290543.78 |
+| Credit Balances | -173290543.78 |
 | Net Aged Receivable | 1359461092.61 |
 | At-Date Receivable | 759020481.15 |
-| 1–30 Days Overdue (Net) | 218464001.82 |
-| 31–60 Days Overdue (Net) | 69135500.55 |
-| 61–90 Days Overdue (Net) | 25871000.18 |
-| 91–120 Days Overdue (Net) | 33782500.14 |
-| Over 120 Days Overdue (Net) | 253187608.77 |
+| 1–30 Overdue | 218464001.82 |
+| 31–60 Overdue | 69135500.55 |
+| 61–90 Overdue | 25871000.18 |
+| 91–120 Overdue | 33782500.14 |
+| Older than 120 | 253187608.77 |
+| Total Overdue | 600440611.46 |
 
-The signed net report uses maturity, falling back to accounting date when absent; due on cutoff belongs in At Date. Gross receivables-aging-v1 instead keeps missing maturity in its own bucket and unapplied credits/advances separate, with no allocation. These policies are not interchangeable. Historical reconstruction uses original balance minus debit-side plus credit-side partial settlements with max_date ≤ cutoff, preserving post-cutoff payments and individual installments. Applied credits reduce residual through accounting settlement; unapplied credits are not assigned by the application.
+Historical residual includes only settlements effective through cutoff; later payments do not erase history. Maturity date falls back to accounting date when missing; due on cutoff belongs in At Date. Signed credits remain in their own buckets with no allocation. Total Overdue sums the five overdue buckets; Overdue % divides aggregate overdue by aggregate net, with null for zero denominator.
 
-Gross v1: current 760,615,731.13; 1–30 239,405,751.70; 31–90 94,315,000.66; >90 227,502,606.69; missing maturity 210,912,546.21 IQD (1,319 components). 3,864 positive components / 2,039 known customers; 1,324 partially settled components, residual 623,244,340.38; 1,378 credit/advance components −173,290,543.78. Rejects/ambiguous components: 0 in the preserved extraction; identity verification still pending.
+Gross-positive aging v1 with a separate missing-maturity bucket remains an alternative unpublished policy. Its summary gross total is supported, but its alternate buckets and any arbitrary credit allocation are not admitted. Installed metadata inspection does not establish general custom-Python equivalence. Other dates/dimensions still need exact evidence and any unresolved policy needs explicit Finance confirmation.
 
 ## Evidence and operating references
 
@@ -336,6 +357,6 @@ Gross v1: current 760,615,731.13; 1–30 239,405,751.70; 31–90 94,315,000.66; 
 
 - [Current local reports](../integration/local-management-reports-v1.md) · [Luna QA handoff](../qa/local-management-pack-luna-handoff.md)
 
-- [Versioned definition source](enterprise-metrics-v1.json)
+- [Versioned definition source](enterprise-metrics-v1.json) · [Finance publication and metric-help delivery](../integration/finance-metric-definitions-delivery.md)
 
-Private workbook and customer extracts remain outside Git. Documents contain aggregate examples only. Tunnel unavailable on October 6: no new source extraction, approval, certification or publication. Existing local authentication and AI/manual publication guards unchanged. Visual/browser QA deferred to Luna; no visual pass claimed.
+Private workbook and customer extracts remain outside Git. Documents contain aggregate examples only. Finance publication reuses exact frozen evidence through the existing local lifecycle; no new source writes or extraction. Authentication and AI/manual publication guards remain unchanged. Visual/browser QA is deferred to Luna; no visual pass claimed.

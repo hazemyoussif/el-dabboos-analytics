@@ -1,5 +1,7 @@
 # Laptop-local management reports pack v1
 
+**Current status, October 7:** [Finance standing approval and exact signed-aging publication](finance-metric-definitions-delivery.md) supersede this document’s historical Finance-pending status for the eleven published metrics only. Receivables & Aging is a normal certified report at the fixed September 30 cutoff; final checks for all five reports have zero failed series (including quiet retries after concurrent-build timeouts), with substantial latency documented in delivery; nine Customer pairs are admitted, while Gross/Credits are summary-only. Alternative gross-positive buckets and unresolved accounting policies remain unpublished. The separate Customer Performance candidate remains pending; its certification was not restarted. Earlier evidence and publication history below are retained. Visual/browser QA remains Deferred in the [combined Luna handoff](../qa/local-management-pack-luna-handoff.md).
+
 Starting branch `codex/production-pilot-lifecycle`, starting HEAD `2358eae041a83451d14fa492e898e4efa7189e29`. Final commit is recorded in the delivery response. No push, merge, cloud infrastructure, online staging or external CD. Discovery report/catalog/two scripts are already committed in `6fe12c0`; no duplicate discovery commit was created.
 
 ## Reports and governance

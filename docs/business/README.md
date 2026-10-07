@@ -1,5 +1,15 @@
 # Enterprise reports and metric approval package
 
+## Current delivery — October 7, 2026
+
+Finance standing approval is recorded in the existing versioned package and applied through exact local certification/publication. Current catalog: **18 report specifications / 5 executable reports; 204 definitions / 21 certified** (6 reconciled pending, 95 defined pending reconciliation, 50 discovered, 32 unavailable). APP-04 is recorded; the remaining forms retain their unresolved choices. Eleven signed-aging summary metrics and nine exact Customer pairs are published at September 30 only; Gross Open Receivable Components and Credits are summary-only. Customer Performance activation remains separate and pending.
+
+The domain semantic catalog owns bilingual metric help used by planner, builder, widgets and generated dictionaries. A metric is product-ready only when business meaning, formula/date semantics, EN/AR and help metadata are complete; certification remains a separate evidence requirement. Material meaning changes require a new definition version. Read [Finance/metric-help delivery](../integration/finance-metric-definitions-delivery.md) and the [combined deferred Luna handoff](../qa/local-management-pack-luna-handoff.md) for current runtime, gates and limitations.
+
+Everything below records the historical October 6 baseline and its earlier delivery evidence. Its pending Finance statements and counts are superseded for the precisely published family above.
+
+## Historical baseline
+
 Wave 2 update: [Invoice & Refund Operations](../integration/executable-reports-wave-two.md) adds one executable report from already-published invoice metrics. Current catalog: **18 specifications / 4 executable reports**; all 204 metric definitions and 19 approval forms are unchanged. The delivery record below describes the earlier `c692d6a` baseline.
 
 Prepared October 6, 2026 for Company 1 (Iraq), reporting currency IQD. Starting branch `codex/production-pilot-lifecycle`, HEAD `e5ea6a1ac3ada7574ac51f4a472fa226bdb0a2db`. This task expands the business catalog and approval specifications, with **no runtime metric/template change**. No new executable report has sufficient complete evidence for safe publication while the approved Odoo tunnel is unavailable. The three existing executable reports are preserved.

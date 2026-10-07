@@ -1,0 +1,13 @@
+# Reviewable local serving-policy optimization — authorized and applied
+
+The certified Finance release `el-dabboos-finance-202609-v6` is active. The initial smokes timed out after activation. This note retains the reviewed remedy and authorization history; current results are in the delivery document. Publication evidence remained exact throughout.
+
+The [reviewed SQL](../../../packages/data/migrations/postgres/017_statement_serving_scope.sql) was explicitly authorized by the user after isolated verification and applied as immutable migration 17 to both local marts. It replaces repeated per-row checks with one statement-scoped certified tenant/dataset relation for six existing runtime-release policies. It retains tenant matching, active binding, approved mapping, exact technical reconciliation, business certification, extraction completion, existing role targets, FORCE RLS and other completion/revision policies. The helper denies unscoped and cross-tenant calls, has a fixed search path, and grants only runtime execution. The business certification comparison uses bidirectional set difference, preserving order/duplicate-independent exact membership and rejecting null/missing/extra cases.
+
+This changes the security boundary implementation, so equivalent intent alone is insufficient to claim safe production behavior. A disposable synthetic PostgreSQL test compares complete visible rows in all six relations before/after for two tenants plus unbound/pending releases; it verifies unscoped/cross-tenant denial, read-only runtime identity/write rejection and exact case-set behavior. It passes. This test does not prove the live performance result or replace the full security suite.
+
+The user authorized this SQL as immutable mart migration 17. Verification includes the complete PostgreSQL/security and engineering gates, local application through the existing runner, refreshed existing runtime grants, a local rebuild and rerunning all five actual report smokes. Do not relax statement timeouts, proof checks, roles or tenant/policy filters. Runtime completion requires zero failed series, exact Finance headlines and all 2,217 Customer groups.
+
+Alternative: explicitly authorize restoring the previous approved serving binding, preserving the Finance certification/promotion history. That would recover the old report release but defer Finance runtime availability; it would not complete this task.
+
+Automatic approval review rejected both a live policy rewrite and a guarded rollback because the consequential serving/security scope was not explicitly authorized. Neither action executed. The user then authorized migration 17; the rollback was not executed. Final runtime results are recorded in the delivery document.

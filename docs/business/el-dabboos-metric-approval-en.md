@@ -2,19 +2,19 @@
 
 Business definition pack v1 · Company 1 · Iraq · IQD · Prepared October 6, 2026.
 
-**Approval preparation only.** Documentation does not approve, certify or publish a metric. Existing published metrics remain governed by their exact release. New approvals are pending; no approver or date is fabricated.
+**Approval preparation only.** Documentation does not approve, certify or publish a metric. Existing published metrics remain governed by their exact release. The standing Finance decision is recorded below; certification and publication still require exact technical evidence.
 
 Discovery evidence: 170 candidates, 28 dimensions, 13 domains, 893 physical tables and 269 relevant models. This pack adds explicit business proposals; its 204 entries are definition records, not 204 executable metrics. Counts below describe each definition once, including separately versioned net and gross receivable policies.
 
 | Lifecycle | Definitions |
 | --- | --- |
-| Certified | 10 |
-| Reconciled · Awaiting Business Approval | 15 |
-| Defined · Awaiting Reconciliation | 97 |
+| Certified | 21 |
+| Reconciled · Awaiting Business Approval | 6 |
+| Defined · Awaiting Reconciliation | 95 |
 | Discovered | 50 |
 | Unavailable / Insufficient Source Data | 32 |
 
-Certified here means an existing certified definition with published September summaries and Business Line/Salesperson pairs only. Other candidate dimensions are not certified. “Defined” means a written proposal, not an approved meaning. “Reconciled” may be numerical control evidence with identity gaps, explicitly disclosed below. Discovery A/B classifications establish source ingredients only.
+Certified means an explicitly published exact definition, period and grouping. September event summaries retain their Business Line/Salesperson pairs. Signed aging is published only at September 30 with the Customer pairs listed per metric; gross components and credits are summary-only. Candidate dimensions are not permissions. Defined means a proposal; discovery establishes source ingredients only.
 
 Lifecycle: Discovered → Defined → Reconciled → exact-version business approval → certification → explicit publication. Unavailable identifies insufficient capture or source evidence. A generic canonical ID does not certify its Odoo mapping or a grouping.
 
@@ -26,27 +26,46 @@ Existing decisions, retained without reopening:
 
 - Business Line is official; Company 1 is Phase 1 Iraq; reporting currency IQD.
 
+## Finance standing metric-design approval
+
+Finance · 2026-10-07 · standing metric-design approval
+
+Financially correct and technically reconciled Finance metrics. Finance adopts analytics definitions where financially correct.
+
+- Unresolved policy choices still require explicit Finance confirmation.
+
+- Accounting correctness must be demonstrated.
+
+- Exact technical reconciliation remains mandatory.
+
+- Gross profit/margin, inventory valuation, FX, purchase spend and cost allocation are not automatically approved.
+
+A metric is not product-ready until its business definition, formula/date semantics, EN/AR localization and metric-help metadata are complete. Certification requires separate exact technical evidence. Material semantic changes require a new definition version.
+
 Sign an exact definition/version/hash and control reference, not a metric name alone. Any formula/date/currency/grain/credit-policy change creates a new definition version and requires new approval/reconciliation. Completed forms are business evidence, not runtime authorization: an authorized operator must record them through existing append-only versioned governance, link exact controls, certify and explicitly publish. Never insert these pending entries into the runtime registry.
 
-## Finance candidate control — pending confirmation
+## Signed receivable cutoff — exact Finance publication
 
-**CANDIDATE CONTROL — PENDING FINANCE CONFIRMATION.** Cutoff 2026-09-30, IQD. All 15,519 source-ID customer/bucket cases exactly reproduce the workbook (2,217 customers; zero ambiguous, unmatched or unexpected identities). Installed report metadata was inspected at 2026-10-06T18:20:50.379Z; custom code equivalence is not asserted. Finance owner/date/confirmed policy/accepted exceptions are unrecorded. Nothing is business-certified or published.
+**CERTIFIED AND LOCALLY PUBLISHED.** Finance standing approval October 7, 2026; cutoff September 30, 2026, IQD. All 15,519 source-ID cases are exact across 2,217 customers; zero ambiguous, unmatched, unexpected or mismatched cases. Existing release certification and explicit publication govern this scope.
 
-| Control output | IQD |
+`el-dabboos-finance-202609-v6` · `finance-standing-20261007-receivables-v1`
+
+| Exact cutoff output | IQD |
 | --- | --- |
 | Gross Open Receivable Components | 1532751636.39 |
-| Signed Open Credit Components | -173290543.78 |
+| Credit Balances | -173290543.78 |
 | Net Aged Receivable | 1359461092.61 |
 | At-Date Receivable | 759020481.15 |
-| 1–30 Days Overdue (Net) | 218464001.82 |
-| 31–60 Days Overdue (Net) | 69135500.55 |
-| 61–90 Days Overdue (Net) | 25871000.18 |
-| 91–120 Days Overdue (Net) | 33782500.14 |
-| Over 120 Days Overdue (Net) | 253187608.77 |
+| 1–30 Overdue | 218464001.82 |
+| 31–60 Overdue | 69135500.55 |
+| 61–90 Overdue | 25871000.18 |
+| 91–120 Overdue | 33782500.14 |
+| Older than 120 | 253187608.77 |
+| Total Overdue | 600440611.46 |
 
-The signed net report uses maturity, falling back to accounting date when absent; due on cutoff belongs in At Date. Gross receivables-aging-v1 instead keeps missing maturity in its own bucket and unapplied credits/advances separate, with no allocation. These policies are not interchangeable. Historical reconstruction uses original balance minus debit-side plus credit-side partial settlements with max_date ≤ cutoff, preserving post-cutoff payments and individual installments. Applied credits reduce residual through accounting settlement; unapplied credits are not assigned by the application.
+Historical residual includes only settlements effective through cutoff; later payments do not erase history. Maturity date falls back to accounting date when missing; due on cutoff belongs in At Date. Signed credits remain in their own buckets with no allocation. Total Overdue sums the five overdue buckets; Overdue % divides aggregate overdue by aggregate net, with null for zero denominator.
 
-Gross v1: current 760,615,731.13; 1–30 239,405,751.70; 31–90 94,315,000.66; >90 227,502,606.69; missing maturity 210,912,546.21 IQD (1,319 components). 3,864 positive components / 2,039 known customers; 1,324 partially settled components, residual 623,244,340.38; 1,378 credit/advance components −173,290,543.78. Rejects/ambiguous components: 0 in the preserved extraction; identity verification still pending.
+Gross-positive aging v1 with a separate missing-maturity bucket remains an alternative unpublished policy. Its summary gross total is supported, but its alternate buckets and any arbitrary credit allocation are not admitted. Installed metadata inspection does not establish general custom-Python equivalence. Other dates/dimensions still need exact evidence and any unresolved policy needs explicit Finance confirmation.
 
 ## Finance
 
@@ -130,71 +149,63 @@ Confirmed totals / accepted exceptions / control reference: ____________________
 
 ### APP-04
 
-Confirm this exact signed Odoo historical control and cutoff, including accounting-date fallback for missing maturity and unallocated credits; specify any adjustments, accepted exceptions and tolerance. The 15,519 identity-aware cases are exact; installed metadata was inspected. Confirm custom-module/report options and record Finance owner, approval date, exact definition version, confirmed totals and accepted exceptions. No Finance approval has been recorded.
+Recorded: Finance standing approval dated October 7 applies to this exact published signed-cutoff family. Exact identity/evidence, maturity-date fallback, signed credits, aggregate overdue ratio and zero-denominator null are demonstrated. Other custom report options or policy changes still require explicit Finance confirmation.
 
 | Metric / exact version | Proposed formula / meaning | Control example |
 | --- | --- | --- |
-| Net Aged Receivable (`net_aged_receivable` vodoo-aged-report-reconstruction-v1) | Signed gross positive components + signed negative components; net Odoo report definition, separate from gross-aging-v1. | 1359461092.61 |
-| At-Date Receivable (`aged_at_date` vodoo-aged-report-reconstruction-v1) | Signed residual with effective due date ≥ cutoff; missing maturity uses accounting-date fallback in net Odoo reconstruction only. | 759020481.15 |
-| 1–30 Days Overdue (Net) (`aged_1_30` vodoo-aged-report-reconstruction-v1) | Signed residual where effective days overdue are 1–30. | 218464001.82 |
-| 31–60 Days Overdue (Net) (`aged_31_60` vodoo-aged-report-reconstruction-v1) | Signed residual where effective days overdue are 31–60. | 69135500.55 |
-| 61–90 Days Overdue (Net) (`aged_61_90` vodoo-aged-report-reconstruction-v1) | Signed residual where effective days overdue are 61–90. | 25871000.18 |
-| 91–120 Days Overdue (Net) (`aged_91_120` vodoo-aged-report-reconstruction-v1) | Signed residual where effective days overdue are 91–120. | 33782500.14 |
-| Over 120 Days Overdue (Net) (`aged_over_120` vodoo-aged-report-reconstruction-v1) | Signed residual where effective days overdue exceed 120. | 253187608.77 |
-| Total Overdue (Net) (`total_overdue_net` v1) | Sum net 1–30, 31–60, 61–90, 91–120 and >120 buckets; derived candidate 600,440,611.46 IQD. | — |
-| Overdue Percentage (Net) (`overdue_net_percentage` v1) | 100 × net total overdue / net aged receivable; net credits can make percentages unusual. No approved ratio yet. | — |
+| Net Aged Receivable (`net_aged_receivable` vodoo-aged-report-reconstruction-v1) | At Date + 1–30 + 31–60 + 61–90 + 91–120 + >120 = Gross Open Receivable Components + Credit Balances | 1359461092.61 |
+| At-Date Receivable (`aged_at_date` vodoo-aged-report-reconstruction-v1) | Signed receivable balances due on or after cutoff, including due today. | 759020481.15 |
+| 1–30 Overdue (`aged_1_30` vodoo-aged-report-reconstruction-v1) | Signed receivable balances overdue by 1–30 days at cutoff. | 218464001.82 |
+| 31–60 Overdue (`aged_31_60` vodoo-aged-report-reconstruction-v1) | Signed receivable balances overdue by 31–60 days at cutoff. | 69135500.55 |
+| 61–90 Overdue (`aged_61_90` vodoo-aged-report-reconstruction-v1) | Signed receivable balances overdue by 61–90 days at cutoff. | 25871000.18 |
+| 91–120 Overdue (`aged_91_120` vodoo-aged-report-reconstruction-v1) | Signed receivable balances overdue by 91–120 days at cutoff. | 33782500.14 |
+| Older than 120 (`aged_over_120` vodoo-aged-report-reconstruction-v1) | Signed receivable balances overdue by more than 120 days at cutoff. | 253187608.77 |
+| Total Overdue (`total_overdue_net` v1) | 1–30 + 31–60 + 61–90 + 91–120 + >120 | 600440611.46 |
+| Overdue % (`overdue_net_percentage` v1) | Total Overdue ÷ Net Aged Receivable × 100 | — |
 
 Why needed: unlock the named report with a meaning Finance, Management and Operations can verify. Existing formulas are listed only where a presentation/stewardship decision needs them; they are not reopened.
 
 Exact definition fingerprints:
 
-- `net_aged_receivable` / `25561db9b16b7017ebb2cfdb45bf5cb15a2bc47c8faefefd5a3aede4b7d72b31`
-- `aged_at_date` / `0109ae39ed22518b7bebed96299d63909eb79540b5b55144727cdde62c0d40a7`
-- `aged_1_30` / `d0f5572a5b129dc8b91ce231a5f495633a00ac7a68bf9893c1ea2ea0c07d420c`
-- `aged_31_60` / `aa3b87bda887554b29721cabcd803edf6de933ed69c24977cb4fa4c8ef580e81`
-- `aged_61_90` / `a3084fa4878dc6a69141529f93078736930bcc6f6ba388387b8403f07180aa0d`
-- `aged_91_120` / `82b5a2d56f1918bfcec27062c43074d467e7ffddcaccc1d835da53febd9ced1f`
-- `aged_over_120` / `7c0057b92c12aff22f3f588e5f78b435c21d3fb7928be0955cfecdfe1b311268`
-- `total_overdue_net` / `c2d7495544b987fdaaccf36843b633338bec10ebbb24ab3a991b88cec2b3d969`
-- `overdue_net_percentage` / `039e17662bdc8f913ce12a1929d71d616e55fb8c597f43bc51dd1b6ca4102685`
+- `net_aged_receivable` / `742b71fb367dbfff4fd8f82313c5be5c90597ae9e92eac18e809bb2d1e91c359`
+- `aged_at_date` / `a6e25410f1e454021f4b7c6da0843e66eacdbc6672ef045fa62375b2033222c6`
+- `aged_1_30` / `6c0b088d24b67ef814c7f67192ac36f59ccd824dfb7cd9bb11a0176ee3f110f0`
+- `aged_31_60` / `7dcb5bd89ebceea808aec0c4d8346c9cff8b9d13a738ab2c6cabc9f6d9d6092d`
+- `aged_61_90` / `2e52737b9a436e7fb0fb0138c1ef053bf1ea8677c6ebe379264e00e5e496c929`
+- `aged_91_120` / `3ca10aeb39dfda5177888fbcb017378f3cce20ec7627937163bb8bb2245f5cda`
+- `aged_over_120` / `50dc4f50fbd334a2adb95b45670e909c93771ec55db4c485b2fb580e907eba2b`
+- `total_overdue_net` / `c58acecc08e48c13e570c70e639ed8d4ff92a85b2aac6d27e7ffb3b3d8b6e046`
+- `overdue_net_percentage` / `7879bb81eec5243cd715a3ccb5efa99bb14d09261168e16792d1b5a648c6be41`
 
-Decision: [ ] Approve  [ ] Revise  [ ] Reject
-
-Comments: ________________________
-
-Approver name and role: ________________________
-
-Approval date: ________________________
-
-Confirmed totals / accepted exceptions / control reference: ________________________
+Finance standing approval already recorded for the exact published family; no repeated sign-off is requested. Policy changes require a new explicit decision.
 
 ### APP-05
 
-Confirm receivables-aging-v1 gross-positive component control, separate missing-date bucket with no fallback and separate signed credits. Do not treat approval of the net Odoo report as approval of this different policy.
+Gross-positive and credit summary totals are already certified under the standing decision. Explicit Finance confirmation is still required for the alternative gross-aging-v1 bucket policy, its separate missing-maturity bucket without fallback, and any allocation change. Signed net aging approval does not certify these alternate buckets.
 
 | Metric / exact version | Proposed formula / meaning | Control example |
 | --- | --- | --- |
-| Gross Open Receivable Components (`receivables_gross_outstanding_amount` vreceivables-aging-v1) | Sum positive reconstructed component residuals; maturity missing stays separate. | 1532751636.39 |
+| Gross Open Receivable Components (`receivables_gross_outstanding_amount` vreceivables-aging-v1) | Positive open receivable components before remaining credit balances are netted. | 1532751636.39 |
 | Current Gross Receivables (`receivables_current_amount` vreceivables-aging-v1) | Positive residual with maturity ≥ cutoff; no missing-date fallback. | 760615731.13 |
 | Gross 1–30 Days Overdue (`receivables_overdue_1_30_amount` vreceivables-aging-v1) | Positive residual with 1–30 days overdue using actual maturity. | 239405751.70 |
 | Gross 31–90 Days Overdue (`receivables_overdue_31_90_amount` vreceivables-aging-v1) | Positive residual with 31–90 days overdue using actual maturity. | 94315000.66 |
 | Gross Over-90 Days Overdue (`receivables_overdue_over_90_amount` vreceivables-aging-v1) | Positive residual with >90 days overdue using actual maturity. | 227502606.69 |
 | Missing Due Date Amount (`receivables_missing_due_date_amount` vreceivables-aging-v1) | Positive open residual where actual maturity is absent; retained in gross outside other buckets. | 210912546.21 |
 | Missing Due Date Component Count (`receivables_missing_due_date_count` vreceivables-aging-v1) | Count positive open maturity components with missing due date; not invoice count. | 1319 |
-| Signed Open Credit Components (`credit_balances` vodoo-aged-report-reconstruction-v1) | Sum negative open components without allocating advances to invoice age. | -173290543.78 |
+| Credit Balances (`credit_balances` vodoo-aged-report-reconstruction-v1) | Remaining negative open receivable components, shown with their negative sign. | -173290543.78 |
 
 Why needed: unlock the named report with a meaning Finance, Management and Operations can verify. Existing formulas are listed only where a presentation/stewardship decision needs them; they are not reopened.
 
 Exact definition fingerprints:
 
-- `receivables_gross_outstanding_amount` / `ab8d1f90932cbf73b9f183b4103ff9290a40d4109fb6d7e0199eb56a764f54cb`
+- `receivables_gross_outstanding_amount` / `b7f8b5b16ba131a9ae7c483005832fafe08b90992a96ad193cfd4c8502e5908a`
 - `receivables_current_amount` / `41ee80f564567e332eccbcea3b224f3617b0748b09fe25c3a9d7bc114f3057ed`
 - `receivables_overdue_1_30_amount` / `37b71eafc9d991dcabd014f87e6692bd818bf81978f438fc76a0fa27e264413b`
 - `receivables_overdue_31_90_amount` / `c45e0619bbf0040efc69fa3fdad410d4c206e9123a0aa9c5f64b094087ac91bd`
 - `receivables_overdue_over_90_amount` / `65751f24aac04df66cf668c68d960eb7a2ddcec178d1692d5f247784daf7d69d`
 - `receivables_missing_due_date_amount` / `064a8b50a0eed41c4a29d1b38888477166945a112f7b14c910009ff6f09f9ce9`
 - `receivables_missing_due_date_count` / `310b1816754d98db051fb8c62b47f1c649fe5d5fdb91e2ef3f8bca6ae40239ad`
-- `credit_balances` / `629b243ec953fca55a8da4cd596a40a04f2c5709b928e34482f5e8c50b69b8c6`
+- `credit_balances` / `74bedd03fa03269a685edead64d281f7dddebf372d5c87abb1c82b319895ea95`
 
 Decision: [ ] Approve  [ ] Revise  [ ] Reject
 
@@ -646,6 +657,6 @@ Confirmed totals / accepted exceptions / control reference: ____________________
 
 - [Current local reports](../integration/local-management-reports-v1.md) · [Luna QA handoff](../qa/local-management-pack-luna-handoff.md)
 
-- [Versioned definition source](enterprise-metrics-v1.json)
+- [Versioned definition source](enterprise-metrics-v1.json) · [Finance publication and metric-help delivery](../integration/finance-metric-definitions-delivery.md)
 
-Private workbook and customer extracts remain outside Git. Documents contain aggregate examples only. Tunnel unavailable on October 6: no new source extraction, approval, certification or publication. Existing local authentication and AI/manual publication guards unchanged. Visual/browser QA deferred to Luna; no visual pass claimed.
+Private workbook and customer extracts remain outside Git. Documents contain aggregate examples only. Finance publication reuses exact frozen evidence through the existing local lifecycle; no new source writes or extraction. Authentication and AI/manual publication guards remain unchanged. Visual/browser QA is deferred to Luna; no visual pass claimed.

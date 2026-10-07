@@ -1,5 +1,7 @@
 # Source evidence acquisition and Customer release preparation
 
+**Current status, October 7:** [Finance standing approval and exact signed-aging publication](finance-metric-definitions-delivery.md) supersede this document’s historical Finance-pending status for the eleven published metrics only. Receivables & Aging is a normal certified report at the fixed September 30 cutoff; final checks for all five reports have zero failed series (including quiet retries after concurrent-build timeouts), with substantial latency documented in delivery; nine Customer pairs are admitted, while Gross/Credits are summary-only. Alternative gross-positive buckets and unresolved accounting policies remain unpublished. The separate Customer Performance candidate remains pending; its certification was not restarted. Earlier evidence and publication history below are retained. Visual/browser QA remains Deferred in the [combined Luna handoff](../qa/local-management-pack-luna-handoff.md).
+
 Starts at `c2576c8` on `codex/production-pilot-lifecycle`. The approved externally managed loopback Odoo tunnel initially returned `ECONNREFUSED`. After the user restored it, a bounded READ ONLY probe verified database `accounting`, Company 1. No connection mechanism, source privileges, source schema or authentication was changed.
 
 ## Reviewable outcome

@@ -1,5 +1,7 @@
 # Odoo Aged Receivable export investigation
 
+**Current status, October 7:** [Finance standing approval and exact signed-aging publication](finance-metric-definitions-delivery.md) supersede this document’s historical Finance-pending status for the eleven published metrics only. Receivables & Aging is a normal certified report at the fixed September 30 cutoff; final checks for all five reports have zero failed series (including quiet retries after concurrent-build timeouts), with substantial latency documented in delivery; nine Customer pairs are admitted, while Gross/Credits are summary-only. Alternative gross-positive buckets and unresolved accounting policies remain unpublished. The separate Customer Performance candidate remains pending; its certification was not restarted. Earlier evidence and publication history below are retained. Visual/browser QA remains Deferred in the [combined Luna handoff](../qa/local-management-pack-luna-handoff.md).
+
 **Numeric reproduction complete; customer identity reconciliation and live report metadata blocked by source availability. No business certification or publication.** This investigation takes priority over publishing the earlier Wave 1 receivable proposals. The original [gross-component candidate](receivables-aging-v1.md) remains a separate, unchanged concept.
 
 ## External Finance reference
