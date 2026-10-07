@@ -24,3 +24,20 @@ test('authenticated account shows real product name and sign-out actions rather 
     assert.ok(html.includes('Trusted user')); assert.ok(html.includes('Sign out all sessions')); assert.ok(!html.includes('Demo identity'));
     } finally { await server.close(); }
 });
+test('only original reserved bootstrap placeholders localize; arbitrary and edited names remain intact', async () => {
+    const server = await createServer({ root: fileURLToPath(new URL('../',import.meta.url)),server: { middlewareMode:true },appType:'custom' });
+    try {
+        const { AccountControls } = await server.ssrLoadModule('/src/auth/AccountControls.tsx');
+        for (const locale of ['en','ar'] as const) {
+            for (const user of [
+                { id: 'staging-tenant-admin',displayName: 'Pending tenant administrator',expected: locale === 'ar' ? 'مسؤول مساحة العمل قيد الإعداد' : 'Pending tenant administrator' },
+                { id: 'other-user',displayName: 'Pending tenant administrator',expected: 'Pending tenant administrator' },
+                { id: 'staging-tenant-admin',displayName: 'Malik',expected: 'Malik' },
+            ]) {
+                const html = renderToStaticMarkup(createElement(AccountControls,{ user: { ...user,preferredLocale: 'ar' },locale,userId: user.id,demoUsers: [],onIdentity: () => {} }));
+                assert.ok(html.includes(`title="${user.expected}"`));
+                assert.ok(html.includes(`>${user.expected}</span>`));
+            }
+        }
+    } finally { await server.close(); }
+});

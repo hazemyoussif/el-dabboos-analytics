@@ -1,3 +1,4 @@
+import { CategoryAxisTick } from './CategoryAxisTick.tsx';
 import type { WidgetExecution } from '@el-dabboos/application';
 import { Bar, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { localeTag } from '../i18n.ts';
@@ -8,7 +9,7 @@ import { chartMargins, seriesColor } from './chart-theme.ts';
 export function ComboContent(props: RenderSeriesProps & { entry: WidgetExecution; data: ChartRow[] }) {
   const { widget, entry, data, locale, profile, theme } = props;
   return <ChartFrame props={props} entry={entry}><ResponsiveContainer width="100%" height="100%"><ComposedChart data={data} margin={chartMargins}>
-    <CartesianGrid stroke={theme.grid} strokeDasharray="3 4" vertical={false} /><XAxis {...axisStyle(theme)} dataKey="label" interval="preserveStartEnd" minTickGap={24} />
+    <CartesianGrid stroke={theme.grid} strokeDasharray="3 4" vertical={false} /><XAxis {...axisStyle(theme)} dataKey="label" interval="preserveStartEnd" minTickGap={24} tick={<CategoryAxisTick fill={theme.axis} locale={locale} />} />
     <YAxis {...axisStyle(theme)} orientation={locale === 'ar' ? 'right' : 'left'} width={56} tickFormatter={n => new Intl.NumberFormat(localeTag(locale, profile), { notation: 'compact' }).format(Number(n))} />
     <Tooltip content={<EnterpriseTooltip props={props} entry={entry} />} cursor={{ fill: theme.highlight }} />
     {widget.series.flatMap((series, index) => {

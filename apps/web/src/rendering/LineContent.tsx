@@ -1,3 +1,4 @@
+import { CategoryAxisTick } from './CategoryAxisTick.tsx';
 import type { WidgetExecution } from '@el-dabboos/application';
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { localeTag } from '../i18n.ts';
@@ -9,7 +10,7 @@ export function LineContent(props: RenderSeriesProps & { entry: WidgetExecution;
   const { widget, entry, data, locale, profile, theme } = props;
   return <ChartFrame props={props} entry={entry}><ResponsiveContainer width="100%" height="100%"><LineChart data={data} margin={chartMargins}>
     <CartesianGrid stroke={theme.grid} strokeDasharray="3 4" vertical={false} />
-    <XAxis {...axisStyle(theme)} dataKey="label" interval="preserveStartEnd" minTickGap={24} />
+    <XAxis {...axisStyle(theme)} dataKey="label" interval="preserveStartEnd" minTickGap={24} tick={<CategoryAxisTick fill={theme.axis} locale={locale} />} />
     <YAxis {...axisStyle(theme)} orientation={locale === 'ar' ? 'right' : 'left'} width={56} tickFormatter={n => new Intl.NumberFormat(localeTag(locale, profile), { notation: 'compact' }).format(Number(n))} />
     <Tooltip content={<EnterpriseTooltip props={props} entry={entry} />} cursor={{ stroke: theme.border, strokeDasharray: '3 4' }} />
     {widget.series.flatMap((series, index) => [
