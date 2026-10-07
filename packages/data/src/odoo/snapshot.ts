@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import type { Pool, PoolClient } from 'pg';
 import { verifyOdooSourceIdentity } from './identity.ts';
+import type { OdooCredentialPolicy } from './identity.ts';
 
 export interface OdooSnapshotEvidence {
   sourceAsOf: string; frozenRevision: string; freezeReference: string;
@@ -23,9 +24,9 @@ export class OdooSnapshotLease {
     this.timer = setTimeout(() => { void this.close(); },durationMs);
     this.timer.unref();
   }
-  static async open(pool: Pool,identity: { tenantId: string; sourceId: string },durationMs: number): Promise<OdooSnapshotLease> {
+  static async open(pool: Pool,identity: { tenantId: string; sourceId: string },durationMs: number,credentialPolicy: OdooCredentialPolicy = 'least_privilege'): Promise<OdooSnapshotLease> {
     if (!Number.isInteger(durationMs) || durationMs<1 || durationMs>600000) throw new Error('Invalid source snapshot duration');
-    await verifyOdooSourceIdentity(pool);
+    await verifyOdooSourceIdentity(pool,credentialPolicy);
     const owner = await pool.connect();
     const started = performance.now();
     try {
@@ -36,7 +37,7 @@ export class OdooSnapshotLease {
       const digest = createHash('sha256').update(JSON.stringify([identity.sourceId,row.descriptor])).digest('hex');
       const remaining = durationMs-(performance.now()-started);
       if (remaining<=0) throw new Error('Source snapshot lease expired during acquisition');
-      return new OdooSnapshotLease(owner,row.token,Object.freeze({ ...identity }),{ sourceAsOf: row.source_as_of.toISOString(),descriptor: row.descriptor,frozenRevision: `pg-mvcc:${digest}`,freezeReference: `pg-lease:${randomUUID()}` },remaining);
+      return new OdooSnapshotLease(owner,row.token,Object.freeze({ tenantId: identity.tenantId,sourceId: identity.sourceId }),{ sourceAsOf: row.source_as_of.toISOString(),descriptor: row.descriptor,frozenRevision: `pg-mvcc:${digest}`,freezeReference: `pg-lease:${randomUUID()}` },remaining);
     } catch (error) {
       try { await owner.query('ROLLBACK'); } finally { owner.release(true); }
       throw error;

@@ -51,6 +51,7 @@ async function sourceFixture() {
  `;
   try {
     await db.admin.query(setup);
+    await db.admin.query('ALTER TABLE public.res_users ADD COLUMN state text');
     await db.admin.query(`CREATE ROLE ${username} LOGIN PASSWORD 'SYNTHETIC_SOURCE_ONLY' NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS`);
     await db.admin.query(`GRANT USAGE ON SCHEMA public TO ${username}; GRANT SELECT ON ALL TABLES IN SCHEMA public TO ${username}`);
     url.username=username;url.password='SYNTHETIC_SOURCE_ONLY';
@@ -62,7 +63,7 @@ async function sourceFixture() {
 }
 const mapping = odooComparisonCandidate({ tenantId: 'el-dabboos-iq',sourceId: 'el-dabboos-odoo18-pg',datasetId: 'pilot-candidate',mappingId: 'odoo18',mappingVersion: '1',businessOwner: 'SYNTHETIC TEST ONLY',reportingCurrency: 'IQD',timeZone: 'Asia/Baghdad' });
 const baseScope = { object: 'sale_order' as const,from: '2026-09-01',to: '2026-09-30',timeZone: 'Asia/Baghdad',sourceAsOf: '2026-10-01T10:00:00.000Z',frozenRevision: 'synthetic-freeze',freezeReference: 'IMMUTABLE SYNTHETIC SOURCE ONLY' };
-const config = { connection: {},tenantId: mapping.tenantId,sourceId: mapping.sourceId,companyIds: ['1'],batchSize: 1000,statementTimeoutMs: 15000,snapshotMaxDurationMs: 600000 };
+const config = { credentialPolicy: 'least_privilege' as const,connection: {},tenantId: mapping.tenantId,sourceId: mapping.sourceId,companyIds: ['1'],batchSize: 1000,statementTimeoutMs: 15000,snapshotMaxDurationMs: 600000 };
 const baseRequest = { tenantId: mapping.tenantId,sourceId: mapping.sourceId,companyIds: ['1'],limit: 1000,frozenRevision: baseScope.frozenRevision };
 
 test('Odoo reader: read-only role, bounded keyset ties, company isolation, composite lookup revision and cursor validation', { skip: !enabled },async () => {
@@ -257,4 +258,46 @@ test('retained snapshot: maximum lease duration expires and cleanup is idempoten
     const count = (await fixture.db.admin.query("SELECT count(*) n FROM pg_stat_activity WHERE datname=current_database() AND state='idle in transaction'")).rows[0].n;
     assert.equal(count,'0');
   } finally { await fixture.close(); }
+});
+
+
+test('staging exception: broader credential may export an RR/RO snapshot, default remains strict and lease identity excludes config', { skip: !enabled },async () => {
+  const fixture = await sourceFixture();
+  let snapshot: OdooSnapshotLease | undefined;
+  try {
+    await assert.rejects(verifyOdooSourceIdentity(fixture.db.admin),/read-only/);
+    await verifyOdooSourceIdentity(fixture.db.admin,'staging_read_only');
+    const identity = { tenantId: config.tenantId,sourceId: config.sourceId,connection: { password: randomUUID() } };
+    snapshot = await OdooSnapshotLease.open(fixture.db.admin,identity,600000,'staging_read_only');
+    assert.deepEqual(snapshot.identity,{ tenantId: config.tenantId,sourceId: config.sourceId });
+    const reader = new OdooPostgresSourceBatchReader(fixture.source,config,{ ...baseScope,...snapshot.evidence },snapshot);
+    const page = await reader.readBatch({ ...baseRequest,limit: 1,frozenRevision: snapshot.evidence.frozenRevision });
+    assert.equal(page.rows.length,1);
+    await snapshot.assertAlive();
+  } finally { await snapshot?.close(); await fixture.close(); }
+});
+
+test('concrete operational source discovers January inserts/updates by October write_date, bounded cutoff and moved dimension controls',{skip:!enabled},async()=>{
+ const fixture=await sourceFixture();
+ try {
+  await fixture.db.admin.query("DELETE FROM sale_order WHERE company_id=1 AND id<>1; UPDATE sale_order SET date_order='2026-01-15',write_date='2026-10-02' WHERE id=1");
+  await fixture.db.admin.query("INSERT INTO sale_order SELECT 99,company_id,'2026-10-03','2026-01-16',state,currency_id,user_id,create_uid,partner_id,business_line_id,amount_untaxed,amount_tax,amount_total FROM sale_order WHERE id=1; INSERT INTO sale_order SELECT 100,company_id,'2030-01-01','2026-01-17',state,currency_id,user_id,create_uid,partner_id,business_line_id,amount_untaxed,amount_tax,amount_total FROM sale_order WHERE id=1");
+  const {OdooOperationalSnapshot}=await import('../../src/operational/source.ts');
+  const baseline={tenantId:mapping.tenantId,sourceId:mapping.sourceId,reportingCurrency:'IQD',datasets:[mapping.datasetId],mappingVersion:'1',definitionVersion:'fixture-definition',mappings:[mapping],capabilities:{tenantId:mapping.tenantId,mode:'certified' as const,releases:[]},from:'2026-01-01',to:'2026-09-30'};
+  const cursor={cutoff:'2026-10-02T00:00:00.000Z',objects:{}};
+  const snapshot=await fixture.openSnapshot();const source=new OdooOperationalSnapshot(fixture.source,config,snapshot,baseline);
+  const pages=[];for await(const page of source.records(baseline,cursor))pages.push(page);
+  const orders=pages.flatMap(page=>page.facts).filter(fact=>fact.sourceObject==='sale_order');
+  assert.ok(orders.some(fact=>fact.sourceRecordId==='1'&&fact.businessDate==='2026-01-15'));
+  assert.ok(orders.some(fact=>fact.sourceRecordId==='99'));assert.ok(!orders.some(fact=>fact.sourceRecordId==='100'));
+  const retained=source.retain();assert.equal(retained.cutoff,source.cutoff);assert.equal(retained.revision,source.revision);await source.close();await source.close();assert.deepEqual(await retained.present('sale_order',['1','99']),['1','99']);await retained.close();
+  await fixture.db.admin.query("UPDATE sale_order SET date_order='2026-02-01',user_id=NULL,business_line_id=2,write_date='2026-10-04' WHERE id=1");
+  const changedLease=await fixture.openSnapshot(),changed=new OdooOperationalSnapshot(fixture.source,config,changedLease,baseline);
+  const moved=[];for await(const page of changed.records(baseline,cursor))moved.push(...page.facts);
+  assert.ok(moved.some(fact=>fact.sourceRecordId==='1'&&fact.businessDate==='2026-02-01'&&fact.dimensions.salesperson==='unassigned'&&fact.dimensions.business_line==='el-dabboos-odoo18-pg:1:2'));
+  const controls=await changed.controls(baseline,[{metric:'order_revenue',month:'2026-01',dimension:'salesperson',identity:'el-dabboos-odoo18-pg:7',dependency:'base'},{metric:'order_revenue',month:'2026-02',dimension:'salesperson',identity:'unassigned',dependency:'base'}]);
+  assert.deepEqual(controls.map(control=>control.value),['1000000.000000','500000.000000']);
+  assert.deepEqual(await changed.present('sale_order',['1','99','101']),['1','99']);
+  await changed.close();
+ }finally{await fixture.close();}
 });

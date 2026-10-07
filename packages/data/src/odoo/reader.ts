@@ -11,23 +11,29 @@ export interface OdooReadScope {
   sourceAsOf: string; frozenRevision: string; mode?: 'backfill'|'incremental';
   /** Durable identity of the actual source snapshot; never an import token. */
   freezeReference: string;
+  /** Trusted job window; inclusive overlap lower bound, unrelated to business dates. */
+  modificationFrom?: string;
 }
 /** Source is SELECT-only, one bounded read-only transaction per page. Tunnel ownership stays external. */
 export class OdooPostgresSourceBatchReader implements SourceBatchReader<OdooSourceRow> {
   constructor(private readonly pool: Pool,private readonly config: OdooSourceConfig,private readonly scope: OdooReadScope,private readonly snapshot: OdooSnapshotLease) {
+    if(scope.modificationFrom) {
+      parseOdooCursor(odooCursor(scope.modificationFrom,'1'));
+      if(Date.parse(sourceTimestamp(scope.modificationFrom))>Date.parse(scope.sourceAsOf))throw new Error('Incremental window exceeds source cutoff');
+    }
     if (!validDateRange({ from: scope.from,to: scope.to }) || !scope.freezeReference.trim() || !Number.isFinite(Date.parse(scope.sourceAsOf))) throw new Error('Certified source freeze and period required');
   }
   async readBatch(request: SourceReadRequest): Promise<SourceBatch<OdooSourceRow>> {
     this.validateRequest(request);
     this.snapshot.assertScope(this.scope,this.config);
     const tokenStart = request.cursor ?? request.watermark;
-    const cursor = tokenStart ? parseOdooCursor(tokenStart) : { writeDate: '1970-01-01 00:00:00.000000',id: '0' };
+    const cursor = tokenStart ? parseOdooCursor(tokenStart) : { writeDate: this.scope.modificationFrom ?? '1970-01-01 00:00:00.000000',id: '0' };
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
       await this.snapshot.importInto(client);
       await client.query("SELECT set_config('statement_timeout',$1,true),set_config('TimeZone','UTC',true)",[String(this.config.statementTimeoutMs)]);
-      const result = await client.query(odooTransactionSql(this.scope.object),[request.companyIds,this.scope.from,this.scope.to,cursor.writeDate,cursor.id,request.limit+1,this.scope.timeZone,this.scope.mode==='incremental']);
+      const result = await client.query(odooTransactionSql(this.scope.object),[request.companyIds,this.scope.from,this.scope.to,cursor.writeDate,cursor.id,request.limit+1,this.scope.timeZone,this.scope.mode==='incremental',this.scope.sourceAsOf]);
       const rows = result.rows.slice(0,request.limit).map(row => ({ ...row,object: this.scope.object } as OdooSourceRow));
       if (rows.some(row => !request.companyIds.includes(row.company_id))) throw new Error('Source company isolation failure');
       await this.snapshot.assertAlive();
