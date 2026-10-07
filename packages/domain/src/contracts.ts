@@ -115,6 +115,8 @@ export interface AnalyticsResult {
 }
 export interface DimensionValueRepository {
   listDimensionValues(dimension: DimensionId, context: AnalyticsContext): Promise<string[]>;
+  /** Governed labels are presentation evidence; identities remain unchanged. */
+  listDimensionOptions?(dimension: DimensionId, context: AnalyticsContext): Promise<Array<{id:string;label?:string}>>;
 }
 export interface AnalyticsRepository {
   execute(query: AnalyticsQuery, context: AnalyticsContext): Promise<AnalyticsResult>;

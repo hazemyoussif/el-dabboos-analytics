@@ -1,3 +1,4 @@
+import {workspaceDestinationTitle,workspaceDisplayTitle} from './workspace-bootstrap.ts';
 import { MetricCurrencyContext, MetricPublicationContext } from './metrics/MetricDefinition.tsx';
 import { useManagementReports } from './reports/useManagementReports.ts';
 import { ManagementArea,ManagementNavigation,ReportStatus,managementTitle,workspaceDataMode } from './reports/ManagementReports.tsx';
@@ -47,7 +48,9 @@ export default function App({ authenticatedUser,onLogout,authenticationError }: 
   const displayError = plannerDisplayError(error, planner.errorCode, locale);
   const builderHistory = builder.history;
   const activeDashboard = builderHistory?.present.kind === 'dashboard' ? builderHistory.present.spec : dashboard;
-  const activeTitle = managementTitle(management.page,locale,builderHistory?.present.kind === 'empty' ? builderHistory.present.base.title[locale] : activeDashboard?.title[locale] ?? t.noDashboard);
+  const destinationTitle=workspaceDestinationTitle(workspace.route,templates,savedDashboards,locale);
+  const loadedTitle=builderHistory?.present.kind==='empty'?builderHistory.present.base.title[locale]:activeDashboard?.title[locale]??t.noDashboard;
+  const activeTitle=managementTitle(management.page,locale,workspaceDisplayTitle(loadedTitle,destinationTitle,loading,activeDashboard));
   const isCreating = showCreationPanel(flow.panel);
   const statusText = flow.status === 'template' ? t.templateBadge : flow.status === 'saved' ? t.savedDashboard
     : flow.status === 'modified' ? t.modified : t.unsaved;
@@ -66,7 +69,7 @@ export default function App({ authenticatedUser,onLogout,authenticationError }: 
     <WorkspaceNavigation {...workspaceNavigationPermissions(workspace)} locale={locale} onNew={()=>{management.close();flow.launchNew();}} onTemplates={() => {management.close();flow.enterCreation('choose-template');}} dataMode={workspaceDataMode(published)} drawerOpen={drawerOpen} onDrawerClose={() => setDrawerOpen(false)}>
       <WorkspaceAdministrationNavigation workspace={workspace} page={adminPage} onPage={setAdminPage} closeDrawer={() => setDrawerOpen(false)} />
       {<ManagementNavigation published={published} allowed={permissions.includes('analytics:query')} templates={templates} locale={locale} activeId={management.page??workspace.activeTemplateId} onSelect={management.select}/>}
-      <DashboardLibrary key={`${userId}-${profile?.id}`} records={savedDashboards} userId={userId} locale={locale} controller={library} loading={loading} activeId={dashboardDocument?.kind === 'saved' ? dashboardDocument.record.id : undefined} onOpen={id => { setAdminPage(null); flow.openSaved(id); setDrawerOpen(false); }} />
+      <DashboardLibrary key={`${userId}-${profile?.id}`} records={savedDashboards} userId={userId} locale={locale} controller={library} loading={loading} activeId={workspace.activeSavedId} onOpen={id => { setAdminPage(null); flow.openSaved(id); setDrawerOpen(false); }} />
     </WorkspaceNavigation>
     <main className="main-content">
       <header className="topbar"><NavigationTrigger locale={locale} onClick={() => setDrawerOpen(true)} /><div className="breadcrumb">{t.workspace} <span>/</span> {isCreating ? t.newDashboard : <>{breadcrumb} <span>/</span> {activeTitle}</>}</div>
@@ -106,5 +109,5 @@ export default function App({ authenticatedUser,onLogout,authenticationError }: 
         <footer className="footer">© {new Date().getFullYear()} El Dabboos · {locale === 'ar' ? 'منصة تحليلات تجريبية' : 'Analytics prototype'}</footer>
       </div>
     </main>
-  </div></MetricCurrencyContext></MetricPublicationContext>;
+  </div><div id="app-overlays" /></MetricCurrencyContext></MetricPublicationContext>;
 }

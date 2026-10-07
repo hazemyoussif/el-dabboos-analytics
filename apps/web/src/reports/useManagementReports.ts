@@ -1,3 +1,4 @@
+import {navigateWorkspace} from '../workspace-route.ts';
 import { useEffect,useRef,useState } from 'react';
 import type { ManagementControlReview } from '@el-dabboos/application';
 import { getManagementControlReview } from '../api/client.ts';
@@ -5,12 +6,12 @@ import type { WorkspaceController } from '../hooks/useWorkspace.ts';
 import type { useDashboardProductFlow } from '../hooks/useDashboardProductFlow.ts';
 import type { ManagementPage } from './ManagementReports.tsx';
 export function useManagementReports(workspace:WorkspaceController,flow:ReturnType<typeof useDashboardProductFlow>,onNavigate:()=>void) {
- const [page,setPage]=useState<ManagementPage|null>(null);
+ const page:ManagementPage|null=workspace.route.kind==='report'?(workspace.route.id==='data-status'?'data-status':workspace.route.id==='finance-control'?'finance-control':workspace.route.id==='customer-performance'&&!workspace.templates.some(item=>item.id==='customer-performance'&&item.availability==='available')?'customer-unavailable':null):null;
  const [review,setReview]=useState<ManagementControlReview|null>(null);
  const [loading,setLoading]=useState(false);
  const [error,setError]=useState(false);
  const requestId=useRef(0);
- useEffect(()=>{requestId.current++;setPage(null);setReview(null);setError(false);setLoading(false);},[workspace.profile?.id,workspace.userId,workspace.navigationRevision]);
+ useEffect(()=>{requestId.current++;setReview(null);setError(false);setLoading(false);},[workspace.profile?.id,workspace.userId,workspace.navigationRevision]);
  const reload=async()=>{
   if(!workspace.profile)return;
   const identity=++requestId.current;
@@ -25,14 +26,15 @@ export function useManagementReports(workspace:WorkspaceController,flow:ReturnTy
   if(!workspace.profile)return;
   if(id==='finance-control'||id==='data-status') {
    if(!workspace.confirmAbandon())return;
-   onNavigate();flow.close();setPage(id);void reload();return;
+   workspace.beginRequest();workspace.setLoading(false);onNavigate();flow.close();navigateWorkspace({kind:'report',id});return;
   }
   const template=workspace.templates.find(item=>item.id===id);
   if(template?.availability!=='available') {
    if(!workspace.confirmAbandon())return;
-   onNavigate();flow.close();setPage('customer-unavailable');return;
+   workspace.beginRequest();workspace.setLoading(false);onNavigate();flow.close();navigateWorkspace({kind:'report',id});return;
   }
-  onNavigate();setPage(null);flow.openTemplate(id,workspace.profile,workspace.locale);
+  onNavigate();flow.openTemplate(id,workspace.profile,workspace.locale);
  };
- return {page,review,loading,error,reload,select,close:()=>setPage(null)};
+ useEffect(()=>{if(page==='finance-control'||page==='data-status')void reload();},[page,workspace.profile?.id]);
+ return {page,review,loading,error,reload,select,close:()=>navigateWorkspace({kind:'workspace'})};
 }

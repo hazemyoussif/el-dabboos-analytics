@@ -22,3 +22,9 @@ COMMIT;
 ```
 
 This does not extend SQL deadlines, publish additional metrics or grant authority to bypass a failed proof. Incident measurements and verification are recorded in [the runtime incident report](../../integration/runtime-incident-20261007.md).
+
+October 7 follow-up: migration 024 preserves the live business certification
+exact-set guard but tests ordinary one-dimensional arrays for nulls using
+`array_position` instead of materializing `unnest`. The original null predicate
+remains for multidimensional arrays; array equality and unordered set fallback,
+tenant/reference checks, proof-result invalidation and SQL deadlines are unchanged.

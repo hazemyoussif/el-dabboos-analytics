@@ -93,3 +93,23 @@ Additional checks:
 Automated/runtime evidence and final local commit(s) will be in the delivery document. Native-dialog SSR/lifecycle tests are engineering evidence, not a browser accessibility pass. Record any Blocker/High/Medium/Low findings with exact screen/file evidence and the smallest fix; no unrelated redesign or automatic certification.
 
 Final engineering status: all five reports have zero failed series in their latest checks (Executive and Invoice/Refund retried after builds/tests). Finance headlines are exact and the Customer table returns all 2,217 rows/labels. Report durations range from 63 to 218 seconds; initial concurrent-build timeouts remain preserved and headroom is limited. Evaluate loading/error/partial states honestly. Migrations 17/18 were explicitly authorized and applied; no rollback ran. The one-byte draft migration formatting exception and unchanged evidence checks are recorded in delivery. Sol visual/browser QA remains not run; Luna remains deferred and not dispatched.
+
+## Runtime recovery and four shared UI fixes — October 7 follow-up
+
+The earlier 63–218 second timings above are historical and superseded by [runtime recovery evidence](../integration/runtime-incident-20261007.md) and [follow-up performance evidence](../integration/performance-followup-20261007.md). All five current reports, including published Receivables & Aging, are in scope. Customer performance remains unavailable. Do not dispatch Luna until requested. Sol browser/visual QA has not run; DOM tests are functional evidence only.
+
+Append these checks to the combined pass, in EN/AR, RTL, Light/Dark/System, desktop/tablet/mobile:
+
+1. Metric tooltip escapes KPI/card/grid clipping and stacks above neighboring widgets. Check viewport edges, table/chart headers, accessible chart tables and manual builder. Hover between trigger and hint, focus/blur, Escape, scrolling/resizing; click/tap still opens the full definition dialog and never adds/selects/drags/resizes a widget.
+2. Click Report B during Report A: B highlights immediately and its title/loading state identifies the destination. Check a slow response, failure/retry, rapid A/B clicks, browser back/forward, direct report/saved deep links and tenant changes. Late A results must never replace B. Saved/version/unsaved-change behavior remains explicit.
+3. Header logout uses compact shell styling and a recognizable icon; verify hover/focus, light/dark, EN/AR/RTL, long names and desktop/tablet/mobile wrapping. Current-session logout and all-session revocation retain their separate authentication semantics.
+4. Salesperson filters show human names, never `el-dabboos-odoo18-pg:2045`. Check Customer and Business Line labels, localized Unassigned, duplicate names remaining distinct selectable identities, EN/AR/RTL and restored saved filters. Missing/conflicting governed labels show “—”; do not substitute names for IDs. Product/Warehouse and other dimensions without certified label evidence must also avoid revealing source identities. Unavailable capabilities remain gated.
+
+Record appearance, responsive behavior and browser accessibility findings separately; none is claimed passed by the functional tests.
+
+Final functional delivery check after removing diagnostics: all five reports return
+200 through normal HTTPS, exact headlines/grouped totals and zero failed series;
+5.112–12.164 seconds, with all 2,217 Aging rows/labels. EN/AR filter endpoints
+show business labels for all discovered Salesperson/Customer/Business Line options
+and no technical identity labels. Automated gates pass (656 unit, 133 PostgreSQL).
+These results do not replace the visual/accessibility/responsive checks above.

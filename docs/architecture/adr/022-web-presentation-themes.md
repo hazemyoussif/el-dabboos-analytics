@@ -29,3 +29,13 @@ Brand assets and backward-compatible browser preference migration are documented
 Manual and sparse AI palette edits converge on `WidgetPresentation.palette`; generation can supply the same governed token. The centralized web ChartTheme resolves actual Light/Dark colors. Builder and provider plans never store resolved colors, CSS or chart-library options. Global theme/locale remain preferences outside saved content. Explicit Default persists as the governed default token; absent widget intent inherits dashboard appearance, or resolves to Enterprise when dashboard appearance is also absent. Palette changes are presentation-only history entries and require explicit Save, unlike global UI theme changes.
 
 Dashboard Appearance V1 persists only the governed dashboard palette in optional DashboardSpec v2 presentation, through the normal explicit Save/version lifecycle. It is separate from personal theme preferences. See [visualization capabilities](../visualization-capabilities.md#dashboard-appearance-v1) for inheritance and canonical patch rules.
+
+October 7 runtime follow-up: metric hints use one shared portal in the application
+overlay root, positioned against the trigger and clamped/flipped to the viewport.
+Cards retain their content clipping. The full definition action remains a native
+dialog. Report destination comes from browser history independently of loaded
+analytics; header logout uses existing shell button tokens and Lucide icons.
+Shared dimension filters use governed display evidence with stable identity values;
+missing/conflicting evidence uses the neutral “—” presentation fallback and
+Unassigned remains localized. Appearance/responsive/browser accessibility checks
+remain pending in the combined Luna handoff; no visual pass is implied.

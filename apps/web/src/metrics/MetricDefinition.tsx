@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { MetricTooltip } from './MetricTooltip.tsx';
 import { Info, X } from 'lucide-react';
 import type { AnalyticsReleaseProvenance, AnalyticsResult, Locale, SemanticMetric, PublishedAnalyticsCapabilities } from '@el-dabboos/domain';
 import { copy } from '../i18n.ts';
@@ -47,9 +48,16 @@ export function MetricInfo(props: Props) {
  const [open, setOpen] = useState(false);
  const trigger = useRef<HTMLButtonElement>(null);
  const tooltip = useId();
+ const [hint,setHint]=useState(false);
+ const focused=useRef(false);
+ const hovered=useRef(false);
+ const dismiss=useRef<ReturnType<typeof setTimeout>|null>(null);
+ const showHint=()=>{if(dismiss.current)clearTimeout(dismiss.current);setHint(true);};
+ const hideHint=()=>{if(focused.current||hovered.current)return;if(dismiss.current)clearTimeout(dismiss.current);dismiss.current=setTimeout(()=>setHint(false),150);};
+ useEffect(()=>()=>{if(dismiss.current)clearTimeout(dismiss.current);},[]);
  return <span className="metric-info" onClick={event => event.stopPropagation()} onPointerDown={event => event.stopPropagation()}>
-  <button type="button" ref={trigger} className="metric-info-button" aria-label={`${definitionCopy[props.locale].info}: ${props.metric.labels[props.locale]}`} aria-describedby={tooltip} aria-haspopup="dialog" onClick={() => setOpen(true)}><Info aria-hidden="true" /></button>
-  <span id={tooltip} role="tooltip" className="metric-definition-tooltip">{props.metric.help.shortDefinition[props.locale]}</span>
+  <button type="button" ref={trigger} className="metric-info-button" aria-label={`${definitionCopy[props.locale].info}: ${props.metric.labels[props.locale]}`} aria-describedby={tooltip} aria-haspopup="dialog" onPointerEnter={()=>{hovered.current=true;showHint();}} onPointerLeave={()=>{hovered.current=false;hideHint();}} onFocus={()=>{focused.current=true;showHint();}} onBlur={()=>{focused.current=false;hideHint();}} onKeyDown={event=>{if(event.key==='Escape'){if(dismiss.current)clearTimeout(dismiss.current);setHint(false);}}} onClick={() => {if(dismiss.current)clearTimeout(dismiss.current);setHint(false);setOpen(true);}}><Info aria-hidden="true" /></button>
+  <MetricTooltip id={tooltip} text={props.metric.help.shortDefinition[props.locale]} rtl={props.locale==='ar'} visible={hint&&!open} anchor={trigger} onEnter={()=>{hovered.current=true;showHint();}} onLeave={()=>{hovered.current=false;hideHint();}}/>
   {open && createPortal(<MetricDefinitionDialog {...props} currency={currency} trigger={trigger.current} onClose={() => setOpen(false)} />, document.body)}
  </span>;
 }

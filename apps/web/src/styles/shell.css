@@ -82,3 +82,8 @@ html[dir=rtl] .navigation-drawer { margin-inline-start: auto; }
 .management-info table { width:100%; border-collapse:collapse; }
 .management-info th,.management-info td { text-align:start; padding:var(--space-3); border-bottom:1px solid var(--border-subtle); }
 @media(max-width:767px) { .management-info { padding:var(--space-4); } .management-info dl { grid-template-columns:1fr; gap:var(--space-2); } .management-info dd { margin-block-end:var(--space-3); } }
+
+.auth-account { min-width: 0; max-width: 100%; }
+.account-name { overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+.account-actions { display: flex; align-items: center; gap: var(--space-1); }
+.account-actions button { min-height: 36px; font-size: var(--text-xs); }

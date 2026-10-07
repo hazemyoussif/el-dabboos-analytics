@@ -884,42 +884,6 @@
       "ceiling": 1
     },
     {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "PostgresAnalyticsRepository/listDimensionValues/tenantTransaction:callback2/binding:m",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "PostgresAnalyticsRepository/listDimensionValues/tenantTransaction:callback2/m.capabilities.filter:callback0/binding:c",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "PostgresAnalyticsRepository/listDimensionValues/tenantTransaction:callback2/m.capabilities.filter:callback0/(context.enforcedFilters ?? []).every:callback0/binding:f",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "PostgresAnalyticsRepository/listDimensionValues/tenantTransaction:callback2/eligible.flatMap:callback0/binding:c",
-      "metric": "shortNames",
-      "ceiling": 2
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "PostgresAnalyticsRepository/listDimensionValues/tenantTransaction:callback2/binding:d",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "PostgresAnalyticsRepository/listDimensionValues/tenantTransaction:callback2/result.rows.map:callback0/binding:r",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
       "file": "packages/data/src/postgres/sql.ts",
       "symbol": "dimensionSql/binding:d",
       "metric": "shortNames",

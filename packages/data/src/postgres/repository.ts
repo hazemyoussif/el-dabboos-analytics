@@ -8,7 +8,7 @@ import type { PublishedReconciliationCoverage } from './published-capabilities.t
 import type { PublishedAnalyticsCapabilities } from '@el-dabboos/domain';
 import { selectQueryKeys,querySlots } from './query-slots.ts';
 import { aggregateQuerySlots } from './query-aggregate.ts';
-import { queryDimensionLabels } from './query-labels.ts';
+import { queryDimensionLabels,dimensionLabelField,sourceDisplayLabel } from './query-labels.ts';
 import { queryMetadata } from './query-metadata.ts';
 import { analyzeRows } from './query-analysis.ts';
 import { certifiedMapping } from './mapping-releases.ts';
@@ -79,23 +79,28 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository, Dimensi
     },true,this.options.statementTimeoutMs ?? 15000);
   }
   async listDimensionValues(dimension: DimensionId, context: AnalyticsContext): Promise<string[]> {
+    return (await this.listDimensionOptions(dimension,context)).map(option=>option.id);
+  }
+  async listDimensionOptions(dimension: DimensionId, context: AnalyticsContext): Promise<Array<{id:string;label?:string}>> {
     if (!context.tenantId.trim() || !categoricalDimensions.includes(dimension)) throw new Error('Unsupported dimension');
     return tenantTransaction(this.pool,context.tenantId,async client => {
-      const m = await this.release(client,context);
+      const mapping = await this.release(client,context);
       // Use only inputs of a metric certified for both discovery and every policy dimension.
-      const eligible = m.capabilities.filter(c => c.dimensions.includes(dimension) && (context.enforcedFilters ?? []).every(f => c.dimensions.includes(f.dimension)));
+      const eligible = mapping.capabilities.filter(capability => capability.dimensions.includes(dimension) && (context.enforcedFilters ?? []).every(filter => capability.dimensions.includes(filter.dimension)));
       if (!eligible.length) {
-        if (!m.capabilities.some(capability => (context.enforcedFilters ?? []).every(filter => capability.dimensions.includes(filter.dimension)))) throw new Error('Uncertified discovery/policy dimension');
+        if (!mapping.capabilities.some(capability => (context.enforcedFilters ?? []).every(filter => capability.dimensions.includes(filter.dimension)))) throw new Error('Uncertified discovery/policy dimension');
         throw new UncertifiedDimensionError(dimension);
       }
-      const measures = [...new Set(eligible.flatMap(c => requiredMeasures(c.metric)))];
-      const ps: unknown[] = [context.tenantId,m.datasetId,measures];
-      const policy = filterSql(context.enforcedFilters ?? [],ps,[...new Set(eligible.flatMap(c => c.dimensions))]);
-      const d = dimensionSql(dimension);
-      const result = await client.query(`SELECT DISTINCT ${d} AS value FROM ((SELECT * FROM mart.canonical_facts WHERE tenant_id=$1 AND dataset_id=$2 AND measure_id=ANY($3::text[]) AND kind='event')
-        UNION ALL (SELECT DISTINCT ON (measure_id,entity_id) * FROM mart.canonical_facts WHERE tenant_id=$1 AND dataset_id=$2 AND measure_id=ANY($3::text[]) AND kind='snapshot' ORDER BY measure_id,entity_id,business_date DESC)) f WHERE ${policy} AND ${d} IS NOT NULL ORDER BY value LIMIT ${this.maxGroups+1}`,ps);
+      const measures = [...new Set(eligible.flatMap(capability => requiredMeasures(capability.metric)))];
+      const ps: unknown[] = [context.tenantId,mapping.datasetId,measures];
+      const policy = filterSql(context.enforcedFilters ?? [],ps,[...new Set(eligible.flatMap(capability => capability.dimensions))]);
+      const identity = dimensionSql(dimension);
+      const field=dimensionLabelField(dimension);
+      const label=field?`nullif(coalesce(f.display_labels->>'${field}',f.transaction_evidence->'labels'->>'${field}'),'')`:'NULL::text';
+      const result = await client.query(`SELECT ${identity} AS value,CASE WHEN count(DISTINCT ${label})=1 THEN min(${label}) END label FROM ((SELECT * FROM mart.canonical_facts WHERE tenant_id=$1 AND dataset_id=$2 AND measure_id=ANY($3::text[]) AND kind='event')
+        UNION ALL (SELECT DISTINCT ON (measure_id,entity_id) * FROM mart.canonical_facts WHERE tenant_id=$1 AND dataset_id=$2 AND measure_id=ANY($3::text[]) AND kind='snapshot' ORDER BY measure_id,entity_id,business_date DESC)) f WHERE ${policy} AND ${identity} IS NOT NULL GROUP BY ${identity} ORDER BY value LIMIT ${this.maxGroups+1}`,ps);
       if (result.rows.length > this.maxGroups) throw new DimensionDiscoveryLimitError(dimension);
-      return result.rows.map(r => String(r.value));
+      return result.rows.map(row => ({id:String(row.value),...(row.label?{label:sourceDisplayLabel(row.label,context.locale)}:{})}));
     },true,this.options.statementTimeoutMs ?? 15000);
   }
 }

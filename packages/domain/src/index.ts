@@ -28,3 +28,4 @@ export * from './published-capabilities.ts';
 export * from './derived-certification.ts';
 export * from './receivable-snapshot.ts';
 export * from './reconciliation-limits.ts';
+export * from './dimension-presentation.ts';

@@ -1,0 +1,108 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import {act,createElement} from 'react';
+import {createRoot} from 'react-dom/client';
+import {Window} from 'happy-dom';
+import {createServer} from 'vite';
+import {fileURLToPath} from 'node:url';
+import {semanticCatalog,tenantProfiles} from '@el-dabboos/domain';
+import {tooltipPosition} from '../src/metrics/tooltip-position.ts';
+import {parseWorkspaceRoute,workspaceRoutePath} from '../src/workspace-route.ts';
+
+async function domFixture(path='/') {
+ const browser=new Window({url:'https://analytics.test'+path});
+ const globals={window:browser,document:browser.document,HTMLElement:browser.HTMLElement,HTMLDialogElement:browser.HTMLDialogElement,Event:browser.Event,PopStateEvent:browser.PopStateEvent,ResizeObserver:browser.ResizeObserver,IS_REACT_ACT_ENVIRONMENT:true};
+ const previous=new Map(Object.keys(globals).map(key=>[key,Object.getOwnPropertyDescriptor(globalThis,key)]));
+ for(const [key,value] of Object.entries(globals))Object.defineProperty(globalThis,key,{value,configurable:true,writable:true});
+ const server=await createServer({root:fileURLToPath(new URL('../',import.meta.url)),server:{middlewareMode:true,hmr:false},optimizeDeps:{noDiscovery:true,include:[]},appType:'custom'});
+ const container=browser.document.createElement('div');browser.document.body.append(container);const root=createRoot(container);
+ return {browser,server,root,container,async close(){await act(async()=>root.unmount());await server.close();await browser.happyDOM.close();for(const [key,value]of previous){if(value)Object.defineProperty(globalThis,key,value);else Reflect.deleteProperty(globalThis,key);}}};
+}
+function deferred<T>(){let resolve!:(value:T)=>void;const promise=new Promise<T>(done=>{resolve=done;});return {promise,resolve};}
+const reportIds=['executive-sales-invoicing','invoice-refund-operations'];
+function report(id:string){const dashboard={schemaVersion:2,id,title:{en:id,ar:id},locale:'en',filters:{},layout:{columns:1},widgets:[]};return {dashboard,execution:{dashboard,widgetResults:{},metadata:{executedAt:'2026-10-07T00:00:00Z',succeeded:0,failed:0,succeededSeries:0,failedSeries:0}}};}
+async function settle(){await act(async()=>{await new Promise<void>(resolve=>setImmediate(resolve));});}
+
+ test('report destination changes before data, survives failure and stale completion, and follows history/tenant scope',async()=>{
+ const fixture=await domFixture('/reports/executive-sales-invoicing');const priorFetch=globalThis.fetch;
+ const first=deferred<Response>();const second=deferred<Response>();let calls=0;const requestedTenants:string[]=[];
+ globalThis.fetch=async(input,options)=>{
+  const path=String(input);const json=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json'}});
+  if(path.includes('/instantiate')){requestedTenants.push(String((options?.headers as Record<string,string>)['x-tenant-id']));calls++;if(calls===1)return first.promise;if(calls===2)return second.promise;return json(report(path.includes(reportIds[1]!)?reportIds[1]!:reportIds[0]!));}
+  if(path==='/api/administration-capabilities')return json({platformPermissions:[]});
+  if(path==='/api/tenant-profiles')return json({profiles:[tenantProfiles['demo-iq'],tenantProfiles['demo-eg']],defaultTenantId:'demo-iq'});
+  if(path==='/api/demo-capabilities')return json({permissions:['dashboard:view','analytics:query']});
+  if(path==='/api/semantic-catalog')return json({metrics:[semanticCatalog.net_invoiced_revenue],registry:[],published:{tenantId:'demo-iq',mode:'certified',releases:[]}});
+  if(path==='/api/dashboard-templates')return json({templates:reportIds.map(id=>({id,name:{en:id,ar:id},availability:'available',tags:['management']})),defaultTemplateId:reportIds[0]});
+  if(path==='/api/saved-dashboards')return json({dashboards:[]});
+  if(path.startsWith('/api/dimensions/'))return json({values:[]});
+  throw Error('Unexpected fixture request: '+path);
+ };
+ try {
+  const {useWorkspace}=await fixture.server.ssrLoadModule('/src/hooks/useWorkspace.ts');
+  const {ManagementNavigation}=await fixture.server.ssrLoadModule('/src/reports/ManagementReports.tsx');let workspace:ReturnType<typeof useWorkspace>;
+  function Probe(){workspace=useWorkspace({id:'test-user',displayName:'Test',defaultTenantId:'demo-iq'});return createElement(ManagementNavigation,{templates:workspace.templates,locale:'en',activeId:workspace.activeTemplateId,published:workspace.published,onSelect:(id:string)=>void workspace.openTemplate(id,workspace.profile,'en')});}
+  await act(async()=>fixture.root.render(createElement(Probe)));await settle();
+  assert.equal(workspace!.loading,true);assert.equal(workspace!.activeTemplateId,reportIds[0]);
+  await act(async()=>fixture.container.querySelectorAll('button')[1]!.click());
+  assert.equal(workspace!.activeTemplateId,reportIds[1]);assert.equal(workspace!.loading,true);
+  assert.equal(fixture.container.querySelector('[aria-current="page"]')?.textContent,reportIds[1]);
+  await act(async()=>first.resolve(new Response(JSON.stringify(report(reportIds[0]!)))));await settle();
+  assert.equal(workspace!.activeTemplateId,reportIds[1]);assert.equal(workspace!.document,null);
+  await act(async()=>second.resolve(new Response(JSON.stringify({error:{code:'FAILED',message:'Report failed'}}),{status:503})));await settle();
+  assert.equal(workspace!.loading,false);assert.equal(workspace!.error,'Report failed');assert.equal(workspace!.document,null);assert.equal(workspace!.activeTemplateId,reportIds[1]);
+  await act(async()=>{fixture.browser.history.replaceState({},'','/reports/'+reportIds[0]);fixture.browser.dispatchEvent(new fixture.browser.PopStateEvent('popstate'));});await settle();
+  assert.equal(workspace!.activeTemplateId,reportIds[0]);assert.equal(workspace!.document?.spec?.id,reportIds[0]);
+  await act(async()=>{fixture.browser.history.replaceState({},'','/reports/'+reportIds[1]);fixture.browser.dispatchEvent(new fixture.browser.PopStateEvent('popstate'));});await settle();
+  assert.equal(workspace!.document?.spec?.id,reportIds[1]);
+  await act(async()=>{await workspace!.loadWorkspace('test-user','demo-eg',false);});await settle();
+  assert.equal(workspace!.profile?.id,'demo-eg');assert.equal(requestedTenants.at(-1),'demo-eg');assert.equal(workspace!.activeTemplateId,reportIds[0]);
+ }finally{globalThis.fetch=priorFetch;await fixture.close();}
+ });
+
+test('shared metric hint portals outside a clipped card, supports focus/Escape and preserves modal/drag isolation',async()=>{
+ const fixture=await domFixture();
+ try {
+  const {MetricInfo}=await fixture.server.ssrLoadModule('/src/metrics/MetricDefinition.tsx');let selected=0;
+  const overlays=fixture.browser.document.createElement('div');overlays.id='app-overlays';fixture.browser.document.body.append(overlays);
+  await act(async()=>fixture.root.render(createElement('div',{style:{overflow:'hidden'},onClick:()=>selected++,onPointerDown:()=>selected++},createElement(MetricInfo,{metric:semanticCatalog.net_invoiced_revenue,locale:'ar'}))));
+  const button=fixture.container.querySelector('button')!;
+  await act(async()=>button.focus());
+  const hint=overlays.querySelector('[role="tooltip"]')!;
+  assert.equal(hint.getAttribute('dir'),'rtl');assert.equal(hint.hasAttribute('hidden'),false);assert.equal(button.getAttribute('aria-describedby'),hint.id);
+  await act(async()=>button.dispatchEvent(new fixture.browser.KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
+  assert.equal(hint.hasAttribute('hidden'),true);
+  await act(async()=>{button.dispatchEvent(new fixture.browser.PointerEvent('pointerdown',{bubbles:true}));button.click();});
+  assert.equal(selected,0);assert.ok(fixture.browser.document.body.querySelector('dialog'));assert.equal(button.getAttribute('aria-haspopup'),'dialog');
+ }finally{await fixture.close();}
+});
+
+test('tooltip geometry preserves RTL alignment, flips at the lower edge and clamps narrow viewports',()=>{
+ const anchor={left:260,right:296,top:190,bottom:226};
+ assert.deepEqual(tooltipPosition(anchor,{width:280,height:80},{width:320,height:240},true),{left:16,top:102});
+ assert.deepEqual(tooltipPosition({left:20,right:56,top:20,bottom:56},{width:120,height:40},{width:400,height:300},false),{left:20,top:64});
+ assert.deepEqual(parseWorkspaceRoute('/reports/invoice-refund-operations'),{kind:'report',id:'invoice-refund-operations'});
+ assert.equal(workspaceRoutePath({kind:'saved',id:'record/one'}),'/dashboards/record%2Fone');
+ assert.deepEqual(parseWorkspaceRoute('/dashboards/record%2Fone'),{kind:'saved',id:'record/one'});
+ assert.deepEqual(parseWorkspaceRoute('/reports/%invalid'),{kind:'workspace'});
+});
+
+test('shared filters display governed bilingual names while changes and restored state retain distinct IDs',async()=>{
+ const fixture=await domFixture();
+ try {
+  const {DimensionFilterControl}=await fixture.server.ssrLoadModule('/src/DimensionFilterControl.tsx');
+  const {AccountControls}=await fixture.server.ssrLoadModule('/src/auth/AccountControls.tsx');
+  for(const locale of ['en','ar']) {
+   const name=locale==='ar'?'مندوب المبيعات':'Salesperson name';const options=[{id:'source:2045',label:name},{id:'source:2046',label:name},{id:'unassigned',label:'unassigned'}];let selected:string[]=[];
+   await act(async()=>fixture.root.render(createElement(DimensionFilterControl,{dimension:'salesperson',values:['source:2046'],options,locale,onChange:(values:string[])=>{selected=values;}})));
+   const select=fixture.container.querySelector('select')!;
+   assert.equal(select.selectedOptions[0]!.textContent,name);assert.equal(select.querySelectorAll('option').length,4);assert.ok(!fixture.container.textContent?.includes('source:'));
+   await act(async()=>{select.value=JSON.stringify(['source:2045']);select.dispatchEvent(new fixture.browser.Event('change',{bubbles:true}));});assert.deepEqual(selected,['source:2045']);
+   assert.ok(fixture.container.textContent?.includes(locale==='ar'?'غير مسند':'Unassigned'));
+   await act(async()=>fixture.root.render(createElement(DimensionFilterControl,{dimension:'customer',values:['source:missing'],options:[],locale,onChange:()=>{}})));assert.ok(!fixture.container.textContent?.includes('source:missing'));
+   const logouts:Array<boolean|undefined>=[];
+   await act(async()=>fixture.root.render(createElement(AccountControls,{user:{id:'test',displayName:'Test'},locale,userId:'test',demoUsers:[],onIdentity:()=>{},onLogout:(all?:boolean)=>logouts.push(all)})));
+   await act(async()=>{for(const button of fixture.container.querySelectorAll('button')){assert.ok(button.getAttribute('aria-label'));button.click();}});assert.deepEqual(logouts,[undefined,true]);
+  }
+ }finally{await fixture.close();}
+});

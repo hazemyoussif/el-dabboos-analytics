@@ -4,7 +4,7 @@ import type { QuerySqlScope } from './query-slots.ts';
 import { bind,dimensionSql } from './sql.ts';
 /** Labels are evidence, never identity. Return only unambiguous labels for the authorized result keys. */
 export async function queryDimensionLabels(client:PoolClient,query:AnalyticsQuery,scope:QuerySqlScope,keys:(string|null)[],locale:Locale):Promise<Record<string,string>> {
- const field=query.groupBy==='business_line'?'businessLine':query.groupBy==='salesperson'?'salesperson':query.groupBy==='customer'?'customer':null;
+ const field=dimensionLabelField(query.groupBy);
  if(!field || !query.groupBy || !keys.length)return {};
  const parameters=[...scope.params];
  const identity=dimensionSql(query.groupBy);
@@ -26,4 +26,8 @@ export function sourceDisplayLabel(raw:string,locale:Locale):string {
   const fallback=translations.en_US??Object.values(translations).find(value=>typeof value==='string'&&value.trim());
   return typeof fallback==='string'?fallback:raw;
  } catch {return raw;}
+}
+
+export function dimensionLabelField(dimension:AnalyticsQuery['groupBy']) {
+ return dimension==='business_line'?'businessLine':dimension==='salesperson'?'salesperson':dimension==='customer'?'customer':null;
 }
