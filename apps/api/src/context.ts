@@ -7,6 +7,7 @@ import type { AnalyticsRepository, AuditAction, AuditSink, AuthorizationPolicy, 
 import { ApiError } from './errors.ts';
 
 export interface ApiDependencies {
+  operationalStatus?: import('@el-dabboos/domain').OperationalStatusProvider;
   administration?: { unitOfWork: AdministrationUnitOfWork; directory: AccessDirectory; profiles: TenantProfileProvider;
     /** Explicit synthetic adapter or configured trusted IdP boundary; headers never directly become binding IDs. */
     authenticate: (headers: Record<string, unknown>) => Promise<string>;

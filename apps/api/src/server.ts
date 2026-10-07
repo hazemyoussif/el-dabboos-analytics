@@ -3,7 +3,7 @@ import { openLocalAuthentication } from './auth/runtime.ts';
 import { openControlStorage } from './control-storage.ts';
 import type { StructuredPlannerDiagnostic } from '@el-dabboos/application';
 import { StructuredDashboardPlanner } from '@el-dabboos/application';
-import { MockAnalyticsRepository, PostgresAnalyticsRepository, SqliteAnalyticsRepository, createMartPool, createSqliteSchema, generateSeedFacts, assertMartRuntimeReady } from '@el-dabboos/data';
+import { MockAnalyticsRepository, PostgresOperationalStatus, PostgresAnalyticsRepository, SqliteAnalyticsRepository, createMartPool, createSqliteSchema, generateSeedFacts, assertMartRuntimeReady } from '@el-dabboos/data';
 import type { AnalyticsRepository, DashboardPlanner, DimensionValueRepository } from '@el-dabboos/domain';
 import { existsSync, realpathSync } from 'node:fs';
 import { resolve, } from 'node:path';
@@ -27,6 +27,7 @@ const syntheticIdentity = config.deployment.identityMode === 'synthetic';
 const provider = config.analyticsProvider;
 let dataReady: (tenantId: string) => Promise<boolean> = async (id) => id === 'demo-iq' || id === 'demo-eg';
 let analyticsReady: () => Promise<boolean>;
+let operationalStatus: import('@el-dabboos/domain').OperationalStatusProvider | undefined;
 let repository: AnalyticsRepository & DimensionValueRepository;
 let close: () => void | Promise<void> = () => { };
 if (provider === 'sqlite') {
@@ -44,6 +45,7 @@ else {
     if (!config.postgres)
         throw new Error('Missing PostgreSQL runtime configuration');
     const pool = createMartPool(config.postgres.runtimeUrl, config.postgres.poolMax);
+    operationalStatus=new PostgresOperationalStatus(pool);
     pool.on('error', () => { process.stderr.write('PostgreSQL pool connection failed\n'); });
     repository = new PostgresAnalyticsRepository(pool, { reportingCurrencies: {}, reportingCurrency: async (id) => (await administration.profiles.get(id, 'en'))?.reportingCurrency ?? null, statementTimeoutMs: config.postgres.statementTimeoutMs, maxGroups: config.postgres.maxGroups, maxDateSpanDays: config.postgres.maxDateSpanDays });
     const postgresRepository = repository as PostgresAnalyticsRepository;
@@ -79,7 +81,7 @@ else if (plannerMode === 'disabled')
     planner = null;
 else if (plannerMode !== 'mock')
     throw new Error('DASHBOARD_PLANNER must be mock, structured, or disabled.');
-const app = await buildApi({ ...(provider==='postgres' ? { publishedCapabilities: repository as PostgresAnalyticsRepository } : {}),analyticsRepository: repository, dimensionValues: repository, executionConcurrency: config.executionConcurrency,
+const app = await buildApi({ ...(operationalStatus?{operationalStatus}:{}), ...(provider==='postgres' ? { publishedCapabilities: repository as PostgresAnalyticsRepository } : {}),analyticsRepository: repository, dimensionValues: repository, executionConcurrency: config.executionConcurrency,
     readiness: { persistence: async () => { await localAuth?.ready(); return controlStorage.ready(); }, analytics: analyticsReady },
     administration: { unitOfWork: administration, directory: administration.directory, profiles: administration.profiles, dataReady,
         authenticate: async (headers) => {

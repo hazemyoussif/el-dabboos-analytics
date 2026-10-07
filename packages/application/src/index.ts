@@ -32,3 +32,4 @@ export * from './published-analytics.ts';
 
 export * from './management-templates.ts';
 export * from './management-reviews.ts';
+export * from './analytics-operations.ts';
