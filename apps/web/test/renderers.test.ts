@@ -17,7 +17,7 @@ test('every renderer has EN/AR titles and accessible chart values; composition r
       if (type === 'combo') widget.series.push({ id: 'profit', metric: 'gross_profit' });
       const entry: WidgetExecution = { status: 'success', seriesResults: {}, alignedRows: [{ key: 'branch-1', series: { revenue: { value: 100 }, profit: { value: 30 } } }] };
       const html = renderToStaticMarkup(createElement(WidgetCard, { widget, entry, locale, catalog: semanticCatalog, profile: tenantProfiles['demo-iq'] }));
-      assert.ok(html.includes(locale === 'ar' ? 'رسم الإيرادات' : 'Revenue chart')); assert.ok(html.includes(`widget-${type}`));
+      assert.ok(html.includes(locale === 'ar' ? 'رسم الإيرادات' : 'Revenue chart')); assert.ok(html.includes(`widget-${type}`)); assert.ok(html.includes('aria-haspopup="dialog"')); assert.ok(html.includes(semanticCatalog.revenue.help.shortDefinition[locale]));
       if (!['kpi', 'table'].includes(type)) assert.ok(html.includes(locale === 'ar' ? 'عرض قيم الرسم' : 'View chart values'));
       if (['pie', 'treemap'].includes(type)) {
         entry.alignedRows[0]!.series.revenue = { value: -10 };

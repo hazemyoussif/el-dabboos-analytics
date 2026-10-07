@@ -1,3 +1,5 @@
+import { successfulMetricMetadata } from './metrics/definition-copy.ts';
+import { MetricInfo } from './metrics/MetricDefinition.tsx';
 import { TrendingUp, ChartLine, ChartArea, ChartBar, ChartPie, PanelsTopLeft, ChartNoAxesCombined, Table2, AlertCircle } from 'lucide-react';
 import { resolveGovernedPalette, withGovernedPalette } from './rendering/chart-theme.ts';
 import { useChartTheme } from './presentation/ThemeProvider.tsx';
@@ -32,7 +34,7 @@ export function WidgetCard({ widget, dashboardPalette, entry, catalog, locale, p
     const result = entry?.seriesResults[series.id];
     return result?.status === 'error' ? [result.error.message] : [];
   });
-  if (!entry || entry.status === 'error') return <article className="widget widget-error"><div className="widget-heading"><h3>{title}</h3><AlertCircle aria-hidden="true" /></div><Notice tone="danger">{failures.join(' · ') || t.failed}</Notice></article>;
+  if (!entry || entry.status === 'error') return <article className="widget widget-error"><div className="widget-heading"><h3>{title}</h3><WidgetMetricDefinitions widget={widget} catalog={catalog} locale={locale} profile={profile} entry={entry} /><AlertCircle aria-hidden="true" /></div><Notice tone="danger">{failures.join(' · ') || t.failed}</Notice></article>;
   const dimensionLabels=Object.assign({},...Object.values(entry.seriesResults).map(series=>series.status==='success'?series.result.metadata.dimensionLabels??{}:{})) as Record<string,string>;
   const keyLabel=(key:string|null)=>key!==null&&dimensionLabels[key]?formatDimensionLabel(dimensionLabels[key]!,widget.dimension,locale):formatKey(key,widget.dimension,locale,profile);
   const data: ChartRow[] = entry.alignedRows.map((row,index) => {
@@ -49,7 +51,7 @@ export function WidgetCard({ widget, dashboardPalette, entry, catalog, locale, p
   const Content = renderers[widget.type];
   const content = !hasData ? <EmptyState>{t.empty}</EmptyState> : <Content {...props} />;
   const summary = widget.type !== 'kpi' && widget.type !== 'table' && <details className="chart-summary"><summary>{locale === 'ar' ? 'عرض قيم الرسم' : 'View chart values'}</summary><TableContent {...props} /></details>;
-  return <article className={`widget widget-${widget.type}`}><div className="widget-heading"><div><h3>{title}</h3><p>{subtitle}</p></div><span className="widget-icon"><Icon aria-hidden="true" /></span></div>{entry.status === 'partial' && <Notice>{t.partial}: {failures.join(' · ')}</Notice>}{content}{summary}</article>;
+  return <article className={`widget widget-${widget.type}`}><div className="widget-heading"><div><h3>{title}</h3><p>{subtitle}</p>{widget.type !== 'table' && <WidgetMetricDefinitions widget={widget} catalog={catalog} locale={locale} profile={profile} entry={entry} />}</div><span className="widget-icon"><Icon aria-hidden="true" /></span></div>{entry.status === 'partial' && <Notice>{t.partial}: {failures.join(' · ')}</Notice>}{content}{summary}</article>;
 }
 export function DashboardRenderer({ execution, catalog, locale, profile, dashboardOverride }: Props & { dashboardOverride?: DashboardSpec }) {
   const spec = dashboardOverride ?? execution.dashboard;
@@ -60,4 +62,11 @@ export function DashboardRenderer({ execution, catalog, locale, profile, dashboa
       <WidgetCard widget={widget} dashboardPalette={spec.presentation?.palette} entry={execution.widgetResults[widget.id]} catalog={catalog} locale={locale} profile={profile} />
     </div>;
   })}</div>;
+}
+
+function WidgetMetricDefinitions({widget,catalog,locale,profile,entry}: {widget: DashboardWidget; catalog: Record<string,SemanticMetric>; locale: Locale; profile: TenantProfile; entry: WidgetExecution | undefined}) {
+ return <div>{widget.series.map(series => {
+  const metric = catalog[series.metric];
+  return metric && <span key={series.id}>{widget.series.length > 1 && metric.labels[locale]}<MetricInfo metric={metric} locale={locale} currency={profile.reportingCurrency} metadata={successfulMetricMetadata(entry?.seriesResults[series.id])} /></span>;
+ })}</div>;
 }

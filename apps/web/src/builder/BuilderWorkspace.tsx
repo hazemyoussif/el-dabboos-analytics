@@ -1,3 +1,4 @@
+import { MetricInfo } from '../metrics/MetricDefinition.tsx';
 import { publishedWidgetAllowed,editorAnalysisAllowed,validPublishedWidgetDraft } from './published-capabilities.ts';
 import { ArrowUp, ArrowDown, X, Undo2, Redo2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -156,13 +157,13 @@ function WidgetEditor({ initial, adding, base, registry, catalog, published, loc
         </span></div>
         <select aria-label={`${t.metric} ${index + 1}`} value={series.metric} onChange={event => setDraft(current => withWidgetMetric(current, series.id, event.target.value as MetricId))}>
           {available.map(metric => <option key={metric.id} value={metric.id} disabled={metric.id !== series.metric && (['line', 'area', 'bar', 'combo'].includes(draft.type)) && draft.series.length > 1 && !canAddSeries({ ...draft, series: draft.series.filter(item => item.id !== series.id) }, metric.id, catalog).allowed}>{metric.labels[locale]}</option>)}
-        </select>
+        </select><BuilderMetricInfo metric={catalog[series.metric]} locale={locale} />
         {draft.type === 'combo' && <label>{locale === 'ar' ? 'علامة السلسلة' : 'Series mark'}<select value={series.presentation?.mark ?? (index === 0 ? 'bar' : 'line')} onChange={event => updateSeries(series.id, old => ({ ...old, presentation: { mark: event.target.value as 'bar' | 'line' } }))}><option value="bar">{locale === 'ar' ? 'أعمدة' : 'Bar'}</option><option value="line">{locale === 'ar' ? 'خطي' : 'Line'}</option></select></label>}
         <SeriesAnalysisControls analysis={analysis} index={index} locale={locale} allowed={allowed} change={(change,remove)=>changeAnalysis(series,change,remove)} />
       </div>;
     })}
     {!['kpi', 'pie', 'treemap'].includes(draft.type) && draft.series.length < (draft.type === 'combo' ? 4 : 8) && <div className="builder-add-series"><select aria-label={t.addSeries} value={newMetric} onChange={event => { setNewMetric(event.target.value as MetricId); setMessage(''); }}>
-      {available.map(metric => <option key={metric.id} value={metric.id}>{metric.labels[locale]}</option>)}</select><button type="button" onClick={addSeries}>{t.addSeries}</button></div>}
+      {available.map(metric => <option key={metric.id} value={metric.id}>{metric.labels[locale]}</option>)}</select><BuilderMetricInfo metric={catalog[newMetric]} locale={locale} /><button type="button" onClick={addSeries}>{t.addSeries}</button></div>}
     {message && <p className="builder-hint" role="alert">{message}</p>}
     {!valid && <p className="builder-hint">{t.validation}</p>}
     <div className="builder-editor-actions"><button className="primary-button" disabled={!valid} onClick={() => onApply(draft)}>{t.apply}</button>{!adding && <button className="builder-danger" onClick={onRemove}>{t.remove}</button>}</div>
@@ -266,10 +267,10 @@ export function BuilderWorkspace({ history, execution, catalog, registry, publis
         return <details key={domain} open={domain === 'sales'}><summary>{name}</summary><div className="builder-metric-list">{metrics.map(metric => {
           const id = metric.id;
           if (!metricAvailable(id, catalog, registry)) return <div key={id} className="builder-planned">{metric.labels[locale]} <small>{t.planned}</small></div>;
-          return <button key={id} className={`metric-palette-item ${dragItem?.kind === 'metric' && dragItem.metricId === id ? 'metric-dragging' : ''}`}
+          return <div key={id} className="builder-metric-row"><button className={`metric-palette-item ${dragItem?.kind === 'metric' && dragItem.metricId === id ? 'metric-dragging' : ''}`}
             disabled={busy} draggable={!busy} onDragStart={event => { const item: BuilderDragItem = { kind: 'metric', metricId: id };
               writeBuilderDragItem(event.dataTransfer, item); setMetricChoice(null); setDragItem(item); }} onDragEnd={finishDrag}
-            onClick={() => chooseMetric(id, { x: 0, y: 0 }, selected?.id)}>{metric.labels[locale]}</button>;
+            onClick={() => chooseMetric(id, { x: 0, y: 0 }, selected?.id)}>{metric.labels[locale]}</button><MetricInfo metric={catalog[id]!} locale={locale} currency={profile.reportingCurrency} /></div>;
         })}</div></details>;
       })}</aside>
     <div className="builder-center"><div className="builder-canvas-head"><strong>{dashboardTitle}</strong><span>{t.preview} · {t.unsaved}</span><div><button disabled={!history.past.length} onClick={onUndo}><Undo2 aria-hidden="true" />{locale === 'ar' ? 'تراجع' : 'Undo'}</button><button disabled={!history.future.length} onClick={onRedo}><Redo2 aria-hidden="true" />{locale === 'ar' ? 'إعادة' : 'Redo'}</button><button disabled={!spec} onClick={() => spec && guarded(() => onCommand({ type: 'layout', layout: arrangeLayout(spec) }))}>{locale === 'ar' ? 'ترتيب تلقائي' : 'Auto arrange'}</button><button disabled={!spec} onClick={() => spec && guarded(() => onCommand({ type: 'layout', layout: resetLayout(spec) }))}>{locale === 'ar' ? 'إعادة ضبط التخطيط' : 'Reset layout'}</button></div></div>
@@ -323,3 +324,5 @@ export function PaletteSelect({ locale, value, dashboardPalette, onChange }: {
     if (palette) onChange(palette);
   }}><option value="inherit">{appearanceCopy[locale].inherit} ({names[dashboardPalette ?? 'default']})</option>{governedPalettes.map(palette => <option key={palette} value={palette}>{names[palette]}</option>)}</select></label>;
 }
+
+function BuilderMetricInfo({metric, locale}: {metric: SemanticMetric | undefined; locale: Locale}) { return metric ? <MetricInfo metric={metric} locale={locale} /> : null; }

@@ -1,3 +1,4 @@
+import { MetricCurrencyContext, MetricPublicationContext } from './metrics/MetricDefinition.tsx';
 import { useManagementReports } from './reports/useManagementReports.ts';
 import { ManagementArea,ManagementNavigation,ReportStatus,managementTitle,workspaceDataMode } from './reports/ManagementReports.tsx';
 import type { AuthUser } from './auth/client.ts';
@@ -61,7 +62,7 @@ export default function App({ authenticatedUser,onLogout,authenticationError }: 
   }, [execution]);
   const period = execution?.metadata.effectiveFilters?.dateRange;
   const periodSelection = builder.history || showAiEditor(flow.panel) ? activeDashboard?.filters : viewFilters.selection;
-  return <div className="app-shell">
+  return <MetricPublicationContext value={published}><MetricCurrencyContext value={profile?.reportingCurrency}><div className="app-shell">
     <WorkspaceNavigation {...workspaceNavigationPermissions(workspace)} locale={locale} onNew={()=>{management.close();flow.launchNew();}} onTemplates={() => {management.close();flow.enterCreation('choose-template');}} dataMode={workspaceDataMode(published)} drawerOpen={drawerOpen} onDrawerClose={() => setDrawerOpen(false)}>
       <WorkspaceAdministrationNavigation workspace={workspace} page={adminPage} onPage={setAdminPage} closeDrawer={() => setDrawerOpen(false)} />
       {<ManagementNavigation published={published} allowed={permissions.includes('analytics:query')} templates={templates} locale={locale} activeId={management.page??workspace.activeTemplateId} onSelect={management.select}/>}
@@ -105,5 +106,5 @@ export default function App({ authenticatedUser,onLogout,authenticationError }: 
         <footer className="footer">© {new Date().getFullYear()} El Dabboos · {locale === 'ar' ? 'منصة تحليلات تجريبية' : 'Analytics prototype'}</footer>
       </div>
     </main>
-  </div>;
+  </div></MetricCurrencyContext></MetricPublicationContext>;
 }

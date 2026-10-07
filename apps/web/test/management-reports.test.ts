@@ -17,7 +17,11 @@ test('management status surfaces localize pending Finance and published capabili
   for(const locale of ['en','ar'] as const) {
    const props={locale,profile:tenantProfiles['demo-iq'],published,metadata:null,review:managementControlReview('el-dabboos-iq'),reviewLoading:false,reviewError:false,onRetry(){}};
    const finance=renderToStaticMarkup(createElement(ManagementInfo,{...props,page:'finance-control'}));
-   assert.ok(finance.includes(locale==='en'?'Awaiting approval':'بانتظار الاعتماد'));
+   assert.ok(finance.includes(locale==='en'?'Awaiting publication':'بانتظار النشر'));
+   const agingPublished={...published,releases:[{...published.releases[0],capabilities:[{metric:'net_aged_receivable',summary:true,dimensions:['customer'],analyses:[]}]}]};
+   const certifiedFinance=renderToStaticMarkup(createElement(ManagementInfo,{...props,published:agingPublished,page:'finance-control'}));
+   assert.ok(certifiedFinance.includes(locale==='en'?'Certified':'معتمد'));
+   assert.ok(!certifiedFinance.includes(locale==='en'?'Awaiting publication':'بانتظار النشر'));
    assert.ok(!finance.includes('1,359,461'));assert.ok(!finance.includes('report-status">Certified'));
    const unavailable=renderToStaticMarkup(createElement(ManagementInfo,{...props,page:'customer-unavailable'}));
    assert.ok(unavailable.includes(locale==='en'?'Not available for this dataset':'غير متاح لهذه البيانات'));
