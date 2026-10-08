@@ -15,7 +15,7 @@ const apiBase = validateApiBase((import.meta as ImportMeta & { env?: { VITE_API_
 let syntheticHeaders = (import.meta as ImportMeta & { env?: { PROD?: boolean } }).env?.PROD !== true;
 export function configureIdentityMode(mode: string): void { syntheticHeaders = mode==='synthetic'; }
 export async function request<T>(session: ApiSession, path: string, method: string, body?: unknown): Promise<T> {
-  const response = await fetch(apiLocation(path,apiBase), { method, credentials: 'include',headers: { 'content-type': 'application/json', ...(syntheticHeaders ? { 'x-demo-user-id': session.userId } : {}), 'x-tenant-id': session.tenantId, 'x-locale': session.locale }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
+  const response = await fetch(apiLocation(path,apiBase), { method, credentials: 'include',headers: { ...(body === undefined ? {} : { 'content-type': 'application/json' }), ...(syntheticHeaders ? { 'x-demo-user-id': session.userId } : {}), 'x-tenant-id': session.tenantId, 'x-locale': session.locale }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
   const data = await response.json() as T & ApiError;
   if (response.status===401 && !syntheticHeaders && typeof window!=='undefined') window.dispatchEvent(new Event('dabboos-session-expired'));
   if (!response.ok) throw new ApiClientError(response.status, data.error?.code ?? 'REQUEST_FAILED', data.error?.message ?? `Request failed (${response.status})`);
@@ -60,3 +60,7 @@ export const getAdministrationCapabilities = (userId: string) => request<{ platf
 export const executeSavedDashboard = (session: ApiSession, id: string) => request<DashboardExecutionResult>(session, `/api/saved-dashboards/${encodeURIComponent(id)}/execute`, "POST");
 
 export const getManagementControlReview=(session:ApiSession)=>request<{review:import('@el-dabboos/application').ManagementControlReview|null}>(session,'/api/management-control-review','GET');
+
+export const discoverDimension=(session:ApiSession,dimension:DimensionId,query:import('@el-dabboos/domain').DimensionDiscoveryRequest)=>request<import('@el-dabboos/domain').DimensionDiscoveryPage>(session,`/api/dimensions/${encodeURIComponent(dimension)}/search`,'POST',query);
+
+export const drillThrough=(session:ApiSession,query:import('@el-dabboos/domain').DrillRequest)=>request<import('@el-dabboos/domain').DrillPage>(session,'/api/analytics/drill-through','POST',query);

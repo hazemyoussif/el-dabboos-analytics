@@ -4,6 +4,7 @@ import { Pool } from 'pg';
 import { randomUUID } from 'node:crypto';
 import { database,enabled } from './support.ts';
 import { OdooPostgresSourceBatchReader } from '../../src/odoo/reader.ts';
+import {createOdooSourcePool,odooSourceConfig} from '../../src/odoo/config.ts';
 import { verifyOdooSourceIdentity } from '../../src/odoo/identity.ts';
 import { ingestOdooExtraction } from '../../src/odoo/ingestion.ts';
 import { odooComparisonCandidate } from '../../src/odoo/mapping.ts';
@@ -299,5 +300,29 @@ test('concrete operational source discovers January inserts/updates by October w
   assert.deepEqual(controls.map(control=>control.value),['1000000.000000','500000.000000']);
   assert.deepEqual(await changed.present('sale_order',['1','99','101']),['1','99']);
   await changed.close();
+ }finally{await fixture.close();}
+});
+
+// Isolated synthetic database: even credentials with write authority get read-only sessions.
+test('configured Odoo connections default to read-only before identity/operation queries',{skip:!enabled},async()=>{
+ const db=await database(false),url=new URL(process.env.PG_TEST_ADMIN_URL!);
+ url.pathname='/'+(await db.admin.query('SELECT current_database() name')).rows[0].name;
+ const config=odooSourceConfig({ODOO_SOURCE_HOST:url.hostname,ODOO_SOURCE_PORT:url.port,ODOO_SOURCE_DATABASE:url.pathname.slice(1),ODOO_SOURCE_USER:decodeURIComponent(url.username),ODOO_SOURCE_PASSWORD:decodeURIComponent(url.password),ODOO_SOURCE_COMPANY_IDS:'1'},{tenantId:'synthetic',sourceId:'synthetic'});
+ const source=createOdooSourcePool(config);
+ try {assert.equal((await source.query('SHOW transaction_read_only')).rows[0].transaction_read_only,'on');await assert.rejects(source.query('CREATE TABLE synthetic_write_attempt(id int)'),{code:'25006'});assert.equal((await db.admin.query("SELECT to_regclass('public.synthetic_write_attempt') name")).rows[0].name,null);}
+ finally {await source.end();await db.close();}
+});
+
+test('incremental composite revision discovers lookup-only changes outside business-date scope',{skip:!enabled},async()=>{
+ const fixture=await sourceFixture();
+ try {
+  await fixture.db.admin.query("ALTER TABLE public.res_partner ADD COLUMN partner_latitude numeric, ADD COLUMN gps_shop_location text, ADD COLUMN unrelated_blob bytea; UPDATE public.res_partner SET area='Synthetic Area',partner_latitude=33.125,gps_shop_location='Synthetic GPS',unrelated_blob=decode(repeat('ab',65536),'hex') WHERE id=20");
+  await fixture.db.admin.query("INSERT INTO public.res_country_state VALUES(8,'Synthetic Region','2026-10-03'); UPDATE public.res_partner SET state_id=8 WHERE id=20; UPDATE public.res_users SET write_date='2026-10-02' WHERE id=7; UPDATE public.business_line SET name='Renamed General',write_date='2026-10-04' WHERE id=1");
+  const snapshot=await fixture.openSnapshot();
+  const reader=new OdooPostgresSourceBatchReader(fixture.source,config,{...baseScope,from:'2026-01-01',to:'2026-01-31',mode:'incremental',modificationFrom:'2026-10-03 00:00:00.000000',...snapshot.evidence},snapshot);
+  const first=await reader.readBatch({...baseRequest,frozenRevision:snapshot.evidence.frozenRevision,limit:2});
+  assert.deepEqual(first.rows.map(row=>row.recordId),['1','2']);assert.ok(first.rows.every(row=>row.version==='2026-10-04 00:00:00.000000'&&row.payload.business_line_name==='Renamed General'&&row.payload.state_name==='Synthetic Region'&&row.payload.business_date==='2026-09-15'));
+  assert.equal(first.rows[0]!.payload.area,'Synthetic Area');assert.equal(first.rows[0]!.payload.latitude,'33.125');assert.equal(first.rows[0]!.payload.longitude,null);assert.equal(first.rows[0]!.payload.shop_gps,'Synthetic GPS');
+  const next=await reader.readBatch({...baseRequest,frozenRevision:snapshot.evidence.frozenRevision,limit:2,cursor:first.nextCursor!});assert.deepEqual(next.rows.map(row=>row.recordId),['3','4']);
  }finally{await fixture.close();}
 });

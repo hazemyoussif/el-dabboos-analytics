@@ -4,6 +4,7 @@ import { useChartTheme } from '../presentation/ThemeProvider.tsx';
 import { presentationCopy } from '../presentation/copy.ts';
 import { formatValue } from '../i18n.ts';
 import { comparisonKey, seriesLabel, valueKey } from './shared.ts';
+import { chartDrillHint } from './DrillMarks.tsx';
 import type { RenderSeriesProps } from './shared.ts';
 import { seriesColor, showChartLegend } from './chart-theme.ts';
 export interface LegendItem { key: string; label: string; color: string; reference?: boolean }
@@ -42,5 +43,9 @@ export function EnterpriseTooltip({ active, label, payload, props, entry, compos
       {aligned?.absoluteChange !== undefined && <div className="tooltip-detail"><span>{t.change}</span><span>{props.formatSeries(series.id,aligned.absoluteChange)}{aligned.percentageChange != null && ` (${formatValue(aligned.percentageChange,'percentage',props.locale,props.profile)})`}</span></div>}
       {aligned?.rank !== undefined && <div className="tooltip-detail"><span>{t.rank}</span><span>{aligned.rank}</span></div>}
     </div>;
-  })}</div>;
+  })}{props.onDrill && entry && payload.some(item => {
+    const series = props.widget.series.find(candidate => valueKey(candidate.id) === item.dataKey);
+    const row = entry.alignedRows[item.payload?._row ?? item.payload?.sourceIndex ?? -1];
+    return series && row && props.canDrill?.(series.id, row.key);
+  }) && <p className="chart-drill-hint">{chartDrillHint(props.locale)}</p>}</div>;
 }

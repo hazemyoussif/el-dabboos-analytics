@@ -7,6 +7,8 @@ export const comparisonKey = (id: string) => `c_${id}`;
 export type ChartRow = Record<string, string | number | null>;
 export interface RenderSeriesProps {
   theme: ChartTheme;
+  canDrill?: ((seriesId:string,key:string|null)=>boolean)|undefined;
+  onDrill?: (seriesId:string,key:string|null,opener?:Element)=>void;
   keyLabel?: (key:string|null)=>string;
   widget: DashboardWidget;
   catalog: Record<string, SemanticMetric>;

@@ -22,3 +22,31 @@
 .metric-definition-body dd { margin-inline-start: 0; margin-block-start: .25rem; }
 .builder-metric-row { display: flex; align-items: center; }
 .builder-metric-row > button:first-child { flex: 1; }
+
+.operational-trust { margin-block: .5rem; max-width: 52rem; }
+.operational-trust summary { cursor: pointer; }
+.operational-details { padding-block: .75rem; overflow-wrap: anywhere; }
+.operational-details h3 { margin-block: 1rem .5rem; }
+.operational-row { display: grid; grid-template-columns: minmax(9rem, 1fr) minmax(0, 2fr); gap: .75rem; margin-block: .4rem; }
+.operational-row dd { margin: 0; }
+.operational-buttons { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
+.operational-buttons label { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.operational-buttons button, .operational-buttons select { min-height: 44px; }
+.operational-actions { margin-block: 1rem; }
+@media (max-width: 600px) { .operational-row { grid-template-columns: 1fr; gap: .2rem; } }
+.operational-trust summary small { display: block; margin-block-start: var(--space-1); color: var(--text-muted); }
+
+.drill-dialog { width: min(1100px, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); overflow: auto; padding: var(--space-4); color: var(--text-primary); background: var(--surface-elevated); border: 1px solid var(--border-default); border-radius: var(--radius-lg); }
+.drill-dialog::backdrop { background: rgb(0 0 0 / .45); }
+.drill-dialog header, .drill-controls { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.drill-dialog header { align-items: center; }
+.drill-controls { align-items: end; }
+.drill-dialog header { justify-content: space-between; }
+.drill-controls label { display: grid; gap: var(--space-1); }
+.drill-search-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: var(--space-3); flex: 1 1 20rem; min-width: 0; }
+.drill-search-row label { min-width: 0; grid-template-columns: minmax(0, 1fr); }
+.drill-search-row input { width: 100%; min-width: 0; }
+.drill-dialog button, .drill-dialog input, .drill-dialog select { min-height: 44px; }
+.drill-dialog .table-wrap { max-height: 55dvh; overflow: auto; margin-block: var(--space-3); }
+.drill-dialog td, .drill-dialog th { text-align: start; }
+.drill-dialog td:nth-last-child(2) { text-align: end; }

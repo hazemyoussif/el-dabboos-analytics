@@ -1,11 +1,14 @@
-import {createContext,useContext,useEffect,useRef,useState} from 'react';
+import {createContext,useCallback,useContext,useEffect,useRef,useState} from 'react';
 import {governedDimensionLabel} from '@el-dabboos/domain';
 import type {DimensionDiscoveryPage,DimensionDiscoveryRequest,Locale,MetricId} from '@el-dabboos/domain';
+import {DimensionDiscoveryContext} from './DimensionDiscoveryContext.ts';
 export type CustomerLoader=(request:DimensionDiscoveryRequest)=>Promise<DimensionDiscoveryPage>;
 export const CustomerDiscoveryContext=createContext<CustomerLoader|null>(null);
 /** Search opens on demand; saved selections hydrate without full population discovery. */
 export function CustomerFilterControl({values,locale,disabled,onChange,metric,asOf}:{values:string[];locale:Locale;disabled?:boolean;onChange:(values:string[])=>void;metric?:MetricId;asOf?:string}){
- const load=useContext(CustomerDiscoveryContext),generation=useRef(0);
+ const discovery=useContext(DimensionDiscoveryContext),legacy=useContext(CustomerDiscoveryContext),generation=useRef(0);
+ const shared=useCallback((request:DimensionDiscoveryRequest)=>discovery!('customer',request),[discovery]);
+ const load=discovery?shared:legacy;
  const [open,setOpen]=useState(false),[search,setSearch]=useState(''),[options,setOptions]=useState<DimensionDiscoveryPage['values']>([]),[hydrated,setHydrated]=useState<DimensionDiscoveryPage['selected']>([]),[cursor,setCursor]=useState<string>(),[busy,setBusy]=useState(false),[failed,setFailed]=useState(false);
  const selectionKey=JSON.stringify(values);
  const request=async(continuation?:string,selectedOnly=false)=>{

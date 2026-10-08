@@ -48,3 +48,11 @@ export { HistoricalAnalyticsRepository } from './postgres/historical-repository.
 export { PostgresOperationalStatus } from './postgres/operational-evidence.ts';
 
 export { TrustedAnalyticsRepository } from './operational/repository.ts';
+
+export { OdooOperationalSource } from './operational/source.ts';
+export { PostgresOperationalStore } from './operational/store.ts';
+export { readBaseline,bootstrapOperationalServing } from './operational/baseline.ts';
+
+export { verifyOdooSourceIdentity } from './odoo/identity.ts';
+
+export { TrustedDrillThroughRepository } from './operational/drill-through.ts';

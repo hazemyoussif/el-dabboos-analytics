@@ -171,3 +171,103 @@ dependency = zero. See the operational acceptance handoff for results and limits
 
 Daily event base reconciliation, monthly rollups and exact hybrid range planning
 are now owned by [event aggregate operations](event-serving-aggregates.md).
+
+## Manual operational UX
+
+The report header exposes separate trusted serving, source freshness (inclusive
+600-second target), reconciliation and certification details. The Data &
+Certification Status view reads stored tenant evidence, aggregate coverage and
+published Finance snapshot dates. Current source staleness does not revoke
+closed-period certification. Receivables displays its executed `snapshotAsOf`
+separately from source freshness.
+
+Refresh View only re-executes the current dashboard with its transient viewer
+filters against the runtime trusted repository. It performs no source access,
+reconciliation, cursor mutation or promotion. Operational jobs keep that report
+visible; Refresh View explicitly retrieves promoted results afterwards.
+
+Manual commands are opt-in: `ANALYTICS_MANUAL_OPERATIONS=enabled` requires the
+PostgreSQL provider, a separate `MART_INGESTOR_URL`, and the existing read-only
+Odoo source configuration/resolver. Keep these credentials in protected runtime
+configuration, never in the browser, images, specs or logs. Report/status reads
+continue using the separate runtime role and tenant RLS. Enabling commands does
+not enable a scheduler. Disabled or absent configuration presents unavailable
+operator controls without synthetic results.
+
+`POST /api/analytics/operations` accepts only `{kind:"sync"}`, `{kind:"affected"}`
+or `{kind:"daily"}`. Fresh session membership, `analytics:query` and `tenant:manage`
+are required. Role/account names have no special authority. Platform authority
+alone does not bypass tenant membership. The route derives actor and tenant;
+caller-supplied identity, deep reconciliation and sweep are rejected. It invokes
+exactly the same named composition and `AnalyticsOperations` lifecycle as the CLI.
+
+Execution is synchronous: the UI shows running/syncing/validation intent and
+completion/failure, without pretending to observe intermediate phases. Configure
+an ingress timeout appropriate to the existing bounded source lease when enabling
+commands. A transport failure means completion could not be confirmed; status
+must be refreshed before retrying. Stored rejected candidates and technical
+failures show previous-trusted-data feedback. The pipeline's immutable run/failure
+audit records actor, tenant, operation, timestamp, run ID and result; successful
+evidence/promotion/cursor/audit remain one transaction. HTTP authorization results
+also use the existing safe audit sink.
+
+### Approved local source availability
+
+The local manual-operation composition fixes `ANALYTICS_SOURCE_TENANT_ID` and
+`ANALYTICS_SOURCE_ID` in protected configuration. An optional externally managed
+`ANALYTICS_SOURCE_RELAY_SOCKET=/run/dabboos-source/source.sock` connects a private
+mode-0600 host Unix socket to an API-container loopback bridge. The bridge listens
+only on 127.0.0.1 inside that container and is recreated with API startup. It adds
+no public port, source destination input or browser connection. Source connection
+configuration defaults every PostgreSQL session to read-only; existing identity
+validation and operation READ ONLY snapshots remain required.
+
+A background monitor checks relay reachability and the governed source identity
+every 30 seconds. Source probes have independent short timeouts. HTTP status,
+report reads and Refresh View read cached evidence or the trusted mart; they never
+trigger source probes. Cached evidence includes relay/source availability, last
+check and last successful connection, without connection strings or credentials.
+Evidence older than 75 seconds disables source-dependent commands. An unavailable
+source leaves trusted-serving readiness healthy, rejects authorized operations
+with `ANALYTICS_SOURCE_UNAVAILABLE`, and automatically re-enables controls after
+a successful background check. Other tenants cannot use the configured source.
+
+The source reader uses the governed related-model `write_date` columns directly
+for composite revisions and bounded keyset ordering. Optional customer location
+columns are discovered from a closed allowlist once per source pool, inside its
+read-only snapshot transaction. Missing fields remain null and existing fallback
+fields remain supported. This avoids serializing unrelated binary/large partner
+fields for timestamp predicates and presentation projection; it does not change
+filters, tenant/company scope, cutoffs or safety bounds.
+
+Manage relay recovery outside Git/images using the existing approved local SSH
+or Teleport authentication mechanism. Restarting a socket bridge does not replace
+SSH authentication: reconnecting an expired/disconnected upstream session requires
+a valid approved unattended identity. Never bypass host verification or store a
+password in source, argv or container images.
+
+### Governed dimension filter presentation
+
+Dimension discovery preserves `{id, label}`: stable IDs drive queries and saved
+filters, while governed labels drive controls. Trusted serving resolves label
+evidence from the same tenant, metric and policy tuples as option identities.
+The categorical discovery endpoint `/api/dimensions/:dimension/search` reuses the
+existing bounded request/response contract. Customer discovery keeps bounded
+keyset search and independent selected-ID hydration; other dimensions reuse their
+existing bounded value lists without adding pagination. Restored selections can
+hydrate labels even when absent from the initial options. Missing or technical
+labels use the existing safe fallback. Business Line uses governed EN/AR names;
+actual customer and person names remain unchanged unless localized evidence exists.
+Branch, Region and other categorical controls inherit the shared behavior.
+
+Customer Historical reports present one bounded-scope guidance message per
+execution. The existing date/customer safety policy and result bounds are unchanged.
+
+## Governed detail serving
+
+[Mart drill-through](governed-drill-through.md) adds immutable partition-to-fact
+lineage under migration 035, exact publication guards and bounded detail reads.
+Event details require the summary's trusted release and source-as-of; changed
+state requires Refresh View. Finance details pin the originating immutable
+customer snapshot, with per-point lineage for historical trends. No source
+transport, source verification or export runs during drill-through.

@@ -58,6 +58,8 @@ export interface OperationalRunSummary {
 }
 export interface AnalyticsOperationalStatus {
   tenantId:string; freshnessTargetSeconds:number;
+  sourceAvailability?:AnalyticsSourceAvailability;
+  definitionVersion?:string|null;mappingVersion?:string|null;financeSnapshots?:string[];
   eventAggregates?:{from:string|null;throughMonth:string|null;dailyPartitions:number;monthlyPartitions:number;pendingPartitions:number;dailyRows:number;monthlyRows:number;latestRefresh:string|null};
   trustedServingRevision?:string|null;pendingCandidateRun?:string|null;freshnessAgeSeconds?:number|null;
   latestFailure?:{runId:string;kind:string;failedAt:string}|null;
@@ -68,3 +70,9 @@ export interface OperationalStatusProvider {
   /** Read-only projection of stored evidence. Never opens the source or reconstructs proof. */
   status(tenantId: string): Promise<AnalyticsOperationalStatus>;
 }
+
+/** Safe command result; source identities and partition details stay on the server. */
+export interface AnalyticsOperationResult {run:AnalyticsJobRun;canonicalRevisions:number;servingUpdated:boolean}
+
+/** Safe operational connectivity evidence; credentials and destinations never cross this boundary. */
+export interface AnalyticsSourceAvailability {relayAvailable:boolean;sourceAvailable:boolean;checkedAt:string|null;lastSuccessfulConnection:string|null}

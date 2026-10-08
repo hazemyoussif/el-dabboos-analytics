@@ -10,7 +10,7 @@ import type {WidgetExecution} from '@el-dabboos/application';
 test('nullable KPI, unavailable coverage and diagnostic failures render governed EN/AR copy',async()=>{
  const server=await createServer({root:fileURLToPath(new URL('../',import.meta.url)),server:{middlewareMode:true},optimizeDeps:{noDiscovery:true},appType:'custom'});
  try {
-  const {WidgetCard}=await server.ssrLoadModule('/src/Renderer.tsx');
+  const {WidgetCard,DashboardRenderer}=await server.ssrLoadModule('/src/Renderer.tsx');
   const widget:DashboardWidget={id:'nullable',type:'kpi',series:[{id:'value',metric:'average_invoice_value'}]};
   const result:AnalyticsResult={metric:'average_invoice_value',groupBy:null,rows:[{key:null,value:null}],metadata:{sourceId:'synthetic',executedAt:'2026-10-08T00:21:08.728Z',metricType:'currency',semantics:'ratio'}};
   const entry:WidgetExecution={status:'success',seriesResults:{value:{status:'success',result}},alignedRows:[{key:null,series:{value:{value:null}}}]};
@@ -24,6 +24,10 @@ test('nullable KPI, unavailable coverage and diagnostic failures render governed
    const failed:WidgetExecution={status:'error',alignedRows:[],seriesResults:{value:{status:'error',error:{code:'SERIES_EXECUTION_FAILED',message:'Unsafe SQL numeric output'}}}};
    assert.ok(!/Unsafe SQL|NaN|Infinity/.test(render(failed)));
    const limited=structuredClone(failed);if(limited.seriesResults.value!.status==='error')limited.seriesResults.value!.error={code:'RESULT_LIMIT_EXCEEDED',message:'internal bound'};assert.ok(render(limited).includes(locale==='en'?'Choose customers':'اختر عملاء'));
+   const dashboard={version:2,id:'bounded',title:{en:'Historical',ar:'تاريخي'},layout:{columns:12},filters:{},widgets:[widget,{...widget,id:'second'}]};
+   const boundedView=renderToStaticMarkup(createElement(DashboardRenderer,{execution:{dashboard,widgetResults:{nullable:limited,second:limited},metadata:{}},catalog:semanticCatalog,locale,profile:tenantProfiles['demo-iq']}));
+   assert.equal(boundedView.split(locale==='en'?'Choose customers':'اختر عملاء').length-1,1);assert.ok(!boundedView.includes('internal bound'));
+
    const {MetricDefinitionBody}=await server.ssrLoadModule('/src/metrics/MetricDefinition.tsx');
    const proof={...result.metadata,reconciliation:{status:'exact' as const,reference:'synthetic-history',definitionReference:'standing-definition'}};
    const definition=renderToStaticMarkup(createElement(MetricDefinitionBody,{metric:semanticCatalog.net_aged_receivable,locale,metadata:proof}));assert.ok(definition.includes(locale==='en'?'Exactly reconciled snapshot':'رصيد مطابق بدقة'));assert.ok(definition.includes('standing-definition'));

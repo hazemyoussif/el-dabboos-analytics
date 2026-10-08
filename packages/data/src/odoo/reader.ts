@@ -4,6 +4,7 @@ import { validDateRange } from '@el-dabboos/domain';
 import type { OdooSourceConfig } from './config.ts';
 import type { OdooSourceRow } from './rows.ts';
 import { odooCursor, odooRevision, parseOdooCursor, sourceTimestamp } from './cursor.ts';
+import {odooPartnerProjection} from './partner-projection.ts';
 import { odooTransactionSql } from './sql.ts';
 import type { OdooSnapshotLease } from './snapshot.ts';
 export interface OdooReadScope {
@@ -33,7 +34,8 @@ export class OdooPostgresSourceBatchReader implements SourceBatchReader<OdooSour
       await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
       await this.snapshot.importInto(client);
       await client.query("SELECT set_config('statement_timeout',$1,true),set_config('TimeZone','UTC',true)",[String(this.config.statementTimeoutMs)]);
-      const result = await client.query(odooTransactionSql(this.scope.object),[request.companyIds,this.scope.from,this.scope.to,cursor.writeDate,cursor.id,request.limit+1,this.scope.timeZone,this.scope.mode==='incremental',this.scope.sourceAsOf]);
+      const partnerFields=await odooPartnerProjection(this.pool,client);
+      const result = await client.query(odooTransactionSql(this.scope.object,partnerFields),[request.companyIds,this.scope.from,this.scope.to,cursor.writeDate,cursor.id,request.limit+1,this.scope.timeZone,this.scope.mode==='incremental',this.scope.sourceAsOf]);
       const rows = result.rows.slice(0,request.limit).map(row => ({ ...row,object: this.scope.object } as OdooSourceRow));
       if (rows.some(row => !request.companyIds.includes(row.company_id))) throw new Error('Source company isolation failure');
       await this.snapshot.assertAlive();

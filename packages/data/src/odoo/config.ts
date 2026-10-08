@@ -32,6 +32,6 @@ export function odooSourceConfig(environment: Readonly<Record<string,string|unde
   if (!['true','false'].includes(staging)) throw new Error('Invalid staging pilot declaration');
   if (staging==='true' && (scope.tenantId!=='el-dabboos-iq' || scope.sourceId!=='el-dabboos-odoo18-pg' || companyIds.join(',')!=='1' || environment.ODOO_SOURCE_DATABASE!=='accounting')) throw new Error('Unapproved staging pilot scope');
   return { ...scope,companyIds,credentialPolicy: staging==='true' ? 'staging_read_only' : 'least_privilege',batchSize: integer(environment,'ODOO_SOURCE_BATCH_SIZE',500,1000),statementTimeoutMs: integer(environment,'ODOO_SOURCE_STATEMENT_TIMEOUT_MS',15000,120000),snapshotMaxDurationMs: integer(environment,'ODOO_SOURCE_SNAPSHOT_MAX_DURATION_MS',120000,600000),
-    connection: { host,port: integer(environment,'ODOO_SOURCE_PORT',5432,65535),database: required(environment,'ODOO_SOURCE_DATABASE'),user: required(environment,'ODOO_SOURCE_USER'),password: required(environment,'ODOO_SOURCE_PASSWORD'),
+    connection: { options:'-c default_transaction_read_only=on',host,port: integer(environment,'ODOO_SOURCE_PORT',5432,65535),database: required(environment,'ODOO_SOURCE_DATABASE'),user: required(environment,'ODOO_SOURCE_USER'),password: required(environment,'ODOO_SOURCE_PASSWORD'),
       max: 1,connectionTimeoutMillis: integer(environment,'ODOO_SOURCE_CONNECT_TIMEOUT_MS',5000,30000),idleTimeoutMillis: 30000 } };
 }

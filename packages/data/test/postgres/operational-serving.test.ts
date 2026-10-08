@@ -1,7 +1,10 @@
+import { migratePostgres } from '../../src/postgres/migrations.ts';
+import { persistOperationalFact } from '../../src/operational/facts.ts';
+import { TrustedDrillThroughRepository } from '../../src/operational/drill-through.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import type { AnalyticsCursor,AnalyticsPartition,ProductionFact } from '@el-dabboos/domain';
+import type { AnalyticsCursor,AnalyticsPartition,ProductionFact,DimensionId } from '@el-dabboos/domain';
 import { requiredMeasures } from '@el-dabboos/domain';
 import { AnalyticsOperations } from '../../../application/src/analytics-operations.ts';
 import { database,enabled } from './support.ts';
@@ -33,8 +36,8 @@ function fixtureControls(facts:ProductionFact[],partitions:readonly AnalyticsPar
   return [{partition,measure,value:`${value/1000000n}.${String(value%1000000n).padStart(6,'0')}`,count:String(selected.length)}];
  }));
 }
-async function setup(object='fixture',ratio=false,customer=false) {
- const db=await database();const specification=mapping();if(customer){specification.measures=specification.measures.map(rule=>({...rule,dimensionMappings:{customer:'synthetic customer'}}));specification.capabilities=specification.capabilities.map(capability=>({...capability,dimensions:['customer','date','month','quarter','year']}));}if(ratio){specification.measures=specification.measures.slice(0,2).map((rule,index)=>({...rule,measureId:index===0?'order_revenue':'order_count',dimensionMappings:{salesperson:'synthetic owner'}}));specification.capabilities=['order_revenue','order_count','average_confirmed_order_value'].map(metric=>({metric:metric as typeof specification.capabilities[number]['metric'],dimensions:['salesperson','month']}));}await deploy(db.migrator,{...specification,measures:specification.measures.map(rule=>({...rule,sourceObject:object}))});
+async function setup(object='fixture',ratio=false,customer=false,dimensions?:DimensionId[],events=false) {
+ const db=await database();const specification=mapping();if(events){const measures=['order_revenue','order_count','invoiced_revenue','refund_value','net_invoiced_revenue','invoice_count','refund_count'] as const;specification.measures=measures.map(measureId=>({...specification.measures[0]!,measureId,dimensionMappings:{customer:'synthetic customer',salesperson:'synthetic salesperson',business_line:'synthetic business line'}}));specification.capabilities=measures.map(metric=>({metric,dimensions:['customer','salesperson','business_line','date','month','year']}));}if(dimensions){specification.measures=specification.measures.filter(rule=>rule.measureId==='revenue').map(rule=>({...rule,dimensionMappings:Object.fromEntries(dimensions.map(dimension=>[dimension,'synthetic governed identity']))}));specification.capabilities=specification.capabilities.filter(capability=>capability.metric==='revenue').map(capability=>({...capability,dimensions:[...dimensions,'date','month','quarter','year']}));}if(customer){specification.measures=specification.measures.map(rule=>({...rule,dimensionMappings:{customer:'synthetic customer'}}));specification.capabilities=specification.capabilities.map(capability=>({...capability,dimensions:['customer','date','month','quarter','year']}));}if(ratio){specification.measures=specification.measures.slice(0,2).map((rule,index)=>({...rule,measureId:index===0?'order_revenue':'order_count',dimensionMappings:{salesperson:'synthetic owner'}}));specification.capabilities=['order_revenue','order_count','average_confirmed_order_value'].map(metric=>({metric:metric as typeof specification.capabilities[number]['metric'],dimensions:['salesperson','month']}));}await deploy(db.migrator,{...specification,measures:specification.measures.map(rule=>({...rule,sourceObject:object}))},dimensions?fact('old-row',{businessDate:'2026-01-15',value:'0.000000',dimensions:{customer:'source:2045',salesperson:'source:17',business_line:'source:4',branch:'branch:1',region:'region:1'}}):undefined,events?specification.measures.map(rule=>{const row=fact(`calibration-${rule.measureId}`,{measureId:rule.measureId,businessDate:'2026-01-15',value:'0.000000',dimensions:{customer:'private:customer',salesperson:'private:rep',business_line:'private:line'}});if(rule.measureId.endsWith('count'))delete row.currency;return row;}):undefined);
  if(ratio){const {PostgresDerivedMetricCertification}=await import('../../src/postgres/derived-certification.ts');await new PostgresDerivedMetricCertification(db.migrator).record({tenantId:'a',datasetId:'release',mappingVersion:'1',reference:'SYNTHETIC-OPERATIONAL-RATIO',metric:'average_confirmed_order_value',grouping:null,from:'2026-01-01',to:'2026-01-31',caseIds:['fixture-certification-order_revenue','fixture-certification-order_count'],approvalReference:'SYNTHETIC-APPROVER',approvedAt:clock().toISOString(),businessSemantics:'Synthetic exact full-period ratio',technicalReference:'synthetic-controls'});}
  await bootstrapOperationalServing(db.migrator,'a');
  const baseline=await tenantTransaction(db.ingestor,'a',client=>readBaseline(client,'a'),true),source=new FixtureSnapshot();source.definitionVersion=baseline.definitionVersion;
@@ -364,5 +367,147 @@ test('runtime cannot read unpublished monthly partitions or write serving tables
   await fixture.db.migrator.query(`CREATE TRIGGER corrupt_daily BEFORE INSERT ON mart.analytics_aggregate_bases FOR EACH ROW EXECUTE FUNCTION mart.corrupt_daily()`);
   fixture.source.rows=[januaryFact()];await assert.rejects(fixture.run(),/Daily aggregate differs/);assert.equal(await januaryValue(fixture.repository),0);
   await fixture.db.migrator.query('DROP TRIGGER corrupt_daily ON mart.analytics_aggregate_bases');assert.equal((await fixture.run()).status,'passed');
+ }finally{await fixture.db.close();}
+});
+
+
+test('shared trusted dimension discovery retains governed labels, scoped identities and independent selected hydration',{skip:!enabled},async()=>{
+ const dimensions:DimensionId[]=['customer','salesperson','business_line','branch','region'];
+ const f=await setup('fixture',false,false,dimensions);try {
+  f.source.rows=[januaryFact({dimensions:{customer:'source:2045',salesperson:'source:17',business_line:'source:4',branch:'branch:1',region:'region:1'},displayLabels:{customer:'شركة الاختبار',salesperson:'Ahmed Ali',businessLine:'General'}}),januaryFact({sourceRecordId:'second',dimensions:{customer:'source:9999',salesperson:'source:18',business_line:'source:5',branch:'branch:2',region:'region:2'},displayLabels:{customer:'Selected customer',salesperson:'Mohamed Hassan',businessLine:'No Sugar'}})];
+  await f.run();
+  for(const locale of ['en','ar'] as const){
+   const context={tenantId:'a',locale};
+   for(const [dimension,id,label] of [['customer','source:2045','شركة الاختبار'],['salesperson','source:17','Ahmed Ali'],['business_line','source:4','General']] as const){
+    assert.ok((await f.repository.listDimensionOptions(dimension,context)).some(option=>option.id===id&&option.label===label));
+   }
+   const customer=await f.repository.searchDimensionOptions('customer',context,{limit:1,selectedIds:['source:9999']});
+   assert.equal(customer.values.length,1);assert.equal(customer.selected[0]?.label,'Selected customer');assert.ok(customer.nextCursor);
+   const searched=await f.repository.searchDimensionOptions('customer',context,{search:'شركة',limit:1});assert.equal(searched.values[0]?.id,'source:2045');
+   const salesperson=await f.repository.searchDimensionOptions('salesperson',context,{search:'Ahmed',limit:1,selectedIds:['source:18']});assert.equal(salesperson.values[0]?.id,'source:17');assert.equal(salesperson.selected[0]?.label,'Mohamed Hassan');
+   const business=await f.repository.searchDimensionOptions('business_line',context,{limit:1,selectedIds:['source:5']});assert.equal(business.selected[0]?.label,'No Sugar');
+   const scoped=await f.repository.listDimensionOptions('salesperson',{...context,enforcedFilters:[{dimension:'branch',values:['branch:1']}]});assert.deepEqual(scoped,[{id:'source:17',label:'Ahmed Ali'}]);
+  }
+  const {trustedDimensionOptions}=await import('../../src/operational/dimension-options.ts');
+  await assert.rejects(tenantTransaction(f.db.runtime,'a',client=>trustedDimensionOptions(client,{dimension:'salesperson',context:{tenantId:'a',locale:'en'},metric:'revenue',measures:['revenue'],maxGroups:1}),true),/discovery/i);
+  assert.deepEqual(await tenantTransaction(f.db.runtime,'b',client=>trustedDimensionOptions(client,{dimension:'salesperson',context:{tenantId:'b',locale:'en'},metric:'revenue',measures:['revenue'],maxGroups:100}),true),[]);
+  for(const dimension of ['branch','region'] as const)assert.equal((await f.repository.listDimensionOptions(dimension,{tenantId:'a',locale:'en'})).length,2);
+ }finally{await f.db.close();}
+});
+
+
+test('mart-only event drill reconciles each family, dates, clicked scope, encrypted continuation and RLS',{skip:!enabled},async()=>{
+ const fixture=await setup('fixture',false,false,undefined,true);
+ try {
+  const context={tenantId:'a',locale:'en' as const};
+  const dimensions={customer:'private:customer',salesperson:'private:rep',business_line:'private:line'};
+  const displayLabels={customer:'Customer Alpha',salesperson:'Ahmed',businessLine:'General'};
+  const measures=['order_revenue','order_count','invoiced_revenue','refund_value','net_invoiced_revenue','invoice_count','refund_count'] as const;
+  fixture.source.rows=measures.flatMap(measureId=>Array.from({length:5},(_,index)=>januaryFact({sourceRecordId:`record-${measureId}-${index}`,measureId,businessDate:`2026-09-${String(index+1).padStart(2,'0')}`,value:measureId.endsWith('count')?'1.000000':'10.000000',dimensions,displayLabels}))).map(row=>{if(row.measureId.endsWith('count'))delete row.currency;return row;});
+  for(let month=2;month<9;month++)fixture.source.rows.push(januaryFact({sourceRecordId:`empty-month-${month}`,measureId:'net_invoiced_revenue',businessDate:`2026-${String(month).padStart(2,'0')}-15`,value:'0.000000',dimensions,displayLabels}));
+  // Signed refund impact belongs to October; September invoice impact stays positive.
+  fixture.source.rows.push(januaryFact({sourceRecordId:'october-credit',measureId:'net_invoiced_revenue',businessDate:'2026-10-02',value:'-7.000000',dimensions,displayLabels}));
+  await fixture.run();
+  const drill=new TrustedDrillThroughRepository(fixture.db.runtime,scope=>fixture.repository.getPublishedCapabilities(scope));
+  for(const metric of measures){
+   const query={metric,dateRange:{from:'2026-09-01',to:'2026-09-30'}};
+   const summary=await fixture.repository.execute(query,context),release=summary.metadata.release!.datasetId;
+   const started=performance.now();
+   const first=await drill.drill({query,sourceAsOf:summary.metadata.sourceAsOf!,release,limit:2,sort:{field:'amount',direction:'asc'}},context);
+   const firstPageMs=performance.now()-started;
+   assert.equal(Number(first.value),summary.rows[0]!.value);assert.equal(first.rows.length,2);assert.equal(first.rows[0]!.customer,'Customer Alpha');assert.ok(first.nextCursor);
+   const second=await drill.drill({query,sourceAsOf:summary.metadata.sourceAsOf!,release,limit:2,sort:{field:'amount',direction:'asc'},cursor:first.nextCursor},context);
+   const third=await drill.drill({query,sourceAsOf:summary.metadata.sourceAsOf!,release,limit:2,sort:{field:'amount',direction:'asc'},cursor:second.nextCursor!},context);
+   assert.equal(third.hasMore,false);assert.equal([...first.rows,...second.rows,...third.rows].length,5);
+   assert.equal([...first.rows,...second.rows,...third.rows].reduce((sum,row)=>sum+Number(row.amount),0),summary.rows[0]!.value);
+   const scoped=await drill.drill({query,sourceAsOf:summary.metadata.sourceAsOf!,release,clicked:{dimension:'business_line',values:['private:line']}},{...context,enforcedFilters:[{dimension:'salesperson',values:['private:rep']}]});assert.equal(scoped.value,first.value);
+   const hidden=await drill.drill({query,sourceAsOf:summary.metadata.sourceAsOf!,release},{...context,enforcedFilters:[{dimension:'customer',values:['other']}]});assert.equal(hidden.rows.length,0);
+   await assert.rejects(drill.drill({query,sourceAsOf:summary.metadata.sourceAsOf!,release,cursor:first.nextCursor},{...context,enforcedFilters:[{dimension:'customer',values:['other']}]}),/DRILL_CONTEXT_INVALID/);
+   await assert.rejects(drill.drill({query,sourceAsOf:summary.metadata.sourceAsOf!,release},{tenantId:'b',locale:'en'}));
+   process.stdout.write(`drill-first-page ${JSON.stringify({metric,rows:5,ms:firstPageMs})}\n`);
+  }
+  const query={metric:'net_invoiced_revenue' as const,dateRange:{from:'2026-09-02',to:'2026-09-03'}};
+  const summary=await fixture.repository.execute(query,context),release=summary.metadata.release!.datasetId;
+  assert.equal((await drill.drill({query,sourceAsOf:summary.metadata.sourceAsOf!,release},context)).value,'20.000000');
+  const october={...query,dateRange:{from:'2026-10-01',to:'2026-10-07'}};
+  assert.equal((await drill.drill({query:october,sourceAsOf:summary.metadata.sourceAsOf!,release},context)).value,'-7.000000');
+  const searched=await drill.drill({query,sourceAsOf:summary.metadata.sourceAsOf!,release,search:'no matching customer',sort:{field:'customer',direction:'asc'}},context);
+  assert.equal(searched.rows.length,0);assert.equal(searched.hasMore,false);assert.equal(searched.value,'20.000000');
+  const annual={...query,dateRange:{from:'2026-01-01',to:'2026-12-31'},filters:[{dimension:'salesperson' as const,values:['private:rep']}]};
+  assert.equal((await drill.drill({query:annual,sourceAsOf:summary.metadata.sourceAsOf!,release,search:'Alpha'},context)).value,'43.000000');
+  const raw=await tenantTransaction(fixture.db.runtime,'b',client=>client.query('SELECT * FROM mart.analytics_fact_revisions'),true);assert.equal(raw.rowCount,0);
+  const first=await drill.drill({query,sourceAsOf:summary.metadata.sourceAsOf!,release,limit:1},context);
+  fixture.source.cutoff='2026-10-07T12:05:00.000Z';
+  assert.equal((await fixture.run()).status,'unchanged');
+  await assert.rejects(drill.drill({query,sourceAsOf:summary.metadata.sourceAsOf!,release},context),/DRILL_RELEASE_CHANGED/);
+  const refreshed=await fixture.repository.execute(query,context);
+  assert.equal((await drill.drill({query,sourceAsOf:refreshed.metadata.sourceAsOf!,release},context)).value,first.value);
+  fixture.source.cutoff='2026-10-07T12:10:00.000Z';fixture.source.rows.push(januaryFact({sourceRecordId:'new',measureId:'net_invoiced_revenue',businessDate:'2026-09-01',dimensions,displayLabels}));assert.equal((await fixture.run()).status,'passed');
+  await assert.rejects(drill.drill({query,sourceAsOf:summary.metadata.sourceAsOf!,release,cursor:first.nextCursor!},context),/DRILL_RELEASE_CHANGED/);
+ }finally{await fixture.db.close();}
+});
+
+test('ratio drill exposes exact numerator and denominator rather than averaged row ratios',{skip:!enabled},async()=>{
+ const fixture=await setup('fixture',true);
+ try {
+  fixture.source.rows=[januaryFact({measureId:'order_revenue',value:'100.000000',dimensions:{salesperson:'rep'}}),januaryFact({sourceRecordId:'count',measureId:'order_count',value:'2.000000',dimensions:{salesperson:'rep'}})];delete fixture.source.rows[1]!.currency;
+  await fixture.run();const context={tenantId:'a',locale:'en' as const};
+  const query={metric:'average_confirmed_order_value' as const,dateRange:{from:'2026-01-01',to:'2026-01-31'}};
+  const summary=await fixture.repository.execute(query,context);
+  const drill=new TrustedDrillThroughRepository(fixture.db.runtime,scope=>fixture.repository.getPublishedCapabilities(scope));
+  const page=await drill.drill({query,sourceAsOf:summary.metadata.sourceAsOf!,release:summary.metadata.release!.datasetId},context);
+  assert.deepEqual(page.bases,{order_revenue:'100.000000',order_count:'2.000000'});assert.equal(Number(page.value),summary.rows[0]!.value);
+ }finally{await fixture.db.close();}
+});
+
+
+test('representative synthetic invoice detail uses bounded first pages for September, annual salesperson and customer scope',{skip:!enabled},async()=>{
+ const fixture=await setup('fixture',false,false,undefined,true);
+ try {
+  const dimensions={customer:'private:customer',salesperson:'private:rep',business_line:'private:line'},displayLabels={customer:'Customer Alpha',salesperson:'Ahmed',businessLine:'General'};
+  fixture.source.rows=Array.from({length:2000},(_,index)=>januaryFact({sourceRecordId:`large-${index}`,measureId:'net_invoiced_revenue',businessDate:`2026-09-${String(index%28+1).padStart(2,'0')}`,value:'10.000000',dimensions,displayLabels}));
+  for(let month=2;month<=10;month++)if(month!==9)fixture.source.rows.push(januaryFact({sourceRecordId:`empty-${month}`,measureId:'net_invoiced_revenue',businessDate:`2026-${String(month).padStart(2,'0')}-15`,value:'0.000000',dimensions,displayLabels}));
+  assert.equal((await fixture.run()).status,'passed');
+  const context={tenantId:'a',locale:'en' as const},drill=new TrustedDrillThroughRepository(fixture.db.runtime,scope=>fixture.repository.getPublishedCapabilities(scope));
+  for(const [name,query] of [
+   ['September invoice',{metric:'net_invoiced_revenue' as const,dateRange:{from:'2026-09-01',to:'2026-09-30'}}],
+   ['Annual salesperson',{metric:'net_invoiced_revenue' as const,dateRange:{from:'2026-01-01',to:'2026-12-31'},filters:[{dimension:'salesperson' as const,values:['private:rep']}]}],
+   ['Customer filtered',{metric:'net_invoiced_revenue' as const,dateRange:{from:'2026-09-01',to:'2026-09-30'},filters:[{dimension:'customer' as const,values:['private:customer']}]}]
+  ] satisfies Array<[string,import('@el-dabboos/domain').AnalyticsQuery]>){
+   const summary=await fixture.repository.execute(query,context),started=performance.now();
+   const page=await drill.drill({query,sourceAsOf:summary.metadata.sourceAsOf!,release:summary.metadata.release!.datasetId,limit:50},context);
+   const milliseconds=performance.now()-started;assert.equal(page.rows.length,50);assert.equal(page.hasMore,true);assert.equal(Number(page.value),summary.rows[0]!.value);
+   process.stdout.write(`drill-benchmark ${JSON.stringify({name,records:2000,firstPageMs:milliseconds})}\n`);
+  }
+ }finally{await fixture.db.close();}
+});
+
+
+test('drill lineage migration backfills exact populated partitions and refuses incompatible current heads',{skip:!enabled},async()=>{
+ const fixture=await setup('fixture',true);
+ try {
+  const dimensions={salesperson:'rep'};
+  fixture.source.rows=[januaryFact({measureId:'order_revenue',dimensions}),januaryFact({sourceRecordId:'february',measureId:'order_revenue',businessDate:'2026-02-15',value:'50.000000',dimensions})];
+  assert.equal((await fixture.run()).status,'passed');
+  const context={tenantId:'a',locale:'en' as const},january={metric:'order_revenue' as const,dateRange:{from:'2026-01-01',to:'2026-01-31'}},february={...january,dateRange:{from:'2026-02-01',to:'2026-02-28'}};
+  const summary=await fixture.repository.execute(january,context),release=summary.metadata.release!.datasetId;
+  await tenantTransaction(fixture.db.ingestor,'a',async client=>{const baseline=await readBaseline(client,'a');await persistOperationalFact(client,baseline,januaryFact({measureId:'order_revenue',value:'200.000000',sourceVersion:'candidate-only',sourceRevision:'3',dimensions}));});
+  // Recreate a populated pre-035 fixture, using only its isolated disposable database.
+  await fixture.db.admin.query(`DROP TRIGGER drill_membership_lock ON mart.analytics_serving_members;
+   DROP TABLE mart.analytics_drill_partitions CASCADE;DROP TABLE mart.analytics_partition_facts CASCADE;
+   DROP FUNCTION IF EXISTS mart.freeze_drill_membership();DROP FUNCTION IF EXISTS mart.drill_partition_exact(text,text);
+   ALTER TABLE mart.analytics_fact_revisions DROP COLUMN measure_id, DROP COLUMN business_date;
+   DROP POLICY IF EXISTS trusted_only ON mart.analytics_fact_revisions;
+   REVOKE SELECT ON mart.analytics_fact_revisions FROM dabboos_runtime;
+   DELETE FROM mart_admin.mart_schema_migrations WHERE version>=35`);
+  assert.deepEqual(await migratePostgres(fixture.db.migrator),[35,36,37]);
+  const drill=new TrustedDrillThroughRepository(fixture.db.runtime,scope=>fixture.repository.getPublishedCapabilities(scope));
+  await assert.rejects(drill.drill({query:january,release,sourceAsOf:summary.metadata.sourceAsOf!},context),/DRILL_NOT_READY/);
+  const exact=await drill.drill({query:february,release,sourceAsOf:summary.metadata.sourceAsOf!},context);assert.equal(exact.value,'50.000000');
+  const projections=await tenantTransaction(fixture.db.runtime,'a',client=>client.query("SELECT count(*)::int mismatches FROM mart.analytics_fact_revisions WHERE measure_id IS DISTINCT FROM payload->>'measureId' OR business_date IS DISTINCT FROM payload->>'businessDate'"),true);assert.equal(projections.rows[0].mismatches,0);
+  assert.equal((await fixture.repository.execute(january,context)).rows[0]!.value,100);
+  assert.equal((await tenantTransaction(fixture.db.runtime,'b',client=>client.query('SELECT * FROM mart.analytics_fact_revisions'),true)).rowCount,0);
+  const force=(await fixture.db.admin.query("SELECT count(*)::int count FROM pg_class JOIN pg_namespace ON pg_namespace.oid=relnamespace WHERE nspname='mart' AND relkind='r' AND relname<>'measure_definitions' AND (NOT relrowsecurity OR NOT relforcerowsecurity)")).rows[0].count;assert.equal(force,0);
+  await assert.rejects(tenantTransaction(fixture.db.ingestor,'a',client=>client.query(`INSERT INTO mart.analytics_partition_facts SELECT tenant_id,partition_id,'forbidden',revision_id FROM mart.analytics_partition_facts LIMIT 1`)),/membership is immutable/);
  }finally{await fixture.db.close();}
 });

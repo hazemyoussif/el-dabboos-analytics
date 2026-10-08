@@ -1,6 +1,9 @@
+import { useAnalyticsOperations } from './reports/useAnalyticsOperations.ts';
+import { GlobalMetricCatalog } from './metrics/GlobalMetricCatalog.tsx';
+import { ReportOperationalSurface,OperationalStatusPage } from './reports/AnalyticsOperations.tsx';
 import { HistoricalCoverage } from './reports/HistoricalCoverage.tsx';
-import {CustomerDiscoveryContext} from './CustomerFilterControl.tsx';
-import {searchCustomers} from './api/client.ts';
+import {DimensionDiscoveryContext} from './DimensionDiscoveryContext.ts';
+import {discoverDimension} from './api/client.ts';
 import {workspaceDestinationTitle,workspaceDisplayTitle} from './workspace-bootstrap.ts';
 import { MetricCurrencyContext, MetricPublicationContext } from './metrics/MetricDefinition.tsx';
 import { useManagementReports } from './reports/useManagementReports.ts';
@@ -42,6 +45,7 @@ export default function App({ authenticatedUser,onLogout,authenticationError }: 
   const builder = useDashboardBuilder(workspace);
   const planner = useDashboardPlanner(workspace, builder.reset);
   const viewFilters = useDashboardViewFilters(workspace);
+  const operations = useAnalyticsOperations(workspace,viewFilters.overrides);
   const flow = useDashboardProductFlow(workspace, builder, planner, viewFilters.clearForEdit);
   const { locale, userId, demoUsers, permissions, profiles, profile, catalog, published, metricRegistry, templates,
     dashboard, document: dashboardDocument, savedDashboards, execution, loading, error, filterOptions, setError } = workspace;
@@ -67,9 +71,9 @@ export default function App({ authenticatedUser,onLogout,authenticationError }: 
     return null;
   }, [execution]);
   const period = execution?.metadata.effectiveFilters?.dateRange;
-  const loadCustomers=useCallback((query:import('@el-dabboos/domain').DimensionDiscoveryRequest)=>searchCustomers({userId,tenantId:profile!.id,locale},query),[userId,profile?.id,locale]);
+  const loadDimensions=useCallback((dimension:import('@el-dabboos/domain').DimensionId,query:import('@el-dabboos/domain').DimensionDiscoveryRequest)=>discoverDimension({userId,tenantId:profile!.id,locale},dimension,query),[userId,profile?.id,locale]);
   const periodSelection = builder.history || showAiEditor(flow.panel) ? activeDashboard?.filters : viewFilters.selection;
-  return <CustomerDiscoveryContext value={loadCustomers}><MetricPublicationContext value={published}><MetricCurrencyContext value={profile?.reportingCurrency}><div className="app-shell">
+  return <DimensionDiscoveryContext value={loadDimensions}><MetricPublicationContext value={published}><MetricCurrencyContext value={profile?.reportingCurrency}><div className="app-shell">
     <WorkspaceNavigation {...workspaceNavigationPermissions(workspace)} locale={locale} onNew={()=>{management.close();flow.launchNew();}} onTemplates={() => {management.close();flow.enterCreation('choose-template');}} dataMode={workspaceDataMode(published)} drawerOpen={drawerOpen} onDrawerClose={() => setDrawerOpen(false)}>
       <WorkspaceAdministrationNavigation workspace={workspace} page={adminPage} onPage={setAdminPage} closeDrawer={() => setDrawerOpen(false)} />
       {<ManagementNavigation published={published} allowed={permissions.includes('analytics:query')} templates={templates} locale={locale} activeId={management.page??workspace.activeTemplateId} onSelect={management.select}/>}
@@ -82,21 +86,22 @@ export default function App({ authenticatedUser,onLogout,authenticationError }: 
           <div className="topbar-control"><span>{t.language}</span><div className="language-toggle" role="group" aria-label={t.language}><button className={locale === 'en' ? 'selected' : ''} onClick={() => workspace.selectLocale('en' as Locale)}>EN</button><button className={locale === 'ar' ? 'selected' : ''} onClick={() => workspace.selectLocale('ar' as Locale)}>عربي</button></div></div></div></header>
       <div className="page-content">
         <WorkspaceContent page={adminPage} workspace={workspace}><>
-        <ManagementArea page={management.page} locale={locale} profile={profile} published={published} metadata={metadata} review={management.review} reviewLoading={management.loading} reviewError={management.error} onRetry={()=>void management.reload()}>
+        <ManagementArea statusView={<OperationalStatusPage operations={operations} locale={locale} profile={profile}/>} page={management.page} locale={locale} profile={profile} published={published} metadata={metadata} review={management.review} reviewLoading={management.loading} reviewError={management.error} onRetry={()=>void management.reload()}>
         <DashboardCreationPanel panel={flow.panel} locale={locale} profile={profile} templates={templates} prompt={planner.prompt} onPrompt={planner.setPrompt}
           activity={planner} loading={loading} canGenerate={permissions.includes('ai:generate')} onChooseAi={() => flow.enterCreation('create-ai')}
           onBlank={flow.blank} onChooseTemplate={() => flow.enterCreation('choose-template')} onTemplate={id => profile && flow.openTemplate(id, profile, locale)}
           onGenerate={() => void flow.createAi()} onClose={flow.close} />
-        {!isCreating && <details className="catalog-panel"><summary>{t.metricCatalog} · {metricRegistry.filter(item => item.availability === 'available').length} {t.available} · {metricRegistry.filter(item => item.availability === 'planned').length} {t.planned}</summary><div className="catalog-list">{metricRegistry.map(item => <div key={item.id} className="catalog-metric"><span>{item.labels[locale]}</span><span className={item.availability === 'available' ? 'metric-available' : 'metric-planned'}>{item.availability === 'available' ? t.available : t.planned}</span></div>)}</div></details>}
+        {!isCreating && <GlobalMetricCatalog registry={metricRegistry} catalog={catalog} locale={locale} />}
         <AuthenticationNotice message={authenticationError} />
         {displayError && <div className="global-error" role="alert"><AlertCircle aria-hidden="true" />{displayError}<button onClick={() => setError(null)} aria-label={locale === 'ar' ? 'إغلاق' : 'Dismiss'}><X aria-hidden="true" /></button></div>}
-        {!isCreating && <DashboardSection header={<div className="dashboard-title-row"><div><div className="eyebrow eyebrow-light">{breadcrumb}</div><h2>{activeTitle}</h2><ReportStatus published={published} locale={locale} dashboard={activeDashboard}/>{flow.status && <span className={`save-status ${flow.status === 'modified' || flow.status === 'unsaved' ? 'dirty' : ''}`}>{statusText}</span>}</div>
+        {!isCreating && <DashboardSection header={<div className="dashboard-title-row"><div><div className="eyebrow eyebrow-light">{breadcrumb}</div><h2>{activeTitle}</h2><ReportStatus published={published} locale={locale} dashboard={activeDashboard}/><ReportOperationalSurface kind="trust" operations={operations} locale={locale} profile={profile} metadata={metadata}/> {flow.status && <span className={`save-status ${flow.status === 'modified' || flow.status === 'unsaved' ? 'dirty' : ''}`}>{statusText}</span>}</div>
           <DashboardActions locale={locale} status={flow.status} actions={flow.actions} editing={!!builderHistory} loading={loading || builder.busy || viewFilters.busy}
             canCreate={permissions.includes('dashboard:create')} canEdit={permissions.includes('dashboard:edit')}
             onNew={flow.launchNew} onUseTemplate={flow.useTemplate} onEdit={flow.editManual} onEditAi={flow.editAi} onView={flow.view}
             onRename={activeDashboard ? flow.rename : undefined} onSave={() => void flow.save()} onSaveAs={() => void flow.save(true)} onDiscard={flow.discard} /></div>}
           aiEditor={showAiEditor(flow.panel) && dashboard && profile && <DashboardAiEditor locale={locale} profile={profile} activity={planner} instruction={planner.instruction} onInstruction={planner.setInstruction} loading={loading} onApply={() => void flow.applyAiEdit()} onClose={flow.close} />}
           metadata={<>
+          <ReportOperationalSurface kind="actions" operations={operations} locale={locale} profile={profile} metadata={metadata} dashboard={activeDashboard} editing={!!builderHistory}/>
           {activeDashboard && profile && <div className="meta-strip"><div><span>{t.period}</span><strong>{(loading || builder.busy || viewFilters.busy) ? t.loading : !execution ? '—' : <>{periodSelection?.datePreset ? `${periodLabels[locale][periodSelection.datePreset]} · ` : ''}{period ? `${formatDate(period.from, locale, profile)} — ${formatDate(period.to, locale, profile)}` : periodCopy[locale].all}</>}</strong></div><div><span>{t.source}</span><strong>{metadata?.sourceId ?? '—'}</strong></div><div><span>{t.dataThrough}</span><strong>{metadata?.dataThrough ? formatDate(metadata.dataThrough, locale, profile) : '—'}</strong></div>{metadata?.sourceAsOf && <div><span>{t.sourceUpdated}</span><strong>{formatTimestamp(metadata.sourceAsOf, locale, profile)}</strong></div>}</div>}
           {!builderHistory && !showAiEditor(flow.panel) && activeDashboard && profile && !loading && <DashboardViewFilters dashboard={activeDashboard} selection={viewFilters.selection} effectiveRange={period} catalog={catalog} profile={profile} locale={locale} options={filterOptions} active={viewFilters.active} busy={viewFilters.busy} onChange={viewFilters.change} onReset={viewFilters.reset} />}
           {profile && <HistoricalCoverage published={published} profile={profile} locale={locale} />}
@@ -104,7 +109,7 @@ export default function App({ authenticatedUser,onLogout,authenticationError }: 
           </>} canvas={<>
           {(loading || viewFilters.busy && !builderHistory) && <DashboardSkeleton label={t.loading} />}
           {!loading && builderHistory && profile && <Suspense fallback={<DashboardSkeleton label={t.loading} />}><BuilderWorkspace history={builderHistory} execution={execution} catalog={catalog} published={published} registry={metricRegistry} profile={profile} locale={locale} filterOptions={filterOptions} busy={builder.busy || viewFilters.busy} onCommand={builder.command} onUndo={builder.undo} onRedo={builder.redo} /></Suspense>}
-          {!loading && !viewFilters.busy && !builderHistory && execution && profile && <DashboardRenderer execution={execution} dashboardOverride={dashboard ?? undefined} catalog={catalog} locale={locale} profile={profile} />}
+          {!loading && !viewFilters.busy && !builderHistory && execution && profile && <DashboardRenderer key={`${userId}-${profile.id}-${locale}-${execution.metadata.executedAt}`} session={{userId,tenantId:profile.id,locale}} execution={execution} dashboardOverride={dashboard ?? undefined} catalog={catalog} locale={locale} profile={profile} />}
           {!loading && !builderHistory && !execution && !error && <EmptyState action={<button onClick={flow.launchNew}>{t.newDashboard}</button>}>{t.noDashboard}</EmptyState>}
         </>} />}
 
@@ -114,5 +119,5 @@ export default function App({ authenticatedUser,onLogout,authenticationError }: 
         <footer className="footer">© {new Date().getFullYear()} El Dabboos · {locale === 'ar' ? 'منصة تحليلات تجريبية' : 'Analytics prototype'}</footer>
       </div>
     </main>
-  </div><div id="app-overlays" /></MetricCurrencyContext></MetricPublicationContext></CustomerDiscoveryContext>;
+  </div><div id="app-overlays" /></MetricCurrencyContext></MetricPublicationContext></DimensionDiscoveryContext>;
 }

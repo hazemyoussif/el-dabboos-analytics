@@ -1,7 +1,7 @@
 import type { PoolClient } from 'pg';
 import type { AnalyticsQuery,Locale } from '@el-dabboos/domain';
 import type { QuerySqlScope } from './query-slots.ts';
-import {DimensionDiscoveryLimitError} from '@el-dabboos/domain';
+import {DimensionDiscoveryLimitError,categoricalDimensions} from '@el-dabboos/domain';
 import { bind,dimensionSql } from './sql.ts';
 /** Labels are evidence, never identity. Return only unambiguous labels for the authorized result keys. */
 export async function queryDimensionLabels(client:PoolClient,query:AnalyticsQuery,scope:QuerySqlScope,keys:(string|null)[],locale:Locale):Promise<Record<string,string>> {
@@ -34,7 +34,7 @@ export function sourceDisplayLabel(raw:string,locale:Locale):string {
 }
 
 export function dimensionLabelField(dimension:AnalyticsQuery['groupBy']) {
- return dimension==='business_line'?'businessLine':dimension==='salesperson'?'salesperson':dimension==='customer'?'customer':null;
+ return dimension==='business_line'?'businessLine':dimension&&categoricalDimensions.includes(dimension)?dimension:null;
 }
 
 /** Discover every authorized event identity and its latest nonempty label in one scan. */

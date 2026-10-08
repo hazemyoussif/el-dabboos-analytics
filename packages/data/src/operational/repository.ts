@@ -1,3 +1,4 @@
+import { trustedDimensionOptions } from './dimension-options.ts';
 import type { Pool } from 'pg';
 import { validateQuery,publishedQueryIssues,semanticCatalog,categoricalDimensions,requiredMeasures,timeDimensions } from '@el-dabboos/domain';
 import type { AnalyticsContext,AnalyticsQuery,AnalyticsRepository,AnalyticsResult,DimensionId,DimensionValueRepository,PublishedAnalyticsCapabilities } from '@el-dabboos/domain';
@@ -10,7 +11,7 @@ import { servingLabels } from './serving-labels.ts';
 import {FinanceSnapshotRepository,financeMetric} from './finance-repository.ts';
 import {discoverCustomers} from './customer-discovery.ts';
 import {dailyEventCapabilities} from './daily-capabilities.ts';
-import { servingRows,operationalServingInput,servingFilters } from './serving-query.ts';
+import { servingRows } from './serving-query.ts';
 /** Reads only a stored trusted manifest and approved capability projection. No source or proof port. */
 export class TrustedAnalyticsRepository implements AnalyticsRepository,DimensionValueRepository {
  private readonly fallback:HistoricalAnalyticsRepository;
@@ -45,7 +46,7 @@ export class TrustedAnalyticsRepository implements AnalyticsRepository,Dimension
  }
  async listDimensionValues(dimension:DimensionId,context:AnalyticsContext){return (await this.listDimensionOptions(dimension,context)).map(option=>option.id);}
  async searchDimensionOptions(dimension:DimensionId,context:AnalyticsContext,request:import('@el-dabboos/domain').DimensionDiscoveryRequest){
-  if(dimension!=='customer')throw new Error('Unsupported bounded discovery dimension');
+  if(dimension!=='customer')return boundedDimensionPage(await this.listDimensionOptions(dimension,context),request);
   return discoverCustomers(this.pool,context,request,await this.getPublishedCapabilities(context),this.options.statementTimeoutMs??15000);
  }
  async listDimensionOptions(dimension:DimensionId,context:AnalyticsContext) {
@@ -54,10 +55,7 @@ export class TrustedAnalyticsRepository implements AnalyticsRepository,Dimension
   const eligible=stored.capabilities.releases.flatMap(release=>release.capabilities).filter(capability=>capability.dimensions.includes(dimension)&&(context.enforcedFilters??[]).every(filter=>capability.dimensions.includes(filter.dimension)));
   if(!eligible.length)throw new Error('Uncertified discovery/policy dimension');
   return tenantTransaction(this.pool,context.tenantId,async client=>{
-   const params:unknown[]=[context.tenantId,[...new Set(eligible.flatMap(capability=>requiredMeasures(capability.metric)))]];
-   const filters=servingFilters({metric:eligible[0]!.metric},context,params);params.push(dimension);
-   const result=await client.query(`SELECT DISTINCT base.dimensions->>$${params.length} id FROM ${operationalServingInput} WHERE trusted.tenant_id=$1 AND base.measure_id=ANY($2::text[]) AND ${filters} AND base.dimensions->>$${params.length} IS NOT NULL ORDER BY id LIMIT ${this.maxGroups+1}`,params);
-   if(result.rows.length>this.maxGroups)throw new Error('Dimension discovery bound exceeded');return result.rows.map(row=>({id:String(row.id)}));
+   return trustedDimensionOptions(client,{dimension,context,metric:eligible[0]!.metric,measures:[...new Set(eligible.flatMap(capability=>requiredMeasures(capability.metric)))],maxGroups:this.maxGroups});
   },true,this.options.statementTimeoutMs??15000);
  }
  private stored(tenantId:string) {
@@ -99,4 +97,11 @@ function metricPresentation(query:AnalyticsQuery):Pick<AnalyticsResult['metadata
  const metric=semanticCatalog[query.metric];
  if(query.analysis?.percentageContribution)return {metricType:'percentage',semantics:metric.semantics.kind,unit:'%'};
  return {metricType:metric.type,semantics:metric.semantics.kind,...(metric.presentation.unit?{unit:metric.presentation.unit}:{})};
+}
+
+/** Low-cardinality governed lists reuse their existing bound, not a second pagination system. */
+function boundedDimensionPage(options:Array<{id:string;label?:string}>,request:import('@el-dabboos/domain').DimensionDiscoveryRequest):import('@el-dabboos/domain').DimensionDiscoveryPage {
+ const limit=request.limit??50,search=request.search?.toLocaleLowerCase()??'',selected=request.selectedIds??[];
+ if(request.cursor||!Number.isInteger(limit)||limit<1||limit>100||search.length>100||selected.length>1000)throw new Error('Invalid bounded dimension discovery');
+ return {values:options.filter(option=>!search||option.label?.toLocaleLowerCase().includes(search)).slice(0,limit),selected:options.filter(option=>selected.includes(option.id))};
 }

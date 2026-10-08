@@ -7,6 +7,8 @@ import type { AnalyticsRepository, AuditAction, AuditSink, AuthorizationPolicy, 
 import { ApiError } from './errors.ts';
 
 export interface ApiDependencies {
+  drillThroughRepository?: import('@el-dabboos/domain').DrillThroughRepository;
+  operationalCommands?: { availability?(tenantId:string):import('@el-dabboos/domain').AnalyticsSourceAvailability;run(request: import('@el-dabboos/domain').AnalyticsJobRequest): Promise<import('@el-dabboos/domain').AnalyticsOperationResult> };
   operationalStatus?: import('@el-dabboos/domain').OperationalStatusProvider;
   administration?: { unitOfWork: AdministrationUnitOfWork; directory: AccessDirectory; profiles: TenantProfileProvider;
     /** Explicit synthetic adapter or configured trusted IdP boundary; headers never directly become binding IDs. */

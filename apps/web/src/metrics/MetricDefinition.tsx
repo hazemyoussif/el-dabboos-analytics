@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { MetricTooltip } from './MetricTooltip.tsx';
+import { MetricIdentifier } from './MetricIdentifier.tsx';
 import { Info, X } from 'lucide-react';
 import type { AnalyticsReleaseProvenance, AnalyticsResult, Locale, SemanticMetric, PublishedAnalyticsCapabilities } from '@el-dabboos/domain';
 import { copy } from '../i18n.ts';
@@ -64,7 +65,7 @@ export function MetricInfo(props: Props) {
  </span>;
 }
 
-function DefinitionTechnicalDetails({metric,locale,provenance}: {metric: SemanticMetric; locale: Locale; provenance: AnalyticsReleaseProvenance | undefined}) { const text = definitionCopy[locale]; return <details><summary>{text.technical}</summary><dl><dt>{locale === 'ar' ? 'معرّف المؤشر' : 'Metric ID'}</dt><dd><bdi>{metric.id}</bdi></dd>{provenance && <><dt>{locale === 'ar' ? 'إصدار الربط' : 'Mapping version'}</dt><dd><bdi>{provenance.mappingVersion}</bdi></dd><dt>{locale === 'ar' ? 'مرجع الاعتماد' : 'Certification reference'}</dt><dd><bdi>{provenance.outputCertificationReference ?? provenance.certificationReference}</bdi></dd><dt>{locale === 'ar' ? 'المصدر' : 'Source'}</dt><dd><bdi>{provenance.sourceId}</bdi></dd></>}</dl></details>; }
+function DefinitionTechnicalDetails({metric,locale,provenance}: {metric: SemanticMetric; locale: Locale; provenance: AnalyticsReleaseProvenance | undefined}) { const text = definitionCopy[locale]; return <details><summary>{text.technical}</summary><MetricIdentifier metric={metric} locale={locale}/><dl>{provenance && <><dt>{locale === 'ar' ? 'إصدار الربط' : 'Mapping version'}</dt><dd><bdi>{provenance.mappingVersion}</bdi></dd><dt>{locale === 'ar' ? 'مرجع الاعتماد' : 'Certification reference'}</dt><dd><bdi>{provenance.outputCertificationReference ?? provenance.certificationReference}</bdi></dd><dt>{locale === 'ar' ? 'المصدر' : 'Source'}</dt><dd><bdi>{provenance.sourceId}</bdi></dd></>}</dl></details>; }
 
 function metricTrustStatus(metric:SemanticMetric,metadata:AnalyticsResult['metadata']|undefined,published:PublishedAnalyticsCapabilities|undefined,locale:Locale){
  if(published?.mode==='synthetic')return definitionCopy[locale].demo;

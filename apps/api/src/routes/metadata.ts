@@ -1,15 +1,16 @@
+import {dimensionOptionLabels} from './dimension-option-labels.ts';
 import type { FastifyInstance } from 'fastify';
 import { managementControlReview,publishedCatalog } from '@el-dabboos/application';
-import { categoricalDimensions,governedDimensionLabel,DimensionDiscoveryLimitError,UncertifiedDimensionError } from '@el-dabboos/domain';
+import { categoricalDimensions,DimensionDiscoveryLimitError,UncertifiedDimensionError } from '@el-dabboos/domain';
 import type { DimensionId } from '@el-dabboos/domain';
 import { workspacePublishedCapabilities } from '../published-analytics.ts';
 import { analyticsContext } from '../context.ts';
 import type { RouteContext } from '../context.ts';
 import { ApiError } from '../errors.ts';
-import {registerCustomerDiscovery} from './customer-discovery.ts';
+import {registerDimensionDiscovery} from './dimension-discovery.ts';
 
 export function registerMetadataRoutes(app: FastifyInstance, services: RouteContext): void {
-  registerCustomerDiscovery(app,services);
+  registerDimensionDiscovery(app,services);
   app.get('/api/management-control-review',async request=>{
     const { context }=await services.session(request.headers);
     services.authorize(context,'dashboard:view','analytics:query');
@@ -30,7 +31,7 @@ export function registerMetadataRoutes(app: FastifyInstance, services: RouteCont
       return { dimension,availability: 'unavailable',reason: 'uncertified_dimension',values: [] };
     if(dimension==='customer'&&services.deps.dimensionValues.searchDimensionOptions){
       const page=await services.deps.dimensionValues.searchDimensionOptions('customer',analyticsContext(context),{limit:50});
-      return {dimension,values:page.values.map(option=>({...option,label:governedDimensionLabel(option.id,option.label,context.locale,'customer')})),...(page.nextCursor?{nextCursor:page.nextCursor}:{})};
+      return {dimension,values:dimensionOptionLabels(page.values,'customer',context.locale,profile),...(page.nextCursor?{nextCursor:page.nextCursor}:{})};
     }
     let options: Array<{id:string;label?:string}>;
     try {
@@ -43,6 +44,6 @@ export function registerMetadataRoutes(app: FastifyInstance, services: RouteCont
         return { dimension,availability: 'unavailable',reason: error instanceof DimensionDiscoveryLimitError ? 'discovery_limit' : 'uncertified_dimension',values: [] };
       throw error;
     }
-    return { dimension, values: options.map(({id,label}) => ({ id, label: governedDimensionLabel(id,dimension === 'branch' ? profile.branchLabels[id]?.[context.locale] ?? label : label,context.locale,dimension as DimensionId) })) };
+    return { dimension, values: dimensionOptionLabels(options,dimension as DimensionId,context.locale,profile) };
   });
 }

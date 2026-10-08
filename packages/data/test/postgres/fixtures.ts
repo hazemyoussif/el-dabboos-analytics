@@ -14,16 +14,23 @@ export function mapping(tenantId = 'a'): SourceMapping {
     capabilities: ['revenue','order_count','average_order_value','outstanding_amount','sales_growth'].map(metric => ({ metric: metric as SourceMapping['capabilities'][number]['metric'],dimensions: ['branch','date','month','quarter','year'] })),
   };
 }
-export async function deploy(pool: Pool, m: SourceMapping) {
+export async function deploy(pool: Pool, m: SourceMapping,calibrationFact?:ProductionFact,calibrationFacts?:readonly ProductionFact[]) {
+  const calibrationRows=calibrationFacts??(calibrationFact?[calibrationFact]:[]);
   const releases = new PostgresMappingReleases(pool);
   await releases.registerCandidate({ ...m,approval: { status: 'pending' } });
-  const calibration = { ...batch('fixture-calibration',0,m.tenantId),datasetId: m.datasetId,sourceId: m.sourceId,mappingId: m.mappingId,mappingVersion: m.mappingVersion,sourceAsOf: '2026-01-01T10:00:00.000Z',startedAt: '2026-01-01T09:00:00.000Z' };
-  await new PostgresMartWriter(pool,{ [m.tenantId]: ['fixture-company'] },clock).commit(calibration,[],{ ...evidence,sourceObjects: [...new Set(m.measures.map(measure => measure.sourceObject))],completeness: 'complete_scope' });
+  const calibration = { ...batch('fixture-calibration',calibrationRows.length,m.tenantId),datasetId: m.datasetId,sourceId: m.sourceId,mappingId: m.mappingId,mappingVersion: m.mappingVersion,sourceAsOf: '2026-01-01T10:00:00.000Z',startedAt: '2026-01-01T09:00:00.000Z' };
+  await new PostgresMartWriter(pool,{ [m.tenantId]: ['fixture-company'] },clock).commit(calibration,calibrationRows.map(fact=>({facts:[{...fact,batchId:calibration.batchId,sourceAsOf:calibration.sourceAsOf,frozenRevision:'freeze-1'}]})),{ ...evidence,sourceObjects: [...new Set(m.measures.map(measure => measure.sourceObject))],completeness: 'complete_scope' });
   const caseIds = [];
   for (const measure of m.measures) {
     const caseId = `fixture-certification-${measure.measureId}`;
-    await new PostgresReconciliation(pool).record([{ caseId,tenantId: m.tenantId,datasetId: m.datasetId,mappingVersion: m.mappingVersion,measureId: measure.measureId,sourceReportReference: 'EMPTY SYNTHETIC CALIBRATION ONLY',frozenRevision: 'freeze-1',batchIds: ['fixture-calibration'],from: '2026-01-01',to: '2026-01-31',grouping: null,groupKey: null,expectedValue: '0.000000',actualValue: '0.000000',expectedCount: '0',actualCount: '0',tolerance: { status: 'approved',absoluteValue: '0.000000',absoluteCount: '0',approvalReference: 'SYNTHETIC TEST ONLY' } }],m.reportingCurrency);
+    await new PostgresReconciliation(pool).record([{ caseId,tenantId: m.tenantId,datasetId: m.datasetId,mappingVersion: m.mappingVersion,measureId: measure.measureId,sourceReportReference: 'EMPTY SYNTHETIC CALIBRATION ONLY',frozenRevision: 'freeze-1',batchIds: ['fixture-calibration'],from: '2026-01-01',to: '2026-01-31',grouping: null,groupKey: null,expectedValue: '0.000000',actualValue: '0.000000',expectedCount: String(calibrationRows.filter(fact=>fact.measureId===measure.measureId).length),actualCount: String(calibrationRows.filter(fact=>fact.measureId===measure.measureId).length),tolerance: { status: 'approved',absoluteValue: '0.000000',absoluteCount: '0',approvalReference: 'SYNTHETIC TEST ONLY' } }],m.reportingCurrency);
     caseIds.push(caseId);
+    const measureFact=calibrationRows.find(fact=>fact.measureId===measure.measureId);
+    if(measureFact)for(const [dimension,identity] of Object.entries(measureFact.dimensions)){
+      const groupedId=caseId+'-'+dimension;
+      await new PostgresReconciliation(pool).record([{caseId:groupedId,tenantId:m.tenantId,datasetId:m.datasetId,mappingVersion:m.mappingVersion,measureId:measure.measureId,sourceReportReference:'SYNTHETIC ZERO CALIBRATION',frozenRevision:'freeze-1',batchIds:[calibration.batchId],from:'2026-01-01',to:'2026-01-31',grouping:dimension as import('@el-dabboos/domain').DimensionId,groupKey:identity!,expectedValue:'0.000000',actualValue:'0.000000',expectedCount:'1',actualCount:'1',tolerance:{status:'approved',absoluteValue:'0.000000',absoluteCount:'0',approvalReference:'SYNTHETIC TEST ONLY'}}],m.reportingCurrency);
+      caseIds.push(groupedId);
+    }
   }
   await certify(pool,{ tenantId: m.tenantId,datasetId: m.datasetId,caseIds,from: '2026-01-01',to: '2026-01-31',measureId: m.measures[0]!.measureId,value: '0.000000' });
   await releases.approve({ tenantId: m.tenantId,datasetId: m.datasetId,caseIds,reference: 'SYNTHETIC TEST ONLY',approvedAt: clock().toISOString() });

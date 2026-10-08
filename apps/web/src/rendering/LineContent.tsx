@@ -1,4 +1,5 @@
 import { CategoryAxisTick } from './CategoryAxisTick.tsx';
+import { DrillPointMark } from './DrillMarks.tsx';
 import type { WidgetExecution } from '@el-dabboos/application';
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { localeTag } from '../i18n.ts';
@@ -15,7 +16,7 @@ export function LineContent(props: RenderSeriesProps & { entry: WidgetExecution;
     <Tooltip content={<EnterpriseTooltip props={props} entry={entry} />} cursor={{ stroke: theme.border, strokeDasharray: '3 4' }} />
     {widget.series.flatMap((series, index) => [
       ...(entry.alignedRows.some(row => row.series[series.id]?.comparisonValue !== undefined) ? [<Line key={`comparison-${series.id}`} dataKey={comparisonKey(series.id)} stroke={seriesColor(theme,index)} strokeOpacity={0.6} strokeDasharray="5 4" strokeWidth={1.5} dot={false} connectNulls={false} isAnimationActive={false} />] : []),
-      <Line type={widget.presentation?.curve === 'smooth' ? 'monotone' : 'linear'} key={series.id} dataKey={valueKey(series.id)} name={seriesLabel(props, index)} stroke={seriesColor(theme,index)} strokeWidth={2.5} dot={false} activeDot={{ r: 4, stroke: theme.tooltip, strokeWidth: 2 }} connectNulls={false} isAnimationActive={false} />,
+      <Line type={widget.presentation?.curve === 'smooth' ? 'monotone' : 'linear'} key={series.id} dataKey={valueKey(series.id)} name={seriesLabel(props, index)} stroke={seriesColor(theme,index)} strokeWidth={2.5} dot={props.onDrill ? mark => <DrillPointMark mark={mark} props={props} seriesId={series.id} color={seriesColor(theme,index)}/> : false} activeDot={props.onDrill ? false : { r: 4, stroke: theme.tooltip, strokeWidth: 2 }} connectNulls={false} isAnimationActive={false} />,
     ])}
   </LineChart></ResponsiveContainer></ChartFrame>;
 }

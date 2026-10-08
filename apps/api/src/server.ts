@@ -1,3 +1,6 @@
+import { TrustedDrillThroughRepository } from '@el-dabboos/data';
+import {localAnalyticsSourceRelay} from './analytics-local-relay.ts';
+import { manualAnalyticsCommands } from './analytics-operations-runtime.ts';
 import { parseLocalAuthConfig } from './auth/config.ts';
 import { openLocalAuthentication } from './auth/runtime.ts';
 import { openControlStorage } from './control-storage.ts';
@@ -28,6 +31,7 @@ const provider = config.analyticsProvider;
 let dataReady: (tenantId: string) => Promise<boolean> = async (id) => id === 'demo-iq' || id === 'demo-eg';
 let analyticsReady: () => Promise<boolean>;
 let operationalStatus: import('@el-dabboos/domain').OperationalStatusProvider | undefined;
+let drillThroughRepository: import('@el-dabboos/domain').DrillThroughRepository | undefined;
 let repository: AnalyticsRepository & DimensionValueRepository;
 let close: () => void | Promise<void> = () => { };
 if (provider === 'sqlite') {
@@ -49,6 +53,7 @@ else {
     pool.on('error', () => { process.stderr.write('PostgreSQL pool connection failed\n'); });
     repository = new TrustedAnalyticsRepository(pool, { reportingCurrencies: {}, reportingCurrency: async (id) => (await administration.profiles.get(id, 'en'))?.reportingCurrency ?? null, statementTimeoutMs: config.postgres.statementTimeoutMs, maxGroups: config.postgres.maxGroups, maxDateSpanDays: config.postgres.maxDateSpanDays });
     const postgresRepository = repository as TrustedAnalyticsRepository;
+    drillThroughRepository = new TrustedDrillThroughRepository(pool,context=>postgresRepository.getPublishedCapabilities(context),config.postgres.statementTimeoutMs);
     dataReady = id => postgresRepository.isDataReady(id);
     close = () => pool.end();
     try {
@@ -81,7 +86,9 @@ else if (plannerMode === 'disabled')
     planner = null;
 else if (plannerMode !== 'mock')
     throw new Error('DASHBOARD_PLANNER must be mock, structured, or disabled.');
-const app = await buildApi({ ...(operationalStatus?{operationalStatus}:{}), ...(provider==='postgres' ? { publishedCapabilities: repository as TrustedAnalyticsRepository } : {}),analyticsRepository: repository, dimensionValues: repository, executionConcurrency: config.executionConcurrency,
+const sourceRelay=await localAnalyticsSourceRelay(process.env);
+const operationalCommands=manualAnalyticsCommands(provider,process.env);
+const app = await buildApi({ ...(drillThroughRepository?{drillThroughRepository}:{}), ...(operationalCommands?{operationalCommands}:{}), ...(operationalStatus?{operationalStatus}:{}), ...(provider==='postgres' ? { publishedCapabilities: repository as TrustedAnalyticsRepository } : {}),analyticsRepository: repository, dimensionValues: repository, executionConcurrency: config.executionConcurrency,
     readiness: { persistence: async () => { await localAuth?.ready(); return controlStorage.ready(); }, analytics: analyticsReady },
     administration: { unitOfWork: administration, directory: administration.directory, profiles: administration.profiles, dataReady,
         authenticate: async (headers) => {
@@ -105,6 +112,7 @@ const app = await buildApi({ ...(operationalStatus?{operationalStatus}:{}), ...(
                 return result;
             }) } : {}),
     }, libraryRepository: administration.library, ...(planner !== undefined ? { planner } : {}) }, { corsOrigins: config.deployment.corsOrigins,identityMode: config.deployment.identityMode,...(localAuth ? { localAuth } : {}),...(config.deployment.operationalLogging ? { operationalLog: (line: string) => process.stdout.write(`${line}\n`) } : {}) });
+app.addHook('onClose',async()=>{await operationalCommands?.close();await sourceRelay?.close();});
 const port = config.port;
 try {
     const address = await app.listen({ port, host: config.deployment.host });
@@ -112,6 +120,7 @@ try {
     process.stdout.write(`El Dabboos API listening at ${address}\n`);
 }
 catch (error) {
+    await operationalCommands?.close();await sourceRelay?.close();
     await close();
     await localAuth?.close(); await controlStorage.close();
     throw error;

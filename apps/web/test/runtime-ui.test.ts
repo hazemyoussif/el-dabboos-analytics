@@ -120,3 +120,19 @@ test('customer discovery opens lazily, hydrates saved selections and follows bou
   await act(async()=>fixture.root.render(render(['source:saved'])));await settle();assert.equal(calls.at(-1)!.limit,1);assert.deepEqual(calls.at(-1)!.selectedIds,['source:saved']);assert.ok(fixture.container.textContent?.includes('Saved customer'));assert.ok(!fixture.container.textContent?.includes('source:saved'));
  }finally{await fixture.close();}
 });
+
+test('shared discovery hydrates restored IDs outside initial options in EN/AR without changing selections',async()=>{
+ const fixture=await domFixture();try {
+  const {DimensionFilterControl}=await fixture.server.ssrLoadModule('/src/DimensionFilterControl.tsx');
+  const {DimensionDiscoveryContext}=await fixture.server.ssrLoadModule('/src/DimensionDiscoveryContext.ts');
+  const calls:Array<{dimension:string;query:import('@el-dabboos/domain').DimensionDiscoveryRequest}>=[];
+  const load=async(dimension:string,query:import('@el-dabboos/domain').DimensionDiscoveryRequest)=>{calls.push({dimension,query});return {values:[{id:'source:first',label:'Initial name'}],selected:[{id:'source:saved',label:dimension==='business_line'?'No Sugar':'Saved actual name'}]};};
+  for(const locale of ['en','ar'])for(const dimension of ['customer','salesperson','business_line','branch','region']){
+   let changed=false;
+   await act(async()=>fixture.root.render(createElement(DimensionDiscoveryContext.Provider,{value:load},createElement(DimensionFilterControl,{dimension,locale,values:['source:saved'],options:[],onChange:()=>{changed=true;}}))));await settle();
+   assert.equal(changed,false);assert.equal(calls.at(-1)?.dimension,dimension);assert.deepEqual(calls.at(-1)?.query.selectedIds,['source:saved']);assert.equal(calls.at(-1)?.query.limit,1);
+   assert.ok(fixture.container.textContent?.includes(dimension==='business_line'?(locale==='ar'?'بدون سكر':'No Sugar'):'Saved actual name'));assert.ok(!fixture.container.textContent?.includes('source:'));
+   if(dimension!=='customer')assert.equal(fixture.container.querySelector('select')!.value,JSON.stringify(['source:saved']));
+  }
+ }finally{await fixture.close();}
+});

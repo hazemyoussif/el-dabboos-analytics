@@ -101,6 +101,8 @@ export interface AnalyticsResult {
   metadata: {
     /** Effective governed cutoff; snapshots are never added across this date. */
     snapshotAsOf?: string;
+    /** Per-point immutable lineage for historical Finance trends. */
+    drillReleases?: Record<string,string>;
     reconciliation?: {status:'exact';reference:string;definitionReference:string};
     coverage?: {status:'complete'|'partial'|'unavailable';from:string;through:string;cutoff?:string};
     availability?: {state:'DATA_NOT_READY'|'PARTIAL_COVERAGE';reason:'outside_coverage'|'missing_partition'|'no_snapshot'};

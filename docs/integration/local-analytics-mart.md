@@ -56,6 +56,15 @@ pnpm mart:local verify
 
 Normal commands never delete the named volume. Keep local credentials available across restarts. The persistent mart can remain running while the disposable PostgreSQL suite uses port 55436.
 
+The persistent server uses `restart: unless-stopped`, matching the local staging
+application. It resumes after a Docker daemon restart unless deliberately stopped;
+after an explicit stop, use `pnpm mart:local start`. This server also hosts the
+local staging control/authentication database. A stopped server can therefore
+cause API startup to fail its control identity/schema check and the HTTPS auth
+bootstrap request to return 502. Check the container and its logs before changing
+auth settings or applying migrations. Odoo/Teleport availability is separate from
+control authentication and trusted mart serving.
+
 ## Explicit destructive developer reset
 
 Only when the operator intentionally wants to erase **all local mart data**, use:

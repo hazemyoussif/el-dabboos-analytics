@@ -26,6 +26,6 @@ export interface AuthorizationPolicy {
   authorizeMetric(metric: MetricId, context: RequestContext): void;
   authorizeDashboard(spec: DashboardSpec, context: RequestContext): void;
 }
-export type AuditAction = 'analytics.query' | 'dashboard.execute' | 'dashboard.generate' | 'dashboard.edit' | 'dashboard.builder_edit' | 'dashboard.saved_list' | 'dashboard.saved_get' | 'dashboard.saved_create' | 'dashboard.saved_update';
+export type AuditAction = 'analytics.operation' | 'analytics.query' | 'dashboard.execute' | 'dashboard.generate' | 'dashboard.edit' | 'dashboard.builder_edit' | 'dashboard.saved_list' | 'dashboard.saved_get' | 'dashboard.saved_create' | 'dashboard.saved_update';
 export interface AuditEvent { tenantId: string; userId: string; membershipId: string; action: AuditAction; timestamp: string; result: 'allowed' | 'denied' | 'error'; dashboardId?: string; providerId?: string; modelId?: string; traceId?: string }
 export interface AuditSink { record(event: AuditEvent): void }

@@ -1,3 +1,4 @@
+import { TrustedDrillThroughRepository } from '../../src/operational/drill-through.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {database,enabled} from './support.ts';
@@ -33,6 +34,8 @@ test('separate exact customer snapshots resolve historical, middle-date, latest 
   }
   const missing=await repository.execute({metric:'net_aged_receivable',dateRange:{from:'2025-01-01',to:'2025-10-30'}},{tenantId:'a',locale:'ar'});assert.equal(missing.rows[0]?.value,null);assert.equal(missing.metadata.availability?.state,'DATA_NOT_READY');
   const trend=await repository.execute({metric:'net_aged_receivable',groupBy:'month',dateRange:{from:'2026-05-01',to:'2026-06-30'}},{tenantId:'a',locale:'en'});assert.deepEqual(trend.rows.map(row=>row.value),[100,100]);
+  const drill=new TrustedDrillThroughRepository(db.runtime,scope=>repository.getPublishedCapabilities(scope));
+  for(const row of trend.rows){const page=await drill.drill({query:{metric:'net_aged_receivable',dateRange:{from:row.key+'-01',to:row.key==='2026-05'?'2026-05-31':'2026-06-30'}},release:trend.metadata.drillReleases![row.key!]!,sourceAsOf:trend.metadata.sourceAsOf!},{tenantId:'a',locale:'en'});assert.equal(Number(page.value),row.value);assert.equal(page.snapshotAsOf?.slice(0,7),row.key);}
   assert.deepEqual((await db.admin.query('SELECT specification FROM mart.release_certifications')).rows,prior);
   const hidden=await tenantTransaction(db.runtime,'b',client=>client.query('SELECT * FROM mart.finance_snapshot_customers'),true);assert.equal(hidden.rowCount,0);
   const scoped=await repository.execute({metric:'net_aged_receivable',dateRange:{from:'2025-10-01',to:'2026-09-30'}},{tenantId:'a',locale:'en',enforcedFilters:[{dimension:'customer',values:['fixture:absent']}]});assert.equal(scoped.rows[0]?.value,0);
@@ -52,6 +55,38 @@ test('more than 3000 governed customers use bounded stable search and selected-I
   const search=await repository.searchDimensionOptions('customer',context,{...request,search:'Customer 310'});assert.equal(search.values.length,6);
   await assert.rejects(repository.searchDimensionOptions('customer',{...context,enforcedFilters:[{dimension:'customer',values:['fixture:03104']}]},{...request,cursor:first.nextCursor}),/Invalid customer continuation/);
   const scoped=await repository.searchDimensionOptions('customer',{...context,enforcedFilters:[{dimension:'customer',values:['fixture:03104']}]},request);assert.deepEqual(scoped.values.map(option=>option.id),['fixture:03104']);
+  const drill=new TrustedDrillThroughRepository(db.runtime,scope=>repository.getPublishedCapabilities(scope));
+  const bucketQuery={metric:'aged_at_date' as const,dateRange:{from:'2025-10-01',to:'2026-10-08'}};
+  const bucketSummary=await repository.execute(bucketQuery,context),started=performance.now();
+  const bucket=await drill.drill({query:bucketQuery,sourceAsOf:bucketSummary.metadata.sourceAsOf!,release:bucketSummary.metadata.release!.datasetId,limit:50},context);
+  assert.equal(bucket.rows.length,50);assert.equal(Number(bucket.value),bucketSummary.rows[0]!.value);
+  process.stdout.write(`drill-benchmark ${JSON.stringify({name:'Receivables bucket',records:3105,firstPageMs:performance.now()-started})}\n`);
   const headline=await repository.execute({metric:'net_aged_receivable',dateRange:{from:'2025-10-01',to:'2026-10-08'}},context);assert.equal(headline.rows[0]?.value,310500);
+ }finally{await db.close();}
+});
+
+
+test('Finance drill pins a single published customer snapshot, signed bucket amounts and scoped pages',{skip:!enabled},async()=>{
+ const {db,repository}=await fixture();try {
+  const snapshot=evidence('2026-09-30',3);
+  for(const customer of snapshot.customers)customer.actual={...customer.actual};
+  const credit=snapshot.customers[1]!;for(const measure of ['net_aged_receivable','aged_at_date'])credit.actual[measure]='-25.000000';credit.actual.gross_open_receivable_components='0.000000';credit.actual.credit_balances='-25.000000';credit.expected={...credit.actual};
+  snapshot.totals.net_aged_receivable='175.000000';snapshot.totals.aged_at_date='175.000000';snapshot.totals.gross_open_receivable_components='200.000000';snapshot.totals.credit_balances='-25.000000';
+  await publishFinanceSnapshot(db.migrator,snapshot);
+  const context={tenantId:'a',locale:'ar' as const},query={metric:'net_aged_receivable' as const,dateRange:{from:'2026-01-01',to:'2026-10-08'}};
+  const summary=await repository.execute(query,context),release=summary.metadata.release!.datasetId;
+  const drill=new TrustedDrillThroughRepository(db.runtime,scope=>repository.getPublishedCapabilities(scope));
+  const started=performance.now(),first=await drill.drill({query,sourceAsOf:summary.metadata.sourceAsOf!,release,limit:2,sort:{field:'customer',direction:'asc'}},context);
+  const firstPageMs=performance.now()-started;
+  const second=await drill.drill({query,sourceAsOf:summary.metadata.sourceAsOf!,release,limit:2,sort:{field:'customer',direction:'asc'},cursor:first.nextCursor!},context);
+  assert.equal(Number(first.value),summary.rows[0]!.value);assert.equal(first.snapshotAsOf,'2026-09-30');assert.equal([...first.rows,...second.rows].reduce((sum,row)=>sum+Number(row.amount),0),175);
+  assert.equal(first.grain,'customer_snapshot');assert.equal(second.hasMore,false);
+  const scoped=await drill.drill({query,sourceAsOf:summary.metadata.sourceAsOf!,release,clicked:{dimension:'customer',values:['fixture:00001']}},context);assert.equal(scoped.value,'-25.000000');assert.equal(scoped.rows[0]!.customer,'Customer 1');
+  const bucket=await drill.drill({query:{...query,metric:'credit_balances'},sourceAsOf:summary.metadata.sourceAsOf!,release},context);assert.equal(bucket.value,'-25.000000');
+  await assert.rejects(drill.drill({query,sourceAsOf:summary.metadata.sourceAsOf!,release},{...context,enforcedFilters:[{dimension:'salesperson',values:['rep']}]}));
+  // Later month-end publication does not alter an already-open immutable snapshot.
+  await publishFinanceSnapshot(db.migrator,evidence('2026-08-31'));
+  assert.equal((await drill.drill({query,sourceAsOf:summary.metadata.sourceAsOf!,release},context)).snapshotAsOf,'2026-09-30');
+  process.stdout.write(`drill-finance-first-page ${JSON.stringify({rows:3,ms:firstPageMs})}\n`);
  }finally{await db.close();}
 });

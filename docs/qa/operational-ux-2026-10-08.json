@@ -1,0 +1,327 @@
+{
+  "date": "2026-10-08",
+  "branch": "codex/production-pilot-lifecycle",
+  "baseHead": "2800df19401578bba8e6679739c7c483c5c5851d",
+  "committed": false,
+  "tests": {
+    "unitSuite": {
+      "tests": 731,
+      "passed": 731,
+      "skipped": 0
+    },
+    "postgresSuite": {
+      "tests": 172,
+      "passed": 172,
+      "skipped": 0
+    },
+    "finalPresentationDelta": {
+      "tests": 18,
+      "passed": 18
+    },
+    "finalApiLabelDelta": {
+      "tests": 3,
+      "passed": 3
+    },
+    "finalPostgresLabelDelta": {
+      "tests": 1,
+      "passed": 1
+    }
+  },
+  "runtime": {
+    "url": "https://localhost:8443",
+    "authenticatedIdentity": "staging-tenant-admin",
+    "tenant": "el-dabboos-iq",
+    "manualSync": "technical failure; successful/zero-change live sync not confirmed",
+    "affected": {
+      "status": "failed",
+      "mismatchCount": 12,
+      "runId": "ad57050e-3b34-4212-a9cb-4b59759bbc25"
+    },
+    "daily": {
+      "status": "failed",
+      "mismatchCount": 3,
+      "runId": "531dba3a-e4bf-4ed4-9554-277a4c332230"
+    },
+    "readOnlyFingerprintUnchanged": true,
+    "initialFingerprint": {
+      "runs": 11,
+      "failures": 8,
+      "cases": 138364,
+      "trusted": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54",
+      "cutoff": "2026-10-08 00:21:08.728+00",
+      "latestAudit": [
+        {
+          "run_id": "b9d983de-1530-4906-b590-9e3ea4241390",
+          "kind": "sync",
+          "actor_id": "local-operator",
+          "trigger_type": "operator",
+          "status": "unchanged",
+          "records_changed": 0,
+          "partitions_affected": 0,
+          "mismatch_count": 0,
+          "serving_release": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+        },
+        {
+          "run_id": "987fe7ad-2764-4276-a5ae-7b5b2ea791dc",
+          "kind": "affected",
+          "actor_id": "local-operator",
+          "trigger_type": "operator",
+          "status": "passed",
+          "records_changed": 0,
+          "partitions_affected": 0,
+          "mismatch_count": 0,
+          "serving_release": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+        },
+        {
+          "run_id": "e7ba3f5d-624c-4c30-b371-c9d2b68dcc82",
+          "kind": "sync",
+          "actor_id": "bounded-replay-operator",
+          "trigger_type": "operator",
+          "status": "unchanged",
+          "records_changed": 0,
+          "partitions_affected": 0,
+          "mismatch_count": 0,
+          "serving_release": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+        },
+        {
+          "run_id": "6d926c9b-24b4-4434-b550-4f86480c46bb",
+          "kind": "sync",
+          "actor_id": "bounded-replay-operator",
+          "trigger_type": "operator",
+          "status": "unchanged",
+          "records_changed": 0,
+          "partitions_affected": 0,
+          "mismatch_count": 0,
+          "serving_release": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+        }
+      ]
+    },
+    "afterManualFingerprint": {
+      "runs": 13,
+      "failures": 11,
+      "cases": 138364,
+      "trusted": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54",
+      "cutoff": "2026-10-08 00:21:08.728+00",
+      "latestAudit": [
+        {
+          "run_id": "531dba3a-e4bf-4ed4-9554-277a4c332230",
+          "kind": "daily",
+          "actor_id": "staging-tenant-admin",
+          "trigger_type": "manual",
+          "status": "failed",
+          "records_changed": 0,
+          "partitions_affected": 0,
+          "mismatch_count": 3,
+          "serving_release": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+        },
+        {
+          "run_id": "ad57050e-3b34-4212-a9cb-4b59759bbc25",
+          "kind": "affected",
+          "actor_id": "staging-tenant-admin",
+          "trigger_type": "manual",
+          "status": "failed",
+          "records_changed": 0,
+          "partitions_affected": 0,
+          "mismatch_count": 12,
+          "serving_release": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+        },
+        {
+          "run_id": "b9d983de-1530-4906-b590-9e3ea4241390",
+          "kind": "sync",
+          "actor_id": "local-operator",
+          "trigger_type": "operator",
+          "status": "unchanged",
+          "records_changed": 0,
+          "partitions_affected": 0,
+          "mismatch_count": 0,
+          "serving_release": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+        },
+        {
+          "run_id": "987fe7ad-2764-4276-a5ae-7b5b2ea791dc",
+          "kind": "affected",
+          "actor_id": "local-operator",
+          "trigger_type": "operator",
+          "status": "passed",
+          "records_changed": 0,
+          "partitions_affected": 0,
+          "mismatch_count": 0,
+          "serving_release": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+        }
+      ]
+    },
+    "afterRefreshFingerprint": {
+      "runs": 13,
+      "failures": 11,
+      "cases": 138364,
+      "trusted": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54",
+      "cutoff": "2026-10-08 00:21:08.728+00",
+      "latestAudit": [
+        {
+          "run_id": "531dba3a-e4bf-4ed4-9554-277a4c332230",
+          "kind": "daily",
+          "actor_id": "staging-tenant-admin",
+          "trigger_type": "manual",
+          "status": "failed",
+          "records_changed": 0,
+          "partitions_affected": 0,
+          "mismatch_count": 3,
+          "serving_release": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+        },
+        {
+          "run_id": "ad57050e-3b34-4212-a9cb-4b59759bbc25",
+          "kind": "affected",
+          "actor_id": "staging-tenant-admin",
+          "trigger_type": "manual",
+          "status": "failed",
+          "records_changed": 0,
+          "partitions_affected": 0,
+          "mismatch_count": 12,
+          "serving_release": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+        },
+        {
+          "run_id": "b9d983de-1530-4906-b590-9e3ea4241390",
+          "kind": "sync",
+          "actor_id": "local-operator",
+          "trigger_type": "operator",
+          "status": "unchanged",
+          "records_changed": 0,
+          "partitions_affected": 0,
+          "mismatch_count": 0,
+          "serving_release": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+        },
+        {
+          "run_id": "987fe7ad-2764-4276-a5ae-7b5b2ea791dc",
+          "kind": "affected",
+          "actor_id": "local-operator",
+          "trigger_type": "operator",
+          "status": "passed",
+          "records_changed": 0,
+          "partitions_affected": 0,
+          "mismatch_count": 0,
+          "serving_release": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+        }
+      ]
+    },
+    "finalCommandsAvailable": false,
+    "temporarySourceRelayRemoved": true,
+    "temporaryWriterAndSourceCredentialsRemoved": true
+  },
+  "filters": {
+    "dimensions": [
+      "customer",
+      "salesperson",
+      "business_line",
+      "branch",
+      "region"
+    ],
+    "stableIdsPreserved": true,
+    "humanReadableLabels": true,
+    "customerPageSize": 50,
+    "customerSearchVerified": true,
+    "selectedHydrationOutsidePage": "real DOM and PostgreSQL tests",
+    "manualReports": [
+      "Executive Sales & Invoicing",
+      "Invoice & Refund Operations"
+    ],
+    "locales": [
+      "en",
+      "ar"
+    ],
+    "noTechnicalOptionText": true
+  },
+  "historicalPolicy": {
+    "longUnfilteredGuidanceCount": 1,
+    "shortUnfilteredReportRendered": true,
+    "longSelectedCustomerReportRendered": true,
+    "safetyBoundsChanged": false
+  },
+  "visual": {
+    "phoneWidth": 390,
+    "tabletWidth": 768,
+    "desktopWidth": 1036,
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "locales": [
+      "en",
+      "ar"
+    ],
+    "rtl": true,
+    "horizontalOverflow": false,
+    "minimumActionHeight": 44
+  },
+  "safety": {
+    "frontendDuplicatesSyncLogic": false,
+    "frontendDuplicatesReconciliationLogic": false,
+    "normalReadContactsOdoo": false,
+    "refreshViewContactsOdoo": false,
+    "failedCandidateReplacesTrustedRelease": false,
+    "rlsBypassed": false,
+    "authorizationWeakened": false,
+    "financeSemanticsChanged": false,
+    "receivablesSnapshotSemanticsChanged": false,
+    "llmRuntimeDependency": false,
+    "odooWrites": false,
+    "push": false,
+    "merge": false,
+    "externalDeployment": false
+  },
+  "limits": [
+    "Local persistent relay is now explicitly approved and active; unattended upstream SSH authentication and renewed admin sign-in remain required for complete acceptance.",
+    "Local source sync technical failure remains unclassified; reconciliation has real failed controls. Successful manual live Sync/Reconcile acceptance remains unconfirmed.",
+    "Existing Vite bundle-size warning remains."
+  ],
+  "persistentLocalSource": {
+    "authorizedScope": "current local staging only",
+    "relayAvailable": true,
+    "sourceAvailable": true,
+    "socketMode": "0600",
+    "relayRestartPolicy": "unless-stopped",
+    "verifiedAutomaticRelayRestarts": 1,
+    "apiRestartRecoveredBridge": true,
+    "sourceOutageApiReadiness": 200,
+    "sourceOutageTrustedQueryRows": [
+      1,
+      1,
+      40,
+      1927,
+      2217
+    ],
+    "upstreamUnattendedSshReconnect": "blocked: fresh session authentication rejected; approved identity reference requested",
+    "newAuthenticatedManualRuns": "pending: browser admin sign-in required",
+    "sourceSessionDefaultReadOnly": true,
+    "noSourceWrites": true,
+    "trustedPointerUnchanged": true,
+    "historicalAtPriorFollowup": true
+  },
+  "finalAcceptanceAttempt": {
+    "record": "final-operational-acceptance-2026-10-08.md",
+    "gate": "incomplete",
+    "adminAuthenticated": true,
+    "apiSyncFailureRunIds": [
+      "65ad677c-18c6-40a2-af5a-334c0419c259",
+      "6e0ac97e-0986-4349-bff5-f396aa94b3a4"
+    ],
+    "sourceReadDiagnostic": {
+      "changedOrderRows": 1859,
+      "changedInvoiceRows": 1923,
+      "failureCategory": "snapshot_lease_expired",
+      "elapsedMs": 122081,
+      "operationalAcceptance": false
+    },
+    "machineIdentityProvisioned": false,
+    "strictSelectOnlyGrantCheck": false,
+    "strictPolicyEnforced": true,
+    "personalSessionBridgeStopped": true,
+    "relayAutomaticStartupDisabled": true,
+    "trustedPointerUnchanged": true,
+    "cursorUnchanged": true,
+    "postPromotionReconcile": "pending",
+    "noChangeSync": "pending",
+    "sourceOutageHttp200": true,
+    "refreshViewCompleted": true,
+    "finalQueryRepairLiveCompletion": "unverified",
+    "remainingMismatchInterpretation": "real source divergence observed; no successful complete candidate yet, so 12/3 not fully explained"
+  }
+}
