@@ -1,28 +1,21 @@
 import { timeDimensions } from '@el-dabboos/domain';
-import type { AnalyticsFilter, DimensionId, MetricId, RequestContext } from '@el-dabboos/domain';
+import type { RequestContext } from '@el-dabboos/domain';
 import type { AnalyticsIntent } from './analytics-intent.ts';
 import { validateAnalyticsIntent } from './analytics-intent.ts';
 import type { AnalyticsIntentResult } from './analytics-execution.ts';
 
 /** Server-owned bounded semantic memory. Fresh membership/policy is still required each turn. */
-export interface AnalyticsConversationState {
-  tenantId: string; userId: string; membershipId: string; scopeSignature:string;
-  activeContext: AnalyticsIntent['context'];
-  viewerFilters: AnalyticsFilter[];
-  metrics: MetricId[]; dimensions: DimensionId[];
-  entities: {dimension:DimensionId;ids:string[]}[];
-  previousIntent: AnalyticsIntent;
-  resultReferences: {analysis:number;series:number;release?:string;executedAt:string}[];
-  resolvedAmbiguities: MetricId[];
-}
-export function analyticsConversationState(result:AnalyticsIntentResult,identity:RequestContext):AnalyticsConversationState {
-  const successful = result.analyses.flatMap((analysis,analysisIndex) => analysis.series.flatMap((entry,seriesIndex) => entry.status === 'SUPPORTED' ? [{entry,analysisIndex,seriesIndex}] : []));
+export type { AnalyticsConversationState } from '@el-dabboos/domain';
+import type { AnalyticsConversationState } from '@el-dabboos/domain';
+export function analyticsConversationState(result:AnalyticsIntentResult,identity:RequestContext,previous?:AnalyticsConversationState):AnalyticsConversationState {
+  if(previous)assertConversationOwner(previous,identity);
+  const successful = result.analyses.flatMap((analysis,analysisIndex) => analysis.series.flatMap((entry,seriesIndex) => entry.status === 'SUPPORTED' || entry.status === 'PARTIAL_COVERAGE' ? [{entry,analysisIndex,seriesIndex}] : []));
   return {tenantId:identity.tenant.tenantId,userId:identity.principal.userId,membershipId:identity.principal.membershipId,scopeSignature:conversationScopeSignature(identity),
     activeContext:effectiveConversationContext(successful[0]?.entry.query,result.intent.context),
     viewerFilters:structuredClone(successful[0]?.entry.query.filters ?? result.intent.context.dimensions ?? []),previousIntent:structuredClone(result.intent),
     metrics:[...new Set(successful.map(item => item.entry.query.metric))],dimensions:[...new Set(successful.flatMap(item => item.entry.query.groupBy ? [item.entry.query.groupBy] : []))],
-    entities:successful.flatMap(({entry}) => entry.query.groupBy && !timeDimensions.includes(entry.query.groupBy) ? [{dimension:entry.query.groupBy,ids:entry.result.rows.flatMap(row => row.key === null ? [] : [row.key]).slice(0,100)}] : []),
-    resultReferences:successful.map(({entry,analysisIndex,seriesIndex}) => ({analysis:analysisIndex,series:seriesIndex,...(entry.result.metadata.release ? {release:entry.result.metadata.release.datasetId} : {}),executedAt:entry.result.metadata.executedAt})),resolvedAmbiguities:[]};
+    entities:mergeConversationEntities(relatedEntityContext(result.intent,previous) ? previous!.entities : [],successful.flatMap(({entry}) => entry.query.groupBy && !timeDimensions.includes(entry.query.groupBy) ? [{dimension:entry.query.groupBy,ids:entry.result.rows.flatMap(row => row.key === null ? [] : [row.key]).slice(0,100)}] : [])),
+    resultReferences:successful.map(({entry,analysisIndex,seriesIndex}) => ({analysis:analysisIndex,series:seriesIndex,...(entry.result.metadata.release ? {release:entry.result.metadata.release.datasetId} : {}),executedAt:entry.result.metadata.executedAt})),resolvedAmbiguities:previous?.resolvedAmbiguities ?? []};
 }
 /** Follow-up operators consume stable identities/periods, never a guessed name or replayed chat. */
 export function resolveAnalyticsFollowUp(state:AnalyticsConversationState,identity:RequestContext,followUp:{rank:number}|{compareEntities:number;datePreset:'last_6_months'}):AnalyticsIntent {
@@ -64,4 +57,13 @@ export function analyticsConversationContext(state:AnalyticsConversationState) {
 function effectiveConversationContext(query:import('@el-dabboos/domain').AnalyticsQuery|undefined,fallback:AnalyticsIntent['context']):AnalyticsIntent['context'] {
   if (!query) return structuredClone(fallback);
   return {...(query.dateRange ? {dateRange:structuredClone(query.dateRange)} : {}),...(query.filters ? {dimensions:structuredClone(query.filters)} : {})};
+}
+
+function mergeConversationEntities(previous:AnalyticsConversationState['entities'],current:AnalyticsConversationState['entities']) {
+ return current.map(group=>({dimension:group.dimension,ids:[...new Set([...previous.filter(item=>item.dimension===group.dimension).flatMap(item=>item.ids),...group.ids])].slice(-100)}));
+}
+
+function relatedEntityContext(intent:AnalyticsIntent,previous?:AnalyticsConversationState):boolean {
+ if(!previous || JSON.stringify(intent.analyses.flatMap(analysis=>analysis.series.map(series=>series.metric)))!==JSON.stringify(previous.previousIntent.analyses.flatMap(analysis=>analysis.series.map(series=>series.metric))))return false;
+ return intent.analyses.some(analysis=>analysis.rank!==undefined || previous.entities.some(group=>group.dimension===analysis.dimension && intent.context.dimensions?.some(filter=>filter.dimension===group.dimension && filter.values.length===group.ids.length && filter.values.every(id=>group.ids.includes(id)))));
 }

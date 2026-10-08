@@ -33,3 +33,5 @@ export * from './analytics-impact.ts';
 export * from './analytics-operations.ts';
 
 export * from './drill-through.ts';
+
+export * from './analyst.ts';

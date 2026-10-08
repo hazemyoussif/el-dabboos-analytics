@@ -1,3 +1,4 @@
+import { MetadataAnalystConversations } from '../metadata/analyst.ts';
 import type { AccessDirectory, AdministrationTransaction, AdministrationUnitOfWork, DashboardLibraryRepository, TenantProfileProvider } from '@el-dabboos/domain';
 import { getTenantProfile, validateTenantConfiguration } from '@el-dabboos/domain';
 import type { Pool } from 'pg';
@@ -24,6 +25,7 @@ export class PostgresAdministrationStore implements AdministrationUnitOfWork {
     }
     write<T>(operation: (transaction: AdministrationTransaction) => Promise<T>) { return this.transaction(true, connection => operation(this.repositories(connection))); }
     read<T>(operation: (transaction: AdministrationTransaction) => Promise<T>) { return this.transaction(false, connection => operation(this.repositories(connection))); }
+    readonly analyst = new MetadataAnalystConversations((write, operation) => this.transaction(write, operation));
     readonly directory: AccessDirectory = {
         tenantAccess: (id,tenantId) => this.read(transaction => transaction.directory.tenantAccess(id,tenantId)),
         platformAccess: id => this.read(transaction => transaction.directory.platformAccess(id)),

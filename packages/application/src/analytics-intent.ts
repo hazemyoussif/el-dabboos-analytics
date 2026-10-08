@@ -1,24 +1,16 @@
 import Ajv2020 from 'ajv/dist/2020.js';
 import { dimensions, relativeDatePresets, validDateRange } from '@el-dabboos/domain';
-import type { AnalyticsQuery, DashboardSpec, DateRange, DimensionId, MetricId } from '@el-dabboos/domain';
+import type { AnalyticsQuery, DashboardSpec, DateRange, MetricId } from '@el-dabboos/domain';
 import { analyticsSeriesSchema, compileAnalyticsSeries } from './analytics-series.ts';
-import type { AnalyticsSeriesIntent } from './analytics-series.ts';
 import type { DashboardGenerationPlan } from './generation-plan.ts';
 import { resolveDashboardFilters } from './dashboard-filters.ts';
 
 /** Transient semantic intent. Presentation, tenant/policy, SQL and model-owned IDs are excluded. */
-export interface AnalyticsIntent {
-  context: DashboardSpec['filters'];
-  analyses: AnalyticsAnalysisIntent[];
-}
-export interface AnalyticsAnalysisIntent {
-  dimension?: DimensionId;
-  series: AnalyticsSeriesIntent[];
-  context?: DashboardSpec['filters'];
-  /** Select an ordinal after deterministic ranking; never guess a display name. */
-  rank?: number;
-}
+export type { AnalyticsIntent, AnalyticsAnalysisIntent } from '@el-dabboos/domain';
+import type { AnalyticsIntent } from '@el-dabboos/domain';
 export type AnalyticsPlanningOutcome = { status: 'SUPPORTED'; intent: AnalyticsIntent }
+  | {status:'FOLLOW_UP';operation:'rank';rank:number}
+  | {status:'FOLLOW_UP';operation:'compare_entities';count:number;datePreset:'last_6_months'}
   | { status: 'AMBIGUOUS'; choices: MetricId[] }
   | { status: 'UNSUPPORTED_CAPABILITY' | 'DATA_NOT_READY' };
 const object = (properties: object, required: string[] = []) => ({ type: 'object', additionalProperties: false, properties, required });
@@ -36,6 +28,8 @@ export const analyticsIntentSchema = { $defs: { series: analyticsSeriesSchema },
 }, ['context','analyses']) };
 export const analyticsPlanningSchema = { $defs: analyticsIntentSchema.$defs, oneOf: [
   object({ status: { enum: ['SUPPORTED'] }, intent: analyticsIntentSchema }, ['status','intent']),
+  object({status:{enum:['FOLLOW_UP']},operation:{enum:['rank']},rank:{type:'integer',minimum:1,maximum:100}},['status','operation','rank']),
+  object({status:{enum:['FOLLOW_UP']},operation:{enum:['compare_entities']},count:{type:'integer',minimum:2,maximum:100},datePreset:{enum:['last_6_months']}},['status','operation','count','datePreset']),
   object({ status: { enum: ['AMBIGUOUS'] }, choices: { type: 'array', minItems: 2, maxItems: 8, uniqueItems: true,
     items: analyticsSeriesSchema.properties.metric } }, ['status','choices']),
   object({ status: { enum: ['UNSUPPORTED_CAPABILITY','DATA_NOT_READY'] } }, ['status']),

@@ -5,7 +5,7 @@ import type { Pool, PoolClient } from 'pg';
 import { assertMetadataReady, migrateMetadata } from '../metadata/migrations.ts';
 import { assertControlReady } from './migrations.ts';
 /** Dependency order is explicit, shared with exact row parity verification. */
-export const controlImportTables = ['customers','tenants','users','identities','roles','role_permissions','role_metric_domains','memberships','membership_roles','membership_scopes','platform_assignments','platform_assignment_roles','admin_audit_events','bootstrap_state','dashboard_records','dashboard_grants','dashboard_folders','dashboard_library_preferences','tenant_assignment_candidates'] as const;
+export const controlImportTables = ['customers','tenants','users','identities','roles','role_permissions','role_metric_domains','memberships','membership_roles','membership_scopes','platform_assignments','platform_assignment_roles','admin_audit_events','bootstrap_state','dashboard_records','dashboard_grants','dashboard_folders','dashboard_library_preferences','tenant_assignment_candidates','analyst_conversations','analyst_question_audit'] as const;
 function verifySourceSchema(source: DatabaseSync): void {
     assertMetadataReady(source);
     if (source.prepare('PRAGMA integrity_check').get()?.integrity_check !== 'ok') throw new Error('Corrupt SQLite metadata');

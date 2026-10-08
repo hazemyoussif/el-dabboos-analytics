@@ -1,11 +1,8 @@
 import { semanticCatalog } from '@el-dabboos/domain';
 import type { AnalysisSpec, MetricId, TenantProfile } from '@el-dabboos/domain';
 
-export interface AnalyticsSeriesIntent {
-  metric: MetricId; comparison?: AnalysisSpec['comparison']; movingAverageWindow?: number;
-  runningTotal?: boolean; percentageContribution?: boolean; ranking?: boolean;
-  topNDirection?: 'top' | 'bottom'; topNLimit?: number;
-}
+export type { AnalyticsSeriesIntent } from '@el-dabboos/domain';
+import type { AnalyticsSeriesIntent } from '@el-dabboos/domain';
 const choice = (values: readonly string[]) => ({ enum: values });
 const object = <T extends object>(properties: T, required: string[]) => ({ type: 'object', additionalProperties: false, properties, required });
 export const analyticsSeriesSchema = object({

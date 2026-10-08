@@ -1,3 +1,4 @@
+import { registerAnalystRoutes } from './routes/ai-analyst.ts';
 import { registerAnalyticsStatusRoutes } from './routes/analytics-status.ts';
 import { registerLocalAuthentication } from './auth/routes.ts';
 import type { LocalAuthenticationRuntime } from './auth/runtime.ts';
@@ -37,6 +38,7 @@ export async function buildApi(deps: ApiDependencies, runtime: { corsOrigins?: r
   registerAnalyticsRoutes(app, services);
   registerAnalyticsStatusRoutes(app, services);
   registerDashboardRoutes(app, services);
+  registerAnalystRoutes(app, services);
   registerSavedDashboardRoutes(app, services);
   registerDashboardLibraryRoutes(app, services);
   return app;

@@ -1,3 +1,4 @@
+import { MetadataAnalystConversations } from './analyst.ts';
 import type { AccessDirectory, AdministrationTransaction, AdministrationUnitOfWork, DashboardLibraryRepository, TenantProfileProvider } from '@el-dabboos/domain';
 import { getTenantProfile, validateTenantConfiguration } from '@el-dabboos/domain';
 import { randomUUID } from 'node:crypto';
@@ -30,6 +31,11 @@ export class SqliteAdministrationStore implements AdministrationUnitOfWork {
     }
     write<T>(op: (tenantId: AdministrationTransaction) => Promise<T>) { return this.transaction(true, op); }
     read<T>(op: (tenantId: AdministrationTransaction) => Promise<T>) { return this.transaction(false, op); }
+    readonly analyst = new MetadataAnalystConversations((write, operation) => this.enqueue(async () => {
+        this.db.exec(write ? 'BEGIN IMMEDIATE' : 'BEGIN');
+        try { const result = await operation(metadataConnection(this.db)); this.db.exec('COMMIT'); return result; }
+        catch(error) { this.db.exec('ROLLBACK'); throw error; }
+    }));
     readonly directory: AccessDirectory = { tenantAccess: (id, tenantId) => this.read(transaction => transaction.directory.tenantAccess(id, tenantId)), platformAccess: id => this.read(transaction => transaction.directory.platformAccess(id)), listActiveMemberships: id => this.read(transaction => transaction.directory.listActiveMemberships(id)) };
     readonly library: DashboardLibraryRepository = {
         listFolders: snapshot => this.enqueue(() => new SqliteDashboardLibraryRepository(this.db).listFolders(snapshot)),

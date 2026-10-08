@@ -7,6 +7,9 @@ import type { AnalyticsRepository, AuditAction, AuditSink, AuthorizationPolicy, 
 import { ApiError } from './errors.ts';
 
 export interface ApiDependencies {
+  analystRepository?: import('@el-dabboos/domain').AnalystConversationRepository;
+  analystPlanner?: import('@el-dabboos/application').StructuredAnalyticsPlanner;
+  analystSynthesis?: import('@el-dabboos/domain').LLMProvider;
   drillThroughRepository?: import('@el-dabboos/domain').DrillThroughRepository;
   operationalCommands?: { availability?(tenantId:string):import('@el-dabboos/domain').AnalyticsSourceAvailability;run(request: import('@el-dabboos/domain').AnalyticsJobRequest): Promise<import('@el-dabboos/domain').AnalyticsOperationResult> };
   operationalStatus?: import('@el-dabboos/domain').OperationalStatusProvider;

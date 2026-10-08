@@ -28,7 +28,7 @@ export interface RuntimeConfig {
   analyticsProvider: 'sqlite' | 'mock' | 'postgres';
   postgres?: { runtimeUrl: string; poolMax: number; statementTimeoutMs: number; maxGroups: number; maxDateSpanDays: number }; plannerMode: 'mock' | 'structured' | 'disabled';
   analyticsPath: string; dashboardPath: string; port: number; executionConcurrency: number;
-  llm: { baseUrl?: string; modelId?: string; apiKey?: string; timeoutMs: number; repairAttempts: number; diagnostics: boolean; temperature: number; maxTokens: number; reasoningBudgetTokens?: number; seed?: number };
+  llm: { baseUrl?: string; modelId?: string; apiKey?: string; timeoutMs: number; repairAttempts: number; diagnostics: boolean; temperature: number; maxTokens: number; analystSynthesis:boolean; reasoningBudgetTokens?: number; seed?: number };
 }
 /** Only the API composition root supplies environment values; never loads env files itself. */
 export function parseRuntimeConfig(env: Readonly<Record<string, string | undefined>>, defaults: { analyticsPath: string; dashboardPath: string }): RuntimeConfig {
@@ -73,7 +73,7 @@ export function parseRuntimeConfig(env: Readonly<Record<string, string | undefin
     analyticsPath: path('SQLITE_DB_PATH', defaults.analyticsPath), dashboardPath: path('DASHBOARD_DB_PATH', defaults.dashboardPath),
     port: integer('PORT', 3001, 1, 65535), executionConcurrency: integer('ANALYTICS_EXECUTION_CONCURRENCY', 8, 1, 64),
     llm: { ...(baseUrl ? { baseUrl } : {}), ...(modelId ? { modelId } : {}), ...(env.LLM_API_KEY ? { apiKey: env.LLM_API_KEY } : {}),
-      temperature, maxTokens: integer('LLM_MAX_TOKENS', 2048, 1, 65536),
+      analystSynthesis: choice('ANALYST_SYNTHESIS','false',['true','false'])==='true', temperature, maxTokens: integer('LLM_MAX_TOKENS', 2048, 1, 65536),
       ...(env.LLM_REASONING_BUDGET_TOKENS !== undefined ? { reasoningBudgetTokens: integer('LLM_REASONING_BUDGET_TOKENS', 0, 0, 65536) } : {}),
       ...(env.LLM_SEED !== undefined ? { seed: integer('LLM_SEED', 0, 0, 2147483647) } : {}),
       timeoutMs: integer('LLM_TIMEOUT_MS', 120000, 1, 600000), repairAttempts: integer('LLM_REPAIR_ATTEMPTS', 1, 0, 2), diagnostics: diagnosticsValue === 'true' } };

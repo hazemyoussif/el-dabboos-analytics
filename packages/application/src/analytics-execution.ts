@@ -70,12 +70,18 @@ function combinedStatus(series:AnalyticsSeriesResult[]):AnalyticsIntentResult['s
 }
 /** Stable row identity + exact executed query + immutable release; no display-string reconstruction. */
 export function analyticsResultDrillRequest(entry:AnalyticsSeriesResult,key:string|null):DrillRequest|null {
-  if (entry.status !== 'SUPPORTED' || entry.query.analysis || !drillMetrics.includes(entry.query.metric)) return null;
+  if (entry.status !== 'SUPPORTED' || hasValueTransform(entry.query) || !drillMetrics.includes(entry.query.metric)) return null;
   const {metadata,rows} = entry.result, dimension = entry.query.groupBy;
   if (!metadata.release || !metadata.sourceAsOf || rows.find(row => row.key === key)?.value == null) return null;
   if (dimension && !drillDimensions.includes(dimension)) return null;
-  const {groupBy:_groupBy,...query} = entry.query;
+  const {groupBy:_groupBy,analysis:_analysis,...query} = entry.query;
+  void _analysis;
   void _groupBy;
   return {query,release:metadata.drillReleases?.[String(key)] ?? metadata.release.datasetId,sourceAsOf:metadata.sourceAsOf,
     ...(dimension && key !== null ? {clicked:{dimension,values:[key]}} : {})};
+}
+
+function hasValueTransform(query:AnalyticsQuery) {
+ const analysis=query.analysis;
+ return !!(analysis?.comparison || analysis?.movingAverage || analysis?.runningTotal || analysis?.percentageContribution);
 }

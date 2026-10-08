@@ -5,7 +5,7 @@ import { parseLocalAuthConfig } from './auth/config.ts';
 import { openLocalAuthentication } from './auth/runtime.ts';
 import { openControlStorage } from './control-storage.ts';
 import type { StructuredPlannerDiagnostic } from '@el-dabboos/application';
-import { StructuredDashboardPlanner } from '@el-dabboos/application';
+import { StructuredAnalyticsPlanner, StructuredDashboardPlanner } from '@el-dabboos/application';
 import { MockAnalyticsRepository, PostgresOperationalStatus, TrustedAnalyticsRepository, SqliteAnalyticsRepository, createMartPool, createSqliteSchema, generateSeedFacts, assertMartRuntimeReady } from '@el-dabboos/data';
 import type { AnalyticsRepository, DashboardPlanner, DimensionValueRepository } from '@el-dabboos/domain';
 import { existsSync, realpathSync } from 'node:fs';
@@ -67,6 +67,8 @@ else {
 }
 const plannerMode = config.plannerMode;
 let planner: DashboardPlanner | null | undefined;
+let analystPlanner:StructuredAnalyticsPlanner|undefined;
+let analystSynthesis:import('@el-dabboos/domain').LLMProvider|undefined;
 if (plannerMode === 'structured') {
     const baseUrl = config.llm.baseUrl;
     const modelId = config.llm.modelId;
@@ -79,8 +81,11 @@ if (plannerMode === 'structured') {
         ? (event: StructuredPlannerDiagnostic) => {
             process.stderr.write(`${formatStructuredDiagnostic(event, apiKey)}\n`);
         } : undefined;
-    planner = new StructuredDashboardPlanner(new OpenAICompatibleLLMProvider({ baseUrl, modelId,
-        ...(apiKey ? { apiKey } : {}), temperature: config.llm.temperature, maxTokens: config.llm.maxTokens, ...(config.llm.reasoningBudgetTokens !== undefined ? { reasoningBudgetTokens: config.llm.reasoningBudgetTokens } : {}), ...(config.llm.seed !== undefined ? { seed: config.llm.seed } : {}), timeoutMs, ...(config.llm.diagnostics ? { diagnostics: event => process.stderr.write(`${JSON.stringify(event)}\n`) } : {}) }), { maxRepairAttempts, ...(diagnostics ? { diagnostics } : {}) });
+    const llmProvider = new OpenAICompatibleLLMProvider({ baseUrl, modelId,
+        ...(apiKey ? { apiKey } : {}), temperature: config.llm.temperature, maxTokens: config.llm.maxTokens, ...(config.llm.reasoningBudgetTokens !== undefined ? { reasoningBudgetTokens: config.llm.reasoningBudgetTokens } : {}), ...(config.llm.seed !== undefined ? { seed: config.llm.seed } : {}), timeoutMs, ...(config.llm.diagnostics ? { diagnostics: event => process.stderr.write(`${JSON.stringify(event)}\n`) } : {}) });
+    analystPlanner=new StructuredAnalyticsPlanner(llmProvider);
+    if(config.llm.analystSynthesis)analystSynthesis=llmProvider;
+    planner=new StructuredDashboardPlanner(llmProvider, { maxRepairAttempts, ...(diagnostics ? { diagnostics } : {}) });
 }
 else if (plannerMode === 'disabled')
     planner = null;
@@ -88,7 +93,7 @@ else if (plannerMode !== 'mock')
     throw new Error('DASHBOARD_PLANNER must be mock, structured, or disabled.');
 const sourceRelay=await localAnalyticsSourceRelay(process.env);
 const operationalCommands=manualAnalyticsCommands(provider,process.env);
-const app = await buildApi({ ...(drillThroughRepository?{drillThroughRepository}:{}), ...(operationalCommands?{operationalCommands}:{}), ...(operationalStatus?{operationalStatus}:{}), ...(provider==='postgres' ? { publishedCapabilities: repository as TrustedAnalyticsRepository } : {}),analyticsRepository: repository, dimensionValues: repository, executionConcurrency: config.executionConcurrency,
+const app = await buildApi({ analystRepository:administration.analyst,...(analystPlanner?{analystPlanner}:{}),...(analystSynthesis?{analystSynthesis}:{}), ...(drillThroughRepository?{drillThroughRepository}:{}), ...(operationalCommands?{operationalCommands}:{}), ...(operationalStatus?{operationalStatus}:{}), ...(provider==='postgres' ? { publishedCapabilities: repository as TrustedAnalyticsRepository } : {}),analyticsRepository: repository, dimensionValues: repository, executionConcurrency: config.executionConcurrency,
     readiness: { persistence: async () => { await localAuth?.ready(); return controlStorage.ready(); }, analytics: analyticsReady },
     administration: { unitOfWork: administration, directory: administration.directory, profiles: administration.profiles, dataReady,
         authenticate: async (headers) => {
