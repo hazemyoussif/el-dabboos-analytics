@@ -1,0 +1,1806 @@
+{
+  "date": "2026-10-08",
+  "timezone": "Africa/Cairo",
+  "head": "526bf32",
+  "branch": "codex/production-pilot-lifecycle",
+  "deploymentInput": "Current checkout including pre-existing uncommitted historical/frontend dependencies. Exact operational adapter, migration and compiled API hashes matched current checkout. No source code changed in this task.",
+  "runtimeBefore": {
+    "el-dabboos-staging-api-1": {
+      "Image": "sha256:c45a7bf0a19340df596c715979843cfb37fee9d162a78f9792bdd7ad4bf0e0a4",
+      "Created": "2026-10-07T18:26:10.506064396Z",
+      "started": "2026-10-07T18:26:11.740151238Z",
+      "healthy": "unhealthy"
+    },
+    "el-dabboos-staging-web-1": {
+      "Image": "sha256:5b1a8c6f5ea6efbcd08a6aecf3c3e8def251362fdfd20e56b6505e7f6b9187c9",
+      "Created": "2026-10-07T18:07:46.402325738Z",
+      "started": "2026-10-07T18:07:47.053020288Z",
+      "healthy": null
+    }
+  },
+  "runtimeAfter": {
+    "el-dabboos-staging-api-1": {
+      "image": "sha256:ed9e6713e9d258fee220e76ebffda97a6ef6849204899fcf46d29e17657e43ec",
+      "created": "2026-10-08T00:36:20.504261695Z",
+      "started": "2026-10-08T00:36:22.421512277Z",
+      "healthy": "starting"
+    },
+    "el-dabboos-staging-web-1": {
+      "image": "sha256:aebb593697d274fff6b0a62c5047e7b3271ca629a4c2e8ab8159e9b4a61680e7",
+      "created": "2026-10-08T00:36:21.965499044Z",
+      "started": "2026-10-08T00:36:22.622724537Z",
+      "healthy": null
+    }
+  },
+  "beforeDataTarget": {
+    "db": [
+      {
+        "database": "el_dabboos_analytics_staging",
+        "host": "172.20.0.2",
+        "port": 5432
+      }
+    ],
+    "binding": [
+      {
+        "dataset_id": "el-dabboos-finance-202609-v6"
+      }
+    ],
+    "history": [
+      {
+        "reference": "el-dabboos-history-202510-202609-v1",
+        "period_from": "2025-10-01",
+        "period_to": "2026-09-30"
+      }
+    ],
+    "trusted": [
+      {
+        "revision_id": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+      }
+    ],
+    "cursor": [
+      {
+        "cutoff": "2026-10-08T00:21:08.728Z"
+      }
+    ]
+  },
+  "runtimeStatus": {
+    "tenantId": "el-dabboos-iq",
+    "trustedServingRevision": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54",
+    "pendingCandidateRun": null,
+    "freshnessAgeSeconds": 1552,
+    "latestFailure": {
+      "runId": "d5351974-56ce-48d7-b86c-38e11927087a",
+      "kind": "daily",
+      "failedAt": "2026-10-07T23:32:33.382Z"
+    },
+    "freshnessTargetSeconds": 600,
+    "cursor": {
+      "cutoff": "2026-10-08T00:21:08.728Z",
+      "objects": {
+        "sale_order": "[\"2026-10-07 19:05:56.466834\",\"70364\"]",
+        "account_move": "[\"2026-10-07 19:05:56.466834\",\"247171\"]"
+      }
+    },
+    "latest": [
+      {
+        "kind": "affected",
+        "runId": "987fe7ad-2764-4276-a5ae-7b5b2ea791dc",
+        "status": "passed",
+        "sourceCutoff": "2026-10-07T23:40:20.136Z",
+        "completedAt": "2026-10-07T23:40:25.706Z",
+        "recordsChanged": 0,
+        "partitionsAffected": 0,
+        "caseCount": 202,
+        "mismatchCount": 0,
+        "servingRelease": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+      },
+      {
+        "kind": "daily",
+        "runId": "15e50a0c-aa25-4874-8671-ff21e02c0fe4",
+        "status": "passed",
+        "sourceCutoff": "2026-10-07T23:34:16.242Z",
+        "completedAt": "2026-10-07T23:35:30.412Z",
+        "recordsChanged": 0,
+        "partitionsAffected": 0,
+        "caseCount": 248,
+        "mismatchCount": 0,
+        "servingRelease": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+      },
+      {
+        "kind": "sweep",
+        "runId": "c5f3508b-479f-4f82-8adf-7414a0a918fe",
+        "status": "unchanged",
+        "sourceCutoff": "2026-10-07T23:27:34.850Z",
+        "completedAt": "2026-10-07T23:29:01.054Z",
+        "recordsChanged": 0,
+        "partitionsAffected": 0,
+        "caseCount": 0,
+        "mismatchCount": 0,
+        "servingRelease": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+      },
+      {
+        "kind": "sync",
+        "runId": "b9d983de-1530-4906-b590-9e3ea4241390",
+        "status": "unchanged",
+        "sourceCutoff": "2026-10-08T00:21:08.728Z",
+        "completedAt": "2026-10-08T00:21:27.623Z",
+        "recordsChanged": 0,
+        "partitionsAffected": 0,
+        "caseCount": 0,
+        "mismatchCount": 0,
+        "servingRelease": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+      }
+    ],
+    "lastSuccessfulSync": {
+      "kind": "sync",
+      "runId": "b9d983de-1530-4906-b590-9e3ea4241390",
+      "status": "unchanged",
+      "sourceCutoff": "2026-10-08T00:21:08.728Z",
+      "completedAt": "2026-10-08T00:21:27.623Z",
+      "recordsChanged": 0,
+      "partitionsAffected": 0,
+      "caseCount": 0,
+      "mismatchCount": 0,
+      "servingRelease": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+    },
+    "trustedCertificationRelease": "el-dabboos-finance-202609-v6",
+    "historicalCoverage": {
+      "reference": "el-dabboos-history-202510-202609-v1",
+      "from": "2025-10-01",
+      "to": "2026-09-30"
+    }
+  },
+  "codeHashes": {
+    "packages/data/src/operational/repository.ts": "9f33c4ab6ecadfa4d8b2a890ae01ba27e8f8b5489cfa7a7dc63fa8a044ed215f",
+    "packages/data/migrations/postgres/030_operational_presence_access.sql": "9f0d3f65e985788f847dbfea1c41193e241fe0835e597a904b7ab5cc4aeefb04",
+    "apps/api/dist/server.mjs": "69e02a27073b037e02639ce306e2931b4a960903b6c408754317c79ccb0f607e"
+  },
+  "timingMethod": "Authenticated native browser report/date actions through https://localhost:8443. Temporary Nginx log records request_time and upstream_response_time, status and bytes, excluding credentials, headers, payloads and query strings. Original protected TLS config restored. First/warm sequential samples on running PostgreSQL; no cold-cache or isolated-load claim. API includes authorization, pool waits, query execution and serialization; individual per-request SQL time unavailable. Table counts are DOM counts including collapsed chart summary tables; series counts come from current template contract, with no displayed failures/partial warnings.",
+  "timings": [
+    {
+      "report": "Executive",
+      "range": "Sep",
+      "from": "2026-09-01",
+      "to": "2026-09-30",
+      "first": {
+        "component": "https-benchmark",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "httpSeconds": 0.066,
+        "apiSeconds": "0.066",
+        "bytes": 5718
+      },
+      "warm": {
+        "component": "https-benchmark",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "httpSeconds": 0.067,
+        "apiSeconds": "0.067",
+        "bytes": 5718
+      },
+      "widgets": 6,
+      "templateSeries": 6,
+      "failedWidgets": 0,
+      "displayedFailureAlerts": 0,
+      "domTableRowsIncludingChartSummaries": 0,
+      "tenant": "el-dabboos-iq"
+    },
+    {
+      "report": "Executive",
+      "range": "6 months",
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "first": {
+        "component": "https-benchmark",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "httpSeconds": 0.125,
+        "apiSeconds": "0.125",
+        "bytes": 5724
+      },
+      "warm": {
+        "component": "https-benchmark",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "httpSeconds": 0.095,
+        "apiSeconds": "0.095",
+        "bytes": 5724
+      },
+      "widgets": 6,
+      "templateSeries": 6,
+      "failedWidgets": 0,
+      "displayedFailureAlerts": 0,
+      "domTableRowsIncludingChartSummaries": 0,
+      "tenant": "el-dabboos-iq"
+    },
+    {
+      "report": "Executive",
+      "range": "12 months",
+      "from": "2025-10-01",
+      "to": "2026-09-30",
+      "first": {
+        "component": "https-benchmark",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "httpSeconds": 0.187,
+        "apiSeconds": "0.188",
+        "bytes": 5728
+      },
+      "warm": {
+        "component": "https-benchmark",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "httpSeconds": 0.141,
+        "apiSeconds": "0.142",
+        "bytes": 5728
+      },
+      "widgets": 6,
+      "templateSeries": 6,
+      "failedWidgets": 0,
+      "displayedFailureAlerts": 0,
+      "domTableRowsIncludingChartSummaries": 0,
+      "tenant": "el-dabboos-iq"
+    },
+    {
+      "report": "Business Line",
+      "range": "Sep",
+      "from": "2026-09-01",
+      "to": "2026-09-30",
+      "first": {
+        "component": "https-benchmark",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "httpSeconds": 0.422,
+        "apiSeconds": "0.422",
+        "bytes": 9302
+      },
+      "warm": {
+        "component": "https-benchmark",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "httpSeconds": 0.345,
+        "apiSeconds": "0.345",
+        "bytes": 9302
+      },
+      "widgets": 3,
+      "templateSeries": 10,
+      "failedWidgets": 0,
+      "displayedFailureAlerts": 0,
+      "domTableRowsIncludingChartSummaries": 3,
+      "tenant": "el-dabboos-iq"
+    },
+    {
+      "report": "Business Line",
+      "range": "6 months",
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "first": {
+        "component": "https-benchmark",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "httpSeconds": 0.453,
+        "apiSeconds": "0.453",
+        "bytes": 9310
+      },
+      "warm": {
+        "component": "https-benchmark",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "httpSeconds": 0.451,
+        "apiSeconds": "0.451",
+        "bytes": 9310
+      },
+      "widgets": 3,
+      "templateSeries": 10,
+      "failedWidgets": 0,
+      "displayedFailureAlerts": 0,
+      "domTableRowsIncludingChartSummaries": 3,
+      "tenant": "el-dabboos-iq"
+    },
+    {
+      "report": "Business Line",
+      "range": "12 months",
+      "from": "2025-10-01",
+      "to": "2026-09-30",
+      "first": {
+        "component": "https-benchmark",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "httpSeconds": 0.566,
+        "apiSeconds": "0.566",
+        "bytes": 9320
+      },
+      "warm": {
+        "component": "https-benchmark",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "httpSeconds": 0.547,
+        "apiSeconds": "0.548",
+        "bytes": 9320
+      },
+      "widgets": 3,
+      "templateSeries": 10,
+      "failedWidgets": 0,
+      "displayedFailureAlerts": 0,
+      "domTableRowsIncludingChartSummaries": 3,
+      "tenant": "el-dabboos-iq"
+    },
+    {
+      "report": "Salesperson",
+      "range": "Sep",
+      "from": "2026-09-01",
+      "to": "2026-09-30",
+      "first": {
+        "component": "https-benchmark",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "httpSeconds": 0.673,
+        "apiSeconds": "0.673",
+        "bytes": 72806
+      },
+      "warm": {
+        "component": "https-benchmark",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "httpSeconds": 0.651,
+        "apiSeconds": "0.651",
+        "bytes": 72806
+      },
+      "widgets": 3,
+      "templateSeries": 10,
+      "failedWidgets": 0,
+      "displayedFailureAlerts": 0,
+      "domTableRowsIncludingChartSummaries": 119,
+      "tenant": "el-dabboos-iq"
+    },
+    {
+      "report": "Salesperson",
+      "range": "6 months",
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "first": {
+        "component": "https-benchmark",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "httpSeconds": 2.321,
+        "apiSeconds": "2.321",
+        "bytes": 92802
+      },
+      "warm": {
+        "component": "https-benchmark",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "httpSeconds": 2.24,
+        "apiSeconds": "2.240",
+        "bytes": 92802
+      },
+      "widgets": 3,
+      "templateSeries": 10,
+      "failedWidgets": 0,
+      "displayedFailureAlerts": 0,
+      "domTableRowsIncludingChartSummaries": 157,
+      "tenant": "el-dabboos-iq"
+    },
+    {
+      "report": "Salesperson",
+      "range": "12 months",
+      "from": "2025-10-01",
+      "to": "2026-09-30",
+      "first": {
+        "component": "https-benchmark",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "httpSeconds": 4.749,
+        "apiSeconds": "4.749",
+        "bytes": 113067
+      },
+      "warm": {
+        "component": "https-benchmark",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "httpSeconds": 4.77,
+        "apiSeconds": "4.770",
+        "bytes": 113067
+      },
+      "widgets": 3,
+      "templateSeries": 10,
+      "failedWidgets": 0,
+      "displayedFailureAlerts": 0,
+      "domTableRowsIncludingChartSummaries": 193,
+      "tenant": "el-dabboos-iq"
+    },
+    {
+      "report": "Invoice & Refund",
+      "range": "Sep",
+      "from": "2026-09-01",
+      "to": "2026-09-30",
+      "first": {
+        "component": "https-benchmark",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "httpSeconds": 0.528,
+        "apiSeconds": "0.527",
+        "bytes": 45790
+      },
+      "warm": {
+        "component": "https-benchmark",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "httpSeconds": 0.531,
+        "apiSeconds": "0.531",
+        "bytes": 45790
+      },
+      "widgets": 7,
+      "templateSeries": 12,
+      "failedWidgets": 0,
+      "displayedFailureAlerts": 0,
+      "domTableRowsIncludingChartSummaries": 39,
+      "tenant": "el-dabboos-iq"
+    },
+    {
+      "report": "Invoice & Refund",
+      "range": "6 months",
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "first": {
+        "component": "https-benchmark",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "httpSeconds": 1.603,
+        "apiSeconds": "1.603",
+        "bytes": 54754
+      },
+      "warm": {
+        "component": "https-benchmark",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "httpSeconds": 1.633,
+        "apiSeconds": "1.634",
+        "bytes": 54754
+      },
+      "widgets": 7,
+      "templateSeries": 12,
+      "failedWidgets": 0,
+      "displayedFailureAlerts": 0,
+      "domTableRowsIncludingChartSummaries": 47,
+      "tenant": "el-dabboos-iq"
+    },
+    {
+      "report": "Invoice & Refund",
+      "range": "12 months",
+      "from": "2025-10-01",
+      "to": "2026-09-30",
+      "first": {
+        "component": "https-benchmark",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "httpSeconds": 3.592,
+        "apiSeconds": "3.593",
+        "bytes": 67997
+      },
+      "warm": {
+        "component": "https-benchmark",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "httpSeconds": 3.563,
+        "apiSeconds": "3.563",
+        "bytes": 67997
+      },
+      "widgets": 7,
+      "templateSeries": 12,
+      "failedWidgets": 0,
+      "displayedFailureAlerts": 0,
+      "domTableRowsIncludingChartSummaries": 62,
+      "tenant": "el-dabboos-iq"
+    },
+    {
+      "report": "Receivables",
+      "range": "Sep",
+      "first": {
+        "component": "https-benchmark",
+        "route": "/api/dashboard-templates/receivables-aging/instantiate",
+        "method": "GET",
+        "status": 200,
+        "httpSeconds": 9.527,
+        "apiSeconds": "9.527",
+        "bytes": 2499266
+      },
+      "warm": {
+        "component": "https-benchmark",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "httpSeconds": 9.011,
+        "apiSeconds": "9.011",
+        "bytes": 2497351
+      },
+      "widgets": 12,
+      "templateSeries": 18,
+      "failedWidgets": 0,
+      "displayedFailureAlerts": 0,
+      "domTableRowsIncludingChartSummaries": 2217,
+      "tenant": "el-dabboos-iq"
+    },
+    {
+      "report": "Receivables",
+      "range": "6 months",
+      "result": "blocked",
+      "response": {
+        "component": "https-benchmark",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 403,
+        "httpSeconds": 0.014,
+        "apiSeconds": "0.014",
+        "bytes": 160
+      },
+      "reason": "Complete report includes customer net-aged snapshot certified only for September. Summary metric supports all three ranges; see separate runtime snapshot check.",
+      "warm": "not repeated after deterministic capability rejection"
+    },
+    {
+      "report": "Receivables",
+      "range": "12 months",
+      "result": "blocked",
+      "response": {
+        "component": "https-benchmark",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 403,
+        "httpSeconds": 0.012,
+        "apiSeconds": "0.012",
+        "bytes": 160
+      },
+      "reason": "Complete report includes customer net-aged snapshot certified only for September. Summary metric supports all three ranges; see separate runtime snapshot check.",
+      "warm": "not repeated after deterministic capability rejection"
+    }
+  ],
+  "historicalExecutiveChecks": [
+    {
+      "range": "Sep",
+      "widgets": 4,
+      "templateSeries": 4,
+      "domTableRowsIncludingChartSummaries": 4,
+      "failedWidgets": 0,
+      "http": {
+        "component": "https-benchmark",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "httpSeconds": 3.268,
+        "apiSeconds": "3.267",
+        "bytes": 101735
+      }
+    },
+    {
+      "range": "6 months",
+      "widgets": 4,
+      "templateSeries": 4,
+      "domTableRowsIncludingChartSummaries": 24,
+      "failedWidgets": 0,
+      "http": {
+        "component": "https-benchmark",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "httpSeconds": 0.296,
+        "apiSeconds": "0.296",
+        "bytes": 24636
+      }
+    },
+    {
+      "range": "12 months",
+      "widgets": 4,
+      "templateSeries": 4,
+      "domTableRowsIncludingChartSummaries": 48,
+      "failedWidgets": 0,
+      "http": {
+        "component": "https-benchmark",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "httpSeconds": 0.612,
+        "apiSeconds": "0.613",
+        "bytes": 72806
+      }
+    }
+  ],
+  "snapshotSummaryRuntimeCheck": [
+    {
+      "from": "2026-09-01",
+      "to": "2026-09-30",
+      "value": 1359461092.61,
+      "snapshotAsOf": "2026-09-30",
+      "release": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+    },
+    {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "value": 1359461092.61,
+      "snapshotAsOf": "2026-09-30",
+      "release": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+    },
+    {
+      "from": "2025-10-01",
+      "to": "2026-09-30",
+      "value": 1359461092.61,
+      "snapshotAsOf": "2026-09-30",
+      "release": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+    }
+  ],
+  "fingerprintBefore": {
+    "analytics_operation_runs": {
+      "count": "11",
+      "fingerprint": "1841ac200d7aea07a1c0a8a55906d9fe"
+    },
+    "analytics_exact_cases": {
+      "count": "734",
+      "fingerprint": "20662d60e9982ae8cd83193c7e791e26"
+    },
+    "analytics_operation_failures": {
+      "count": "8",
+      "fingerprint": "7e951de97e2b8abaef188853068a0ffd"
+    },
+    "analytics_source_cursors": {
+      "count": "1",
+      "fingerprint": "10b6008050c21b800bb7b7a5b80b5d70"
+    },
+    "analytics_trusted_serving": {
+      "count": "1",
+      "fingerprint": "cf250ee0f6148e9f006afa2f51a7202d"
+    },
+    "technical_proof_results": {
+      "count": "25",
+      "fingerprint": "69933878fed847067ff31270a650f13e"
+    },
+    "serving_bindings": {
+      "count": "1",
+      "fingerprint": "5d9d7a94cd742264f6ae3b076293e91e"
+    },
+    "historical_serving_bindings": {
+      "count": "1",
+      "fingerprint": "133181c97852e1ce7ab9f9057d1fdc60"
+    },
+    "historical_release_members": {
+      "count": "24",
+      "fingerprint": "b6fb3094ac8fd0e4aa9221717e9ef6b6"
+    }
+  },
+  "fingerprintAfter": {
+    "analytics_operation_runs": {
+      "count": "11",
+      "fingerprint": "1841ac200d7aea07a1c0a8a55906d9fe"
+    },
+    "analytics_exact_cases": {
+      "count": "734",
+      "fingerprint": "20662d60e9982ae8cd83193c7e791e26"
+    },
+    "analytics_operation_failures": {
+      "count": "8",
+      "fingerprint": "7e951de97e2b8abaef188853068a0ffd"
+    },
+    "analytics_source_cursors": {
+      "count": "1",
+      "fingerprint": "10b6008050c21b800bb7b7a5b80b5d70"
+    },
+    "analytics_trusted_serving": {
+      "count": "1",
+      "fingerprint": "cf250ee0f6148e9f006afa2f51a7202d"
+    },
+    "technical_proof_results": {
+      "count": "25",
+      "fingerprint": "69933878fed847067ff31270a650f13e"
+    },
+    "serving_bindings": {
+      "count": "1",
+      "fingerprint": "5d9d7a94cd742264f6ae3b076293e91e"
+    },
+    "historical_serving_bindings": {
+      "count": "1",
+      "fingerprint": "133181c97852e1ce7ab9f9057d1fdc60"
+    },
+    "historical_release_members": {
+      "count": "24",
+      "fingerprint": "b6fb3094ac8fd0e4aa9221717e9ef6b6"
+    }
+  },
+  "fingerprintsUnchanged": true,
+  "architecture": {
+    "dashboardReadsTriggerSourceSync": false,
+    "dashboardReadsTriggerReconciliation": false,
+    "dashboardReadsRebuildCertification": false,
+    "dashboardReadsUseTrustedServing": true,
+    "sourceAndWriterCredentialsInAPI": false,
+    "categoricalFinanceAnchor": "Original certified el-dabboos-finance-202609-v6; this scope remains pinned rather than incrementally promoted."
+  },
+  "slowPathEvidence": {
+    "results": [
+      {
+        "query": {
+          "metric": "net_aged_receivable",
+          "groupBy": "customer",
+          "dateRange": {
+            "from": "2026-09-01",
+            "to": "2026-09-30"
+          }
+        },
+        "ms": 2640.41471,
+        "rows": 2217,
+        "releases": [
+          "el-dabboos-finance-202609-v6"
+        ]
+      },
+      {
+        "query": {
+          "metric": "overdue_receivable_percentage",
+          "groupBy": "customer",
+          "dateRange": {
+            "from": "2026-09-01",
+            "to": "2026-09-30"
+          }
+        },
+        "ms": 2615.1566570000005,
+        "rows": 2217,
+        "releases": [
+          "el-dabboos-finance-202609-v6"
+        ]
+      },
+      {
+        "query": {
+          "metric": "order_revenue",
+          "groupBy": "salesperson",
+          "dateRange": {
+            "from": "2025-10-01",
+            "to": "2026-09-30"
+          }
+        },
+        "ms": 1145.5481019999997,
+        "rows": 64,
+        "releases": [
+          "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+        ]
+      }
+    ],
+    "topPlans": [
+      {
+        "query": {
+          "metric": "order_revenue",
+          "groupBy": "salesperson",
+          "dateRange": {
+            "from": "2025-10-01",
+            "to": "2026-09-30"
+          }
+        },
+        "measuredQueryMs": 973.3751180000008,
+        "executionMs": 987.122,
+        "planningMs": 0.339,
+        "plan": {
+          "Node Type": "Nested Loop",
+          "Join Type": "Inner",
+          "Actual Total Time": 987.019,
+          "Actual Rows": 64,
+          "Actual Loops": 1,
+          "Shared Hit Blocks": 286470,
+          "Shared Read Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0,
+          "Plans": [
+            {
+              "Node Type": "Function Scan",
+              "Actual Total Time": 0.096,
+              "Actual Rows": 64,
+              "Actual Loops": 1,
+              "Shared Hit Blocks": 0,
+              "Shared Read Blocks": 0,
+              "Temp Read Blocks": 0,
+              "Temp Written Blocks": 0
+            },
+            {
+              "Node Type": "Aggregate",
+              "Actual Total Time": 15.419,
+              "Actual Rows": 1,
+              "Actual Loops": 64,
+              "Shared Hit Blocks": 286470,
+              "Shared Read Blocks": 0,
+              "Temp Read Blocks": 0,
+              "Temp Written Blocks": 0,
+              "Plans": [
+                {
+                  "Node Type": "Result",
+                  "Actual Total Time": 15.36,
+                  "Actual Rows": 515.28,
+                  "Actual Loops": 64,
+                  "Shared Hit Blocks": 286470,
+                  "Shared Read Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0,
+                  "Plans": [
+                    {
+                      "Node Type": "Nested Loop",
+                      "Join Type": "Inner",
+                      "Actual Total Time": 15.324,
+                      "Actual Rows": 515.28,
+                      "Actual Loops": 64,
+                      "Shared Hit Blocks": 286470,
+                      "Shared Read Blocks": 0,
+                      "Temp Read Blocks": 0,
+                      "Temp Written Blocks": 0,
+                      "Plans": [
+                        {
+                          "Node Type": "Nested Loop",
+                          "Join Type": "Inner",
+                          "Actual Total Time": 0.021,
+                          "Actual Rows": 13,
+                          "Actual Loops": 64,
+                          "Shared Hit Blocks": 258,
+                          "Shared Read Blocks": 0,
+                          "Temp Read Blocks": 0,
+                          "Temp Written Blocks": 0,
+                          "Plans": [
+                            {
+                              "Node Type": "Index Scan",
+                              "Relation Name": "analytics_trusted_serving",
+                              "Index Name": "analytics_trusted_serving_pkey",
+                              "Actual Total Time": 0.003,
+                              "Actual Rows": 1,
+                              "Actual Loops": 64,
+                              "Shared Hit Blocks": 128,
+                              "Shared Read Blocks": 0,
+                              "Temp Read Blocks": 0,
+                              "Temp Written Blocks": 0
+                            },
+                            {
+                              "Node Type": "Index Scan",
+                              "Relation Name": "analytics_serving_members",
+                              "Index Name": "analytics_serving_members_pkey",
+                              "Actual Total Time": 0.014,
+                              "Actual Rows": 13,
+                              "Actual Loops": 64,
+                              "Rows Removed by Filter": 0,
+                              "Shared Hit Blocks": 130,
+                              "Shared Read Blocks": 0,
+                              "Temp Read Blocks": 0,
+                              "Temp Written Blocks": 0,
+                              "Plans": [
+                                {
+                                  "Node Type": "Index Scan",
+                                  "Relation Name": "analytics_trusted_serving",
+                                  "Index Name": "analytics_trusted_serving_pkey",
+                                  "Actual Total Time": 0.002,
+                                  "Actual Rows": 1,
+                                  "Actual Loops": 1,
+                                  "Shared Hit Blocks": 2,
+                                  "Shared Read Blocks": 0,
+                                  "Temp Read Blocks": 0,
+                                  "Temp Written Blocks": 0
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "Node Type": "Index Scan",
+                          "Relation Name": "analytics_aggregate_bases",
+                          "Index Name": "analytics_aggregate_bases_pkey",
+                          "Actual Total Time": 1.173,
+                          "Actual Rows": 39.64,
+                          "Actual Loops": 832,
+                          "Rows Removed by Filter": 2497,
+                          "Shared Hit Blocks": 286212,
+                          "Shared Read Blocks": 0,
+                          "Temp Read Blocks": 0,
+                          "Temp Written Blocks": 0,
+                          "Plans": [
+                            {
+                              "Node Type": "Bitmap Heap Scan",
+                              "Relation Name": "analytics_serving_members",
+                              "Actual Total Time": 0.015,
+                              "Actual Rows": 13,
+                              "Actual Loops": 1,
+                              "Rows Removed by Filter": 12,
+                              "Shared Hit Blocks": 4,
+                              "Shared Read Blocks": 0,
+                              "Temp Read Blocks": 0,
+                              "Temp Written Blocks": 0,
+                              "Plans": [
+                                {
+                                  "Node Type": "Bitmap Index Scan",
+                                  "Index Name": "analytics_serving_members_pkey",
+                                  "Actual Total Time": 0.002,
+                                  "Actual Rows": 25,
+                                  "Actual Loops": 1,
+                                  "Shared Hit Blocks": 1,
+                                  "Shared Read Blocks": 0,
+                                  "Temp Read Blocks": 0,
+                                  "Temp Written Blocks": 0
+                                },
+                                {
+                                  "Node Type": "Index Scan",
+                                  "Relation Name": "analytics_trusted_serving",
+                                  "Index Name": "analytics_trusted_serving_pkey",
+                                  "Actual Total Time": 0.001,
+                                  "Actual Rows": 1,
+                                  "Actual Loops": 1,
+                                  "Shared Hit Blocks": 2,
+                                  "Shared Read Blocks": 0,
+                                  "Temp Read Blocks": 0,
+                                  "Temp Written Blocks": 0
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "query": {
+          "metric": "net_aged_receivable",
+          "groupBy": "customer",
+          "dateRange": {
+            "from": "2026-09-01",
+            "to": "2026-09-30"
+          }
+        },
+        "measuredQueryMs": 501.61638600000003,
+        "executionMs": 367.949,
+        "planningMs": 1.293,
+        "plan": {
+          "Node Type": "Aggregate",
+          "Actual Total Time": 366.784,
+          "Actual Rows": 1,
+          "Actual Loops": 1,
+          "Shared Hit Blocks": 95203,
+          "Shared Read Blocks": 0,
+          "Temp Read Blocks": 1477,
+          "Temp Written Blocks": 1479,
+          "Plans": [
+            {
+              "Node Type": "Sort",
+              "Actual Total Time": 366.165,
+              "Actual Rows": 2217,
+              "Actual Loops": 1,
+              "Shared Hit Blocks": 95203,
+              "Shared Read Blocks": 0,
+              "Temp Read Blocks": 1477,
+              "Temp Written Blocks": 1479,
+              "Sort Method": "quicksort",
+              "Sort Space Used": 304,
+              "Sort Space Type": "Memory",
+              "Plans": [
+                {
+                  "Node Type": "Subquery Scan",
+                  "Actual Total Time": 360.581,
+                  "Actual Rows": 2217,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 95203,
+                  "Shared Read Blocks": 0,
+                  "Temp Read Blocks": 1477,
+                  "Temp Written Blocks": 1479,
+                  "Plans": [
+                    {
+                      "Node Type": "Result",
+                      "Actual Total Time": 360.226,
+                      "Actual Rows": 2217,
+                      "Actual Loops": 1,
+                      "Shared Hit Blocks": 95203,
+                      "Shared Read Blocks": 0,
+                      "Temp Read Blocks": 1477,
+                      "Temp Written Blocks": 1479,
+                      "Plans": [
+                        {
+                          "Node Type": "Hash Join",
+                          "Join Type": "Inner",
+                          "Actual Total Time": 359.797,
+                          "Actual Rows": 2217,
+                          "Actual Loops": 1,
+                          "Shared Hit Blocks": 95203,
+                          "Shared Read Blocks": 0,
+                          "Temp Read Blocks": 1477,
+                          "Temp Written Blocks": 1479,
+                          "Plans": [
+                            {
+                              "Node Type": "Index Scan",
+                              "Relation Name": "fact_revisions",
+                              "Index Name": "fact_scope_date",
+                              "Actual Total Time": 143.735,
+                              "Actual Rows": 2217,
+                              "Actual Loops": 1,
+                              "Rows Removed by Filter": 0,
+                              "Shared Hit Blocks": 55992,
+                              "Shared Read Blocks": 0,
+                              "Temp Read Blocks": 0,
+                              "Temp Written Blocks": 0,
+                              "Plans": [
+                                {
+                                  "Node Type": "Function Scan",
+                                  "Actual Total Time": 19.61,
+                                  "Actual Rows": 25,
+                                  "Actual Loops": 1,
+                                  "Shared Hit Blocks": 9273,
+                                  "Shared Read Blocks": 0,
+                                  "Temp Read Blocks": 0,
+                                  "Temp Written Blocks": 0
+                                },
+                                {
+                                  "Node Type": "Result",
+                                  "Actual Total Time": 0.055,
+                                  "Actual Rows": 1,
+                                  "Actual Loops": 2217,
+                                  "Shared Hit Blocks": 45560,
+                                  "Shared Read Blocks": 0,
+                                  "Temp Read Blocks": 0,
+                                  "Temp Written Blocks": 0,
+                                  "Plans": [
+                                    {
+                                      "Node Type": "Nested Loop",
+                                      "Join Type": "Inner",
+                                      "Actual Total Time": 0.055,
+                                      "Actual Rows": 1,
+                                      "Actual Loops": 2217,
+                                      "Shared Hit Blocks": 45560,
+                                      "Shared Read Blocks": 0,
+                                      "Temp Read Blocks": 0,
+                                      "Temp Written Blocks": 0,
+                                      "Plans": [
+                                        {
+                                          "Node Type": "Index Only Scan",
+                                          "Relation Name": "batch_facts",
+                                          "Index Name": "batch_facts_revision_lookup",
+                                          "Actual Total Time": 0.031,
+                                          "Actual Rows": 1,
+                                          "Actual Loops": 2217,
+                                          "Rows Removed by Filter": 0,
+                                          "Shared Hit Blocks": 20359,
+                                          "Shared Read Blocks": 0,
+                                          "Temp Read Blocks": 0,
+                                          "Temp Written Blocks": 0,
+                                          "Plans": [
+                                            {
+                                              "Node Type": "Function Scan",
+                                              "Actual Total Time": 21.252,
+                                              "Actual Rows": 25,
+                                              "Actual Loops": 1,
+                                              "Shared Hit Blocks": 9273,
+                                              "Shared Read Blocks": 0,
+                                              "Temp Read Blocks": 0,
+                                              "Temp Written Blocks": 0
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "Node Type": "Index Scan",
+                                          "Relation Name": "ingestion_batches",
+                                          "Index Name": "ingestion_batches_tenant_id_dataset_id_batch_id_key",
+                                          "Actual Total Time": 0.023,
+                                          "Actual Rows": 1,
+                                          "Actual Loops": 2217,
+                                          "Rows Removed by Filter": 0,
+                                          "Shared Hit Blocks": 25201,
+                                          "Shared Read Blocks": 0,
+                                          "Temp Read Blocks": 0,
+                                          "Temp Written Blocks": 0,
+                                          "Plans": [
+                                            {
+                                              "Node Type": "Seq Scan",
+                                              "Relation Name": "extraction_runs",
+                                              "Actual Total Time": 22.956,
+                                              "Actual Rows": 27,
+                                              "Actual Loops": 1,
+                                              "Rows Removed by Filter": 4,
+                                              "Shared Hit Blocks": 9277,
+                                              "Shared Read Blocks": 0,
+                                              "Temp Read Blocks": 0,
+                                              "Temp Written Blocks": 0,
+                                              "Plans": [
+                                                {
+                                                  "Node Type": "Function Scan",
+                                                  "Actual Total Time": 22.891,
+                                                  "Actual Rows": 25,
+                                                  "Actual Loops": 1,
+                                                  "Shared Hit Blocks": 9273,
+                                                  "Shared Read Blocks": 0,
+                                                  "Temp Read Blocks": 0,
+                                                  "Temp Written Blocks": 0
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "Node Type": "Function Scan",
+                                              "Actual Total Time": 22.393,
+                                              "Actual Rows": 25,
+                                              "Actual Loops": 1,
+                                              "Shared Hit Blocks": 9273,
+                                              "Shared Read Blocks": 0,
+                                              "Temp Read Blocks": 0,
+                                              "Temp Written Blocks": 0
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "Node Type": "Hash",
+                              "Actual Total Time": 211.061,
+                              "Actual Rows": 37190,
+                              "Actual Loops": 1,
+                              "Shared Hit Blocks": 39211,
+                              "Shared Read Blocks": 0,
+                              "Temp Read Blocks": 909,
+                              "Temp Written Blocks": 1387,
+                              "Plans": [
+                                {
+                                  "Node Type": "Unique",
+                                  "Actual Total Time": 200.092,
+                                  "Actual Rows": 37190,
+                                  "Actual Loops": 1,
+                                  "Shared Hit Blocks": 39211,
+                                  "Shared Read Blocks": 0,
+                                  "Temp Read Blocks": 909,
+                                  "Temp Written Blocks": 911,
+                                  "Plans": [
+                                    {
+                                      "Node Type": "Sort",
+                                      "Actual Total Time": 196.307,
+                                      "Actual Rows": 37190,
+                                      "Actual Loops": 1,
+                                      "Shared Hit Blocks": 39211,
+                                      "Shared Read Blocks": 0,
+                                      "Temp Read Blocks": 909,
+                                      "Temp Written Blocks": 911,
+                                      "Sort Method": "external merge",
+                                      "Sort Space Used": 7272,
+                                      "Sort Space Type": "Disk",
+                                      "Plans": [
+                                        {
+                                          "Node Type": "Result",
+                                          "Actual Total Time": 99.841,
+                                          "Actual Rows": 37190,
+                                          "Actual Loops": 1,
+                                          "Shared Hit Blocks": 39211,
+                                          "Shared Read Blocks": 0,
+                                          "Temp Read Blocks": 0,
+                                          "Temp Written Blocks": 0,
+                                          "Plans": [
+                                            {
+                                              "Node Type": "Nested Loop",
+                                              "Join Type": "Inner",
+                                              "Actual Total Time": 97.621,
+                                              "Actual Rows": 37190,
+                                              "Actual Loops": 1,
+                                              "Shared Hit Blocks": 39211,
+                                              "Shared Read Blocks": 0,
+                                              "Temp Read Blocks": 0,
+                                              "Temp Written Blocks": 0,
+                                              "Plans": [
+                                                {
+                                                  "Node Type": "Nested Loop",
+                                                  "Join Type": "Left",
+                                                  "Actual Total Time": 61.93,
+                                                  "Actual Rows": 11,
+                                                  "Actual Loops": 1,
+                                                  "Rows Removed by Filter": 0,
+                                                  "Rows Removed by Join Filter": 12,
+                                                  "Shared Hit Blocks": 27829,
+                                                  "Shared Read Blocks": 0,
+                                                  "Temp Read Blocks": 0,
+                                                  "Temp Written Blocks": 0,
+                                                  "Plans": [
+                                                    {
+                                                      "Node Type": "Index Scan",
+                                                      "Relation Name": "ingestion_batches",
+                                                      "Index Name": "ingestion_batches_tenant_id_dataset_id_batch_id_key",
+                                                      "Actual Total Time": 41.872,
+                                                      "Actual Rows": 11,
+                                                      "Actual Loops": 1,
+                                                      "Rows Removed by Filter": 0,
+                                                      "Shared Hit Blocks": 18554,
+                                                      "Shared Read Blocks": 0,
+                                                      "Temp Read Blocks": 0,
+                                                      "Temp Written Blocks": 0,
+                                                      "Plans": [
+                                                        {
+                                                          "Node Type": "Seq Scan",
+                                                          "Relation Name": "extraction_runs",
+                                                          "Actual Total Time": 21.777,
+                                                          "Actual Rows": 27,
+                                                          "Actual Loops": 1,
+                                                          "Rows Removed by Filter": 4,
+                                                          "Shared Hit Blocks": 9277,
+                                                          "Shared Read Blocks": 0,
+                                                          "Temp Read Blocks": 0,
+                                                          "Temp Written Blocks": 0,
+                                                          "Plans": [
+                                                            {
+                                                              "Node Type": "Function Scan",
+                                                              "Actual Total Time": 21.735,
+                                                              "Actual Rows": 25,
+                                                              "Actual Loops": 1,
+                                                              "Shared Hit Blocks": 9273,
+                                                              "Shared Read Blocks": 0,
+                                                              "Temp Read Blocks": 0,
+                                                              "Temp Written Blocks": 0
+                                                            }
+                                                          ]
+                                                        },
+                                                        {
+                                                          "Node Type": "Function Scan",
+                                                          "Actual Total Time": 20.009,
+                                                          "Actual Rows": 25,
+                                                          "Actual Loops": 1,
+                                                          "Shared Hit Blocks": 9273,
+                                                          "Shared Read Blocks": 0,
+                                                          "Temp Read Blocks": 0,
+                                                          "Temp Written Blocks": 0
+                                                        }
+                                                      ]
+                                                    },
+                                                    {
+                                                      "Node Type": "Materialize",
+                                                      "Actual Total Time": 1.821,
+                                                      "Actual Rows": 2.09,
+                                                      "Actual Loops": 11,
+                                                      "Shared Hit Blocks": 9275,
+                                                      "Shared Read Blocks": 0,
+                                                      "Temp Read Blocks": 0,
+                                                      "Temp Written Blocks": 0,
+                                                      "Plans": [
+                                                        {
+                                                          "Node Type": "Result",
+                                                          "Actual Total Time": 20.023,
+                                                          "Actual Rows": 3,
+                                                          "Actual Loops": 1,
+                                                          "Shared Hit Blocks": 9275,
+                                                          "Shared Read Blocks": 0,
+                                                          "Temp Read Blocks": 0,
+                                                          "Temp Written Blocks": 0,
+                                                          "Plans": [
+                                                            {
+                                                              "Node Type": "Seq Scan",
+                                                              "Relation Name": "extraction_runs",
+                                                              "Actual Total Time": 20.021,
+                                                              "Actual Rows": 3,
+                                                              "Actual Loops": 1,
+                                                              "Rows Removed by Filter": 4,
+                                                              "Shared Hit Blocks": 9275,
+                                                              "Shared Read Blocks": 0,
+                                                              "Temp Read Blocks": 0,
+                                                              "Temp Written Blocks": 0,
+                                                              "Plans": [
+                                                                {
+                                                                  "Node Type": "Function Scan",
+                                                                  "Actual Total Time": 19.992,
+                                                                  "Actual Rows": 25,
+                                                                  "Actual Loops": 1,
+                                                                  "Shared Hit Blocks": 9273,
+                                                                  "Shared Read Blocks": 0,
+                                                                  "Temp Read Blocks": 0,
+                                                                  "Temp Written Blocks": 0
+                                                                }
+                                                              ]
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "Node Type": "Index Scan",
+                                                  "Relation Name": "batch_facts",
+                                                  "Index Name": "batch_facts_pkey",
+                                                  "Actual Total Time": 2.987,
+                                                  "Actual Rows": 3380.91,
+                                                  "Actual Loops": 11,
+                                                  "Rows Removed by Filter": 0,
+                                                  "Shared Hit Blocks": 11382,
+                                                  "Shared Read Blocks": 0,
+                                                  "Temp Read Blocks": 0,
+                                                  "Temp Written Blocks": 0,
+                                                  "Plans": [
+                                                    {
+                                                      "Node Type": "Function Scan",
+                                                      "Actual Total Time": 20.598,
+                                                      "Actual Rows": 25,
+                                                      "Actual Loops": 1,
+                                                      "Shared Hit Blocks": 9273,
+                                                      "Shared Read Blocks": 0,
+                                                      "Temp Read Blocks": 0,
+                                                      "Temp Written Blocks": 0
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "query": {
+          "metric": "overdue_receivable_percentage",
+          "groupBy": "customer",
+          "dateRange": {
+            "from": "2026-09-01",
+            "to": "2026-09-30"
+          }
+        },
+        "measuredQueryMs": 487.997159,
+        "executionMs": 423.691,
+        "planningMs": 1.342,
+        "plan": {
+          "Node Type": "Aggregate",
+          "Actual Total Time": 422.537,
+          "Actual Rows": 1,
+          "Actual Loops": 1,
+          "Shared Hit Blocks": 114500,
+          "Shared Read Blocks": 0,
+          "Temp Read Blocks": 1568,
+          "Temp Written Blocks": 1570,
+          "Plans": [
+            {
+              "Node Type": "Sort",
+              "Actual Total Time": 421.249,
+              "Actual Rows": 4434,
+              "Actual Loops": 1,
+              "Shared Hit Blocks": 114500,
+              "Shared Read Blocks": 0,
+              "Temp Read Blocks": 1568,
+              "Temp Written Blocks": 1570,
+              "Sort Method": "quicksort",
+              "Sort Space Used": 626,
+              "Sort Space Type": "Memory",
+              "Plans": [
+                {
+                  "Node Type": "Subquery Scan",
+                  "Actual Total Time": 409.378,
+                  "Actual Rows": 4434,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 114500,
+                  "Shared Read Blocks": 0,
+                  "Temp Read Blocks": 1568,
+                  "Temp Written Blocks": 1570,
+                  "Plans": [
+                    {
+                      "Node Type": "Result",
+                      "Actual Total Time": 408.665,
+                      "Actual Rows": 4434,
+                      "Actual Loops": 1,
+                      "Shared Hit Blocks": 114500,
+                      "Shared Read Blocks": 0,
+                      "Temp Read Blocks": 1568,
+                      "Temp Written Blocks": 1570,
+                      "Plans": [
+                        {
+                          "Node Type": "Hash Join",
+                          "Join Type": "Inner",
+                          "Actual Total Time": 407.831,
+                          "Actual Rows": 4434,
+                          "Actual Loops": 1,
+                          "Shared Hit Blocks": 114500,
+                          "Shared Read Blocks": 0,
+                          "Temp Read Blocks": 1568,
+                          "Temp Written Blocks": 1570,
+                          "Plans": [
+                            {
+                              "Node Type": "Index Scan",
+                              "Relation Name": "fact_revisions",
+                              "Index Name": "fact_scope_date",
+                              "Actual Total Time": 196.325,
+                              "Actual Rows": 4434,
+                              "Actual Loops": 1,
+                              "Rows Removed by Filter": 0,
+                              "Shared Hit Blocks": 75289,
+                              "Shared Read Blocks": 0,
+                              "Temp Read Blocks": 0,
+                              "Temp Written Blocks": 0,
+                              "Plans": [
+                                {
+                                  "Node Type": "Function Scan",
+                                  "Actual Total Time": 19.564,
+                                  "Actual Rows": 25,
+                                  "Actual Loops": 1,
+                                  "Shared Hit Blocks": 9273,
+                                  "Shared Read Blocks": 0,
+                                  "Temp Read Blocks": 0,
+                                  "Temp Written Blocks": 0
+                                },
+                                {
+                                  "Node Type": "Result",
+                                  "Actual Total Time": 0.039,
+                                  "Actual Rows": 1,
+                                  "Actual Loops": 4434,
+                                  "Shared Hit Blocks": 63296,
+                                  "Shared Read Blocks": 0,
+                                  "Temp Read Blocks": 0,
+                                  "Temp Written Blocks": 0,
+                                  "Plans": [
+                                    {
+                                      "Node Type": "Nested Loop",
+                                      "Join Type": "Inner",
+                                      "Actual Total Time": 0.039,
+                                      "Actual Rows": 1,
+                                      "Actual Loops": 4434,
+                                      "Shared Hit Blocks": 63296,
+                                      "Shared Read Blocks": 0,
+                                      "Temp Read Blocks": 0,
+                                      "Temp Written Blocks": 0,
+                                      "Plans": [
+                                        {
+                                          "Node Type": "Index Only Scan",
+                                          "Relation Name": "batch_facts",
+                                          "Index Name": "batch_facts_revision_lookup",
+                                          "Actual Total Time": 0.026,
+                                          "Actual Rows": 1,
+                                          "Actual Loops": 4434,
+                                          "Rows Removed by Filter": 0,
+                                          "Shared Hit Blocks": 31444,
+                                          "Shared Read Blocks": 0,
+                                          "Temp Read Blocks": 0,
+                                          "Temp Written Blocks": 0,
+                                          "Plans": [
+                                            {
+                                              "Node Type": "Function Scan",
+                                              "Actual Total Time": 22.004,
+                                              "Actual Rows": 25,
+                                              "Actual Loops": 1,
+                                              "Shared Hit Blocks": 9273,
+                                              "Shared Read Blocks": 0,
+                                              "Temp Read Blocks": 0,
+                                              "Temp Written Blocks": 0
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "Node Type": "Index Scan",
+                                          "Relation Name": "ingestion_batches",
+                                          "Index Name": "ingestion_batches_tenant_id_dataset_id_batch_id_key",
+                                          "Actual Total Time": 0.012,
+                                          "Actual Rows": 1,
+                                          "Actual Loops": 4434,
+                                          "Rows Removed by Filter": 0,
+                                          "Shared Hit Blocks": 31852,
+                                          "Shared Read Blocks": 0,
+                                          "Temp Read Blocks": 0,
+                                          "Temp Written Blocks": 0,
+                                          "Plans": [
+                                            {
+                                              "Node Type": "Seq Scan",
+                                              "Relation Name": "extraction_runs",
+                                              "Actual Total Time": 20.52,
+                                              "Actual Rows": 27,
+                                              "Actual Loops": 1,
+                                              "Rows Removed by Filter": 4,
+                                              "Shared Hit Blocks": 9277,
+                                              "Shared Read Blocks": 0,
+                                              "Temp Read Blocks": 0,
+                                              "Temp Written Blocks": 0,
+                                              "Plans": [
+                                                {
+                                                  "Node Type": "Function Scan",
+                                                  "Actual Total Time": 20.479,
+                                                  "Actual Rows": 25,
+                                                  "Actual Loops": 1,
+                                                  "Shared Hit Blocks": 9273,
+                                                  "Shared Read Blocks": 0,
+                                                  "Temp Read Blocks": 0,
+                                                  "Temp Written Blocks": 0
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "Node Type": "Function Scan",
+                                              "Actual Total Time": 19.36,
+                                              "Actual Rows": 25,
+                                              "Actual Loops": 1,
+                                              "Shared Hit Blocks": 9273,
+                                              "Shared Read Blocks": 0,
+                                              "Temp Read Blocks": 0,
+                                              "Temp Written Blocks": 0
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "Node Type": "Hash",
+                              "Actual Total Time": 203.978,
+                              "Actual Rows": 37190,
+                              "Actual Loops": 1,
+                              "Shared Hit Blocks": 39211,
+                              "Shared Read Blocks": 0,
+                              "Temp Read Blocks": 909,
+                              "Temp Written Blocks": 1387,
+                              "Plans": [
+                                {
+                                  "Node Type": "Unique",
+                                  "Actual Total Time": 193.339,
+                                  "Actual Rows": 37190,
+                                  "Actual Loops": 1,
+                                  "Shared Hit Blocks": 39211,
+                                  "Shared Read Blocks": 0,
+                                  "Temp Read Blocks": 909,
+                                  "Temp Written Blocks": 911,
+                                  "Plans": [
+                                    {
+                                      "Node Type": "Sort",
+                                      "Actual Total Time": 189.738,
+                                      "Actual Rows": 37190,
+                                      "Actual Loops": 1,
+                                      "Shared Hit Blocks": 39211,
+                                      "Shared Read Blocks": 0,
+                                      "Temp Read Blocks": 909,
+                                      "Temp Written Blocks": 911,
+                                      "Sort Method": "external merge",
+                                      "Sort Space Used": 7272,
+                                      "Sort Space Type": "Disk",
+                                      "Plans": [
+                                        {
+                                          "Node Type": "Result",
+                                          "Actual Total Time": 94.626,
+                                          "Actual Rows": 37190,
+                                          "Actual Loops": 1,
+                                          "Shared Hit Blocks": 39211,
+                                          "Shared Read Blocks": 0,
+                                          "Temp Read Blocks": 0,
+                                          "Temp Written Blocks": 0,
+                                          "Plans": [
+                                            {
+                                              "Node Type": "Nested Loop",
+                                              "Join Type": "Inner",
+                                              "Actual Total Time": 92.297,
+                                              "Actual Rows": 37190,
+                                              "Actual Loops": 1,
+                                              "Shared Hit Blocks": 39211,
+                                              "Shared Read Blocks": 0,
+                                              "Temp Read Blocks": 0,
+                                              "Temp Written Blocks": 0,
+                                              "Plans": [
+                                                {
+                                                  "Node Type": "Nested Loop",
+                                                  "Join Type": "Left",
+                                                  "Actual Total Time": 57.766,
+                                                  "Actual Rows": 11,
+                                                  "Actual Loops": 1,
+                                                  "Rows Removed by Filter": 0,
+                                                  "Rows Removed by Join Filter": 12,
+                                                  "Shared Hit Blocks": 27829,
+                                                  "Shared Read Blocks": 0,
+                                                  "Temp Read Blocks": 0,
+                                                  "Temp Written Blocks": 0,
+                                                  "Plans": [
+                                                    {
+                                                      "Node Type": "Index Scan",
+                                                      "Relation Name": "ingestion_batches",
+                                                      "Index Name": "ingestion_batches_tenant_id_dataset_id_batch_id_key",
+                                                      "Actual Total Time": 38.82,
+                                                      "Actual Rows": 11,
+                                                      "Actual Loops": 1,
+                                                      "Rows Removed by Filter": 0,
+                                                      "Shared Hit Blocks": 18554,
+                                                      "Shared Read Blocks": 0,
+                                                      "Temp Read Blocks": 0,
+                                                      "Temp Written Blocks": 0,
+                                                      "Plans": [
+                                                        {
+                                                          "Node Type": "Seq Scan",
+                                                          "Relation Name": "extraction_runs",
+                                                          "Actual Total Time": 19.535,
+                                                          "Actual Rows": 27,
+                                                          "Actual Loops": 1,
+                                                          "Rows Removed by Filter": 4,
+                                                          "Shared Hit Blocks": 9277,
+                                                          "Shared Read Blocks": 0,
+                                                          "Temp Read Blocks": 0,
+                                                          "Temp Written Blocks": 0,
+                                                          "Plans": [
+                                                            {
+                                                              "Node Type": "Function Scan",
+                                                              "Actual Total Time": 19.5,
+                                                              "Actual Rows": 25,
+                                                              "Actual Loops": 1,
+                                                              "Shared Hit Blocks": 9273,
+                                                              "Shared Read Blocks": 0,
+                                                              "Temp Read Blocks": 0,
+                                                              "Temp Written Blocks": 0
+                                                            }
+                                                          ]
+                                                        },
+                                                        {
+                                                          "Node Type": "Function Scan",
+                                                          "Actual Total Time": 19.215,
+                                                          "Actual Rows": 25,
+                                                          "Actual Loops": 1,
+                                                          "Shared Hit Blocks": 9273,
+                                                          "Shared Read Blocks": 0,
+                                                          "Temp Read Blocks": 0,
+                                                          "Temp Written Blocks": 0
+                                                        }
+                                                      ]
+                                                    },
+                                                    {
+                                                      "Node Type": "Materialize",
+                                                      "Actual Total Time": 1.721,
+                                                      "Actual Rows": 2.09,
+                                                      "Actual Loops": 11,
+                                                      "Shared Hit Blocks": 9275,
+                                                      "Shared Read Blocks": 0,
+                                                      "Temp Read Blocks": 0,
+                                                      "Temp Written Blocks": 0,
+                                                      "Plans": [
+                                                        {
+                                                          "Node Type": "Result",
+                                                          "Actual Total Time": 18.916,
+                                                          "Actual Rows": 3,
+                                                          "Actual Loops": 1,
+                                                          "Shared Hit Blocks": 9275,
+                                                          "Shared Read Blocks": 0,
+                                                          "Temp Read Blocks": 0,
+                                                          "Temp Written Blocks": 0,
+                                                          "Plans": [
+                                                            {
+                                                              "Node Type": "Seq Scan",
+                                                              "Relation Name": "extraction_runs",
+                                                              "Actual Total Time": 18.913,
+                                                              "Actual Rows": 3,
+                                                              "Actual Loops": 1,
+                                                              "Rows Removed by Filter": 4,
+                                                              "Shared Hit Blocks": 9275,
+                                                              "Shared Read Blocks": 0,
+                                                              "Temp Read Blocks": 0,
+                                                              "Temp Written Blocks": 0,
+                                                              "Plans": [
+                                                                {
+                                                                  "Node Type": "Function Scan",
+                                                                  "Actual Total Time": 18.86,
+                                                                  "Actual Rows": 25,
+                                                                  "Actual Loops": 1,
+                                                                  "Shared Hit Blocks": 9273,
+                                                                  "Shared Read Blocks": 0,
+                                                                  "Temp Read Blocks": 0,
+                                                                  "Temp Written Blocks": 0
+                                                                }
+                                                              ]
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "Node Type": "Index Scan",
+                                                  "Relation Name": "batch_facts",
+                                                  "Index Name": "batch_facts_pkey",
+                                                  "Actual Total Time": 2.886,
+                                                  "Actual Rows": 3380.91,
+                                                  "Actual Loops": 11,
+                                                  "Rows Removed by Filter": 0,
+                                                  "Shared Hit Blocks": 11382,
+                                                  "Shared Read Blocks": 0,
+                                                  "Temp Read Blocks": 0,
+                                                  "Temp Written Blocks": 0,
+                                                  "Plans": [
+                                                    {
+                                                      "Node Type": "Function Scan",
+                                                      "Actual Total Time": 19.679,
+                                                      "Actual Rows": 25,
+                                                      "Actual Loops": 1,
+                                                      "Shared Hit Blocks": 9273,
+                                                      "Shared Read Blocks": 0,
+                                                      "Temp Read Blocks": 0,
+                                                      "Temp Written Blocks": 0
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "statementCount": 26
+  },
+  "discoveryPlan": {
+    "rowsReturned": 3001,
+    "bound": 3000,
+    "explainMs": 580.249,
+    "hitBlocks": 11463,
+    "readBlocks": 0,
+    "queryPlusExplainMs": 1166.22306
+  },
+  "functionalLimits": [
+    "Default full range through October creates four failed Executive widgets: Unsafe SQL numeric output. Requested September/6-month/12-month ranges ending September pass. Numeric semantics were not weakened.",
+    "Customer discovery exceeds existing MART_MAX_GROUPS=3000: HTTP 500, bounded probe returned 3001 IDs; no identities are stored here.",
+    "Complete Receivables report six/twelve month selections return HTTP 403 because customer snapshot capability is September-only; these are blocked, not semantically N/A."
+  ],
+  "verification": {
+    "productionStyleImagesRebuilt": true,
+    "httpsReadiness": "200 ready",
+    "apiContainerHealth": "healthy",
+    "protectedTLSConfigurationRestored": true,
+    "fullRepositorySuitesRerun": false,
+    "reason": "No repository source-code changes; runtime verification only."
+  },
+  "safety": {
+    "odooWrites": false,
+    "martDataWiped": false,
+    "historicalEvidenceWiped": false,
+    "certificationOverwritten": false,
+    "credentialsPrinted": false,
+    "credentialsCommitted": false,
+    "productionDeployment": false,
+    "onlineStaging": false,
+    "externalCD": false,
+    "push": false,
+    "merge": false
+  }
+}

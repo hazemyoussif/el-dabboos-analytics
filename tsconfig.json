@@ -17,6 +17,8 @@
   },
   "include": [
     "packages/**/*.ts",
-    "apps/api/**/*.ts"
+    "apps/api/**/*.ts",
+    "scripts/integration/historical-*.ts",
+    "scripts/integration/finance-snapshots.ts"
   ]
 }

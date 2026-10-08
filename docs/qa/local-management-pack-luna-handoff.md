@@ -113,3 +113,8 @@ Final functional delivery check after removing diagnostics: all five reports ret
 show business labels for all discovered Salesperson/Customer/Business Line options
 and no technical identity labels. Automated gates pass (656 unit, 133 PostgreSQL).
 These results do not replace the visual/accessibility/responsive checks above.
+# Historical wave and final desktop polish — added 2026-10-07
+
+Append to the existing deferred EN/AR/RTL desktop scope: localized reserved account placeholder (edited names remain profile data), shared single-line category-axis truncation with full hover/focus name, and the five historical templates: Historical Executive Trend, Sales vs Invoicing Trend, Business Line Trend, Salesperson Historical Analysis and Customer Historical Analysis. Exercise existing absolute/relative date controls and identity filters; confirm full underlying contribution tables and no default chart with thousands of identities. Verify MoM prior/current values, missing/zero-prior behavior and the shared definition popup; verify three/six-month moving-average explanations and disabled YoY. Existing September reports must retain their values and labels.
+
+Use Light/Dark and EN/AR/RTL, keyboard access and chart precise-value tables. Tablet/mobile remain unverified and do not block this desktop task. This is a handoff scope, not a passed visual gate. Sol visual QA was not run; no Luna task/message was dispatched.

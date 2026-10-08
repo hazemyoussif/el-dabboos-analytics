@@ -41,7 +41,7 @@ Required source keys: `ODOO_SOURCE_HOST`, `ODOO_SOURCE_PORT`, `ODOO_SOURCE_DATAB
 
 Use separately provisioned `MART_MIGRATOR_URL` for migrations/candidate registration and `MART_INGESTOR_URL` for ingestion/reconciliation/status. Runtime continues to use its own `MART_RUNTIME_URL` and existing runtime bounds. None of these credentials belong in the manifest, command line or Git. Mart roles/migrations are administered separately using [mart operations](postgres-mart-operations.md); never run them against Odoo.
 
-The source identity must be a dedicated SELECT-only service role, with no superuser/BYPASSRLS/role/database/schema creation or source-table write rights. The application verifies these privileges and uses read-only transactions. It does not provision that role. Do not use the Odoo application identity.
+Production requires a dedicated SELECT-only service role, with no superuser/BYPASSRLS/role/database/schema creation or source-table write rights. The application verifies these privileges and uses read-only transactions. It does not provision that role. Do not use the Odoo application identity.
 
 ## Manifest and commands
 
@@ -77,6 +77,12 @@ The DB control reader independently aggregates governed source headers overall/b
 
 ## Remaining release gates
 
-Live extraction is blocked until local source/mart configuration is supplied. Confirm the live schema/custom geography and business owner before registering the actual candidate; the application obtains actual PostgreSQL snapshot evidence when running it. Compare the live mart to independently derived DB controls; known candidate numbers belong only to fixtures/control evidence.
+Local staging configuration, source schema compatibility and accountable business ownership were verified before candidate registration. The September staging run completed under one retained snapshot with exact DB controls. Detailed live evidence is kept outside Git; discovery numbers remain comparison controls rather than immutable expectations. Production still requires its own least-privilege reader.
 
 Business certification accepts exact external-report evidence or explicit authorized business/product approval over exact source-to-mart reconciliation, under [ADR 031](../architecture/adr/031-certified-release-promotion.md). For the authorized approval path, exact UI labels, visible filters and screenshots are optional supporting evidence. Record scope, approved values, semantics, approver/time and technical case IDs; never fabricate UI metadata. A technical difference still blocks certification. Mapping approval changes metadata only; promotion into the separate staging mart and serving binding remain explicit [operator operations](certified-release-publication.md). Browser/product QA follows publication.
+
+## Authorized one-off staging credential exception
+
+For the user-authorized September staging pilot only, `ODOO_SOURCE_STAGING_PILOT=true` permits a broader source credential. The typed configuration accepts this declaration only for `accounting`, company `1`, tenant `el-dabboos-iq` and source `el-dabboos-odoo18-pg`. The bounded CLI still fixes September dates; all identity/schema probes, owner, page and control transactions remain `REPEATABLE READ READ ONLY`. Required table SELECT access is still checked. No source writes, DDL, privilege changes or SSH management occur. Without the explicit declaration the dedicated least-privilege guard remains mandatory. Remove the declaration after this staging run; it does not authorize a production credential exception. Snapshot lease identity contains only tenant/source IDs, never connection config.
+
+Source compatibility corrections verified during the first staging preflight use explicit whole-row JSON projections (`alias.*`) so Odoo's own `state` columns cannot collide with the geography alias. Stored city labels are trimmed to the existing canonical text contract; empty labels use Unassigned, while overlength labels still fail validation. Monetary/eligibility/attribution rules and exact tolerances are unchanged. The pending mapping specification remains immutable; source adapter evidence records `odoo18-pg-snapshot-v3`.

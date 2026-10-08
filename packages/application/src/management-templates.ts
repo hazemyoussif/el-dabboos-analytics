@@ -29,7 +29,7 @@ export const managementTemplates:readonly DashboardTemplate[]=[
  receivablesReport(),
 ];
 export function supportedTemplatePeriod(template:DashboardTemplate,published:PublishedAnalyticsCapabilities) {
- return published.releases.find(release=>template.widgets.every(widget=>widget.series.every(item=>!publishedQueryIssues({metric:item.metric,...(widget.dimension?{groupBy:widget.dimension}:{}),...(item.analysis?{analysis:item.analysis}:{}),...(release.period?{dateRange:release.period}:{})},{...published,releases:[release]}).length)))?.period;
+ return published.releases.find(release=>(!template.tags.includes('historical') || !!release.period && release.period.from.slice(0,7) !== release.period.to.slice(0,7)) && template.widgets.every(widget=>widget.series.every(item=>!publishedQueryIssues({metric:item.metric,...(widget.dimension?{groupBy:widget.dimension}:{}),...(item.analysis?{analysis:item.analysis}:{}),...(release.period?{dateRange:release.period}:{})},{...published,releases:[release]}).length)))?.period;
 }
 export function selectDefaultTemplate(templates:readonly {id:string;availability:string}[],mode:PublishedAnalyticsCapabilities['mode']) {
  const preferred=mode==='certified'?'executive-sales-invoicing':'sales-performance';

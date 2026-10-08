@@ -2,7 +2,7 @@ import { validateDashboardOverrideDimensions, resolveDashboardFilters } from './
 import type { DashboardExecutionScope, EffectiveDashboardFilters } from './dashboard-filters.ts';
 import { analyticsQueryIdentity, executionConcurrency, normalizeAnalyticsQuery, runBounded } from './query-execution.ts';
 import type { DashboardExecutionOptions } from './query-execution.ts';
-import { validateDashboardSpec, validateQuery } from '@el-dabboos/domain';
+import { validateDashboardSpec, validateQuery,AnalyticsResultLimitError } from '@el-dabboos/domain';
 import type { AnalyticsContext, AnalyticsQuery, AnalyticsRepository, AnalyticsResult, AnalyticsRow, DashboardSpec, DashboardWidget } from '@el-dabboos/domain';
 
 export type SeriesExecution = { status: 'success'; result: AnalyticsResult } | { status: 'error'; error: { code: string; message: string } };
@@ -48,7 +48,7 @@ function align(widget: DashboardWidget, results: Record<string, SeriesExecution>
 }
 export class DashboardExecutor {
   private readonly concurrency: number;
-  constructor(private readonly repository: AnalyticsRepository, private readonly clock: () => Date = () => new Date(), options: DashboardExecutionOptions = {}) { this.concurrency = executionConcurrency(options.maxConcurrency); }
+  constructor(private readonly repository: AnalyticsRepository, private readonly clock: () => Date = () => new Date(), private readonly options: DashboardExecutionOptions = {}) { this.concurrency = executionConcurrency(options.maxConcurrency); }
   async execute(spec: DashboardSpec, context: AnalyticsContext, scope?: DashboardExecutionScope): Promise<DashboardExecutionResult> {
     validateDashboardSpec(spec);
     if (!context.tenantId.trim() || !['en', 'ar'].includes(context.locale)) throw new Error('Invalid analytics context');
@@ -57,7 +57,7 @@ export class DashboardExecutor {
     validateDashboardOverrideDimensions(spec,scope?.overrides);
     // All normalized requests are planned before any repository call starts.
     const jobs = new Map<string, { query: AnalyticsQuery; result?: SeriesExecution }>();
-    const failure = (error: unknown): SeriesExecution => ({ status: 'error', error: { code: 'SERIES_EXECUTION_FAILED', message: error instanceof Error ? error.message : 'Series failed' } });
+    const failure = seriesFailure;
     const plan = spec.widgets.map(widget => ({ widget, series: widget.series.map(series => {
       const query: AnalyticsQuery = { metric: series.metric,
         ...(widget.dimension ? { groupBy: widget.dimension } : {}),
@@ -75,7 +75,10 @@ export class DashboardExecutor {
     }) }));
     await runBounded([...jobs.values()].map(job => async () => {
       try { job.result = { status: 'success', result: await this.repository.execute(job.query, context) }; }
-      catch (error) { job.result = failure(error); }
+      catch (error) {
+        this.options.onSeriesFailure?.({metric:job.query.metric,category:error instanceof Error && /Unsafe SQL numeric output/.test(error.message)?'unsafe_numeric':'execution_failure'});
+        job.result = failure(error);
+      }
     }), this.concurrency);
     const entries = plan.map(({ widget, series }) => {
       // Each dependent series retains its own result/error object and null metadata.
@@ -94,4 +97,8 @@ export class DashboardExecutor {
     return { dashboard: spec, widgetResults, metadata: { effectiveFilters, executedAt: now.toISOString(), succeeded, failed: entries.length - succeeded,
       succeededSeries, failedSeries: totalSeries - succeededSeries } };
   }
+}
+function seriesFailure(error:unknown):SeriesExecution {
+  if(error instanceof AnalyticsResultLimitError)return {status:'error',error:{code:'RESULT_LIMIT_EXCEEDED',message:'Choose customers or narrow the dates to view this report.'}};
+  return {status:'error',error:{code:'SERIES_EXECUTION_FAILED',message:error instanceof Error&&!/SQL|Unsafe.*result|NaN|Infinity/.test(error.message)?error.message:'This metric is temporarily unavailable.'}};
 }

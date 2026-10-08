@@ -3,6 +3,7 @@ import { categoricalDimensions, maxReconciliationGroups, reconciliationStatus, v
 import type { ReconciliationCase, SourceMapping } from '@el-dabboos/domain';
 import { tenantTransaction } from './session.ts';
 import { validateFrozenExtractions } from './frozen-extractions.ts';
+import { persistReconciliationCases } from './reconciliation-persistence.ts';
 import { aggregateReconciliation } from './reconciliation-aggregate.ts';
 
 export type ReconciliationResult = { cases: ReconciliationCase[]; status: 'reported'|'passed'|'failed'; missingGroups: string[]; unexpectedGroups: string[] };
@@ -34,10 +35,7 @@ export async function recordReconciliation(client: PoolClient,expected: readonly
   const cases = expected.map(control => ({ ...control,actualValue: actualMap.get(control.groupKey)?.value ?? '0.000000',actualCount: actualMap.get(control.groupKey)?.count ?? '0' }));
   const statuses = cases.map(control => reconciliationStatus(control));
   const status = first.tolerance.status==='pending' ? 'reported' : !complete || statuses.includes('failed') ? 'failed' : 'passed';
-  for (const control of cases) {
-    await client.query('INSERT INTO mart.reconciliation_evidence(tenant_id,case_id,dataset_id,specification,status,group_completeness,missing_groups,unexpected_groups) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',[control.tenantId,control.caseId,control.datasetId,JSON.stringify(control),status,complete,missingGroups,unexpectedGroups]);
-    for (const batchId of control.batchIds) await client.query('INSERT INTO mart.reconciliation_batches VALUES ($1,$2,$3,$4)',[control.tenantId,control.caseId,control.datasetId,batchId]);
-  }
+  await persistReconciliationCases(client,cases,{ status,complete,missingGroups,unexpectedGroups });
   return { cases,status,missingGroups,unexpectedGroups };
 }
 

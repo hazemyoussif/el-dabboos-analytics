@@ -360,3 +360,13 @@ Gross-positive aging v1 with a separate missing-maturity bucket remains an alter
 - [Versioned definition source](enterprise-metrics-v1.json) · [Finance publication and metric-help delivery](../integration/finance-metric-definitions-delivery.md)
 
 Private workbook and customer extracts remain outside Git. Documents contain aggregate examples only. Finance publication reuses exact frozen evidence through the existing local lifecycle; no new source writes or extraction. Authentication and AI/manual publication guards remain unchanged. Visual/browser QA is deferred to Luna; no visual pass claimed.
+
+## Historical wave 1: October 2025–September 2026
+
+The independently reconciled and approved local historical collection adds Historical Executive Trend, Sales vs Invoicing Trend, Business Line Trend, Salesperson Historical Analysis and Customer Historical Analysis. Monthly event totals use each document's own approved business date. Existing date-range and identity filters apply; contribution tables retain the complete underlying population. The unfiltered customer/salesperson monthly line shows the combined population, with a filter selecting an individual. Stable source IDs remain grouping keys; labels use the latest authorized source observation within the selected range.
+
+Company 1/IQD event summaries and Business Line, Salesperson and Customer pairs have exact monthly controls. Month-end receivables have separately certified company summaries; historical customer aging is deferred (Phase B). A snapshot summary returns the latest certified cutoff, never a sum across months. September's existing release and five original reports retain their own binding.
+
+MoM uses adjacent complete months: absolute change = current − prior; percentage = (current − prior) / abs(prior) × 100. Missing operands produce null changes; zero prior produces a null percentage. Three/six-month moving averages reuse the governed mean of present values, including partial prefix windows; entirely missing windows remain null. The metric-help popup explains executed transformations in EN/AR. YoY requires comparable earlier certified coverage and remains unavailable in this wave.
+
+See [operator commands and recovery](../integration/historical-ingestion.md) and [monthly acceptance ledger](../qa/historical-wave-one-ledger.json). These additions do not approve the other definitions in this catalog.

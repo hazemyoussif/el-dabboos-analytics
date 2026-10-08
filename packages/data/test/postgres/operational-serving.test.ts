@@ -124,6 +124,32 @@ test('snapshot revisions use the last eligible cutoff and never sum January and 
   assert.equal((await f.run()).status,'passed');
   const result=await f.repository.execute({metric:'outstanding_amount',dateRange:{from:'2026-01-31',to:'2026-02-28'}},{tenantId:'a',locale:'en'});
   assert.equal(result.rows[0]?.value,60);assert.equal(result.metadata.snapshotAsOf,'2026-02-28');
+  for(const [end,value,asOf] of [['2026-02-17',100,'2026-01-15'],['2026-10-08',60,'2026-02-28']] as const){
+   const selected=await f.repository.execute({metric:'outstanding_amount',dateRange:{from:'2026-01-01',to:end}},{tenantId:'a',locale:'en'});
+   assert.equal(selected.rows[0]?.value,value);assert.equal(selected.metadata.snapshotAsOf,asOf);
+  }
+  const absent=await f.repository.execute({metric:'outstanding_amount',dateRange:{from:'2026-01-01',to:'2026-01-14'}},{tenantId:'a',locale:'ar'});
+  assert.equal(absent.rows[0]?.value,null);assert.deepEqual(absent.metadata.availability,{state:'DATA_NOT_READY',reason:'no_snapshot'});
+ }finally{await f.db.close();}
+});
+
+test('covered zero events differ from unavailable future partitions and valid large cent totals',{skip:!enabled},async()=>{
+ const f=await setup();try {
+  const value='17828645788.140000';f.source.rows=[januaryFact({value,currency:{mode:'native',transactionCurrency:'IQD',transactionValue:value,reportingCurrency:'IQD',policyReference:'test-native'}})];
+  assert.equal((await f.run()).status,'passed');
+  const query=(from:string,to:string)=>f.repository.execute({metric:'revenue',dateRange:{from,to}},{tenantId:'a',locale:'en'});
+  const zero=await query('2026-01-01','2026-01-02');assert.equal(zero.rows[0]?.value,0);assert.equal(zero.metadata.coverage?.status,'complete');
+  const unavailable=await query('2026-02-01','2026-02-28');assert.equal(unavailable.rows[0]?.value,null);assert.equal(unavailable.metadata.availability?.state,'DATA_NOT_READY');
+  const partial=await query('2026-01-01','2026-10-08');assert.equal(partial.rows[0]?.value,17828645788.14);assert.equal(partial.metadata.availability?.state,'PARTIAL_COVERAGE');
+ }finally{await f.db.close();}
+});
+
+test('zero ratio denominator stays nullable in trusted serving',{skip:!enabled},async()=>{
+ const f=await setup('fixture',true);try {
+  f.source.rows=[januaryFact({measureId:'order_revenue',dimensions:{salesperson:'fixture-owner'}}),januaryFact({measureId:'order_count',value:'0.000000',dimensions:{salesperson:'fixture-owner'}})];
+  assert.equal((await f.run()).status,'passed');
+  const result=await f.repository.execute({metric:'average_confirmed_order_value',dateRange:{from:'2026-01-01',to:'2026-01-31'}},{tenantId:'a',locale:'en'});
+  assert.equal(result.rows[0]?.value,null);assert.equal(result.metadata.availability,undefined);
  }finally{await f.db.close();}
 });
 

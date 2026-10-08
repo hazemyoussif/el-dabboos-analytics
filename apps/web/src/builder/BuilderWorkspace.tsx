@@ -300,7 +300,7 @@ export function BuilderWorkspace({ history, execution, catalog, registry, publis
         {spec && <DashboardAppearance locale={locale} palette={spec.presentation?.palette ?? 'default'} disabled={busy} onChange={palette => onCommand(dashboardPaletteCommand(palette))} />}
         <details className="dashboard-filters"><summary>{t.filters}</summary>
           <div className="builder-filters">{base && <DatePeriodControl filters={base.filters} effectiveRange={execution?.metadata.effectiveFilters?.dateRange} timeZone={profile.timeZone} locale={locale} disabled={!spec || busy} onChange={date => onCommand(patch({ op: 'set_filters', filters: dashboardFilterSelection(base.filters, { date }) }))} />}
-            {dashboardFilterDimensions(spec ?? { widgets: [] }, catalog).map(dimension => <DimensionFilterControl key={dimension} dimension={dimension} values={requestedFilters.find(filter => filter.dimension === dimension)?.values ?? []} options={filterOptions[dimension] ?? []} locale={locale} disabled={!spec || busy} onChange={values => setRequestedFilter(dimension, values)} />)}
+            {dashboardFilterDimensions(spec ?? { widgets: [] }, catalog).map(dimension => <DimensionFilterControl key={dimension} dimension={dimension} metric={spec?.widgets[0]?.series[0]?.metric} asOf={spec?.filters.dateRange?.to} values={requestedFilters.find(filter => filter.dimension === dimension)?.values ?? []} options={filterOptions[dimension] ?? []} locale={locale} disabled={!spec || busy} onChange={values => setRequestedFilter(dimension, values)} />)}
           </div>
         </details>
       </section>

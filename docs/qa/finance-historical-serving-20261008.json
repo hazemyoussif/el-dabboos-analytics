@@ -1,0 +1,3273 @@
+{
+  "date": "2026-10-08",
+  "head": "526bf32",
+  "localOnly": true,
+  "snapshots": [
+    {
+      "date": "2025-10-31",
+      "status": "published",
+      "customers": 1968,
+      "snapshotId": "68799a326cb6e0cc0d91bfb63c51afc5bfa090099d47f31c1a29267370cdd5c8",
+      "sourceCutoff": "2026-10-08T01:17:39.693Z",
+      "elapsedMs": 13986
+    },
+    {
+      "date": "2025-11-30",
+      "status": "published",
+      "customers": 2345,
+      "snapshotId": "0ad35d6e801cdb5f9835cf992a2e68c2093ca4f85d2ac5c1a338cad796b6d816",
+      "sourceCutoff": "2026-10-08T01:17:56.074Z",
+      "elapsedMs": 20118
+    },
+    {
+      "date": "2025-12-31",
+      "status": "published",
+      "customers": 2033,
+      "snapshotId": "7d8345a88d17f383180ecf153cced66e152999c1d314a74108e4679eb70c266a",
+      "sourceCutoff": "2026-10-08T01:18:18.652Z",
+      "elapsedMs": 14844
+    },
+    {
+      "date": "2026-01-31",
+      "status": "published",
+      "customers": 2190,
+      "snapshotId": "31c150ee86d4e2de5fc7a9d6d318625e64f655c725520100d948cdda9f244711",
+      "sourceCutoff": "2026-10-08T01:18:35.822Z",
+      "elapsedMs": 14948
+    },
+    {
+      "date": "2026-02-28",
+      "status": "published",
+      "customers": 2124,
+      "snapshotId": "0dbec1420f8e12348639b02d5370a8c7cb08122d6a54aed84fa2ae9c12152b03",
+      "sourceCutoff": "2026-10-08T01:18:53.303Z",
+      "elapsedMs": 16136
+    },
+    {
+      "date": "2026-03-31",
+      "status": "published",
+      "customers": 2191,
+      "snapshotId": "1efbea13d56ca26eddf05bdaa1b64275e90b8cdbc3df848abbefb1a4b6781a1f",
+      "sourceCutoff": "2026-10-08T01:19:11.890Z",
+      "elapsedMs": 15843
+    },
+    {
+      "date": "2026-04-30",
+      "status": "published",
+      "customers": 2173,
+      "snapshotId": "83df2e70c0681bf48957c687f5fe4635e32bef254548e6ce345595c762d3edec",
+      "sourceCutoff": "2026-10-08T01:19:30.011Z",
+      "elapsedMs": 16878
+    },
+    {
+      "date": "2026-05-31",
+      "status": "published",
+      "customers": 2175,
+      "snapshotId": "c94117772e2133f3b3fc66a69dc56725844dbb03a576dfeb8b5300d5f732c9ed",
+      "sourceCutoff": "2026-10-08T01:19:49.237Z",
+      "elapsedMs": 17537
+    },
+    {
+      "date": "2026-06-30",
+      "status": "published",
+      "customers": 2065,
+      "snapshotId": "df7a0faa7a2e8767e05ac475009fc5267285fc8da5f2adfa460f952f29b80398",
+      "sourceCutoff": "2026-10-08T01:20:09.057Z",
+      "elapsedMs": 20835
+    },
+    {
+      "date": "2026-07-31",
+      "status": "published",
+      "customers": 2162,
+      "snapshotId": "d4fa0e719c639dc69e6d6662bf199382eb5939598dc8c9b7ca3515a29f67f48c",
+      "sourceCutoff": "2026-10-08T01:20:32.194Z",
+      "elapsedMs": 21762
+    },
+    {
+      "date": "2026-08-31",
+      "status": "published",
+      "customers": 2170,
+      "snapshotId": "a5d80b3facbe765d02373f491eb72a9c1b6a956d5407b089beed11e5a98a4435",
+      "sourceCutoff": "2026-10-08T01:20:56.142Z",
+      "elapsedMs": 18870
+    },
+    {
+      "date": "2026-09-30",
+      "status": "published",
+      "customers": 2217,
+      "snapshotId": "ba1d2eae437814960e525aedc64f96c25e3f521086572e495b3bfe5f3a3cfafd",
+      "sourceCutoff": "2026-10-08T01:21:17.308Z",
+      "elapsedMs": 19144
+    }
+  ],
+  "runtimeMeasurements": {
+    "reads": [
+      {
+        "name": "summary",
+        "ms": 30.19702000000001,
+        "rows": 1,
+        "snapshotAsOf": "2026-09-30",
+        "value": 1359461092.61
+      },
+      {
+        "name": "customer",
+        "ms": 34.37126999999998,
+        "rows": 2217,
+        "snapshotAsOf": "2026-09-30"
+      },
+      {
+        "name": "trend",
+        "ms": 52.69922100000002,
+        "rows": 12,
+        "snapshotAsOf": "2026-09-30"
+      },
+      {
+        "name": "middle-date",
+        "ms": 6.51905400000004,
+        "rows": 1,
+        "snapshotAsOf": "2026-05-31",
+        "value": 1391974112.61
+      },
+      {
+        "name": "discovery",
+        "ms": 10.187333999999964,
+        "rows": 50,
+        "hasContinuation": true
+      }
+    ],
+    "plans": [
+      {
+        "name": "summary",
+        "executionMs": 2.78,
+        "planningMs": 0.282,
+        "plan": {
+          "Node Type": "Limit",
+          "Actual Total Time": 2.731,
+          "Actual Rows": 1,
+          "Actual Loops": 1,
+          "Shared Hit Blocks": 330,
+          "Shared Read Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0,
+          "Plans": [
+            {
+              "Node Type": "Nested Loop",
+              "Join Type": "Inner",
+              "Actual Total Time": 0.017,
+              "Actual Rows": 1,
+              "Actual Loops": 1,
+              "Shared Hit Blocks": 2,
+              "Shared Read Blocks": 0,
+              "Temp Read Blocks": 0,
+              "Temp Written Blocks": 0,
+              "Plans": [
+                {
+                  "Node Type": "Function Scan",
+                  "Actual Total Time": 0.01,
+                  "Actual Rows": 1,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 0,
+                  "Shared Read Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Limit",
+                  "Actual Total Time": 0.005,
+                  "Actual Rows": 1,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 2,
+                  "Shared Read Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0,
+                  "Plans": [
+                    {
+                      "Node Type": "Result",
+                      "Actual Total Time": 0.004,
+                      "Actual Rows": 1,
+                      "Actual Loops": 1,
+                      "Shared Hit Blocks": 2,
+                      "Shared Read Blocks": 0,
+                      "Temp Read Blocks": 0,
+                      "Temp Written Blocks": 0,
+                      "Plans": [
+                        {
+                          "Node Type": "Index Scan",
+                          "Relation Name": "finance_snapshot_publications",
+                          "Index Name": "finance_snapshot_publications_pkey",
+                          "Actual Total Time": 0.003,
+                          "Actual Rows": 1,
+                          "Actual Loops": 1,
+                          "Shared Hit Blocks": 2,
+                          "Shared Read Blocks": 0,
+                          "Temp Read Blocks": 0,
+                          "Temp Written Blocks": 0
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "Node Type": "Aggregate",
+              "Actual Total Time": 2.728,
+              "Actual Rows": 1,
+              "Actual Loops": 1,
+              "Shared Hit Blocks": 330,
+              "Shared Read Blocks": 0,
+              "Temp Read Blocks": 0,
+              "Temp Written Blocks": 0,
+              "Plans": [
+                {
+                  "Node Type": "Sort",
+                  "Actual Total Time": 1.943,
+                  "Actual Rows": 2217,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 330,
+                  "Shared Read Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0,
+                  "Plans": [
+                    {
+                      "Node Type": "Nested Loop",
+                      "Join Type": "Left",
+                      "Actual Total Time": 1.197,
+                      "Actual Rows": 2217,
+                      "Actual Loops": 1,
+                      "Shared Hit Blocks": 330,
+                      "Shared Read Blocks": 0,
+                      "Temp Read Blocks": 0,
+                      "Temp Written Blocks": 0,
+                      "Plans": [
+                        {
+                          "Node Type": "Nested Loop",
+                          "Join Type": "Inner",
+                          "Actual Total Time": 0.054,
+                          "Actual Rows": 1,
+                          "Actual Loops": 1,
+                          "Rows Removed by Join Filter": 11,
+                          "Shared Hit Blocks": 8,
+                          "Shared Read Blocks": 0,
+                          "Temp Read Blocks": 0,
+                          "Temp Written Blocks": 0,
+                          "Plans": [
+                            {
+                              "Node Type": "Index Scan",
+                              "Relation Name": "finance_snapshot_evidence",
+                              "Index Name": "finance_snapshot_evidence_pkey",
+                              "Actual Total Time": 0.029,
+                              "Actual Rows": 12,
+                              "Actual Loops": 1,
+                              "Rows Removed by Filter": 0,
+                              "Shared Hit Blocks": 6,
+                              "Shared Read Blocks": 0,
+                              "Temp Read Blocks": 0,
+                              "Temp Written Blocks": 0,
+                              "Plans": [
+                                {
+                                  "Node Type": "Bitmap Heap Scan",
+                                  "Relation Name": "finance_snapshot_publications",
+                                  "Actual Total Time": 0.006,
+                                  "Actual Rows": 12,
+                                  "Actual Loops": 1,
+                                  "Shared Hit Blocks": 2,
+                                  "Shared Read Blocks": 0,
+                                  "Temp Read Blocks": 0,
+                                  "Temp Written Blocks": 0,
+                                  "Plans": [
+                                    {
+                                      "Node Type": "Bitmap Index Scan",
+                                      "Index Name": "finance_snapshot_publications_tenant_id_snapshot_id_key",
+                                      "Actual Total Time": 0.002,
+                                      "Actual Rows": 12,
+                                      "Actual Loops": 1,
+                                      "Shared Hit Blocks": 1,
+                                      "Shared Read Blocks": 0,
+                                      "Temp Read Blocks": 0,
+                                      "Temp Written Blocks": 0
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "Node Type": "CTE Scan",
+                              "Actual Total Time": 0.002,
+                              "Actual Rows": 1,
+                              "Actual Loops": 12,
+                              "Rows Removed by Filter": 0,
+                              "Shared Hit Blocks": 2,
+                              "Shared Read Blocks": 0,
+                              "Temp Read Blocks": 0,
+                              "Temp Written Blocks": 0
+                            }
+                          ]
+                        },
+                        {
+                          "Node Type": "Index Scan",
+                          "Relation Name": "finance_snapshot_customers",
+                          "Index Name": "finance_snapshot_customers_pkey",
+                          "Actual Total Time": 0.949,
+                          "Actual Rows": 2217,
+                          "Actual Loops": 1,
+                          "Rows Removed by Filter": 0,
+                          "Shared Hit Blocks": 322,
+                          "Shared Read Blocks": 0,
+                          "Temp Read Blocks": 0,
+                          "Temp Written Blocks": 0,
+                          "Plans": [
+                            {
+                              "Node Type": "Bitmap Heap Scan",
+                              "Relation Name": "finance_snapshot_publications",
+                              "Actual Total Time": 0.005,
+                              "Actual Rows": 12,
+                              "Actual Loops": 1,
+                              "Shared Hit Blocks": 2,
+                              "Shared Read Blocks": 0,
+                              "Temp Read Blocks": 0,
+                              "Temp Written Blocks": 0,
+                              "Plans": [
+                                {
+                                  "Node Type": "Bitmap Index Scan",
+                                  "Index Name": "finance_snapshot_publications_tenant_id_snapshot_id_key",
+                                  "Actual Total Time": 0.001,
+                                  "Actual Rows": 12,
+                                  "Actual Loops": 1,
+                                  "Shared Hit Blocks": 1,
+                                  "Shared Read Blocks": 0,
+                                  "Temp Read Blocks": 0,
+                                  "Temp Written Blocks": 0
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "name": "customer",
+        "executionMs": 4.699,
+        "planningMs": 0.297,
+        "plan": {
+          "Node Type": "Limit",
+          "Actual Total Time": 4.594,
+          "Actual Rows": 2217,
+          "Actual Loops": 1,
+          "Shared Hit Blocks": 330,
+          "Shared Read Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0,
+          "Plans": [
+            {
+              "Node Type": "Nested Loop",
+              "Join Type": "Inner",
+              "Actual Total Time": 0.012,
+              "Actual Rows": 1,
+              "Actual Loops": 1,
+              "Shared Hit Blocks": 2,
+              "Shared Read Blocks": 0,
+              "Temp Read Blocks": 0,
+              "Temp Written Blocks": 0,
+              "Plans": [
+                {
+                  "Node Type": "Function Scan",
+                  "Actual Total Time": 0.006,
+                  "Actual Rows": 1,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 0,
+                  "Shared Read Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Limit",
+                  "Actual Total Time": 0.005,
+                  "Actual Rows": 1,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 2,
+                  "Shared Read Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0,
+                  "Plans": [
+                    {
+                      "Node Type": "Result",
+                      "Actual Total Time": 0.004,
+                      "Actual Rows": 1,
+                      "Actual Loops": 1,
+                      "Shared Hit Blocks": 2,
+                      "Shared Read Blocks": 0,
+                      "Temp Read Blocks": 0,
+                      "Temp Written Blocks": 0,
+                      "Plans": [
+                        {
+                          "Node Type": "Index Scan",
+                          "Relation Name": "finance_snapshot_publications",
+                          "Index Name": "finance_snapshot_publications_pkey",
+                          "Actual Total Time": 0.003,
+                          "Actual Rows": 1,
+                          "Actual Loops": 1,
+                          "Shared Hit Blocks": 2,
+                          "Shared Read Blocks": 0,
+                          "Temp Read Blocks": 0,
+                          "Temp Written Blocks": 0
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "Node Type": "Aggregate",
+              "Actual Total Time": 4.495,
+              "Actual Rows": 2217,
+              "Actual Loops": 1,
+              "Shared Hit Blocks": 330,
+              "Shared Read Blocks": 0,
+              "Temp Read Blocks": 0,
+              "Temp Written Blocks": 0,
+              "Plans": [
+                {
+                  "Node Type": "Sort",
+                  "Actual Total Time": 2.481,
+                  "Actual Rows": 2217,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 330,
+                  "Shared Read Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0,
+                  "Plans": [
+                    {
+                      "Node Type": "Nested Loop",
+                      "Join Type": "Left",
+                      "Actual Total Time": 1.107,
+                      "Actual Rows": 2217,
+                      "Actual Loops": 1,
+                      "Shared Hit Blocks": 330,
+                      "Shared Read Blocks": 0,
+                      "Temp Read Blocks": 0,
+                      "Temp Written Blocks": 0,
+                      "Plans": [
+                        {
+                          "Node Type": "Nested Loop",
+                          "Join Type": "Inner",
+                          "Actual Total Time": 0.055,
+                          "Actual Rows": 1,
+                          "Actual Loops": 1,
+                          "Rows Removed by Join Filter": 11,
+                          "Shared Hit Blocks": 8,
+                          "Shared Read Blocks": 0,
+                          "Temp Read Blocks": 0,
+                          "Temp Written Blocks": 0,
+                          "Plans": [
+                            {
+                              "Node Type": "Index Scan",
+                              "Relation Name": "finance_snapshot_evidence",
+                              "Index Name": "finance_snapshot_evidence_pkey",
+                              "Actual Total Time": 0.036,
+                              "Actual Rows": 12,
+                              "Actual Loops": 1,
+                              "Rows Removed by Filter": 0,
+                              "Shared Hit Blocks": 6,
+                              "Shared Read Blocks": 0,
+                              "Temp Read Blocks": 0,
+                              "Temp Written Blocks": 0,
+                              "Plans": [
+                                {
+                                  "Node Type": "Bitmap Heap Scan",
+                                  "Relation Name": "finance_snapshot_publications",
+                                  "Actual Total Time": 0.007,
+                                  "Actual Rows": 12,
+                                  "Actual Loops": 1,
+                                  "Shared Hit Blocks": 2,
+                                  "Shared Read Blocks": 0,
+                                  "Temp Read Blocks": 0,
+                                  "Temp Written Blocks": 0,
+                                  "Plans": [
+                                    {
+                                      "Node Type": "Bitmap Index Scan",
+                                      "Index Name": "finance_snapshot_publications_tenant_id_snapshot_id_key",
+                                      "Actual Total Time": 0.002,
+                                      "Actual Rows": 12,
+                                      "Actual Loops": 1,
+                                      "Shared Hit Blocks": 1,
+                                      "Shared Read Blocks": 0,
+                                      "Temp Read Blocks": 0,
+                                      "Temp Written Blocks": 0
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "Node Type": "CTE Scan",
+                              "Actual Total Time": 0.001,
+                              "Actual Rows": 1,
+                              "Actual Loops": 12,
+                              "Rows Removed by Filter": 0,
+                              "Shared Hit Blocks": 2,
+                              "Shared Read Blocks": 0,
+                              "Temp Read Blocks": 0,
+                              "Temp Written Blocks": 0
+                            }
+                          ]
+                        },
+                        {
+                          "Node Type": "Index Scan",
+                          "Relation Name": "finance_snapshot_customers",
+                          "Index Name": "finance_snapshot_customers_pkey",
+                          "Actual Total Time": 0.86,
+                          "Actual Rows": 2217,
+                          "Actual Loops": 1,
+                          "Rows Removed by Filter": 0,
+                          "Shared Hit Blocks": 322,
+                          "Shared Read Blocks": 0,
+                          "Temp Read Blocks": 0,
+                          "Temp Written Blocks": 0,
+                          "Plans": [
+                            {
+                              "Node Type": "Bitmap Heap Scan",
+                              "Relation Name": "finance_snapshot_publications",
+                              "Actual Total Time": 0.004,
+                              "Actual Rows": 12,
+                              "Actual Loops": 1,
+                              "Shared Hit Blocks": 2,
+                              "Shared Read Blocks": 0,
+                              "Temp Read Blocks": 0,
+                              "Temp Written Blocks": 0,
+                              "Plans": [
+                                {
+                                  "Node Type": "Bitmap Index Scan",
+                                  "Index Name": "finance_snapshot_publications_tenant_id_snapshot_id_key",
+                                  "Actual Total Time": 0.001,
+                                  "Actual Rows": 12,
+                                  "Actual Loops": 1,
+                                  "Shared Hit Blocks": 1,
+                                  "Shared Read Blocks": 0,
+                                  "Temp Read Blocks": 0,
+                                  "Temp Written Blocks": 0
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "name": "discovery",
+        "executionMs": 4.884,
+        "planningMs": 0.235,
+        "plan": {
+          "Node Type": "Append",
+          "Actual Total Time": 4.842,
+          "Actual Rows": 51,
+          "Actual Loops": 1,
+          "Shared Hit Blocks": 324,
+          "Shared Read Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0,
+          "Plans": [
+            {
+              "Node Type": "Aggregate",
+              "Actual Total Time": 2.698,
+              "Actual Rows": 2217,
+              "Actual Loops": 1,
+              "Shared Hit Blocks": 324,
+              "Shared Read Blocks": 0,
+              "Temp Read Blocks": 0,
+              "Temp Written Blocks": 0,
+              "Plans": [
+                {
+                  "Node Type": "Sort",
+                  "Actual Total Time": 2.14,
+                  "Actual Rows": 2217,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 324,
+                  "Shared Read Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0,
+                  "Plans": [
+                    {
+                      "Node Type": "Result",
+                      "Actual Total Time": 1.202,
+                      "Actual Rows": 2217,
+                      "Actual Loops": 1,
+                      "Shared Hit Blocks": 324,
+                      "Shared Read Blocks": 0,
+                      "Temp Read Blocks": 0,
+                      "Temp Written Blocks": 0,
+                      "Plans": [
+                        {
+                          "Node Type": "Nested Loop",
+                          "Join Type": "Inner",
+                          "Actual Total Time": 1.085,
+                          "Actual Rows": 2217,
+                          "Actual Loops": 1,
+                          "Shared Hit Blocks": 324,
+                          "Shared Read Blocks": 0,
+                          "Temp Read Blocks": 0,
+                          "Temp Written Blocks": 0,
+                          "Plans": [
+                            {
+                              "Node Type": "Subquery Scan",
+                              "Actual Total Time": 0.014,
+                              "Actual Rows": 1,
+                              "Actual Loops": 1,
+                              "Rows Removed by Filter": 0,
+                              "Shared Hit Blocks": 2,
+                              "Shared Read Blocks": 0,
+                              "Temp Read Blocks": 0,
+                              "Temp Written Blocks": 0,
+                              "Plans": [
+                                {
+                                  "Node Type": "Limit",
+                                  "Actual Total Time": 0.013,
+                                  "Actual Rows": 1,
+                                  "Actual Loops": 1,
+                                  "Shared Hit Blocks": 2,
+                                  "Shared Read Blocks": 0,
+                                  "Temp Read Blocks": 0,
+                                  "Temp Written Blocks": 0,
+                                  "Plans": [
+                                    {
+                                      "Node Type": "Result",
+                                      "Actual Total Time": 0.012,
+                                      "Actual Rows": 1,
+                                      "Actual Loops": 1,
+                                      "Shared Hit Blocks": 2,
+                                      "Shared Read Blocks": 0,
+                                      "Temp Read Blocks": 0,
+                                      "Temp Written Blocks": 0,
+                                      "Plans": [
+                                        {
+                                          "Node Type": "Index Scan",
+                                          "Relation Name": "finance_snapshot_publications",
+                                          "Index Name": "finance_snapshot_publications_pkey",
+                                          "Actual Total Time": 0.011,
+                                          "Actual Rows": 1,
+                                          "Actual Loops": 1,
+                                          "Shared Hit Blocks": 2,
+                                          "Shared Read Blocks": 0,
+                                          "Temp Read Blocks": 0,
+                                          "Temp Written Blocks": 0
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "Node Type": "Index Scan",
+                              "Relation Name": "finance_snapshot_customers",
+                              "Index Name": "finance_snapshot_customers_pkey",
+                              "Actual Total Time": 0.916,
+                              "Actual Rows": 2217,
+                              "Actual Loops": 1,
+                              "Rows Removed by Filter": 0,
+                              "Shared Hit Blocks": 322,
+                              "Shared Read Blocks": 0,
+                              "Temp Read Blocks": 0,
+                              "Temp Written Blocks": 0,
+                              "Plans": [
+                                {
+                                  "Node Type": "Bitmap Heap Scan",
+                                  "Relation Name": "finance_snapshot_publications",
+                                  "Actual Total Time": 0.008,
+                                  "Actual Rows": 12,
+                                  "Actual Loops": 1,
+                                  "Shared Hit Blocks": 2,
+                                  "Shared Read Blocks": 0,
+                                  "Temp Read Blocks": 0,
+                                  "Temp Written Blocks": 0,
+                                  "Plans": [
+                                    {
+                                      "Node Type": "Bitmap Index Scan",
+                                      "Index Name": "finance_snapshot_publications_tenant_id_snapshot_id_key",
+                                      "Actual Total Time": 0.002,
+                                      "Actual Rows": 12,
+                                      "Actual Loops": 1,
+                                      "Shared Hit Blocks": 1,
+                                      "Shared Read Blocks": 0,
+                                      "Temp Read Blocks": 0,
+                                      "Temp Written Blocks": 0
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "Node Type": "Subquery Scan",
+              "Actual Total Time": 4.749,
+              "Actual Rows": 51,
+              "Actual Loops": 1,
+              "Shared Hit Blocks": 324,
+              "Shared Read Blocks": 0,
+              "Temp Read Blocks": 0,
+              "Temp Written Blocks": 0,
+              "Plans": [
+                {
+                  "Node Type": "Limit",
+                  "Actual Total Time": 4.744,
+                  "Actual Rows": 51,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 324,
+                  "Shared Read Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0,
+                  "Plans": [
+                    {
+                      "Node Type": "Sort",
+                      "Actual Total Time": 4.741,
+                      "Actual Rows": 51,
+                      "Actual Loops": 1,
+                      "Shared Hit Blocks": 324,
+                      "Shared Read Blocks": 0,
+                      "Temp Read Blocks": 0,
+                      "Temp Written Blocks": 0,
+                      "Plans": [
+                        {
+                          "Node Type": "CTE Scan",
+                          "Actual Total Time": 4.448,
+                          "Actual Rows": 2217,
+                          "Actual Loops": 1,
+                          "Rows Removed by Filter": 0,
+                          "Shared Hit Blocks": 324,
+                          "Shared Read Blocks": 0,
+                          "Temp Read Blocks": 0,
+                          "Temp Written Blocks": 0
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "Node Type": "CTE Scan",
+              "Actual Total Time": 0.085,
+              "Actual Rows": 0,
+              "Actual Loops": 1,
+              "Rows Removed by Filter": 2217,
+              "Shared Hit Blocks": 0,
+              "Shared Read Blocks": 0,
+              "Temp Read Blocks": 0,
+              "Temp Written Blocks": 0
+            }
+          ]
+        }
+      }
+    ],
+    "sqlStatements": 15
+  },
+  "httpsSamplesBeforeFinalCopy": [
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.047,
+      "apiSeconds": "0.048",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.004,
+      "apiSeconds": "0.004",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.025,
+      "apiSeconds": "0.025",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.01,
+      "apiSeconds": "0.010",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/health/ready",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.008,
+      "apiSeconds": "0.008",
+      "bytes": 79
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.012,
+      "apiSeconds": "0.012",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/index.html",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 536
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/assets/index-B86BNAxv.js",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 1127431
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/assets/index-Dlz51_NT.css",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 54735
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/state",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.001,
+      "apiSeconds": "0.001",
+      "bytes": 16
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/brand/el-dabboos-mark.png",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 19432
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.005,
+      "apiSeconds": "0.005",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/administration-capabilities",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.012,
+      "apiSeconds": "0.011",
+      "bytes": 26
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/tenant-profiles",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.018,
+      "apiSeconds": "0.018",
+      "bytes": 281
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/demo-capabilities",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.012,
+      "apiSeconds": "0.012",
+      "bytes": 321
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/saved-dashboards",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.061,
+      "apiSeconds": "0.061",
+      "bytes": 17
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/semantic-catalog",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.064,
+      "apiSeconds": "0.065",
+      "bytes": 80784
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-templates",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.071,
+      "apiSeconds": "0.071",
+      "bytes": 63110
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-library",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.061,
+      "apiSeconds": "0.060",
+      "bytes": 31
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-library",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.056,
+      "apiSeconds": "0.056",
+      "bytes": 31
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dimensions/business_line/values",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.732,
+      "apiSeconds": "0.732",
+      "bytes": 136
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-templates/executive-sales-invoicing/instantiate",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.786,
+      "apiSeconds": "0.786",
+      "bytes": 7868
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dimensions/salesperson/values",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.842,
+      "apiSeconds": "0.842",
+      "bytes": 3586
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.084,
+      "apiSeconds": "0.084",
+      "bytes": 6390
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/health/ready",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.008,
+      "apiSeconds": "0.009",
+      "bytes": 79
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.008,
+      "apiSeconds": "0.008",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.008,
+      "apiSeconds": "0.008",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.077,
+      "apiSeconds": "0.077",
+      "bytes": 6840
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.171,
+      "apiSeconds": "0.171",
+      "bytes": 6850
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.083,
+      "apiSeconds": "0.083",
+      "bytes": 6390
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.075,
+      "apiSeconds": "0.076",
+      "bytes": 6840
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.148,
+      "apiSeconds": "0.148",
+      "bytes": 6850
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.024,
+      "apiSeconds": "0.024",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.007,
+      "apiSeconds": "0.008",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/index.html",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 536
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/assets/index-Dlz51_NT.css",
+      "method": "GET",
+      "status": 304,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 0
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/assets/index-B86BNAxv.js",
+      "method": "GET",
+      "status": 304,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 0
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/state",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.001,
+      "apiSeconds": "0.001",
+      "bytes": 16
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.012,
+      "apiSeconds": "0.012",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/brand/el-dabboos-mark.png",
+      "method": "GET",
+      "status": 304,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 0
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/administration-capabilities",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.009,
+      "apiSeconds": "0.009",
+      "bytes": 26
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/tenant-profiles",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.005,
+      "apiSeconds": "0.006",
+      "bytes": 281
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/demo-capabilities",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.007,
+      "apiSeconds": "0.007",
+      "bytes": 321
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/semantic-catalog",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.028,
+      "apiSeconds": "0.028",
+      "bytes": 80784
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/saved-dashboards",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.037,
+      "apiSeconds": "0.037",
+      "bytes": 17
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-templates",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.046,
+      "apiSeconds": "0.045",
+      "bytes": 63110
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-library",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.043,
+      "apiSeconds": "0.043",
+      "bytes": 31
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-library",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.022,
+      "apiSeconds": "0.022",
+      "bytes": 31
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dimensions/business_line/values",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.802,
+      "apiSeconds": "0.802",
+      "bytes": 136
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dimensions/salesperson/values",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.949,
+      "apiSeconds": "0.949",
+      "bytes": 3586
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-templates/business-line-performance/instantiate",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.977,
+      "apiSeconds": "0.978",
+      "bytes": 13965
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.433,
+      "apiSeconds": "0.433",
+      "bytes": 10422
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.366,
+      "apiSeconds": "0.366",
+      "bytes": 12586
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.655,
+      "apiSeconds": "0.655",
+      "bytes": 12604
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.397,
+      "apiSeconds": "0.397",
+      "bytes": 10422
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.365,
+      "apiSeconds": "0.365",
+      "bytes": 12586
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.657,
+      "apiSeconds": "0.657",
+      "bytes": 12604
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.022,
+      "apiSeconds": "0.021",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.013,
+      "apiSeconds": "0.014",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/index.html",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 536
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/assets/index-B86BNAxv.js",
+      "method": "GET",
+      "status": 304,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 0
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/assets/index-Dlz51_NT.css",
+      "method": "GET",
+      "status": 304,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 0
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/state",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.001,
+      "apiSeconds": "0.001",
+      "bytes": 16
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.004,
+      "apiSeconds": "0.004",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/brand/el-dabboos-mark.png",
+      "method": "GET",
+      "status": 304,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 0
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/administration-capabilities",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.008,
+      "apiSeconds": "0.008",
+      "bytes": 26
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/tenant-profiles",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.006,
+      "apiSeconds": "0.006",
+      "bytes": 281
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/demo-capabilities",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.013,
+      "apiSeconds": "0.013",
+      "bytes": 321
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/semantic-catalog",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.027,
+      "apiSeconds": "0.027",
+      "bytes": 80784
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-library",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.021,
+      "apiSeconds": "0.021",
+      "bytes": 31
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-templates",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.048,
+      "apiSeconds": "0.048",
+      "bytes": 63110
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/saved-dashboards",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.053,
+      "apiSeconds": "0.053",
+      "bytes": 17
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-library",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.022,
+      "apiSeconds": "0.022",
+      "bytes": 31
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dimensions/business_line/values",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.756,
+      "apiSeconds": "0.757",
+      "bytes": 136
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dimensions/salesperson/values",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.894,
+      "apiSeconds": "0.895",
+      "bytes": 3586
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-templates/salesperson-performance/instantiate",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 5.201,
+      "apiSeconds": "5.201",
+      "bytes": 119672
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.66,
+      "apiSeconds": "0.660",
+      "bytes": 73926
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.669,
+      "apiSeconds": "0.669",
+      "bytes": 78046
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 5.003,
+      "apiSeconds": "5.004",
+      "bytes": 118315
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.638,
+      "apiSeconds": "0.638",
+      "bytes": 73926
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.632,
+      "apiSeconds": "0.632",
+      "bytes": 78046
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 4.967,
+      "apiSeconds": "4.967",
+      "bytes": 118315
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.023,
+      "apiSeconds": "0.023",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/index.html",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 536
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/assets/index-Dlz51_NT.css",
+      "method": "GET",
+      "status": 304,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 0
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/assets/index-B86BNAxv.js",
+      "method": "GET",
+      "status": 304,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 0
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/state",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.001,
+      "apiSeconds": "0.001",
+      "bytes": 16
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.004,
+      "apiSeconds": "0.004",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/brand/el-dabboos-mark.png",
+      "method": "GET",
+      "status": 304,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 0
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/administration-capabilities",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.006,
+      "apiSeconds": "0.006",
+      "bytes": 26
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/tenant-profiles",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.008,
+      "apiSeconds": "0.008",
+      "bytes": 281
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/demo-capabilities",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.006,
+      "apiSeconds": "0.006",
+      "bytes": 321
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/semantic-catalog",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.02,
+      "apiSeconds": "0.020",
+      "bytes": 80784
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/saved-dashboards",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.029,
+      "apiSeconds": "0.029",
+      "bytes": 17
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-library",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.023,
+      "apiSeconds": "0.023",
+      "bytes": 31
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-templates",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.047,
+      "apiSeconds": "0.047",
+      "bytes": 63110
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-library",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.014,
+      "apiSeconds": "0.014",
+      "bytes": 31
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dimensions/business_line/values",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.642,
+      "apiSeconds": "0.642",
+      "bytes": 136
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dimensions/salesperson/values",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.703,
+      "apiSeconds": "0.703",
+      "bytes": 3586
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-templates/invoice-refund-operations/instantiate",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 3.839,
+      "apiSeconds": "3.839",
+      "bytes": 73233
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.539,
+      "apiSeconds": "0.539",
+      "bytes": 47134
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.513,
+      "apiSeconds": "0.513",
+      "bytes": 49428
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 3.694,
+      "apiSeconds": "3.694",
+      "bytes": 71653
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.475,
+      "apiSeconds": "0.475",
+      "bytes": 47134
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.52,
+      "apiSeconds": "0.519",
+      "bytes": 49428
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 3.693,
+      "apiSeconds": "3.693",
+      "bytes": 71653
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/index.html",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 536
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/state",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.0,
+      "apiSeconds": "0.001",
+      "bytes": 16
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.004,
+      "apiSeconds": "0.003",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/administration-capabilities",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.011,
+      "apiSeconds": "0.011",
+      "bytes": 26
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/tenant-profiles",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.004,
+      "apiSeconds": "0.004",
+      "bytes": 281
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/demo-capabilities",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.006,
+      "apiSeconds": "0.006",
+      "bytes": 321
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/semantic-catalog",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.02,
+      "apiSeconds": "0.020",
+      "bytes": 80784
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-library",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.022,
+      "apiSeconds": "0.022",
+      "bytes": 31
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-templates",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.036,
+      "apiSeconds": "0.036",
+      "bytes": 63110
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/saved-dashboards",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.038,
+      "apiSeconds": "0.038",
+      "bytes": 17
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-library",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.022,
+      "apiSeconds": "0.022",
+      "bytes": 31
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-templates/receivables-aging/instantiate",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.507,
+      "apiSeconds": "0.508",
+      "bytes": 2502030
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dimensions/business_line/values",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.539,
+      "apiSeconds": "0.539",
+      "bytes": 136
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dimensions/salesperson/values",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.714,
+      "apiSeconds": "0.714",
+      "bytes": 3586
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.458,
+      "apiSeconds": "0.457",
+      "bytes": 2500115
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.424,
+      "apiSeconds": "0.424",
+      "bytes": 2500115
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.004,
+      "apiSeconds": "0.004",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.42,
+      "apiSeconds": "0.421",
+      "bytes": 2500115
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.397,
+      "apiSeconds": "0.397",
+      "bytes": 2500115
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.299,
+      "apiSeconds": "0.299",
+      "bytes": 2500115
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.312,
+      "apiSeconds": "0.312",
+      "bytes": 2500115
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.008,
+      "apiSeconds": "0.008",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.018,
+      "apiSeconds": "0.019",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.333,
+      "apiSeconds": "0.332",
+      "bytes": 2500115
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.005,
+      "apiSeconds": "0.004",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.325,
+      "apiSeconds": "0.325",
+      "bytes": 2459024
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.063,
+      "apiSeconds": "0.063",
+      "bytes": 9584
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.007,
+      "apiSeconds": "0.008",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.008,
+      "apiSeconds": "0.008",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.007,
+      "apiSeconds": "0.007",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.003,
+      "apiSeconds": "0.003",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.007,
+      "apiSeconds": "0.007",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/index.html",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 536
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/assets/index-B86BNAxv.js",
+      "method": "GET",
+      "status": 304,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 0
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/assets/index-Dlz51_NT.css",
+      "method": "GET",
+      "status": 304,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 0
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/state",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.001,
+      "apiSeconds": "0.001",
+      "bytes": 16
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.005,
+      "apiSeconds": "0.005",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/brand/el-dabboos-mark.png",
+      "method": "GET",
+      "status": 304,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 0
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/administration-capabilities",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.024,
+      "apiSeconds": "0.024",
+      "bytes": 26
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/tenant-profiles",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.01,
+      "apiSeconds": "0.010",
+      "bytes": 281
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/demo-capabilities",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.006,
+      "apiSeconds": "0.006",
+      "bytes": 321
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/semantic-catalog",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.034,
+      "apiSeconds": "0.035",
+      "bytes": 80784
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-templates",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.048,
+      "apiSeconds": "0.049",
+      "bytes": 63110
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-library",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.038,
+      "apiSeconds": "0.039",
+      "bytes": 31
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/saved-dashboards",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.055,
+      "apiSeconds": "0.055",
+      "bytes": 17
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-library",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.017,
+      "apiSeconds": "0.017",
+      "bytes": 31
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dimensions/business_line/values",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.569,
+      "apiSeconds": "0.570",
+      "bytes": 136
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dimensions/salesperson/values",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.722,
+      "apiSeconds": "0.722",
+      "bytes": 3586
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-templates/customer-performance/instantiate",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 1.149,
+      "apiSeconds": "1.149",
+      "bytes": 457702
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 10.516,
+      "apiSeconds": "10.516",
+      "bytes": 2931420
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 10.83,
+      "apiSeconds": "10.829",
+      "bytes": 2950804
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 1.037,
+      "apiSeconds": "1.037",
+      "bytes": 456375
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.009,
+      "apiSeconds": "0.009",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.005,
+      "apiSeconds": "0.005",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.008,
+      "apiSeconds": "0.008",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.004,
+      "apiSeconds": "0.004",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.003,
+      "apiSeconds": "0.004",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.004,
+      "apiSeconds": "0.003",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/index.html",
+      "method": "GET",
+      "status": 304,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 0
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/assets/index-B86BNAxv.js",
+      "method": "GET",
+      "status": 304,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 0
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/assets/index-Dlz51_NT.css",
+      "method": "GET",
+      "status": 304,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 0
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/state",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.001,
+      "apiSeconds": "0.001",
+      "bytes": 16
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.005,
+      "apiSeconds": "0.005",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/brand/el-dabboos-mark.png",
+      "method": "GET",
+      "status": 304,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 0
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/administration-capabilities",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.009,
+      "apiSeconds": "0.009",
+      "bytes": 26
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/tenant-profiles",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.006,
+      "apiSeconds": "0.006",
+      "bytes": 281
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/demo-capabilities",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.009,
+      "apiSeconds": "0.009",
+      "bytes": 321
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-templates",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.035,
+      "apiSeconds": "0.036",
+      "bytes": 63110
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/semantic-catalog",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.052,
+      "apiSeconds": "0.053",
+      "bytes": 80784
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/saved-dashboards",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.053,
+      "apiSeconds": "0.054",
+      "bytes": 17
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-library",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.036,
+      "apiSeconds": "0.036",
+      "bytes": 31
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-library",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.016,
+      "apiSeconds": "0.016",
+      "bytes": 31
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-templates/executive-sales-invoicing/instantiate",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.32,
+      "apiSeconds": "0.320",
+      "bytes": 7868
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dimensions/business_line/values",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.825,
+      "apiSeconds": "0.825",
+      "bytes": 136
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dimensions/salesperson/values",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.954,
+      "apiSeconds": "0.953",
+      "bytes": 3586
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.064,
+      "apiSeconds": "0.064",
+      "bytes": 6374
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dimensions/customer/search",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.275,
+      "apiSeconds": "0.276",
+      "bytes": 5268
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.101,
+      "apiSeconds": "0.101",
+      "bytes": 6208
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dimensions/customer/search",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.274,
+      "apiSeconds": "0.274",
+      "bytes": 400
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.003,
+      "apiSeconds": "0.003",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/index.html",
+      "method": "GET",
+      "status": 304,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 0
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/state",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.001,
+      "apiSeconds": "0.001",
+      "bytes": 16
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.003,
+      "apiSeconds": "0.003",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/administration-capabilities",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.004,
+      "apiSeconds": "0.004",
+      "bytes": 26
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/tenant-profiles",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.005,
+      "apiSeconds": "0.005",
+      "bytes": 281
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/demo-capabilities",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.008,
+      "apiSeconds": "0.008",
+      "bytes": 321
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/semantic-catalog",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.019,
+      "apiSeconds": "0.019",
+      "bytes": 80784
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-templates",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.023,
+      "apiSeconds": "0.023",
+      "bytes": 63110
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/saved-dashboards",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.029,
+      "apiSeconds": "0.029",
+      "bytes": 17
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-library",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.021,
+      "apiSeconds": "0.021",
+      "bytes": 31
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-library",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.017,
+      "apiSeconds": "0.017",
+      "bytes": 31
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dimensions/business_line/values",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.734,
+      "apiSeconds": "0.734",
+      "bytes": 136
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dimensions/salesperson/values",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.865,
+      "apiSeconds": "0.865",
+      "bytes": 3586
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-templates/invoice-refund-operations/instantiate",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 4.047,
+      "apiSeconds": "4.047",
+      "bytes": 73233
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.3,
+      "apiSeconds": "0.300",
+      "bytes": 22218
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dimensions/customer/search",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.242,
+      "apiSeconds": "0.242",
+      "bytes": 5268
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.234,
+      "apiSeconds": "0.233",
+      "bytes": 10847
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dimensions/customer/search",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.275,
+      "apiSeconds": "0.276",
+      "bytes": 400
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.013,
+      "apiSeconds": "0.014",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.007,
+      "apiSeconds": "0.007",
+      "bytes": 106
+    }
+  ],
+  "httpsFinalSamples": [
+    {
+      "component": "https-benchmark",
+      "route": "/health/ready",
+      "method": "GET",
+      "status": 502,
+      "httpSeconds": 0.001,
+      "apiSeconds": "0.000",
+      "bytes": 157
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/index.html",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 536
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/assets/index-D1VISkx6.js",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 1127989
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/assets/index-Vg7fGGfg.css",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 55152
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/brand/el-dabboos-mark.png",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 19432
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/state",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.017,
+      "apiSeconds": "0.018",
+      "bytes": 16
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.033,
+      "apiSeconds": "0.033",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/administration-capabilities",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.013,
+      "apiSeconds": "0.013",
+      "bytes": 26
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/tenant-profiles",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.012,
+      "apiSeconds": "0.013",
+      "bytes": 281
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/demo-capabilities",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.014,
+      "apiSeconds": "0.013",
+      "bytes": 321
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/saved-dashboards",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.048,
+      "apiSeconds": "0.047",
+      "bytes": 17
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/semantic-catalog",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.052,
+      "apiSeconds": "0.052",
+      "bytes": 80784
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-library",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.053,
+      "apiSeconds": "0.054",
+      "bytes": 31
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-templates",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.069,
+      "apiSeconds": "0.069",
+      "bytes": 63110
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-library",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.069,
+      "apiSeconds": "0.069",
+      "bytes": 31
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dimensions/business_line/values",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.776,
+      "apiSeconds": "0.776",
+      "bytes": 136
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dimensions/salesperson/values",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 1.01,
+      "apiSeconds": "1.010",
+      "bytes": 3586
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-templates/invoice-refund-operations/instantiate",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 4.153,
+      "apiSeconds": "4.153",
+      "bytes": 73233
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.019,
+      "apiSeconds": "0.019",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dimensions/business_line/values",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.591,
+      "apiSeconds": "0.591",
+      "bytes": 136
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dimensions/salesperson/values",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.715,
+      "apiSeconds": "0.715",
+      "bytes": 3591
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/index.html",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 536
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/assets/index-Vg7fGGfg.css",
+      "method": "GET",
+      "status": 304,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 0
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/assets/index-D1VISkx6.js",
+      "method": "GET",
+      "status": 304,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 0
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/state",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.0,
+      "apiSeconds": "0.001",
+      "bytes": 16
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.005,
+      "apiSeconds": "0.005",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/brand/el-dabboos-mark.png",
+      "method": "GET",
+      "status": 304,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 0
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/administration-capabilities",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.007,
+      "apiSeconds": "0.007",
+      "bytes": 26
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/tenant-profiles",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.007,
+      "apiSeconds": "0.007",
+      "bytes": 281
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/demo-capabilities",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.012,
+      "apiSeconds": "0.012",
+      "bytes": 321
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/semantic-catalog",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.022,
+      "apiSeconds": "0.022",
+      "bytes": 80784
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-library",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.026,
+      "apiSeconds": "0.026",
+      "bytes": 31
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-templates",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.045,
+      "apiSeconds": "0.045",
+      "bytes": 63110
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/saved-dashboards",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.046,
+      "apiSeconds": "0.045",
+      "bytes": 17
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-library",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.019,
+      "apiSeconds": "0.019",
+      "bytes": 31
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboard-templates/receivables-aging/instantiate",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.478,
+      "apiSeconds": "0.478",
+      "bytes": 2505270
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dimensions/business_line/values",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.595,
+      "apiSeconds": "0.595",
+      "bytes": 136
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dimensions/salesperson/values",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.643,
+      "apiSeconds": "0.643",
+      "bytes": 3591
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.019,
+      "apiSeconds": "0.020",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.003,
+      "apiSeconds": "0.003",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.088,
+      "apiSeconds": "0.088",
+      "bytes": 9584
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.397,
+      "apiSeconds": "0.397",
+      "bytes": 2503355
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.017,
+      "apiSeconds": "0.017",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.007,
+      "apiSeconds": "0.007",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.019,
+      "apiSeconds": "0.019",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.007,
+      "apiSeconds": "0.006",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.022,
+      "apiSeconds": "0.022",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.009,
+      "apiSeconds": "0.009",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.019,
+      "apiSeconds": "0.019",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.008,
+      "apiSeconds": "0.008",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.009,
+      "apiSeconds": "0.009",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.008,
+      "apiSeconds": "0.008",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.021,
+      "apiSeconds": "0.021",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.02,
+      "apiSeconds": "0.020",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dimensions/business_line/values",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.583,
+      "apiSeconds": "0.583",
+      "bytes": 136
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dimensions/salesperson/values",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.638,
+      "apiSeconds": "0.637",
+      "bytes": 3586
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.01,
+      "apiSeconds": "0.009",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.412,
+      "apiSeconds": "0.412",
+      "bytes": 2503355
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.349,
+      "apiSeconds": "0.349",
+      "bytes": 2503355
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.321,
+      "apiSeconds": "0.321",
+      "bytes": 2503355
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.005,
+      "apiSeconds": "0.004",
+      "bytes": 106
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/assets/BuilderWorkspace-C9QLGCqo.js",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 105285
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/assets/BuilderWorkspace-CgLZr6WS.css",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.0,
+      "apiSeconds": "",
+      "bytes": 2351
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.164,
+      "apiSeconds": "0.164",
+      "bytes": 3006
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.069,
+      "apiSeconds": "0.069",
+      "bytes": 3006
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.039,
+      "apiSeconds": "0.039",
+      "bytes": 2316
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "httpSeconds": 0.061,
+      "apiSeconds": "0.061",
+      "bytes": 3006
+    },
+    {
+      "component": "https-benchmark",
+      "route": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "httpSeconds": 0.006,
+      "apiSeconds": "0.005",
+      "bytes": 106
+    }
+  ],
+  "operationalFingerprintsUnchanged": true,
+  "verification": {
+    "fullSuiteRuns": 1,
+    "unitPass": 707,
+    "postgresInitialPass": 158,
+    "postgresInitialFail": 5,
+    "postgresFocusedRepairPass": 7,
+    "postgresUniquePassingAfterRepair": 163,
+    "skipped": 0,
+    "finalFocusedRegressionsPass": 35,
+    "finalQualityDiagnostics": 0,
+    "typecheck": "passed"
+  },
+  "manualLimitations": [
+    "Annual unfiltered Customer Performance exceeds the retained 3000 group bound; select customers or narrow dates.",
+    "Final Arabic phone/tablet and keyboard review was not completed; browser interaction became unreliable. Arabic desktop availability and provenance were verified earlier."
+  ]
+}

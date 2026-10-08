@@ -14,6 +14,7 @@ export function resolveRelativeDatePreset(preset: RelativeDatePreset, timeZone: 
     case 'current_month': return { from: date(year, month, 1), to: today };
     case 'previous_month': return { from: date(year, month - 1, 1), to: date(year, month, 0) };
     case 'last_30_days': return { from: date(year, month, day - 29), to: today };
+    case 'last_90_days': return { from: date(year, month, day - 89), to: today };
     case 'current_quarter': return { from: date(year, quarter, 1), to: today };
     case 'previous_quarter': return { from: date(year, quarter - 3, 1), to: date(year, quarter, 0) };
     case 'current_year': return { from: date(year, 0, 1), to: today };

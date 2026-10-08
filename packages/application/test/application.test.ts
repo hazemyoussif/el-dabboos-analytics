@@ -11,8 +11,8 @@ const context = { tenantId: 'demo-iq', locale: 'en' } as const;
 const result = (query: AnalyticsQuery, rows: AnalyticsResult['rows']): AnalyticsResult => ({ metric: query.metric, groupBy: query.groupBy ?? null, rows,
   metadata: { sourceId: 'spy', executedAt: fixed().toISOString(), metricType: 'currency', semantics: 'additive' } });
 test('reusable templates instantiate identically for both markets with symbolic dates', () => {
-  assert.equal(dashboardTemplates.length, 26);
-  assert.equal(new Set(dashboardTemplates.map(t => t.id)).size, 26);
+  assert.equal(dashboardTemplates.length, 31);
+  assert.equal(new Set(dashboardTemplates.map(t => t.id)).size, 31);
   for (const template of dashboardTemplates) {
     const a = instantiateDashboardTemplate(template, iq, fixed(), 'en');
     const b = instantiateDashboardTemplate(template, eg, fixed(), 'ar');
@@ -142,4 +142,13 @@ test('mock planner generates Iraqi, Egyptian, MSA and English v2 specs and edits
     assert.ok(check(current));
   }
   await assert.rejects(planner.generate({ prompt: 'Show website traffic', locale: 'en', context, tenantProfile: iq }));
+});
+
+test('unexpected numeric corruption fails closed, emits a safe diagnostic and never returns raw SQL to cards',async()=>{
+ const diagnostics:Array<{metric:string;category:string}>=[];
+ const repository:AnalyticsRepository={execute:async()=>{throw new Error('Unsafe SQL numeric output');}};
+ const spec=instantiateDashboardTemplate(getDashboardTemplate('sales-performance')!,iq,fixed(),'en');spec.widgets=spec.widgets.slice(0,1);
+ const execution=await new DashboardExecutor(repository,fixed,{onSeriesFailure:diagnostic=>diagnostics.push(diagnostic)}).execute(spec,context,{timeZone:iq.timeZone});
+ assert.ok(diagnostics.length>0);assert.equal(diagnostics[0]!.category,'unsafe_numeric');
+ for(const widget of Object.values(execution.widgetResults))for(const series of Object.values(widget.seriesResults)){assert.equal(series.status,'error');if(series.status==='error')assert.equal(series.error.message,'This metric is temporarily unavailable.');}
 });

@@ -1,0 +1,155 @@
+{
+  "command": "pnpm odoo:history backfill --tenant el-dabboos-iq --from 2025-10-01 --to 2026-09-30 --checkpoint-dir .local-state/historical-202510-202609",
+  "modelEndpoint": "unusable-loopback-endpoint",
+  "modelCredential": "invalid-unused",
+  "completedCheckpointsValidated": 24,
+  "sourceExtractionsStarted": 0,
+  "factWritesStarted": 0,
+  "retainedNovemberDecember": true,
+  "results": [
+    {
+      "month": "2025-10",
+      "kind": "events",
+      "status": "resumed-reconciled",
+      "datasetId": "el-dabboos-history-202510-events-9d4e45a2"
+    },
+    {
+      "month": "2025-10",
+      "kind": "aging",
+      "status": "resumed-reconciled",
+      "datasetId": "el-dabboos-history-202510-aging-v2"
+    },
+    {
+      "month": "2025-11",
+      "kind": "events",
+      "status": "resumed-reconciled",
+      "datasetId": "el-dabboos-history-202511-events-cc9ed00a"
+    },
+    {
+      "month": "2025-11",
+      "kind": "aging",
+      "status": "resumed-reconciled",
+      "datasetId": "el-dabboos-history-202511-aging-cc118241"
+    },
+    {
+      "month": "2025-12",
+      "kind": "events",
+      "status": "resumed-reconciled",
+      "datasetId": "el-dabboos-history-202512-events-45fd49fc"
+    },
+    {
+      "month": "2025-12",
+      "kind": "aging",
+      "status": "resumed-reconciled",
+      "datasetId": "el-dabboos-history-202512-aging-01eadda8"
+    },
+    {
+      "month": "2026-01",
+      "kind": "events",
+      "status": "resumed-reconciled",
+      "datasetId": "el-dabboos-history-202601-events-b300d88e"
+    },
+    {
+      "month": "2026-01",
+      "kind": "aging",
+      "status": "resumed-reconciled",
+      "datasetId": "el-dabboos-history-202601-aging-1a8c9842"
+    },
+    {
+      "month": "2026-02",
+      "kind": "events",
+      "status": "resumed-reconciled",
+      "datasetId": "el-dabboos-history-202602-events-e020b666"
+    },
+    {
+      "month": "2026-02",
+      "kind": "aging",
+      "status": "resumed-reconciled",
+      "datasetId": "el-dabboos-history-202602-aging-17c5ad68"
+    },
+    {
+      "month": "2026-03",
+      "kind": "events",
+      "status": "resumed-reconciled",
+      "datasetId": "el-dabboos-history-202603-events-3525e734"
+    },
+    {
+      "month": "2026-03",
+      "kind": "aging",
+      "status": "resumed-reconciled",
+      "datasetId": "el-dabboos-history-202603-aging-73541314"
+    },
+    {
+      "month": "2026-04",
+      "kind": "events",
+      "status": "resumed-reconciled",
+      "datasetId": "el-dabboos-history-202604-events-1c2be7ca"
+    },
+    {
+      "month": "2026-04",
+      "kind": "aging",
+      "status": "resumed-reconciled",
+      "datasetId": "el-dabboos-history-202604-aging-0fa6bdec"
+    },
+    {
+      "month": "2026-05",
+      "kind": "events",
+      "status": "resumed-reconciled",
+      "datasetId": "el-dabboos-history-202605-events-2d10f02c"
+    },
+    {
+      "month": "2026-05",
+      "kind": "aging",
+      "status": "resumed-reconciled",
+      "datasetId": "el-dabboos-history-202605-aging-e63c753e"
+    },
+    {
+      "month": "2026-06",
+      "kind": "events",
+      "status": "resumed-reconciled",
+      "datasetId": "el-dabboos-history-202606-events-686ac9cd"
+    },
+    {
+      "month": "2026-06",
+      "kind": "aging",
+      "status": "resumed-reconciled",
+      "datasetId": "el-dabboos-history-202606-aging-570f9f91"
+    },
+    {
+      "month": "2026-07",
+      "kind": "events",
+      "status": "resumed-reconciled",
+      "datasetId": "el-dabboos-history-202607-events-ff9c287d"
+    },
+    {
+      "month": "2026-07",
+      "kind": "aging",
+      "status": "resumed-reconciled",
+      "datasetId": "el-dabboos-history-202607-aging-ea9a2aa7"
+    },
+    {
+      "month": "2026-08",
+      "kind": "events",
+      "status": "resumed-reconciled",
+      "datasetId": "el-dabboos-history-202608-events-f23caab3"
+    },
+    {
+      "month": "2026-08",
+      "kind": "aging",
+      "status": "resumed-reconciled",
+      "datasetId": "el-dabboos-history-202608-aging-bade7386"
+    },
+    {
+      "month": "2026-09",
+      "kind": "events",
+      "status": "resumed-reconciled",
+      "datasetId": "el-dabboos-history-202609-events-c04441de"
+    },
+    {
+      "month": "2026-09",
+      "kind": "aging",
+      "status": "resumed-reconciled",
+      "datasetId": "el-dabboos-history-202609-aging-59c08b7b"
+    }
+  ]
+}

@@ -1,4 +1,7 @@
 import type { DimensionId } from './contracts.ts';
+export class AnalyticsResultLimitError extends Error {
+  constructor(readonly dimension:DimensionId){super('Governed result limit exceeded');this.name='AnalyticsResultLimitError';}
+}
 /** Discovery metadata only. This never authorizes a filter, grouping or query. */
 export class UncertifiedDimensionError extends Error {
   constructor(readonly dimension: DimensionId) { super('Uncertified discovery dimension'); }

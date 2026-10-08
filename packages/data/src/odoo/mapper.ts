@@ -41,7 +41,7 @@ export function mapOdooRecord(record: SourceRecord<OdooSourceRow>,mapping: Sourc
   if (!batch.companyIds.includes(row.company_id) || batch.tenantId!==mapping.tenantId || batch.sourceId!==mapping.sourceId || record.object!==row.object || record.recordId!==row.id || record.version!==row.write_date || record.revision!==odooRevision(row.write_date) || record.change!=='upsert') throw new Error('Source mapping scope or version');
   if (!row.business_date) throw new Error('Source business date required');
   const scope = `${mapping.sourceId}:${row.company_id}`;
-  const dimensions = { salesperson: stableId(row.salesperson_id,mapping.sourceId),customer: stableId(row.partner_id,mapping.sourceId),business_line: stableId(row.business_line_id,scope),city: row.city ?? 'unassigned',state: stableId(row.state_id,mapping.sourceId) };
+  const dimensions = { salesperson: stableId(row.salesperson_id,mapping.sourceId),customer: stableId(row.partner_id,mapping.sourceId),business_line: stableId(row.business_line_id,scope),city: row.city?.trim() || 'unassigned',state: stableId(row.state_id,mapping.sourceId) };
   const transaction = transactionEvidence(row);
   const inPeriod = !period || row.business_date>=period.from && row.business_date<=period.to;
   return contributions(row).map(contribution => {

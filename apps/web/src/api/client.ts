@@ -43,12 +43,13 @@ export const createSavedDashboard = (session: ApiSession, dashboard: DashboardSp
 export const updateSavedDashboard = (session: ApiSession, id: string, dashboard: DashboardSpec, expectedVersion: number) => request<DashboardRecord>(session, `/api/saved-dashboards/${encodeURIComponent(id)}`, 'PUT', { dashboard, expectedVersion });
 export const executeDashboard = (session: ApiSession, dashboard: DashboardSpec, overrides?: DashboardFilterOverrides) => request<DashboardExecutionResult>(session, '/api/dashboards/execute', 'POST', { dashboard, ...(overrides ? { overrides } : {}) });
 export async function getFilterOptions(session: ApiSession,dimensions: readonly DimensionId[] = categoricalDimensions): Promise<FilterOptions> {
-  const values = await Promise.all(dimensions.filter(dimension=>categoricalDimensions.includes(dimension)).map(async dimension => {
+  const values = await Promise.all(dimensions.filter(dimension=>dimension!=='customer'&&categoricalDimensions.includes(dimension)).map(async dimension => {
     const response = await request<{ dimension: DimensionId; values: Array<{ id: string; label: string }> }>(session, `/api/dimensions/${dimension}/values`, 'GET');
     return [dimension, response.values] as const;
   }));
   return Object.fromEntries(values);
 }
+export const searchCustomers=(session:ApiSession,query:import('@el-dabboos/domain').DimensionDiscoveryRequest)=>request<import('@el-dabboos/domain').DimensionDiscoveryPage>(session,'/api/dimensions/customer/search','POST',query);
 export const getDashboardLibrary = (session: ApiSession) => request<{ folders: import('@el-dabboos/domain').DashboardFolder[]; preferences: import('@el-dabboos/domain').DashboardLibraryPreference[] }>(session, '/api/dashboard-library', 'GET');
 export const createDashboardFolder = (session: ApiSession, name: string) => request<import('@el-dabboos/domain').DashboardFolder>(session, '/api/dashboard-library/folders', 'POST', { name });
 export const renameDashboardFolder = (session: ApiSession, id: string, name: string) => request<import('@el-dabboos/domain').DashboardFolder>(session, `/api/dashboard-library/folders/${encodeURIComponent(id)}`, 'PUT', { name });

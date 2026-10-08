@@ -42,7 +42,7 @@ async function executeRetainedRun(manifest: OdooPilotManifest,environment: NodeJ
   const sourcePool = createOdooSourcePool(config);
   let snapshot: OdooSnapshotLease | undefined;
   try {
-    snapshot = await OdooSnapshotLease.open(ownerPool,config,config.snapshotMaxDurationMs);
+    snapshot = await OdooSnapshotLease.open(ownerPool,config,config.snapshotMaxDurationMs,config.credentialPolicy);
     const run: ExtractionRun = { tenantId: mapping.tenantId,sourceId: mapping.sourceId,companyIds: ['1'],datasetId: mapping.datasetId,mappingId: mapping.mappingId,mappingVersion: mapping.mappingVersion,extractionId: manifest.extractionId,sourceObjects: ['sale_order','account_move'],from: '2026-09-01',to: '2026-09-30',sourceAsOf: snapshot.evidence.sourceAsOf,frozenRevision: snapshot.evidence.frozenRevision,freezeReference: snapshot.evidence.freezeReference,completeness: 'complete_scope' };
     const result = await ingestRetainedOdooPilot({ sourcePool,martPool: mart,sourceConfig: config,mapping,run,snapshot });
     return { ...result,evidenceKind: 'DB-only; Invoice Analysis sign-off still required' };

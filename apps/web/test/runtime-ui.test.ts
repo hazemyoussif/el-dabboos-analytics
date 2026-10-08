@@ -106,3 +106,17 @@ test('shared filters display governed bilingual names while changes and restored
   }
  }finally{await fixture.close();}
 });
+
+test('customer discovery opens lazily, hydrates saved selections and follows bounded continuation',async()=>{
+ const fixture=await domFixture();try {
+  const {CustomerFilterControl,CustomerDiscoveryContext}=await fixture.server.ssrLoadModule('/src/CustomerFilterControl.tsx');
+  const calls:import('@el-dabboos/domain').DimensionDiscoveryRequest[]=[];
+  const load=async(query:import('@el-dabboos/domain').DimensionDiscoveryRequest)=>{calls.push(query);return {values:[{id:query.cursor?'source:second':'source:first',label:query.cursor?'Second customer':'First customer'}],selected:query.selectedIds?.length?[{id:'source:saved',label:'Saved customer'}]:[],...(query.cursor?{}:{nextCursor:'continuation'})};};
+  const render=(values:string[])=>createElement(CustomerDiscoveryContext.Provider,{value:load},createElement(CustomerFilterControl,{locale:'en',values,onChange:()=>{}}));
+  await act(async()=>fixture.root.render(render([])));await settle();assert.equal(calls.length,0);
+  await act(async()=>fixture.container.querySelector('button')!.click());await settle();assert.equal(calls.length,1);assert.equal(calls[0]!.limit,50);
+  const more=[...fixture.container.querySelectorAll('button')].find(button=>button.textContent==='Load more')!;
+  await act(async()=>more.click());await settle();assert.equal(calls[1]!.cursor,'continuation');assert.ok(fixture.container.textContent?.includes('Second customer'));
+  await act(async()=>fixture.root.render(render(['source:saved'])));await settle();assert.equal(calls.at(-1)!.limit,1);assert.deepEqual(calls.at(-1)!.selectedIds,['source:saved']);assert.ok(fixture.container.textContent?.includes('Saved customer'));assert.ok(!fixture.container.textContent?.includes('source:saved'));
+ }finally{await fixture.close();}
+});

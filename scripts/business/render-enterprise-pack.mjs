@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 const directory = new URL('../../docs/business/', import.meta.url);
+const historicalSupplement = JSON.parse(readFileSync(new URL('historical-supplement-v1.json',directory),'utf8')).documents;
 export const stateLabels = {
  certified: { en: 'Certified', ar: 'معتمد' },
  reconciled_awaiting_approval: { en: 'Reconciled · Awaiting Business Approval', ar: 'تمت المطابقة · بانتظار اعتماد الأعمال' },
@@ -131,7 +132,7 @@ export function renderPack(input) {
  ['el-dabboos-report-catalog-' + locale + '.md', reportCatalog(pack, locale)],
  ['el-dabboos-metric-dictionary-' + locale + '.md', dictionary(pack, locale)],
  ['el-dabboos-metric-approval-' + locale + '.md', approval(pack, locale)],
- ]));
+ ]).map(([name,content])=>[name,content+(historicalSupplement[name] ?? '')]));
 }
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
  const pack = JSON.parse(readFileSync(new URL('enterprise-metrics-v1.json', directory), 'utf8'));

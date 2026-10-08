@@ -73,7 +73,7 @@ export function snapshotMetric(metric:AnalyticsPartition['metric']){const semant
 export function monthEnd(month:string){const date=new Date(`${month}-01T00:00:00Z`);date.setUTCMonth(date.getUTCMonth()+1);date.setUTCDate(0);return date.toISOString().slice(0,10);}
 
 const qualityChecks=new WeakMap<OdooSnapshotLease,{through:string;check:Promise<void>}>();
-function validateSnapshotQuality(pool:Pool,lease:OdooSnapshotLease,config:OdooSourceConfig,through:string) {
+export function validateSnapshotQuality(pool:Pool,lease:OdooSnapshotLease,config:OdooSourceConfig,through:string) {
  const cached=qualityChecks.get(lease);if(cached&&cached.through!==through)throw new Error('Conflicting receivable quality scope');
  let check=cached?.check;
  if(!check){check=sourceTransaction(pool,lease,config,async client=>{

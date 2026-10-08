@@ -6465,3 +6465,13 @@ Names below are inspected source references, not runnable mappings. A proposed I
 - [Versioned definition source](enterprise-metrics-v1.json) · [Finance publication and metric-help delivery](../integration/finance-metric-definitions-delivery.md)
 
 Private workbook and customer extracts remain outside Git. Documents contain aggregate examples only. Finance publication reuses exact frozen evidence through the existing local lifecycle; no new source writes or extraction. Authentication and AI/manual publication guards remain unchanged. Visual/browser QA is deferred to Luna; no visual pass claimed.
+
+## Historical period behavior — existing definition versions
+
+Historical coverage is October 2025–September 2026, Company 1/IQD. Existing approved definitions remain unchanged: confirmed orders use order date and `sale_order.user_id`; posted invoices and refunds use their own issue date and `account_move.invoice_user_id`. Customer and official Business Line grouping retain stable source IDs. Names are labels, not identity. Each month has independent exact technical evidence and task-owner business approval; September data certification is not inherited.
+
+Events represent period activity. Month-end aging reconstructs signed residuals at each cutoff using posted receivable items, cutoff-qualified partial settlements and maturity/accounting-date aging. Annual snapshot summaries use the latest certified state. Historical aging is company-summary Phase A; Customer aging remains a later phase. Ratios require separate exact output certification; annual averages are not averages of monthly ratios.
+
+MoM definition v1: absolute change = current − previous month; percentage change = (current − previous month) / abs(previous month) × 100. Missing operands yield null; zero prior yields a null percentage. Complete monthly buckets and an adjacent prior period are required. Moving-average definition v1: mean of present values in the current and preceding two/five monthly buckets, with partial prefixes and null for an entirely missing window; selected coverage must support three/six months. These use the existing governed transformations and bilingual metric help. YoY remains disabled pending comparable prior-year certification.
+
+See [historical operator contract](../integration/historical-ingestion.md). This supplement does not regenerate or change the 204 definition records.

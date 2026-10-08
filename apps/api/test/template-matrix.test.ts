@@ -4,7 +4,7 @@ import { semanticCatalog, tenantProfiles, validateDashboardSpec, widgetTypes } f
 import { generateSeedFacts, MockAnalyticsRepository } from '@el-dabboos/data';
 import { dashboardTemplates, DashboardExecutor, DemoIdentityProvider, DefaultAuthorizationPolicy, instantiateDashboardTemplate } from '@el-dabboos/application';
 test('all governed templates validate and execute in EN/AR for both demo markets with authorized metrics', async () => {
-  assert.equal(dashboardTemplates.length,26);
+  assert.equal(dashboardTemplates.length,31);
   const managementFacts=Object.values(tenantProfiles).flatMap(profile=>(['order_revenue','order_count','net_invoiced_revenue','invoiced_revenue','refund_value'] as const).map(measureId=>({tenantId:profile.id,measureId,date:'2026-08-15',value:10,dimensions:{business_line:'synthetic-line',salesperson:'synthetic-rep',customer:'synthetic-customer'}})));
   const repository = new MockAnalyticsRepository([...generateSeedFacts('demo-iq'),...generateSeedFacts('demo-eg'),...managementFacts]);
   const identity = new DemoIdentityProvider(); const policy = new DefaultAuthorizationPolicy(); const executor = new DashboardExecutor(repository, () => new Date('2026-09-30T12:00:00Z'));

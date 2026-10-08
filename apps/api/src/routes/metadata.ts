@@ -6,8 +6,10 @@ import { workspacePublishedCapabilities } from '../published-analytics.ts';
 import { analyticsContext } from '../context.ts';
 import type { RouteContext } from '../context.ts';
 import { ApiError } from '../errors.ts';
+import {registerCustomerDiscovery} from './customer-discovery.ts';
 
 export function registerMetadataRoutes(app: FastifyInstance, services: RouteContext): void {
+  registerCustomerDiscovery(app,services);
   app.get('/api/management-control-review',async request=>{
     const { context }=await services.session(request.headers);
     services.authorize(context,'dashboard:view','analytics:query');
@@ -26,6 +28,10 @@ export function registerMetadataRoutes(app: FastifyInstance, services: RouteCont
     const published = await workspacePublishedCapabilities(services,context);
     if (!published.releases.some(release => release.capabilities.some(capability => capability.dimensions.includes(dimension as DimensionId))))
       return { dimension,availability: 'unavailable',reason: 'uncertified_dimension',values: [] };
+    if(dimension==='customer'&&services.deps.dimensionValues.searchDimensionOptions){
+      const page=await services.deps.dimensionValues.searchDimensionOptions('customer',analyticsContext(context),{limit:50});
+      return {dimension,values:page.values.map(option=>({...option,label:governedDimensionLabel(option.id,option.label,context.locale,'customer')})),...(page.nextCursor?{nextCursor:page.nextCursor}:{})};
+    }
     let options: Array<{id:string;label?:string}>;
     try {
       const repository=services.deps.dimensionValues;

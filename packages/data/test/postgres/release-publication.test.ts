@@ -11,6 +11,20 @@ import { database,enabled } from './support.ts';
 import { batch,certify,clock,deploy,evidence,fact,mapping } from './fixtures.ts';
 
 const scope = { tenantId: 'a',datasetId: 'release',reference: 'SYNTHETIC PROMOTION ONLY' };
+test('bounded monthly promotion preserves the existing canonical fingerprint and independently reruns without writes',{skip:!enabled},async()=>{
+  const source=await database(),target=await database(),failed=await database();
+  try {
+    await authorize(source,await reconcile(source));
+    const expected=await tenantTransaction(source.migrator,'a',async client=>releaseFingerprint(await readReleaseRows(client,scope)),true);
+    const promotion=new PostgresReleasePromotion(source.migrator,target.migrator);
+    assert.deepEqual(await promotion.promoteBounded(scope),{fingerprint:expected,alreadyPromoted:false});
+    assert.deepEqual(await promotion.promoteBounded(scope),{fingerprint:expected,alreadyPromoted:true});
+    assert.equal((await promotion.promote(scope)).fingerprint,expected);
+    await failed.admin.query(`CREATE FUNCTION mart.fail_transfer() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'SYNTHETIC BOUNDED FAILURE'; END $$; CREATE TRIGGER synthetic_failure BEFORE INSERT ON mart.fact_revisions FOR EACH ROW EXECUTE FUNCTION mart.fail_transfer()`);
+    await assert.rejects(new PostgresReleasePromotion(source.migrator,failed.migrator).promoteBounded(scope),/SYNTHETIC BOUNDED FAILURE/);
+    assert.equal((await tenantTransaction(failed.migrator,'a',client=>client.query('SELECT * FROM mart.mapping_releases'),true)).rowCount,0);
+  } finally {await Promise.all([source.close(),target.close(),failed.close()]);}
+});
 async function reconcile(db: Awaited<ReturnType<typeof database>>,wrongValue = false) {
   await new PostgresMappingReleases(db.migrator).registerCandidate({ ...mapping(),approval: { status: 'pending' } });
   await new PostgresMartWriter(db.ingestor,{ a: ['fixture-company'] },clock).commit(batch(),[{ facts: [fact()] }],{ ...evidence,completeness: 'complete_scope' });

@@ -1,3 +1,6 @@
+import { HistoricalCoverage } from './reports/HistoricalCoverage.tsx';
+import {CustomerDiscoveryContext} from './CustomerFilterControl.tsx';
+import {searchCustomers} from './api/client.ts';
 import {workspaceDestinationTitle,workspaceDisplayTitle} from './workspace-bootstrap.ts';
 import { MetricCurrencyContext, MetricPublicationContext } from './metrics/MetricDefinition.tsx';
 import { useManagementReports } from './reports/useManagementReports.ts';
@@ -16,7 +19,7 @@ import { DashboardSkeleton, EmptyState } from './presentation/Feedback.tsx';
 import { DashboardLibrary } from './library/DashboardLibrary.tsx';
 import { DashboardNameDialog } from './library/DashboardNameDialog.tsx';
 import { useDashboardLibrary } from './hooks/useDashboardLibrary.ts';
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import type { Locale } from '@el-dabboos/domain';
 import { DashboardRenderer } from './Renderer.tsx';
 import { useWorkspace } from './hooks/useWorkspace.ts';
@@ -64,8 +67,9 @@ export default function App({ authenticatedUser,onLogout,authenticationError }: 
     return null;
   }, [execution]);
   const period = execution?.metadata.effectiveFilters?.dateRange;
+  const loadCustomers=useCallback((query:import('@el-dabboos/domain').DimensionDiscoveryRequest)=>searchCustomers({userId,tenantId:profile!.id,locale},query),[userId,profile?.id,locale]);
   const periodSelection = builder.history || showAiEditor(flow.panel) ? activeDashboard?.filters : viewFilters.selection;
-  return <MetricPublicationContext value={published}><MetricCurrencyContext value={profile?.reportingCurrency}><div className="app-shell">
+  return <CustomerDiscoveryContext value={loadCustomers}><MetricPublicationContext value={published}><MetricCurrencyContext value={profile?.reportingCurrency}><div className="app-shell">
     <WorkspaceNavigation {...workspaceNavigationPermissions(workspace)} locale={locale} onNew={()=>{management.close();flow.launchNew();}} onTemplates={() => {management.close();flow.enterCreation('choose-template');}} dataMode={workspaceDataMode(published)} drawerOpen={drawerOpen} onDrawerClose={() => setDrawerOpen(false)}>
       <WorkspaceAdministrationNavigation workspace={workspace} page={adminPage} onPage={setAdminPage} closeDrawer={() => setDrawerOpen(false)} />
       {<ManagementNavigation published={published} allowed={permissions.includes('analytics:query')} templates={templates} locale={locale} activeId={management.page??workspace.activeTemplateId} onSelect={management.select}/>}
@@ -95,6 +99,7 @@ export default function App({ authenticatedUser,onLogout,authenticationError }: 
           metadata={<>
           {activeDashboard && profile && <div className="meta-strip"><div><span>{t.period}</span><strong>{(loading || builder.busy || viewFilters.busy) ? t.loading : !execution ? '—' : <>{periodSelection?.datePreset ? `${periodLabels[locale][periodSelection.datePreset]} · ` : ''}{period ? `${formatDate(period.from, locale, profile)} — ${formatDate(period.to, locale, profile)}` : periodCopy[locale].all}</>}</strong></div><div><span>{t.source}</span><strong>{metadata?.sourceId ?? '—'}</strong></div><div><span>{t.dataThrough}</span><strong>{metadata?.dataThrough ? formatDate(metadata.dataThrough, locale, profile) : '—'}</strong></div>{metadata?.sourceAsOf && <div><span>{t.sourceUpdated}</span><strong>{formatTimestamp(metadata.sourceAsOf, locale, profile)}</strong></div>}</div>}
           {!builderHistory && !showAiEditor(flow.panel) && activeDashboard && profile && !loading && <DashboardViewFilters dashboard={activeDashboard} selection={viewFilters.selection} effectiveRange={period} catalog={catalog} profile={profile} locale={locale} options={filterOptions} active={viewFilters.active} busy={viewFilters.busy} onChange={viewFilters.change} onReset={viewFilters.reset} />}
+          {profile && <HistoricalCoverage published={published} profile={profile} locale={locale} />}
           {execution?.metadata.failedSeries ? <div className="partial-note">{t.partial}: {execution.metadata.failedSeries}</div> : null}
           </>} canvas={<>
           {(loading || viewFilters.busy && !builderHistory) && <DashboardSkeleton label={t.loading} />}
@@ -109,5 +114,5 @@ export default function App({ authenticatedUser,onLogout,authenticationError }: 
         <footer className="footer">© {new Date().getFullYear()} El Dabboos · {locale === 'ar' ? 'منصة تحليلات تجريبية' : 'Analytics prototype'}</footer>
       </div>
     </main>
-  </div><div id="app-overlays" /></MetricCurrencyContext></MetricPublicationContext>;
+  </div><div id="app-overlays" /></MetricCurrencyContext></MetricPublicationContext></CustomerDiscoveryContext>;
 }

@@ -2,6 +2,7 @@ import type { DashboardSeries, DashboardSpec, DashboardWidget, DateRange, Relati
 import { validateDashboardSpec } from '@el-dabboos/domain';
 
 import type { PublishedAnalyticsCapabilities } from '@el-dabboos/domain';
+import { historicalTemplates } from './historical-templates.ts';
 import { managementTemplates,supportedTemplatePeriod } from './management-templates.ts';
 import { resolveRelativeDatePreset } from './relative-date.ts';
 export type DatePreset = RelativeDatePreset;
@@ -25,6 +26,7 @@ const one = (id: string, type: DashboardWidget['type'], metric: MetricId, dimens
 
 export const dashboardTemplates: readonly DashboardTemplate[] = [
   ...managementTemplates,
+  ...historicalTemplates,
   { id: 'executive-overview', name: text('Executive Overview', 'نظرة تنفيذية'), description: text('A concise view of sales, margin, collections and reliability.', 'ملخص للمبيعات والهامش والتحصيل والاعتمادية.'), domain: 'executive', tags: ['leadership', 'overview'], datePreset: 'current_year', layout: { columns: 3 }, widgets: [
     one('revenue', 'kpi', 'revenue'), one('gross-margin', 'kpi', 'gross_margin'), one('outstanding', 'kpi', 'outstanding_amount'),
     widget('revenue-profit', 'line', [series('revenue', 'revenue', { comparison: 'year_over_year' }), series('gross-profit', 'gross_profit')], 'month'),

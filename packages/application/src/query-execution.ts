@@ -21,7 +21,10 @@ function stable(value: unknown): unknown {
 export function analyticsQueryIdentity(query: AnalyticsQuery, context: AnalyticsContext): string {
   return JSON.stringify(stable({ query: normalizeAnalyticsQuery(query), tenantId: context.tenantId, locale: context.locale, enforcedFilters: filters(context.enforcedFilters) }));
 }
-export interface DashboardExecutionOptions { maxConcurrency?: number }
+export interface DashboardExecutionOptions {
+  maxConcurrency?: number;
+  onSeriesFailure?: (diagnostic:{metric:AnalyticsQuery['metric'];category:'unsafe_numeric'|'execution_failure'})=>void;
+}
 export const defaultExecutionConcurrency = 8;
 export function executionConcurrency(value = defaultExecutionConcurrency): number {
   if (!Number.isInteger(value) || value < 1 || value > 64) throw new Error('Execution concurrency must be an integer from 1 to 64');

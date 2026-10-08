@@ -60,6 +60,13 @@ test('source config uses local tunnel and explicit company allowlist; errors con
   assert.throws(() => odooSourceConfig({ ...environment,ODOO_SOURCE_COMPANY_IDS: '1,1' },config),/scope/);
   assert.throws(() => odooSourceConfig({ ...environment,ODOO_SOURCE_BATCH_SIZE: '1001' },config),/bounds/);
   assert.equal(config.snapshotMaxDurationMs,120000);
+  assert.equal(config.credentialPolicy,'least_privilege');
+  const staging = { ...environment,ODOO_SOURCE_STAGING_PILOT: 'true',ODOO_SOURCE_DATABASE: 'accounting' };
+  assert.equal(odooSourceConfig(staging,config).credentialPolicy,'staging_read_only');
+  assert.throws(() => odooSourceConfig({ ...staging,ODOO_SOURCE_DATABASE: 'other' },config),/staging pilot scope/);
+  assert.throws(() => odooSourceConfig({ ...staging,ODOO_SOURCE_COMPANY_IDS: '2' },config),/staging pilot scope/);
+  assert.throws(() => odooSourceConfig(staging,{ ...config,tenantId: 'demo-iq' }),/staging pilot scope/);
+  assert.throws(() => odooSourceConfig({ ...staging,ODOO_SOURCE_STAGING_PILOT: 'yes' },config),/declaration/);
   assert.throws(() => odooSourceConfig({ ...environment,ODOO_SOURCE_SNAPSHOT_MAX_DURATION_MS: '600001' },config),/bounds/);
 });
 
@@ -72,4 +79,11 @@ test('stored optional geography is preserved without geocoding or requiring a lo
   const facts = map({ ...order,latitude: '33.123456789',longitude: '44.987654321',shop_gps: 'stored shop coordinate' });
   assert.deepEqual(facts[0]!.transaction!.location,{ latitude: '33.123456789',longitude: '44.987654321',shopGps: 'stored shop coordinate' });
   assert.deepEqual(map(order)[0]!.transaction!.location,{ latitude: null,longitude: null,shopGps: null });
+});
+
+test('stored city formatting is canonicalized without changing amounts, eligibility or stable attribution',() => {
+  const baseline = map({ ...order,city: 'Synthetic City' });
+  assert.deepEqual(map({ ...order,city: ' Synthetic City \t' }),baseline);
+  assert.equal(map({ ...order,city: ' \t' })[0]!.dimensions.city,'unassigned');
+  assert.throws(() => map({ ...order,city: 'x'.repeat(201) }),/capability/);
 });

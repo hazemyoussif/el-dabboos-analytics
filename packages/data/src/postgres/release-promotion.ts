@@ -3,11 +3,17 @@ import { tenantTransaction } from './session.ts';
 import { assertPublicationOperator } from './release-certification.ts';
 import { assertCertifiedRelease,insertReleaseRows,martSchemaFingerprint,readReleaseRows,releaseFingerprint } from './release-transfer.ts';
 import type { ReleaseTransfer } from './release-transfer.ts';
+import {promoteBoundedRelease} from './bounded-release-transfer.ts';
 
 export interface ReleasePromotionScope { tenantId: string; datasetId: string; reference: string }
 /** One frozen source read and one atomic target write. Promotion never binds serving. */
 export class PostgresReleasePromotion {
   constructor(private readonly source: Pool,private readonly target: Pool) {}
+  /** Historical monthly releases stream every proof link instead of loading the relation. */
+  async promoteBounded(scope:ReleasePromotionScope) {
+    validatePromotionScope(scope);
+    return promoteBoundedRelease(this.source,this.target,scope);
+  }
   async promote(scope: ReleasePromotionScope): Promise<{ fingerprint: string; alreadyPromoted: boolean }> {
     validatePromotionScope(scope);
     const transfer = await tenantTransaction(this.source,scope.tenantId,async client => {

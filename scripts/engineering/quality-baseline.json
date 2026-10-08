@@ -843,18 +843,6 @@
     },
     {
       "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "compare/binding:v",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "compare/binding:p",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
       "symbol": "PostgresAnalyticsRepository/release/binding:m",
       "metric": "shortNames",
       "ceiling": 1
@@ -862,24 +850,6 @@
     {
       "file": "packages/data/src/postgres/repository.ts",
       "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/mapping.capabilities.some:callback0/binding:c",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/keys.map:callback0/binding:i",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/keys.map:callback0/binding:v",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/postgres/repository.ts",
-      "symbol": "PostgresAnalyticsRepository/execute/tenantTransaction:callback2/keys.map:callback0/binding:p",
       "metric": "shortNames",
       "ceiling": 1
     },

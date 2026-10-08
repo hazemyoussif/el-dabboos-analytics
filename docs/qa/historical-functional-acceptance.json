@@ -1,0 +1,403 @@
+{
+  "type": "authenticated-functional-http-and-read-only-repository",
+  "visualQA": "deferred-to-Luna",
+  "originalSeptemberReports": [
+    {
+      "report": "executive-sales-invoicing",
+      "status": 200,
+      "durationMs": 10026,
+      "bytes": 6441,
+      "contentType": "application/json; charset=utf-8",
+      "jsonParseFailed": false,
+      "failedSeries": 0,
+      "succeededSeries": 6,
+      "headlines": {
+        "net_invoiced_revenue": 1447166500,
+        "invoiced_revenue": 1465712000,
+        "refund_value": 18545500,
+        "order_revenue": 1461335500,
+        "order_count": 2895,
+        "average_confirmed_order_value": 504779.1018998273
+      },
+      "customerLabels": 0,
+      "exactHeadlineChecks": "passed"
+    },
+    {
+      "report": "business-line-performance",
+      "status": 200,
+      "durationMs": 10011,
+      "bytes": 10130,
+      "contentType": "application/json; charset=utf-8",
+      "jsonParseFailed": false,
+      "failedSeries": 0,
+      "succeededSeries": 10,
+      "headlines": {},
+      "customerLabels": 0,
+      "groupedTotals": {
+        "net_invoiced_revenue": 1447166500,
+        "invoiced_revenue": 1465712000,
+        "refund_value": 18545500,
+        "order_revenue": 1461335500,
+        "order_count": 2895
+      },
+      "exactHeadlineChecks": "passed"
+    },
+    {
+      "report": "salesperson-performance",
+      "status": 200,
+      "durationMs": 10043,
+      "bytes": 73628,
+      "contentType": "application/json; charset=utf-8",
+      "jsonParseFailed": false,
+      "failedSeries": 0,
+      "succeededSeries": 10,
+      "headlines": {},
+      "customerLabels": 0,
+      "groupedTotals": {
+        "net_invoiced_revenue": 1447166500,
+        "invoiced_revenue": 1465712000,
+        "refund_value": 18545500,
+        "order_revenue": 1461335500,
+        "order_count": 2895
+      },
+      "exactHeadlineChecks": "passed"
+    },
+    {
+      "report": "invoice-refund-operations",
+      "status": 200,
+      "durationMs": 13379,
+      "bytes": 46784,
+      "contentType": "application/json; charset=utf-8",
+      "jsonParseFailed": false,
+      "failedSeries": 0,
+      "succeededSeries": 12,
+      "headlines": {
+        "invoice_count": 2890,
+        "refund_count": 120,
+        "average_invoice_value": 507166.78200692043,
+        "invoiced_revenue": 1465712000,
+        "refund_value": 18545500,
+        "net_invoiced_revenue": 1447166500
+      },
+      "customerLabels": 0,
+      "exactHeadlineChecks": "passed"
+    },
+    {
+      "report": "receivables-aging",
+      "status": 200,
+      "durationMs": 22591,
+      "bytes": 2498155,
+      "contentType": "application/json; charset=utf-8",
+      "jsonParseFailed": false,
+      "failedSeries": 0,
+      "succeededSeries": 18,
+      "headlines": {
+        "net_aged_receivable": 1359461092.61,
+        "aged_at_date": 759020481.15,
+        "aged_1_30": 218464001.82,
+        "aged_31_60": 69135500.55,
+        "aged_61_90": 25871000.18,
+        "aged_91_120": 33782500.14,
+        "aged_over_120": 253187608.77,
+        "total_overdue_receivable": 600440611.46,
+        "overdue_receivable_percentage": 44.167546590629314,
+        "gross_open_receivable_components": 1532751636.39,
+        "credit_balances": -173290543.78
+      },
+      "customerRows": 2217,
+      "customerLabels": 2217,
+      "groupedTotals": {
+        "net_aged_receivable": 1359461092.61,
+        "aged_at_date": 759020481.15,
+        "aged_1_30": 218464001.82,
+        "aged_31_60": 69135500.55,
+        "aged_61_90": 25871000.18,
+        "aged_91_120": 33782500.14,
+        "aged_over_120": 253187608.77
+      },
+      "exactHeadlineChecks": "passed"
+    }
+  ],
+  "historicalReports": [
+    {
+      "report": "historical-executive-trend",
+      "locale": "en",
+      "status": 200,
+      "durationMs": 24285,
+      "failedSeries": 0,
+      "dateRange": {
+        "from": "2025-10-01",
+        "to": "2026-09-30"
+      },
+      "checks": [
+        {
+          "metric": "net_invoiced_revenue",
+          "dimension": "month",
+          "rows": 12,
+          "exact": true
+        },
+        {
+          "metric": "order_revenue",
+          "dimension": "month",
+          "rows": 12,
+          "exact": true
+        },
+        {
+          "metric": "order_count",
+          "dimension": "month",
+          "rows": 12,
+          "exact": true
+        },
+        {
+          "metric": "refund_value",
+          "dimension": "month",
+          "rows": 12,
+          "exact": true
+        }
+      ]
+    },
+    {
+      "report": "sales-invoicing-trend",
+      "locale": "en",
+      "status": 200,
+      "durationMs": 11951,
+      "failedSeries": 0,
+      "dateRange": {
+        "from": "2025-10-01",
+        "to": "2026-09-30"
+      },
+      "checks": [
+        {
+          "metric": "order_revenue",
+          "dimension": "month",
+          "rows": 12,
+          "exact": true
+        },
+        {
+          "metric": "net_invoiced_revenue",
+          "dimension": "month",
+          "rows": 12,
+          "exact": true
+        }
+      ]
+    },
+    {
+      "report": "business-line-trend",
+      "locale": "en",
+      "status": 200,
+      "durationMs": 21300,
+      "failedSeries": 0,
+      "dateRange": {
+        "from": "2025-10-01",
+        "to": "2026-09-30"
+      },
+      "checks": [
+        {
+          "metric": "net_invoiced_revenue",
+          "dimension": "month",
+          "rows": 12,
+          "exact": true
+        },
+        {
+          "metric": "net_invoiced_revenue",
+          "dimension": "business_line",
+          "rows": 1,
+          "exact": true
+        },
+        {
+          "metric": "order_revenue",
+          "dimension": "business_line",
+          "rows": 1,
+          "exact": true
+        }
+      ]
+    },
+    {
+      "report": "salesperson-historical-analysis",
+      "locale": "en",
+      "status": 200,
+      "durationMs": 21655,
+      "failedSeries": 0,
+      "dateRange": {
+        "from": "2025-10-01",
+        "to": "2026-09-30"
+      },
+      "checks": [
+        {
+          "metric": "net_invoiced_revenue",
+          "dimension": "month",
+          "rows": 12,
+          "exact": true
+        },
+        {
+          "metric": "net_invoiced_revenue",
+          "dimension": "salesperson",
+          "rows": 62,
+          "exact": true
+        },
+        {
+          "metric": "order_revenue",
+          "dimension": "salesperson",
+          "rows": 64,
+          "exact": true
+        }
+      ]
+    },
+    {
+      "report": "customer-historical-analysis",
+      "locale": "en",
+      "status": 200,
+      "durationMs": 21641,
+      "failedSeries": 0,
+      "dateRange": {
+        "from": "2025-10-01",
+        "to": "2026-09-30"
+      },
+      "checks": [
+        {
+          "metric": "net_invoiced_revenue",
+          "dimension": "month",
+          "rows": 12,
+          "exact": true
+        },
+        {
+          "metric": "net_invoiced_revenue",
+          "dimension": "customer",
+          "rows": 3528,
+          "exact": true
+        },
+        {
+          "metric": "order_revenue",
+          "dimension": "customer",
+          "rows": 3533,
+          "exact": true
+        }
+      ]
+    }
+  ],
+  "arabicFunctionalChecks": [
+    {
+      "report": "historical-executive-trend",
+      "locale": "ar",
+      "status": 200,
+      "durationMs": 20651,
+      "failedSeries": 0,
+      "dateRange": {
+        "from": "2025-10-01",
+        "to": "2026-09-30"
+      },
+      "checks": [
+        {
+          "metric": "net_invoiced_revenue",
+          "dimension": "month",
+          "rows": 12,
+          "exact": true
+        },
+        {
+          "metric": "order_revenue",
+          "dimension": "month",
+          "rows": 12,
+          "exact": true
+        },
+        {
+          "metric": "order_count",
+          "dimension": "month",
+          "rows": 12,
+          "exact": true
+        },
+        {
+          "metric": "refund_value",
+          "dimension": "month",
+          "rows": 12,
+          "exact": true
+        }
+      ]
+    },
+    {
+      "report": "customer-historical-analysis",
+      "locale": "ar",
+      "status": 200,
+      "durationMs": 20876,
+      "failedSeries": 0,
+      "dateRange": {
+        "from": "2025-10-01",
+        "to": "2026-09-30"
+      },
+      "checks": [
+        {
+          "metric": "net_invoiced_revenue",
+          "dimension": "month",
+          "rows": 12,
+          "exact": true
+        },
+        {
+          "metric": "net_invoiced_revenue",
+          "dimension": "customer",
+          "rows": 3528,
+          "exact": true
+        },
+        {
+          "metric": "order_revenue",
+          "dimension": "customer",
+          "rows": 3533,
+          "exact": true
+        }
+      ]
+    }
+  ],
+  "actualHistoricalAnalysisChecks": [
+    {
+      "check": "actual-12-month-MoM",
+      "status": "exact",
+      "firstPrior": null
+    },
+    {
+      "check": "actual-moving-average",
+      "window": 3,
+      "status": "exact"
+    },
+    {
+      "check": "actual-moving-average",
+      "window": 6,
+      "status": "exact"
+    },
+    {
+      "check": "YoY",
+      "status": "rejected"
+    },
+    {
+      "check": "actual-snapshot-cutoffs-and-latest-summary",
+      "months": 12,
+      "status": "exact"
+    }
+  ],
+  "automatedChecks": {
+    "unit": {
+      "passed": 675,
+      "failed": 0,
+      "skipped": 0
+    },
+    "postgres": {
+      "passed": 135,
+      "failed": 0,
+      "skipped": 0
+    },
+    "frozenInstall": "passed",
+    "lint": "passed",
+    "architecture": "zero-diagnostics",
+    "quality": "zero-diagnostics",
+    "typecheck": "passed",
+    "build": "passed-existing-web-chunk-size-warning",
+    "diff": "zero-diagnostics"
+  },
+  "anchorProof": "September release/derived-certificates/approvals/normal-binding fingerprints unchanged in both local marts",
+  "historicalCustomerFilter": {
+    "endpoint": "/api/dimensions/customer/values",
+    "status": 200,
+    "identities": 3570,
+    "labels": 3570,
+    "durationMs": 30775,
+    "stableIdentitySet": "exact",
+    "locale": "en"
+  }
+}

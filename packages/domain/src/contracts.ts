@@ -99,6 +99,11 @@ export interface AnalyticsResult {
   groupBy: DimensionId | null;
   rows: AnalyticsRow[];
   metadata: {
+    /** Effective governed cutoff; snapshots are never added across this date. */
+    snapshotAsOf?: string;
+    reconciliation?: {status:'exact';reference:string;definitionReference:string};
+    coverage?: {status:'complete'|'partial'|'unavailable';from:string;through:string;cutoff?:string};
+    availability?: {state:'DATA_NOT_READY'|'PARTIAL_COVERAGE';reason:'outside_coverage'|'missing_partition'|'no_snapshot'};
     sourceId: string;
     /** Display labels only; row keys remain the stable canonical identity. */
     dimensionLabels?: Record<string,string>;
@@ -111,13 +116,18 @@ export interface AnalyticsResult {
     metricType: MetricType;
     unit?: string;
     semantics: MetricSemantics['kind'];
+    /** Governed executed transformations, used by the same metric-definition popup. */
+    analysis?: AnalysisSpec;
   };
 }
 export interface DimensionValueRepository {
   listDimensionValues(dimension: DimensionId, context: AnalyticsContext): Promise<string[]>;
   /** Governed labels are presentation evidence; identities remain unchanged. */
   listDimensionOptions?(dimension: DimensionId, context: AnalyticsContext): Promise<Array<{id:string;label?:string}>>;
+  searchDimensionOptions?(dimension:DimensionId,context:AnalyticsContext,request:DimensionDiscoveryRequest):Promise<DimensionDiscoveryPage>;
 }
+export interface DimensionDiscoveryRequest {search?:string;cursor?:string;limit?:number;selectedIds?:readonly string[];metric?:MetricId;asOf?:string}
+export interface DimensionDiscoveryPage {values:Array<{id:string;label?:string}>;selected:Array<{id:string;label?:string}>;nextCursor?:string}
 export interface AnalyticsRepository {
   execute(query: AnalyticsQuery, context: AnalyticsContext): Promise<AnalyticsResult>;
 }
@@ -149,7 +159,7 @@ export interface DashboardWidget {
   dimension?: DimensionId;
 }
 /** v2 replaces v1 widget.metric with stable, independently executable series. */
-export const relativeDatePresets = ['today', 'yesterday', 'current_month', 'previous_month', 'last_30_days', 'current_quarter', 'previous_quarter', 'current_year', 'previous_year', 'last_6_months', 'last_12_months'] as const;
+export const relativeDatePresets = ['today', 'yesterday', 'current_month', 'previous_month', 'last_30_days', 'last_90_days', 'current_quarter', 'previous_quarter', 'current_year', 'previous_year', 'last_6_months', 'last_12_months'] as const;
 export type RelativeDatePreset = typeof relativeDatePresets[number];
 
 export interface DashboardSpec {

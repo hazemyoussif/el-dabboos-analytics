@@ -30,6 +30,9 @@ test('statement scope preserves runtime visibility, unbound/pending exclusion, t
   await rm(new URL('028_operational_partition_access.sql',baseline));
   await rm(new URL('029_stored_anchor_capabilities.sql',baseline));
   await rm(new URL('030_operational_presence_access.sql',baseline));
+  await rm(new URL('031_trusted_finance_snapshots.sql',baseline));
+  await rm(new URL('032_finance_snapshot_invariants.sql',baseline));
+  await rm(new URL('033_finance_snapshot_freeze.sql',baseline));
   await migratePostgres(db.migrator,baseline);
   for(const tenant of ['a','b','unbound']) {
    await deploy(db.migrator,mapping(tenant));

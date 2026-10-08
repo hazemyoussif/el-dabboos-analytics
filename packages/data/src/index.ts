@@ -20,6 +20,7 @@ export * from "./metadata/administration.ts";
 
 export * from './postgres/extractions.ts';
 export * from './postgres/mapping-releases.ts';
+export * from './postgres/derived-certification.ts';
 export * from './postgres/extraction-reconciliation.ts';
 export * from './odoo/config.ts';
 export * from './odoo/reader.ts';
@@ -42,6 +43,8 @@ export * from './postgres/release-certification.ts';
 export * from './postgres/release-promotion.ts';
 export * from './receivable-aging.ts';
 
+export * from './odoo/historical-quality.ts';
+export { HistoricalAnalyticsRepository } from './postgres/historical-repository.ts';
 export { PostgresOperationalStatus } from './postgres/operational-evidence.ts';
 
 export { TrustedAnalyticsRepository } from './operational/repository.ts';

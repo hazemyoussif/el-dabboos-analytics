@@ -5,8 +5,8 @@ import { resolveRelativeDatePreset } from '@el-dabboos/application';
 import type { DashboardDateSelection } from '@el-dabboos/application';
 
 export const periodLabels: Record<Locale, Record<RelativeDatePreset, string>> = {
-  en: { today: 'Today', yesterday: 'Yesterday', current_month: 'This month', previous_month: 'Previous month', last_30_days: 'Last 30 days', current_quarter: 'This quarter', previous_quarter: 'Previous quarter', current_year: 'This year', previous_year: 'Previous year', last_6_months: 'Last 6 months', last_12_months: 'Last 12 months' },
-  ar: { today: 'اليوم', yesterday: 'أمس', current_month: 'هذا الشهر', previous_month: 'الشهر السابق', last_30_days: 'آخر ٣٠ يومًا', current_quarter: 'هذا الربع', previous_quarter: 'الربع السابق', current_year: 'هذه السنة', previous_year: 'السنة السابقة', last_6_months: 'آخر ٦ أشهر', last_12_months: 'آخر ١٢ شهرًا' },
+  en: { today: 'Today', yesterday: 'Yesterday', current_month: 'This month', previous_month: 'Previous month', last_30_days: 'Last 30 days', last_90_days: 'Last 90 days', current_quarter: 'This quarter', previous_quarter: 'Previous quarter', current_year: 'This year', previous_year: 'Previous year', last_6_months: 'Last 6 months', last_12_months: 'Last 12 months' },
+  ar: { today: 'اليوم', yesterday: 'أمس', current_month: 'هذا الشهر', previous_month: 'الشهر السابق', last_30_days: 'آخر ٣٠ يومًا', last_90_days: 'آخر ٩٠ يومًا', current_quarter: 'هذا الربع', previous_quarter: 'الربع السابق', current_year: 'هذه السنة', previous_year: 'السنة السابقة', last_6_months: 'آخر ٦ أشهر', last_12_months: 'آخر ١٢ شهرًا' },
 };
 export const periodCopy = {
   en: { period: 'Date period', relative: 'Relative period', fixed: 'Fixed dates', all: 'All time', preset: 'Period', from: 'From', to: 'To', apply: 'Apply dates', filters: 'View filters', temporary: 'Temporary filters', reset: 'Reset to saved defaults', saved: 'Dashboard defaults' },

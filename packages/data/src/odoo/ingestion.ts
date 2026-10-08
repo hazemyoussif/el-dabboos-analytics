@@ -20,7 +20,7 @@ export async function ingestOdooExtraction(options: OdooIngestionOptions) {
   options.snapshot.assertScope(run,sourceConfig);
   if (run.freezeReference!==scope.freezeReference || run.sourceAsOf!==scope.sourceAsOf || run.frozenRevision!==scope.frozenRevision || run.from!==scope.from || run.to!==scope.to || run.sourceObjects.length!==1 || run.sourceObjects[0]!==scope.object) throw new Error('Odoo extraction freeze/scope conflict');
   if (run.tenantId!==sourceConfig.tenantId || run.sourceId!==sourceConfig.sourceId) throw new Error('Odoo extraction configuration scope');
-  await verifyOdooSourceIdentity(options.sourcePool);
+  await verifyOdooSourceIdentity(options.sourcePool,options.sourceConfig.credentialPolicy);
   const runs = new PostgresExtractionRuns(options.martPool,{ [run.tenantId]: sourceConfig.companyIds });
   let checkpoint = await runs.begin(run);
   const reader = new OdooPostgresSourceBatchReader(options.sourcePool,sourceConfig,{ ...scope,mode: run.completeness==='incremental' ? 'incremental' : 'backfill' },options.snapshot);

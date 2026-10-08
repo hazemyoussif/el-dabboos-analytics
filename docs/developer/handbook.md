@@ -56,3 +56,8 @@ Use [control-plane operations](../integration/postgres-control-plane.md) for pro
 Use [shared staging operations](../integration/shared-staging.md) for immutable API/web images, separate staging DB identities, explicit `pnpm staging provision|migrate|bootstrap|verify`, inactive identity placeholders and backup/restore. These commands never load developer env files. Shared-mode startup requires PostgreSQL and approved CORS origins and rejects synthetic identity. Bootstrap uses fresh governed metadata rather than the demo seed or legacy SQLite import.
 
 Local authentication uses pinned Better Auth behind provider-neutral ports, separate `auth.*` control storage and fresh product authorization. See [local identity operations and security gates](../security/local-authentication.md) and [ADR 030](../architecture/adr/030-local-identity-provider.md). `pnpm auth:local provision` is privileged offline initial setup with protected stdin; it never grants membership.
+
+The [operational analytics milestone](../integration/operational-analytics-v1.md)
+records historical range/ratio/snapshot improvements, stored operational evidence,
+read-only status, and the unimplemented production job/serving adapters. Do not
+interpret the application transaction ports as a configured synchronization job.

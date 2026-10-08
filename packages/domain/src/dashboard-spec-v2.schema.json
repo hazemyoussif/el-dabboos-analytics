@@ -129,6 +129,7 @@
             "current_month",
             "previous_month",
             "last_30_days",
+            "last_90_days",
             "current_quarter",
             "previous_quarter",
             "current_year",

@@ -1,13 +1,15 @@
 import type { PoolClient } from 'pg';
-import { semanticCatalog,requiredMeasures,timeDimensions } from '@el-dabboos/domain';
+import { semanticCatalog,requiredMeasures,timeDimensions,AnalyticsResultLimitError } from '@el-dabboos/domain';
 import type { AnalyticsContext,AnalyticsQuery,AnalyticsRow,MetricSemantics } from '@el-dabboos/domain';
 import { periodKeys } from '../calendar.ts';
 import { querySlots } from '../postgres/query-slots.ts';
 import type { QuerySlot } from '../postgres/query-slots.ts';
 import { numericOutput } from '../postgres/sql.ts';
+import { coveredSlot,isSnapshotQuery,coverageMetadata } from './coverage.ts';
+import type { ServingCoverage } from './coverage.ts';
 import { analyzeRows,compareValues } from '../postgres/query-analysis.ts';
 const input=`mart.analytics_trusted_serving trusted JOIN mart.analytics_serving_members member ON member.tenant_id=trusted.tenant_id AND member.revision_id=trusted.revision_id JOIN mart.analytics_aggregate_bases base ON base.tenant_id=member.tenant_id AND base.partition_id=member.partition_id`;
-export async function servingRows(client:PoolClient,query:AnalyticsQuery,context:AnalyticsContext,coverage:{from:string;to:string},maxGroups:number) {
+export async function servingRows(client:PoolClient,query:AnalyticsQuery,context:AnalyticsContext,coverage:ServingCoverage,maxGroups:number) {
  validateServingAnalysis(query);
  const params:unknown[]=[context.tenantId,requiredMeasures(query.metric)];
  const predicates=servingFilters(query,context,params);
@@ -16,7 +18,7 @@ export async function servingRows(client:PoolClient,query:AnalyticsQuery,context
  if(query.analysis?.movingAverage&&keys.length<query.analysis.movingAverage.window)throw new Error('Insufficient historical moving-average coverage');
  const slots=querySlots(query,keys);
  const eligiblePriors=slots.prior.filter(slot=>slot.from!==null&&slot.to!==null&&slot.from>=coverage.from&&slot.to<=coverage.to);
- const values=await slotValues(client,query,slots.current,sql),priors=await slotValues(client,query,eligiblePriors,sql);
+ const values=await slotValues(client,query,slots.current,sql,coverage),priors=await slotValues(client,query,eligiblePriors,sql,coverage);
  const priorValues=new Map(eligiblePriors.map((slot,index)=>[slot.key,priors[index]?.value??null]));
  const derived=semanticCatalog[query.metric].semantics.kind==='comparison_derived';
  const rows:AnalyticsRow[]=keys.map((key,index)=>{
@@ -24,7 +26,7 @@ export async function servingRows(client:PoolClient,query:AnalyticsQuery,context
   const changes=compareValues(value,priorValues.get(key)??null);return derived?{key,value:changes.percentageChange}:{key,value,...changes};
  });
  const dates=values.flatMap(row=>row.through?[row.through]:[]).sort();
- return {rows:analyzeRows(rows,query,!!slots.comparison),dataThrough:dates.at(-1)??null};
+ return {rows:analyzeRows(rows,query,!!slots.comparison),dataThrough:dates.at(-1)??null,...coverageMetadata(query,coverage,dates.at(-1)??null,slots.current.some(slot=>!isSnapshotQuery(query)&&slot.from!==null&&slot.to!==null&&slot.from<=coverage.to&&slot.to>=coverage.from&&!coveredSlot(slot,coverage)))};
 }
 export function servingFilters(query:AnalyticsQuery,context:AnalyticsContext,params:unknown[]) {
  return [...(query.filters??[]),...(context.enforcedFilters??[])].map(filter=>{
@@ -43,13 +45,15 @@ async function servingKeys(client:PoolClient,query:AnalyticsQuery,sql:{params:un
   else {params.push(query.dateRange.from);range=`AND base.business_date BETWEEN $${params.length}::date AND ${through}::date`;}
  }
  const result=await client.query(`SELECT DISTINCT base.dimensions->>${dimension} key FROM ${input} WHERE trusted.tenant_id=$1 AND base.measure_id=ANY($2::text[]) AND ${sql.predicates} AND base.dimensions->>${dimension} IS NOT NULL ${range} ORDER BY key LIMIT ${sql.maxGroups+1}`,params);
- if(result.rows.length>sql.maxGroups)throw new Error('Serving group bound exceeded');return result.rows.map(row=>String(row.key));
+ if(result.rows.length>sql.maxGroups)throw new AnalyticsResultLimitError(query.groupBy!);return result.rows.map(row=>String(row.key));
 }
-async function slotValues(client:PoolClient,query:AnalyticsQuery,slots:QuerySlot[],sql:{params:unknown[];predicates:string}) {
+async function slotValues(client:PoolClient,query:AnalyticsQuery,slots:QuerySlot[],sql:{params:unknown[];predicates:string},coverage:ServingCoverage) {
  if(!slots.length)return [];
  const metric=semanticCatalog[query.metric].semantics;const semantics=metric.kind==='comparison_derived'?semanticCatalog[metric.base].semantics:metric;
  const snapshot=semantics.kind==='snapshot'||semantics.kind==='ratio'&&semantics.basis==='snapshot';
- const params=[...sql.params,JSON.stringify(slots)],slot=`$${params.length}`;
+ const eligible=snapshot?slots:slots.flatMap(slot=>{const covered=coveredSlot(slot,coverage);return covered?[covered]:[];});
+ if(!eligible.length)return slots.map(()=>({value:null,through:null}));
+ const params=[...sql.params,JSON.stringify(eligible)],slot=`$${params.length}`;
  const expression=servingExpression(semantics,params);
  let group='';
  if(query.groupBy&&!timeDimensions.includes(query.groupBy)){params.push(query.groupBy);group=`AND base.dimensions->>$${params.length}=slot.match_key`;}
@@ -58,7 +62,7 @@ async function slotValues(client:PoolClient,query:AnalyticsQuery,slots:QuerySlot
   (SELECT ${expression},max(base.business_date)::text through FROM ${input} WHERE trusted.tenant_id=$1 AND base.measure_id=ANY($2::text[]) AND ${sql.predicates} ${range} ${group}) values`,params);
  const byKey=new Map(result.rows.map(row=>[row.key,row]));
  return slots.map(item=>{
-  const row=byKey.get(item.key)!;
+  const row=byKey.get(item.key);if(!row)return {value:null,through:null};
   if(semantics.kind==='ratio'||semantics.kind==='duration_derived'){const denominator=numericOutput(row.denominator)!;return {value:denominator===0?null:numericOutput(row.numerator)!/denominator*semantics.scale,through:row.through as string|null};}
   return {value:numericOutput(row.value),through:row.through as string|null};
  });

@@ -54,7 +54,10 @@ export function createRouteContext(deps: ApiDependencies): RouteContext {
   const directory = deps.demoDirectory ?? demoIdentity;
   const policy = deps.authorizationPolicy ?? new DefaultAuthorizationPolicy();
   const audit = deps.auditSink ?? new InMemoryAuditSink();
-  const executor = new DashboardExecutor(deps.analyticsRepository, clock, deps.executionConcurrency === undefined ? {} : { maxConcurrency: deps.executionConcurrency });
+  const executor = new DashboardExecutor(deps.analyticsRepository, clock, {
+    ...(deps.executionConcurrency===undefined?{}:{maxConcurrency:deps.executionConcurrency}),
+    onSeriesFailure:diagnostic=>process.stderr.write(`${JSON.stringify({component:'analytics-series-failure',...diagnostic})}\n`),
+  });
   const analytics = new AuthorizedAnalyticsService(deps.analyticsRepository, policy);
   const actors = new WeakMap<RequestContext, AdministrationActor>();
   const administration = deps.administration ? createAdministration(deps.administration.unitOfWork, policy, clock) : null;

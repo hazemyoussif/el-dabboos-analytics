@@ -15,7 +15,7 @@ export function filterSql(filters: readonly AnalyticsFilter[], values: unknown[]
     return `${dimensionSql(f.dimension,alias)} = ANY(${bind(values,f.values)}::text[])`;
   }).join(' AND ') || 'true';
 }
-/** Technical safeguard at the six-decimal aggregate boundary; never rounds stored money. */
+/** Lossless roundtrip at the meaningful decimal scale, with at most six fractional places. */
 export function numericOutput(raw: string | null): number | null {
   if (raw === null) return null;
   if (!/^-?\d+(\.\d+)?$/.test(raw)) throw new Error('Invalid SQL numeric output');
@@ -23,7 +23,12 @@ export function numericOutput(raw: string | null): number | null {
   const [whole, fraction = ''] = raw.split('.');
   const tail = fraction.slice(6);
   if (/[^0]/.test(tail)) throw new Error('Numeric output exceeds six-decimal execution boundary');
-  const units = BigInt(`${whole}${fraction.slice(0,6).padEnd(6,'0')}`);
-  if (!Number.isFinite(n) || units > BigInt(Number.MAX_SAFE_INTEGER) || units < -BigInt(Number.MAX_SAFE_INTEGER) || n.toFixed(6) !== `${whole}.${fraction.slice(0,6).padEnd(6,'0')}`) throw new Error('Unsafe SQL numeric output');
+  // Trailing zeroes do not increase the decimal's mathematical precision.
+  // Use its significant decimal places, not the storage column's fixed scale.
+  const significant = fraction.slice(0,6).replace(/0+$/, '');
+  const units = BigInt(`${whole}${significant}`);
+  const scaledSafe=units<=BigInt(Number.MAX_SAFE_INTEGER) && units>=-BigInt(Number.MAX_SAFE_INTEGER);
+  const normalized = significant ? `${whole}.${significant}` : whole;
+  if (!Number.isFinite(n) || !scaledSafe || n.toFixed(significant.length) !== normalized) throw new Error('Unsafe SQL numeric output');
   return n;
 }

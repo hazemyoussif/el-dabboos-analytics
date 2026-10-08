@@ -53,6 +53,8 @@ test('repository parity: additive/aggregations, ratios, snapshots, comparison ca
         const expected = executeFacts(facts,q,ctx,{ sourceId: 'postgres',executedAt: clock().toISOString(),sourceAsOf: '2026-10-01T10:00:00.000Z' });
         const actual=await repo.execute(q,ctx);
         expected.metadata.release={datasetId:'release',sourceId:'fixture',mappingId:'synthetic',mappingVersion:'1',certificationReference:'SYNTHETIC TEST ONLY'};
+        if(q.metric==='outstanding_amount' && !ctx.enforcedFilters)expected.metadata.snapshotAsOf='2026-02-15';
+        if(q.metric==='outstanding_amount' && ctx.enforcedFilters && q.groupBy==='month')expected.metadata.snapshotAsOf='2026-01-15';
         assert.deepEqual(actual,expected);
       }
     });
@@ -116,6 +118,7 @@ test('repository parity: every executable catalog family, inventory/finance snap
         const expected = executeFacts(facts,q,ctx,{ sourceId: 'postgres',executedAt: clock().toISOString(),sourceAsOf: '2026-10-01T10:00:00.000Z' });
         const actual=await repo.execute(q,ctx);
         expected.metadata.release={datasetId:'release',sourceId:'fixture',mappingId:'synthetic',mappingVersion:'1',certificationReference:'SYNTHETIC TEST ONLY'};
+        if(metric.semantics.kind==='snapshot')expected.metadata.snapshotAsOf='2026-02-28';
         assert.deepEqual(actual,expected);
         if (dimension) {
           const restricted = { ...ctx,enforcedFilters: [{ dimension,values: ['original'] }] };

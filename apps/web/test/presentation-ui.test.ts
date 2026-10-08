@@ -290,7 +290,7 @@ test('date and viewer controls render all governed presets, truthful multi-value
     const { DashboardViewFilters } = await server.ssrLoadModule('/src/DashboardViewFilters.tsx');
     for (const locale of ['en', 'ar'] as const) {
       const relative = renderToStaticMarkup(createElement(DatePeriodControl, { filters: { datePreset: 'previous_month' }, timeZone: 'Asia/Baghdad', locale, onChange() {} }));
-      assert.equal((relative.match(/<option /g) ?? []).length, 14); assert.ok(relative.includes('value="previous_month" selected=""'));
+      assert.equal((relative.match(/<option /g) ?? []).length, 15); assert.ok(relative.includes('value="previous_month" selected=""'));
       assert.ok(relative.includes(locale === 'en' ? 'Fixed dates' : 'تواريخ ثابتة'));
       const fixed = renderToStaticMarkup(createElement(DatePeriodControl, { filters: { dateRange: { from: '2026-09-01', to: '2026-09-30' } }, timeZone: 'Asia/Baghdad', locale, onChange() {} }));
       assert.ok(fixed.includes('value="2026-09-01"')); assert.ok(fixed.includes('value="absolute" selected=""'));

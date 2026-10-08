@@ -15,6 +15,7 @@ import { readOdooControls } from './controls.ts';
 export interface RetainedOdooPilotOptions {
   sourcePool: Pool; martPool: Pool; sourceConfig: OdooSourceConfig;
   mapping: SourceMapping; run: ExtractionRun; snapshot: OdooSnapshotLease;
+  groupings?: readonly ('business_line'|'salesperson'|'customer'|null)[];
 }
 type PilotObject = 'sale_order'|'account_move';
 function pilotPosition(cursor: string|undefined): { object: PilotObject; cursor?: string } {
@@ -45,25 +46,38 @@ export async function ingestRetainedOdooPilot(options: RetainedOdooPilotOptions)
   if (checkpoint.status!=='running') throw new Error('Retained pilot already completed');
   const writer = new PostgresMartWriter(options.martPool,{ [run.tenantId]: sourceConfig.companyIds });
   let reconciliation: ReconciliationResult[] = [];
+  let observedCityWhitespaceRecords = 0;
+  const durations = {sourceReadMs:0,mappingMs:0,martWriteMs:0,reconciliationMs:0};
   while (checkpoint.status==='running') {
     const position = pilotPosition(checkpoint.cursor);
     const reader = new OdooPostgresSourceBatchReader(options.sourcePool,sourceConfig,pilotScope(options,position.object),snapshot);
+    let phaseStarted = performance.now();
     const page = await reader.readBatch({ tenantId: run.tenantId,sourceId: run.sourceId,companyIds: run.companyIds,limit: sourceConfig.batchSize,frozenRevision: run.frozenRevision,...(position.cursor ? { cursor: position.cursor } : {}) });
+    durations.sourceReadMs += performance.now()-phaseStarted;
+    observedCityWhitespaceRecords += page.rows.filter(record => record.payload.city!==null && record.payload.city!==record.payload.city.trim()).length;
     const terminal = position.object==='account_move' && !page.nextCursor;
     const cursorEnd = !page.nextCursor && position.object==='sale_order' ? JSON.stringify(['account_move',null]) : JSON.stringify([position.object,page.nextCursor ?? page.watermarkEnd ?? position.cursor ?? null]);
     const batchId = `${run.extractionId}-page-${checkpoint.pageCount+1}`;
-    const batch: IngestionBatch = { tenantId: run.tenantId,sourceId: run.sourceId,companyIds: run.companyIds,batchId,datasetId: run.datasetId,mappingId: run.mappingId,mappingVersion: run.mappingVersion,adapterVersion: 'odoo18-pg-snapshot-v2',startedAt: new Date().toISOString(),sourceAsOf: run.sourceAsOf,frozenRevision: run.frozenRevision,status: 'running',rowsRead: page.rows.length,rowsAccepted: 0,rowsRejected: 0,factsInserted: 0,factsUpdated: 0,factsTombstoned: 0,factsReplayed: 0 };
+    const batch: IngestionBatch = { tenantId: run.tenantId,sourceId: run.sourceId,companyIds: run.companyIds,batchId,datasetId: run.datasetId,mappingId: run.mappingId,mappingVersion: run.mappingVersion,adapterVersion: 'odoo18-pg-snapshot-v3',startedAt: new Date().toISOString(),sourceAsOf: run.sourceAsOf,frozenRevision: run.frozenRevision,status: 'running',rowsRead: page.rows.length,rowsAccepted: 0,rowsRejected: 0,factsInserted: 0,factsUpdated: 0,factsTombstoned: 0,factsReplayed: 0 };
+    phaseStarted = performance.now();
     const controls = terminal ? await pilotControls(options) : [];
+    durations.sourceReadMs += performance.now()-phaseStarted;
+    phaseStarted = performance.now();
+    const records = page.rows.map(record => ({facts:mapOdooRecord(record,mapping,batch,{from:run.from,to:run.to})}));
+    durations.mappingMs += performance.now()-phaseStarted;
     await snapshot.assertAlive();
-    await writer.commit(batch,page.rows.map(record => ({ facts: mapOdooRecord(record,mapping,batch,{ from: run.from,to: run.to }) })),{ sourceObjects: [...run.sourceObjects],requestLimit: sourceConfig.batchSize,completeness: run.completeness,deletionEvidence: 'unavailable',paginationComplete: terminal,...(checkpoint.cursor ? { cursorStart: checkpoint.cursor } : {}),...(terminal ? { watermarkEnd: cursorEnd } : {}),page: { extractionId: run.extractionId,pageNumber: checkpoint.pageCount+1,cursorEnd } },terminal ? async client => { reconciliation = await certifyPilot(client,options,controls); } : undefined);
+    phaseStarted = performance.now();
+    await writer.commit(batch,records,{ sourceObjects: [...run.sourceObjects],requestLimit: sourceConfig.batchSize,completeness: run.completeness,deletionEvidence: 'unavailable',paginationComplete: terminal,...(checkpoint.cursor ? { cursorStart: checkpoint.cursor } : {}),...(terminal ? { watermarkEnd: cursorEnd } : {}),page: { extractionId: run.extractionId,pageNumber: checkpoint.pageCount+1,cursorEnd } },terminal ? async client => { const began = performance.now();reconciliation = await certifyPilot(client,options,controls);durations.reconciliationMs += performance.now()-began; } : undefined);
+    durations.martWriteMs += performance.now()-phaseStarted;
     checkpoint = (await runs.resume(run.tenantId,run.extractionId)).checkpoint;
   }
-  return { checkpoint,reconciliation,snapshot: snapshot.evidence };
+  durations.martWriteMs -= durations.reconciliationMs;
+  return { checkpoint,reconciliation,snapshot: snapshot.evidence,observedCityWhitespaceRecords,durations };
 }
 async function pilotControls(options: RetainedOdooPilotOptions): Promise<Omit<ReconciliationCase,'batchIds'>[][]> {
   const controls = [];
   for (const object of ['sale_order','account_move'] as const) {
-    controls.push(...await readOdooControls(options.sourcePool,{ mapping: options.mapping,source: pilotScope(options,object),companyIds: options.run.companyIds,tolerance: { status: 'approved',absoluteValue: '0.000000',absoluteCount: '0',approvalReference: 'Pilot handoff: exact DB control equality' },reportReference: `DB snapshot pilot ${options.run.extractionId}` },options.snapshot));
+    controls.push(...await readOdooControls(options.sourcePool,{ mapping: options.mapping,source: pilotScope(options,object),companyIds: options.run.companyIds,...(options.groupings ? { groupings: options.groupings } : {}),tolerance: { status: 'approved',absoluteValue: '0.000000',absoluteCount: '0',approvalReference: 'Pilot handoff: exact DB control equality' },reportReference: `DB snapshot pilot ${options.run.extractionId}` },options.snapshot));
   }
   return controls;
 }
