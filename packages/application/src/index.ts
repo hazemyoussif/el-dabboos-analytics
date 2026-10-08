@@ -35,3 +35,10 @@ export * from './management-reviews.ts';
 export * from './analytics-operations.ts';
 
 export * from './drill-through.ts';
+
+export * from './analytics-intent.ts';
+export * from './analytics-series.ts';
+export * from './analytics-capability.ts';
+export * from './analytics-execution.ts';
+export * from './analytics-planner.ts';
+export * from './analytics-conversation.ts';

@@ -511,3 +511,19 @@ test('drill lineage migration backfills exact populated partitions and refuses i
   await assert.rejects(tenantTransaction(fixture.db.ingestor,'a',client=>client.query(`INSERT INTO mart.analytics_partition_facts SELECT tenant_id,partition_id,'forbidden',revision_id FROM mart.analytics_partition_facts LIMIT 1`)),/membership is immutable/);
  }finally{await fixture.db.close();}
 });
+
+test('AI Analyst direct event grouping uses trusted serving and forced scoped RLS without source connectivity',{skip:!enabled},async()=>{
+ const {AnalyticsIntentExecutor}=await import('../../../application/src/analytics-execution.ts');
+ const {DefaultAuthorizationPolicy}=await import('../../../application/src/security.ts');
+ const f=await setup('fixture',false,false,undefined,true);try {
+  f.source.rows=[januaryFact({sourceRecordId:'rep-a',businessDate:'2026-02-15',measureId:'order_revenue',value:'100.000000',dimensions:{customer:'customer:a',salesperson:'rep:a',business_line:'general'}}),januaryFact({sourceRecordId:'rep-b',businessDate:'2026-02-15',measureId:'order_revenue',value:'999.000000',dimensions:{customer:'customer:b',salesperson:'rep:b',business_line:'general'}})];
+  assert.equal((await f.run()).status,'passed');
+  // Source is deliberately broken after promotion; answering must touch the runtime mart only.
+  f.source.interrupt=true;
+  const identity:import('@el-dabboos/domain').RequestContext={principal:{userId:'synthetic-manager',membershipId:'synthetic-membership'},tenant:{tenantId:'a'},locale:'ar',authorization:{permissions:['analytics:query'],metricDomains:['sales'],enforcedFilters:[{dimension:'salesperson',values:['rep:a']}]}};
+  const executor=new AnalyticsIntentExecutor(f.repository,f.repository,new DefaultAuthorizationPolicy(),{timeZone:'Asia/Baghdad',clock});
+  const output=await executor.execute({context:{dateRange:{from:'2026-02-01',to:'2026-02-28'}},analyses:[{dimension:'salesperson',series:[{metric:'order_revenue'}]}]},identity);
+  assert.ok('analyses' in output,JSON.stringify(output));const entry=output.analyses[0]!.series[0]!;assert.notEqual(entry.status,'EXECUTION_FAILED');if(entry.status!=='EXECUTION_FAILED'){assert.deepEqual(entry.result.rows.map(row=>[row.key,row.value]),[['rep:a',100]]);assert.ok(entry.result.metadata.release);}
+  const hidden=await tenantTransaction(f.db.runtime,'b',client=>client.query('SELECT * FROM mart.analytics_aggregate_bases'),true);assert.equal(hidden.rowCount,0);
+ }finally{await f.db.close();}
+});

@@ -294,3 +294,19 @@ test('live edit regression: sparse blue intent through strict fake HTTP/API pres
     assert.ok(!response.body.includes('DashboardEditPlan'));
   } finally { await app.close(); await fake.close(); }
 });
+
+test('AI Analyst preserves Bonsai/Gemini-compatible JSON transport and fails closed on extra text or unknown IDs',async()=>{
+ const {StructuredAnalyticsPlanner,DemoIdentityProvider}=await import('@el-dabboos/application');
+ const {syntheticCapabilities,tenantProfiles}=await import('@el-dabboos/domain');
+ const identity=new DemoIdentityProvider().resolve('demo-iq-admin','demo-iq','en');
+ const valid={status:'SUPPORTED',intent:{context:{datePreset:'previous_month'},analyses:[{series:[{metric:'order_revenue'}]}]}};
+ for(const modelId of ['bonsai-2','gemini-compatible-shim'])for(const content of [JSON.stringify(valid),JSON.stringify({...valid,intent:{...valid.intent,analyses:[{series:[{metric:'invented'}]}]}}),'Here is your answer: '+JSON.stringify(valid)]){
+  const fake=await fakeServer(()=>content);try {
+   const planner=new StructuredAnalyticsPlanner(new OpenAICompatibleLLMProvider({baseUrl:fake.baseUrl,modelId,timeoutMs:1000}),{clock:()=>new Date('2026-10-08T12:00:00Z')});
+   const output=await planner.plan({prompt:'Order revenue last month',identity,profile:tenantProfiles['demo-iq'],published:syntheticCapabilities({tenantId:'demo-iq',locale:'en'})});
+   assert.equal(output.outcome.status,content===JSON.stringify(valid)?'SUPPORTED':'INVALID_PLAN');
+   assert.equal(fake.requests.length,1);assert.ok(!Object.hasOwn(fake.requests[0]!,'tools'));assert.ok(!Object.hasOwn(fake.requests[0]!,'function_call'));
+   assert.equal((fake.requests[0]!.response_format as {json_schema:{name:string}}).json_schema.name,'analytics_intent');
+  }finally{await fake.close();}
+ }
+});

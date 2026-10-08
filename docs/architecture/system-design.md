@@ -128,3 +128,14 @@ complete trusted months and daily edges per output slot, preserving full dimensi
 and policy intersections. Semantic compatibility follows immutable baseline and
 manifest partition lineage; snapshot Finance remains separate. See
 [event aggregate operations](../integration/event-serving-aggregates.md).
+
+## Shared AI Analyst foundation
+
+Dashboard generation and direct business questions now share application-owned
+analytics series intent/schema, semantic context, trusted preference resolution,
+transformation compilation and result alignment. `AnalyticsIntentExecutor` executes
+validated intent against configured governed repositories without creating a
+dashboard. It preserves publication, policy, coverage and snapshot semantics;
+provider output remains untrusted. No conversational UI or route is added. See
+[shared semantic core](shared-ai-analyst.md) for contracts, evaluation, bounded
+conversation state, provider compatibility and current capability limits.

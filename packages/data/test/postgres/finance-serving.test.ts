@@ -90,3 +90,25 @@ test('Finance drill pins a single published customer snapshot, signed bucket amo
   process.stdout.write(`drill-finance-first-page ${JSON.stringify({rows:3,ms:firstPageMs})}\n`);
  }finally{await db.close();}
 });
+
+test('AI Analyst direct Finance execution pins latest trusted snapshot <= Oct 8 with scoped customer ranking and reusable drill lineage',{skip:!enabled},async()=>{
+ const {AnalyticsIntentExecutor,analyticsResultDrillRequest}=await import('../../../application/src/analytics-execution.ts');
+ const {DefaultAuthorizationPolicy}=await import('../../../application/src/security.ts');
+ const {db,repository}=await fixture();try {
+  await publishFinanceSnapshot(db.migrator,evidence('2026-09-30',2));
+  await publishFinanceSnapshot(db.migrator,evidence('2026-08-31',1));
+  const identity:import('@el-dabboos/domain').RequestContext={principal:{userId:'synthetic-analyst',membershipId:'synthetic-membership'},tenant:{tenantId:'a'},locale:'en',authorization:{permissions:['analytics:query'],metricDomains:['finance'],enforcedFilters:[]}};
+  const executor=new AnalyticsIntentExecutor(repository,repository,new DefaultAuthorizationPolicy(),{timeZone:'Asia/Baghdad',clock:()=>new Date('2026-10-08T12:00:00Z')});
+  const intent:import('../../../application/src/analytics-intent.ts').AnalyticsIntent={context:{dateRange:{from:'2026-10-08',to:'2026-10-08'}},analyses:[{series:[{metric:'net_aged_receivable'}]}]};
+  const output=await executor.execute(intent,identity);assert.ok('analyses' in output);
+  const entry=output.analyses[0]!.series[0]!;assert.equal(entry.status,'SUPPORTED');
+  assert.equal(entry.result.rows[0]!.value,200);assert.equal(entry.result.metadata.snapshotAsOf,'2026-09-30');assert.equal(entry.form,'snapshot');assert.equal(entry.result.metadata.reconciliation?.status,'exact');
+  const request=analyticsResultDrillRequest(entry,null);assert.ok(request);
+  const drill=new TrustedDrillThroughRepository(db.runtime,scope=>repository.getPublishedCapabilities(scope));
+  const page=await drill.drill(request,{tenantId:'a',locale:'en'});assert.equal(page.value,'200.000000');assert.equal(page.snapshotAsOf,'2026-09-30');
+  const scoped=await executor.execute({...intent,analyses:[{dimension:'customer',series:[{metric:'net_aged_receivable',topNDirection:'top',topNLimit:1}]}]}, {...identity,authorization:{...identity.authorization,enforcedFilters:[{dimension:'customer',values:['fixture:00001']}]}});
+  assert.ok('analyses' in scoped);const ranked=scoped.analyses[0]!.series[0]!;assert.notEqual(ranked.status,'EXECUTION_FAILED');if(ranked.status!=='EXECUTION_FAILED')assert.deepEqual(ranked.result.rows.map(row=>row.key),['fixture:00001']);
+  const missing=await executor.execute({...intent,context:{dateRange:{from:'2025-01-01',to:'2025-01-01'}}},identity);assert.equal(missing.status,'DATA_NOT_READY');
+  process.stdout.write(`analytics-intent-benchmark ${JSON.stringify(output.timing)}\n`);
+ }finally{await db.close();}
+});
