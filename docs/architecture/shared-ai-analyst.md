@@ -1,7 +1,7 @@
 # Shared AI Analyst semantic core
 
 The application exports a provider-neutral `StructuredAnalyticsPlanner` and
-`AnalyticsIntentExecutor`. They have no HTTP route or conversational UI yet. The
+`AnalyticsIntentExecutor`. The Ask Business HTTP service and bilingual web page compose them. The
 caller resolves fresh membership and supplies the trusted tenant profile,
 published-capability provider and runtime analytics repository. Production
 composition must use `TrustedAnalyticsRepository` and its forced-RLS runtime pool;
@@ -99,7 +99,7 @@ a fresh question/result; historical references cannot cross users/workspaces.
 `resolveAnalyticsFollowUp` maps second-place intent to the same metric/grouping and
 concrete effective period with rank=2. Comparing prior entities uses retained IDs,
 not display strings. The new last-six-month period remains symbolic. These are
-semantic operations for a later orchestrator, not runtime hardcoded question text.
+validated transient planner operations resolved by the conversational orchestrator, never runtime hardcoded question text. A new independent ranking replaces prior entity selections; ordinal and explicit retained-entity contexts preserve the related identities.
 
 ## Evaluation, timing and limits
 
@@ -125,7 +125,65 @@ publication that does not admit Top-N remains unavailable for Top-N even if a
 synthetic engine can calculate it. More capable models do not alter publication
 or authorization boundaries.
 
-Next milestone: fresh-session API composition and audit, conversational request
-orchestration, verified live-provider evaluations, deterministic answer rendering,
-period-aware detail actions and explicit dashboard-draft handoff. No Ask Business
-page, chat history, answer cards, deployment, auto-save or source access is included.
+## Ask Business service and persistence
+
+`AnalystConversations` owns question orchestration and deterministic answers.
+The planner inherits visible page context when dates/filters are omitted; explicit
+question context overrides it. Canonical clarification choices retain their original
+context and cannot introduce a metric that was not offered. FOLLOW_UP rank and
+compare_entities outcomes compile against server semantic memory before validation.
+Each question performs fresh session checks after planning, during capability
+preflight and before persistence. The append transaction rechecks live membership,
+roles, tenant/customer status and policy scope, then atomically saves a versioned
+conversation plus safe question audit. No provider call runs inside that transaction.
+
+`/api/ai-analyst/conversations` supports authenticated create/list;
+`/:id` loads private history, and `/:id/messages` accepts question, pageContext,
+expectedVersion and optional canonical choice. Owner predicates apply to every
+read/write. Version conflict returns 409. Scope changes invalidate reuse. Draft
+conversion and detail selection live under `/:id/messages/:messageId/dashboard`
+and `/details`. Conversion revalidates the saved intent and canonical spec, executes
+through the existing dashboard executor and opens an unsaved draft. It makes no
+semantic model call and performs no save. Details derive exact keys, release and
+query from saved validated evidence, then use the existing governed drill API.
+Ranking/Top-N selection can drill; transformed, partial and time-group answers
+cannot be misrepresented as raw metric details.
+
+SQLite metadata migration 005 and PostgreSQL control migration 008 add private
+conversations and immutable question audit. Apply them explicitly with existing
+operator migration commands; normal runtime does not migrate storage. No mart
+schema changes are needed. Conversations expire after 30 days, with at most 20
+sessions per owner and 20 display turns per session. Oldest display turns are evicted
+at a 1 MiB record budget. Answers retain at most 30 rows per panel / 600 total;
+truncation is visible. Semantic IDs are separately bounded. Questions are limited
+to 2,000 characters, validated intent to 24 total series / 16 KiB. Question audits
+retain periods, intent hash, status and release/snapshot references for 90 days;
+no question text, result rows, credentials or provider response body is audited.
+Expiry cleanup is opportunistic on create/append; there is no scheduler.
+
+## Answer experience and runtime
+
+The `/ask-business[/conversation-id]` page exposes workspace, period, history,
+clarification, localized authoritative summaries, exact tables and temporal charts,
+and readable evidence. Definition, period, filters, grouping, analysis, certification,
+reconciliation, freshness, coverage and snapshot cutoff remain distinct. Dates
+used in an answer always reflect execution, not the current page selector. Native
+controls, existing theme tokens, chart theme, RTL and existing drill modal are reused.
+Presentation preferences are outside specs and persisted semantic state.
+
+Structured runtime uses the same configured provider-neutral LLMProvider as
+dashboard generation. Mock/disabled planning returns AI_UNAVAILABLE for Ask
+Business; ordinary analytics remain usable. `ANALYST_SYNTHESIS=true` optionally
+selects grounded highlight references for three or more panels. It receives bounded
+evidence and can return only validated panel indices; deterministic summaries own
+all numerical claims. Invalid/unavailable synthesis falls back without losing results.
+Simple answers use no second model call. Timing separates planner, capability,
+execution and synthesis; total covers the pipeline before persistence, while the QA
+HTTP measurement also includes audit and persistence.
+
+The original 32 semantic evaluations remain, augmented by 16 EN/AR conversational
+cases across clarification, resolution, ordinal, entity reference, explicit override,
+page inheritance, dashboard action and detail action. Fake-provider contract results
+prove orchestration and execution fidelity, not live-model language accuracy. See
+[conversational QA handoff](../qa/ask-business-2026-10-08.md) for actual gates,
+browser evidence, performance and live-provider limitations.

@@ -136,6 +136,9 @@ analytics series intent/schema, semantic context, trusted preference resolution,
 transformation compilation and result alignment. `AnalyticsIntentExecutor` executes
 validated intent against configured governed repositories without creating a
 dashboard. It preserves publication, policy, coverage and snapshot semantics;
-provider output remains untrusted. No conversational UI or route is added. See
+provider output remains untrusted. Ask Business adds a bilingual conversational page,
+fresh-session API, private versioned control-plane history and atomic safe question
+audits. Deterministic answers, clarification and stable entity follow-ups reuse this
+core; dashboard handoff opens an explicit unsaved draft. See
 [shared semantic core](shared-ai-analyst.md) for contracts, evaluation, bounded
 conversation state, provider compatibility and current capability limits.

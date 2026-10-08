@@ -21,6 +21,7 @@ Web main.tsx mounts App, theme provider and workspace feature hooks. API server.
 | Saved dashboard lifecycle? | application/saved-dashboards.ts; data/dashboard-sqlite.ts; API routes/saved-dashboards.ts; web dashboard-lifecycle.ts and hooks/useDashboardProductFlow.ts |
 | Folders/preferences? | application/dashboard-library.ts; data/library-sqlite.ts; API routes/dashboard-library.ts; web library-model.ts and hooks/useDashboardLibrary.ts |
 | LLM transport / planner? | API providers/openai-compatible.ts; application/structured-planner.ts, generation-plan.ts, edit-plan.ts, visualization-intent.ts, provider-schema.ts, structured-diagnostics.ts; API structured-diagnostics.ts |
+| Ask Business / conversations? | web analyst/; API routes/ai-analyst.ts; application analyst-conversations.ts, analyst-answer.ts; data metadata/analyst.ts and analyst-access.ts; domain analyst.ts |
 | AI operation progress/errors? | web hooks/useDashboardPlanner.ts, planner-activity.ts, planner-copy.ts and product/AiProgress.tsx |
 | Themes and chart colors? | web presentation/ThemeProvider.tsx, preferences.ts; styles/tokens.css; rendering/chart-theme.ts |
 | Sidebar/navigation? | web shell/WorkspaceNavigation.tsx; product/ and library/ flows |
@@ -65,3 +66,7 @@ interpret the application transaction ports as a configured synchronization job.
 Trusted event range serving reuses daily full-dimensional bases and selects exact
 monthly rollups plus daily edges. See [event aggregate operations](../integration/event-serving-aggregates.md)
 for migration 034, resumable backfill, planner diagnostics and staging grants.
+
+## Ask Business runtime
+
+Read [shared AI Analyst](../architecture/shared-ai-analyst.md) before changing conversational behavior. Apply SQLite metadata 005 or PostgreSQL control 008 explicitly before starting the page. The structured dashboard provider also plans questions; optional `ANALYST_SYNTHESIS` defaults false. Questions and history require fresh AI-generation and analytics permissions. History is private to the user and tenant, expires after 30 days, and uses optimistic versions. Keep live-provider smoke outside tests and do not load developer env in automated coverage. See [delivery evidence](../qa/ask-business-2026-10-08.md).

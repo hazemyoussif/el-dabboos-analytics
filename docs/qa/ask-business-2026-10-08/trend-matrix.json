@@ -1,0 +1,134 @@
+[
+  {
+    "language": "ar",
+    "mode": "dark",
+    "requestedWidth": 1440,
+    "charts": 1,
+    "clientWidth": 1425,
+    "dir": "rtl",
+    "lang": "ar",
+    "rows": 5,
+    "scrollWidth": 1425
+  },
+  {
+    "language": "ar",
+    "mode": "dark",
+    "requestedWidth": 1024,
+    "charts": 1,
+    "clientWidth": 1009,
+    "dir": "rtl",
+    "lang": "ar",
+    "rows": 5,
+    "scrollWidth": 1009
+  },
+  {
+    "language": "ar",
+    "mode": "dark",
+    "requestedWidth": 390,
+    "charts": 1,
+    "clientWidth": 375,
+    "dir": "rtl",
+    "lang": "ar",
+    "rows": 5,
+    "scrollWidth": 375
+  },
+  {
+    "language": "ar",
+    "mode": "light",
+    "requestedWidth": 1440,
+    "charts": 1,
+    "clientWidth": 1425,
+    "dir": "rtl",
+    "lang": "ar",
+    "rows": 5,
+    "scrollWidth": 1425
+  },
+  {
+    "language": "ar",
+    "mode": "light",
+    "requestedWidth": 1024,
+    "charts": 1,
+    "clientWidth": 1009,
+    "dir": "rtl",
+    "lang": "ar",
+    "rows": 5,
+    "scrollWidth": 1009
+  },
+  {
+    "language": "ar",
+    "mode": "light",
+    "requestedWidth": 390,
+    "charts": 1,
+    "clientWidth": 375,
+    "dir": "rtl",
+    "lang": "ar",
+    "rows": 5,
+    "scrollWidth": 375
+  },
+  {
+    "language": "en",
+    "mode": "dark",
+    "requestedWidth": 1440,
+    "charts": 1,
+    "clientWidth": 1425,
+    "dir": "ltr",
+    "lang": "en",
+    "rows": 5,
+    "scrollWidth": 1425
+  },
+  {
+    "language": "en",
+    "mode": "dark",
+    "requestedWidth": 1024,
+    "charts": 1,
+    "clientWidth": 1009,
+    "dir": "ltr",
+    "lang": "en",
+    "rows": 5,
+    "scrollWidth": 1009
+  },
+  {
+    "language": "en",
+    "mode": "dark",
+    "requestedWidth": 390,
+    "charts": 1,
+    "clientWidth": 375,
+    "dir": "ltr",
+    "lang": "en",
+    "rows": 5,
+    "scrollWidth": 375
+  },
+  {
+    "language": "en",
+    "mode": "light",
+    "requestedWidth": 1440,
+    "charts": 1,
+    "clientWidth": 1425,
+    "dir": "ltr",
+    "lang": "en",
+    "rows": 5,
+    "scrollWidth": 1425
+  },
+  {
+    "language": "en",
+    "mode": "light",
+    "requestedWidth": 1024,
+    "charts": 1,
+    "clientWidth": 1009,
+    "dir": "ltr",
+    "lang": "en",
+    "rows": 5,
+    "scrollWidth": 1009
+  },
+  {
+    "language": "en",
+    "mode": "light",
+    "requestedWidth": 390,
+    "charts": 1,
+    "clientWidth": 375,
+    "dir": "ltr",
+    "lang": "en",
+    "rows": 5,
+    "scrollWidth": 375
+  }
+]

@@ -1,0 +1,385 @@
+{
+  "mode": "synthetic in-process HTTP injection; fake planner; SQLite control; seven synthetic order facts, duplicated for the governed revenue metric",
+  "report": [
+    {
+      "case": "scalar",
+      "rounds": [
+        {
+          "httpRoundTripMs": 31.928780000000074,
+          "status": "SUPPORTED",
+          "plannerMs": 13.657243999999992,
+          "capabilityMs": 1.9468709999999874,
+          "executionMs": 2.26223600000003,
+          "synthesisMs": 0,
+          "totalMs": 26.09282399999995
+        },
+        {
+          "httpRoundTripMs": 4.907317999999918,
+          "status": "SUPPORTED",
+          "plannerMs": 0.8905929999999671,
+          "capabilityMs": 0.5289600000000974,
+          "executionMs": 0.15316099999995458,
+          "synthesisMs": 0,
+          "totalMs": 2.9904470000000174
+        },
+        {
+          "httpRoundTripMs": 4.8367310000001,
+          "status": "SUPPORTED",
+          "plannerMs": 0.7813709999999219,
+          "capabilityMs": 0.5610330000000658,
+          "executionMs": 0.1267329999999447,
+          "synthesisMs": 0,
+          "totalMs": 2.7735190000000784
+        },
+        {
+          "httpRoundTripMs": 5.482848999999987,
+          "status": "SUPPORTED",
+          "plannerMs": 1.0302299999999605,
+          "capabilityMs": 0.705936999999949,
+          "executionMs": 0.13526999999999134,
+          "synthesisMs": 0,
+          "totalMs": 3.3152260000000524
+        },
+        {
+          "httpRoundTripMs": 4.29019100000005,
+          "status": "SUPPORTED",
+          "plannerMs": 0.7971650000000636,
+          "capabilityMs": 0.48737100000005285,
+          "executionMs": 0.15105300000004718,
+          "synthesisMs": 0,
+          "totalMs": 2.648568999999952
+        },
+        {
+          "httpRoundTripMs": 4.03420200000005,
+          "status": "SUPPORTED",
+          "plannerMs": 0.6903459999999768,
+          "capabilityMs": 0.5186429999999973,
+          "executionMs": 0.14391200000000026,
+          "synthesisMs": 0,
+          "totalMs": 2.4474199999999655
+        },
+        {
+          "httpRoundTripMs": 4.920731000000046,
+          "status": "SUPPORTED",
+          "plannerMs": 0.9295749999999998,
+          "capabilityMs": 0.6902350000000297,
+          "executionMs": 0.19749799999999595,
+          "synthesisMs": 0,
+          "totalMs": 3.2428030000000945
+        },
+        {
+          "httpRoundTripMs": 4.380008000000089,
+          "status": "SUPPORTED",
+          "plannerMs": 0.8592060000000856,
+          "capabilityMs": 0.4083409999999503,
+          "executionMs": 0.1170799999999872,
+          "synthesisMs": 0,
+          "totalMs": 2.522297999999978
+        },
+        {
+          "httpRoundTripMs": 6.197914999999966,
+          "status": "SUPPORTED",
+          "plannerMs": 0.7076690000000099,
+          "capabilityMs": 0.3763250000000653,
+          "executionMs": 0.1410129999999299,
+          "synthesisMs": 0,
+          "totalMs": 2.439971000000014
+        },
+        {
+          "httpRoundTripMs": 4.914233999999965,
+          "status": "SUPPORTED",
+          "plannerMs": 0.792993000000024,
+          "capabilityMs": 0.45575000000008004,
+          "executionMs": 0.15120300000000952,
+          "synthesisMs": 0,
+          "totalMs": 2.581542000000013
+        }
+      ]
+    },
+    {
+      "case": "ranking",
+      "rounds": [
+        {
+          "httpRoundTripMs": 4.147267000000056,
+          "status": "SUPPORTED",
+          "plannerMs": 0.7199989999999161,
+          "capabilityMs": 0.5441469999999526,
+          "executionMs": 0.3063680000000204,
+          "synthesisMs": 0,
+          "totalMs": 2.80599200000006
+        },
+        {
+          "httpRoundTripMs": 3.7517729999999574,
+          "status": "SUPPORTED",
+          "plannerMs": 0.8375629999999319,
+          "capabilityMs": 0.39217600000006314,
+          "executionMs": 0.13187900000002628,
+          "synthesisMs": 0,
+          "totalMs": 2.449002000000064
+        },
+        {
+          "httpRoundTripMs": 3.563572000000022,
+          "status": "SUPPORTED",
+          "plannerMs": 0.6291899999999941,
+          "capabilityMs": 0.4018869999999879,
+          "executionMs": 0.13976999999999862,
+          "synthesisMs": 0,
+          "totalMs": 2.1640730000000303
+        },
+        {
+          "httpRoundTripMs": 3.4439069999999674,
+          "status": "SUPPORTED",
+          "plannerMs": 0.545564000000013,
+          "capabilityMs": 0.3578069999999798,
+          "executionMs": 0.1195989999999938,
+          "synthesisMs": 0,
+          "totalMs": 2.134732999999983
+        },
+        {
+          "httpRoundTripMs": 4.188570000000027,
+          "status": "SUPPORTED",
+          "plannerMs": 0.7312559999999166,
+          "capabilityMs": 0.4501670000000786,
+          "executionMs": 0.13847000000009757,
+          "synthesisMs": 0,
+          "totalMs": 2.5493940000000066
+        },
+        {
+          "httpRoundTripMs": 3.6006810000000087,
+          "status": "SUPPORTED",
+          "plannerMs": 0.6168870000000197,
+          "capabilityMs": 0.43234399999994366,
+          "executionMs": 0.10533000000009451,
+          "synthesisMs": 0,
+          "totalMs": 2.166480999999976
+        },
+        {
+          "httpRoundTripMs": 3.620074000000045,
+          "status": "SUPPORTED",
+          "plannerMs": 0.6353800000000547,
+          "capabilityMs": 0.3490870000000541,
+          "executionMs": 0.12897399999997106,
+          "synthesisMs": 0,
+          "totalMs": 2.095713000000046
+        },
+        {
+          "httpRoundTripMs": 6.4076279999999315,
+          "status": "SUPPORTED",
+          "plannerMs": 0.5637789999999541,
+          "capabilityMs": 0.3798309999999674,
+          "executionMs": 0.10068899999998848,
+          "synthesisMs": 0,
+          "totalMs": 2.011390000000006
+        },
+        {
+          "httpRoundTripMs": 4.072771999999986,
+          "status": "SUPPORTED",
+          "plannerMs": 0.702331000000072,
+          "capabilityMs": 0.44663900000000467,
+          "executionMs": 0.10613599999999224,
+          "synthesisMs": 0,
+          "totalMs": 2.3704989999999952
+        },
+        {
+          "httpRoundTripMs": 3.687320999999997,
+          "status": "SUPPORTED",
+          "plannerMs": 0.6138209999999162,
+          "capabilityMs": 0.36750400000016725,
+          "executionMs": 0.10280099999999948,
+          "synthesisMs": 0,
+          "totalMs": 2.136867000000052
+        }
+      ]
+    },
+    {
+      "case": "trend",
+      "rounds": [
+        {
+          "httpRoundTripMs": 3.7975430000000188,
+          "status": "SUPPORTED",
+          "plannerMs": 0.6332360000000108,
+          "capabilityMs": 0.7847280000000865,
+          "executionMs": 0.2817850000000135,
+          "synthesisMs": 0,
+          "totalMs": 2.6898339999999052
+        },
+        {
+          "httpRoundTripMs": 3.5807530000000725,
+          "status": "SUPPORTED",
+          "plannerMs": 0.578689000000054,
+          "capabilityMs": 0.6022100000000137,
+          "executionMs": 0.15691600000002381,
+          "synthesisMs": 0,
+          "totalMs": 2.3387030000000095
+        },
+        {
+          "httpRoundTripMs": 4.3951099999999315,
+          "status": "SUPPORTED",
+          "plannerMs": 0.6709980000000542,
+          "capabilityMs": 0.8978109999999333,
+          "executionMs": 0.22293200000001434,
+          "synthesisMs": 0,
+          "totalMs": 2.9744610000000193
+        },
+        {
+          "httpRoundTripMs": 3.9927750000000515,
+          "status": "SUPPORTED",
+          "plannerMs": 0.6113240000000815,
+          "capabilityMs": 0.5836369999999533,
+          "executionMs": 0.1530049999998937,
+          "synthesisMs": 0,
+          "totalMs": 2.38584000000003
+        },
+        {
+          "httpRoundTripMs": 3.96124199999997,
+          "status": "SUPPORTED",
+          "plannerMs": 0.6367440000000215,
+          "capabilityMs": 0.6112369999999601,
+          "executionMs": 0.11885700000004817,
+          "synthesisMs": 0,
+          "totalMs": 2.368829000000005
+        },
+        {
+          "httpRoundTripMs": 3.607120000000009,
+          "status": "SUPPORTED",
+          "plannerMs": 0.5509460000000672,
+          "capabilityMs": 0.5916969999999537,
+          "executionMs": 0.15148999999996704,
+          "synthesisMs": 0,
+          "totalMs": 2.305197000000021
+        },
+        {
+          "httpRoundTripMs": 6.129916999999978,
+          "status": "SUPPORTED",
+          "plannerMs": 0.7011170000000675,
+          "capabilityMs": 0.5585580000000618,
+          "executionMs": 0.1812489999999798,
+          "synthesisMs": 0,
+          "totalMs": 2.5168840000000046
+        },
+        {
+          "httpRoundTripMs": 4.677633000000014,
+          "status": "SUPPORTED",
+          "plannerMs": 0.7495330000000422,
+          "capabilityMs": 0.6297670000000153,
+          "executionMs": 0.12544800000000578,
+          "synthesisMs": 0,
+          "totalMs": 2.898249999999962
+        },
+        {
+          "httpRoundTripMs": 3.6134920000000648,
+          "status": "SUPPORTED",
+          "plannerMs": 0.5775390000000016,
+          "capabilityMs": 0.5277469999999767,
+          "executionMs": 0.10240999999996347,
+          "synthesisMs": 0,
+          "totalMs": 2.196279000000004
+        },
+        {
+          "httpRoundTripMs": 4.709879000000001,
+          "status": "SUPPORTED",
+          "plannerMs": 0.6508800000000292,
+          "capabilityMs": 0.8162140000000591,
+          "executionMs": 0.21962100000007467,
+          "synthesisMs": 0,
+          "totalMs": 3.088355999999976
+        }
+      ]
+    },
+    {
+      "case": "comparison",
+      "rounds": [
+        {
+          "httpRoundTripMs": 3.8653209999999945,
+          "status": "SUPPORTED",
+          "plannerMs": 0.6583630000000085,
+          "capabilityMs": 0.4549690000000055,
+          "executionMs": 0.3840410000000247,
+          "synthesisMs": 0,
+          "totalMs": 2.6825659999999516
+        },
+        {
+          "httpRoundTripMs": 3.4503389999999854,
+          "status": "SUPPORTED",
+          "plannerMs": 0.5891940000000204,
+          "capabilityMs": 0.378812000000039,
+          "executionMs": 0.11730299999999261,
+          "synthesisMs": 0,
+          "totalMs": 2.1154430000000275
+        },
+        {
+          "httpRoundTripMs": 3.8510140000000774,
+          "status": "SUPPORTED",
+          "plannerMs": 0.6006320000000187,
+          "capabilityMs": 0.4046819999999798,
+          "executionMs": 0.1216269999999895,
+          "synthesisMs": 0,
+          "totalMs": 2.3028679999999895
+        },
+        {
+          "httpRoundTripMs": 5.582536000000005,
+          "status": "SUPPORTED",
+          "plannerMs": 0.8756190000000288,
+          "capabilityMs": 0.6304569999999785,
+          "executionMs": 0.1813720000000103,
+          "synthesisMs": 0,
+          "totalMs": 3.6162820000000693
+        },
+        {
+          "httpRoundTripMs": 4.287045999999918,
+          "status": "SUPPORTED",
+          "plannerMs": 0.6389599999999973,
+          "capabilityMs": 0.4156000000000404,
+          "executionMs": 0.14008699999999408,
+          "synthesisMs": 0,
+          "totalMs": 2.64498100000003
+        },
+        {
+          "httpRoundTripMs": 6.902394000000072,
+          "status": "SUPPORTED",
+          "plannerMs": 0.6302499999999327,
+          "capabilityMs": 0.3625680000000102,
+          "executionMs": 0.10743400000001202,
+          "synthesisMs": 0,
+          "totalMs": 2.307130000000029
+        },
+        {
+          "httpRoundTripMs": 6.410262999999986,
+          "status": "SUPPORTED",
+          "plannerMs": 1.2960190000000011,
+          "capabilityMs": 0.6414880000000949,
+          "executionMs": 0.15228400000000875,
+          "synthesisMs": 0,
+          "totalMs": 4.18136800000002
+        },
+        {
+          "httpRoundTripMs": 6.969914000000017,
+          "status": "SUPPORTED",
+          "plannerMs": 3.08471499999996,
+          "capabilityMs": 0.6133769999999004,
+          "executionMs": 0.1282650000000558,
+          "synthesisMs": 0,
+          "totalMs": 5.292192
+        },
+        {
+          "httpRoundTripMs": 4.351724000000104,
+          "status": "SUPPORTED",
+          "plannerMs": 0.6366420000000517,
+          "capabilityMs": 0.4893170000000282,
+          "executionMs": 0.11088599999993676,
+          "synthesisMs": 0,
+          "totalMs": 2.5639300000000276
+        },
+        {
+          "httpRoundTripMs": 5.4150900000000775,
+          "status": "SUPPORTED",
+          "plannerMs": 0.9194420000000036,
+          "capabilityMs": 0.5372519999999668,
+          "executionMs": 0.136620999999991,
+          "synthesisMs": 0,
+          "totalMs": 3.3803720000000794
+        }
+      ]
+    }
+  ]
+}
