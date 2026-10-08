@@ -118,3 +118,13 @@ Finance outputs remain independently certified and pinned, with cached-proof-onl
 reads; they are not part of this summary adapter's incremental promotion scope.
 See [operational analytics v1](../integration/operational-analytics-v1.md) for exact
 scope, source watermark limits, migration/bootstrap ownership and command usage.
+
+## Event aggregate range serving
+
+Migration 034 adds exact, frozen monthly rollups above the existing daily event
+bases. The operational lifecycle copies untouched days, rebuilds old/new changed
+dates and reconciles both grains before promotion. A deterministic planner selects
+complete trusted months and daily edges per output slot, preserving full dimension
+and policy intersections. Semantic compatibility follows immutable baseline and
+manifest partition lineage; snapshot Finance remains separate. See
+[event aggregate operations](../integration/event-serving-aggregates.md).

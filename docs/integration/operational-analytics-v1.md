@@ -168,3 +168,6 @@ five minutes and daily reconciliation/sweep; all formulas, mapping, cursor and
 promotion decisions remain in this repository. No scheduler, cloud staging,
 external CD, push or merge was created. Runtime sync/reconciliation/serving LLM
 dependency = zero. See the operational acceptance handoff for results and limits.
+
+Daily event base reconciliation, monthly rollups and exact hybrid range planning
+are now owned by [event aggregate operations](event-serving-aggregates.md).

@@ -248,3 +248,117 @@ test('jobs refuse a prior executable metric-definition baseline without rewritin
   assert.equal((await db.admin.query('SELECT definition_version FROM mart.analytics_baselines')).rows[0].definition_version,'prior-definition');
  }finally{await db.close();}
 });
+
+test('exact monthly, daily and hybrid event bases equal canonical over twelve months; trends and policy preserve scope',{skip:!enabled},async()=>{
+ const fixture=await setup();try {
+  fixture.source.cutoff='2027-01-07T12:00:00.000Z';
+  fixture.source.rows=Array.from({length:12},(_,index)=>{
+   const date=new Date(Date.UTC(2026,index,15)).toISOString().slice(0,10);
+   return januaryFact({sourceRecordId:`annual-${index}`,businessDate:date});
+  });
+  assert.equal((await fixture.run()).status,'passed');
+  const range={from:'2026-01-01',to:'2026-12-31'},context={tenantId:'a',locale:'en' as const};
+  const selected=await fixture.repository.execute({metric:'revenue',dateRange:range},context);
+  const {verifyEventRange}=await import('../../src/operational/aggregate-verification.ts');
+  const exact=await verifyEventRange(fixture.db.migrator,'a',range);assert.equal(exact.mismatches,0);assert.equal(exact.unprovedPartitions,0);
+  assert.equal(selected.rows[0]?.value,1200);assert.equal(selected.metadata.coverage?.status,'complete');
+  await tenantTransaction(fixture.db.ingestor,'a',async client=>{
+   const sums=(await client.query(`SELECT
+    (SELECT sum(value) FROM mart.analytics_trusted_serving trusted JOIN mart.analytics_serving_members member USING(tenant_id,revision_id) JOIN mart.analytics_aggregate_bases base USING(tenant_id,partition_id) WHERE trusted.tenant_id=$1 AND measure_id='revenue')::text daily,
+    (SELECT sum(value) FROM mart.analytics_trusted_serving trusted JOIN mart.analytics_serving_members member USING(tenant_id,revision_id) JOIN mart.analytics_monthly_bases base USING(tenant_id,partition_id) WHERE trusted.tenant_id=$1 AND measure_id='revenue')::text monthly,
+    (SELECT sum((payload->>'value')::numeric) FROM mart.analytics_fact_heads head JOIN mart.analytics_fact_revisions revision USING(tenant_id,fact_key,revision_id) WHERE head.tenant_id=$1 AND head.status='active' AND head.measure_id='revenue')::text canonical`,['a'])).rows[0];
+   assert.equal(sums.daily,sums.monthly);assert.equal(sums.daily,sums.canonical);
+   const {servingRows}=await import('../../src/operational/serving-query.ts');
+   const coverage={...range,months:fixture.source.rows.map(row=>row.businessDate.slice(0,7))};
+   const annual=await servingRows(client,{metric:'revenue',dateRange:range},context,coverage,4000);assert.equal(annual.rows[0]?.value,1200);
+   const scoped=await servingRows(client,{metric:'revenue',dateRange:range},{...context,enforcedFilters:[{dimension:'branch',values:['baghdad']}]},coverage,4000);assert.equal(scoped.rows[0]?.value,0);
+   const hybrid=await servingRows(client,{metric:'revenue',dateRange:{from:'2026-04-17',to:'2026-07-12'}},context,coverage,4000);
+   assert.equal(hybrid.rows[0]?.value,200);
+   const daily=await servingRows(client,{metric:'revenue',groupBy:'date',dateRange:{from:'2026-05-01',to:'2026-05-31'}},context,coverage,4000);
+   assert.equal(daily.rows.length,31);assert.equal(daily.rows.reduce((total,row)=>total+(row.value??0),0),100);
+   const monthly=await servingRows(client,{metric:'revenue',groupBy:'month',dateRange:range,analysis:{runningTotal:true}},context,coverage,4000);
+   assert.equal(monthly.rows.length,12);assert.equal(monthly.rows.at(-1)?.value,1200);
+  });
+  await assert.rejects(fixture.repository.execute({metric:'revenue',dateRange:range}, {...context,enforcedFilters:[{dimension:'branch',values:['baghdad']}]}),/Uncertified/);
+  assert.equal((await tenantTransaction(fixture.db.runtime,'b',client=>client.query('SELECT * FROM mart.analytics_monthly_bases'),true)).rowCount,0);
+  assert.equal((await tenantTransaction(fixture.db.runtime,'b',client=>client.query('SELECT * FROM mart.analytics_aggregate_proofs'),true)).rowCount,0);
+ }finally{await fixture.db.close();}
+});
+
+test('old-day correction and business-date/dimension move replace both daily and monthly footprints and retain untouched day',{skip:!enabled},async()=>{
+ const fixture=await setup();try {
+  const untouched=januaryFact({sourceRecordId:'unchanged-day',businessDate:'2026-01-20'});
+  fixture.source.rows=[januaryFact(),untouched];await fixture.run();
+  const proofCount=(await fixture.db.admin.query('SELECT count(*) FROM mart.analytics_aggregate_proofs')).rows[0].count;
+  fixture.source.rows=[januaryFact({businessDate:'2026-02-03',dimensions:{branch:'baghdad'},sourceVersion:'move',sourceRevision:'3'}),untouched];
+  assert.equal((await fixture.run()).status,'passed');
+  assert.equal(await januaryValue(fixture.repository),100);
+  const bases=(await tenantTransaction(fixture.db.runtime,'a',client=>client.query(`SELECT base.business_date::text AS day,base.dimensions->>'branch' branch,base.value::text value FROM mart.analytics_trusted_serving trusted JOIN mart.analytics_serving_members member USING(tenant_id,revision_id) JOIN mart.analytics_aggregate_bases base USING(tenant_id,partition_id) WHERE trusted.tenant_id='a' ORDER BY day`),true)).rows;
+  assert.deepEqual(bases,[{day:'2026-01-20',branch:'cairo',value:'100.000000'},{day:'2026-02-03',branch:'baghdad',value:'100.000000'}]);
+  assert.equal(Number((await fixture.db.admin.query('SELECT count(*) FROM mart.analytics_aggregate_proofs')).rows[0].count),Number(proofCount)+2);
+  await assert.rejects(tenantTransaction(fixture.db.ingestor,'a',client=>client.query(`INSERT INTO mart.analytics_monthly_bases SELECT tenant_id,partition_id,'order_count','{}',1,1,'2026-01-01' FROM mart.analytics_aggregate_proofs LIMIT 1`)),/frozen/);
+ }finally{await fixture.db.close();}
+});
+
+test('monthly reconciliation failure preserves serving revision and cursor; resumable backfill proves existing partitions',{skip:!enabled},async()=>{
+ const fixture=await setup();try {
+  const {backfillEventRollups}=await import('../../src/operational/aggregate-rollups.ts');
+  assert.ok((await backfillEventRollups(fixture.db.migrator,'a')).every(row=>row.status==='already-proved'));
+  const previous=(await fixture.db.admin.query('SELECT revision_id FROM mart.analytics_trusted_serving')).rows[0].revision_id;
+  const cutoff=(await fixture.db.admin.query('SELECT cutoff FROM mart.analytics_source_cursors')).rows[0].cutoff.toISOString();
+  await fixture.db.migrator.query(`CREATE FUNCTION mart.corrupt_rollup() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.value=NEW.value+1; RETURN NEW; END $$`);
+  await fixture.db.migrator.query(`CREATE TRIGGER corrupt_rollup BEFORE INSERT ON mart.analytics_monthly_bases FOR EACH ROW EXECUTE FUNCTION mart.corrupt_rollup()`);
+  fixture.source.rows=[januaryFact()];await assert.rejects(fixture.run(),/Monthly aggregate differs/);
+  assert.equal((await fixture.db.admin.query('SELECT revision_id FROM mart.analytics_trusted_serving')).rows[0].revision_id,previous);
+  assert.equal((await fixture.db.admin.query('SELECT cutoff FROM mart.analytics_source_cursors')).rows[0].cutoff.toISOString(),cutoff);
+  await fixture.db.migrator.query('DROP TRIGGER corrupt_rollup ON mart.analytics_monthly_bases');assert.equal((await fixture.run()).status,'passed');
+ }finally{await fixture.db.close();}
+});
+
+test('runtime falls back to trusted daily for missing or incompatible monthly proof, never untrusted monthly values',{skip:!enabled},async()=>{
+ const fixture=await setup();try {
+  fixture.source.rows=[januaryFact()];await fixture.run();
+  await fixture.db.admin.query('ALTER TABLE mart.analytics_aggregate_proofs DISABLE TRIGGER immutable_history');
+  await fixture.db.admin.query("UPDATE mart.analytics_aggregate_proofs SET mapping_version='incompatible'");
+  assert.equal(await januaryValue(fixture.repository),100);
+  const {trustedRangePartitions}=await import('../../src/operational/range-plan.ts');
+  assert.ok((await tenantTransaction(fixture.db.runtime,'a',client=>trustedRangePartitions(client,'a'),true)).every(partition=>!partition.monthly));
+  await fixture.db.admin.query('DELETE FROM mart.analytics_aggregate_proofs');
+  assert.equal(await januaryValue(fixture.repository),100);
+  await fixture.db.admin.query('ALTER TABLE mart.analytics_aggregate_proofs ENABLE TRIGGER immutable_history');
+ }finally{await fixture.db.close();}
+});
+
+test('event transformations use selected monthly periods, weighted bases and policy-scoped contribution',{skip:!enabled},async()=>{
+ const fixture=await setup('fixture',true);try {
+  fixture.source.cutoff='2027-01-07T12:00:00.000Z';
+  fixture.source.rows=Array.from({length:12},(_,index)=>[
+   januaryFact({sourceRecordId:`weighted-${index}`,measureId:'order_revenue',businessDate:`2026-${String(index+1).padStart(2,'0')}-15`,value:`${100*(index+1)}.000000`,dimensions:{salesperson:index%2?'owner-b':'owner-a'},currency:{mode:'native',transactionCurrency:'IQD',transactionValue:`${100*(index+1)}.000000`,reportingCurrency:'IQD',policyReference:'test-native'}}),
+   januaryFact({sourceRecordId:`weighted-${index}`,measureId:'order_count',businessDate:`2026-${String(index+1).padStart(2,'0')}-15`,value:`${index+1}.000000`,dimensions:{salesperson:index%2?'owner-b':'owner-a'}})
+  ]).flat();assert.equal((await fixture.run()).status,'passed');
+  const {servingRows}=await import('../../src/operational/serving-query.ts');
+  await tenantTransaction(fixture.db.runtime,'a',async client=>{
+   const dateRange={from:'2026-01-01',to:'2026-12-31'},coverage={...dateRange,months:fixture.source.rows.map(row=>row.businessDate.slice(0,7))},context={tenantId:'a',locale:'en' as const};
+   const ratio=await servingRows(client,{metric:'average_confirmed_order_value',dateRange},context,coverage,4000);assert.equal(ratio.rows[0]?.value,100);
+   const moving=await servingRows(client,{metric:'order_revenue',groupBy:'month',dateRange,analysis:{movingAverage:{window:3}}},context,coverage,4000);assert.equal(moving.rows.at(-1)?.value,1100);
+   const contribution=await servingRows(client,{metric:'order_revenue',groupBy:'salesperson',dateRange,analysis:{percentageContribution:true}}, {...context,enforcedFilters:[{dimension:'salesperson',values:['owner-a']}]},coverage,4000);assert.deepEqual(contribution.rows.map(row=>row.value),[100]);
+   const ranked=await servingRows(client,{metric:'order_revenue',groupBy:'salesperson',dateRange,analysis:{ranking:true,topN:{direction:'top',limit:1}}},context,coverage,4000);assert.equal(ranked.rows[0]?.key,'owner-b');assert.equal(ranked.rows[0]?.value,4200);
+  },true);
+ }finally{await fixture.db.close();}
+});
+
+test('runtime cannot read unpublished monthly partitions or write serving tables; daily mismatch blocks promotion',{skip:!enabled},async()=>{
+ const fixture=await setup();try {
+  const partitionId=randomUUID();
+  await tenantTransaction(fixture.db.ingestor,'a',async client=>{
+   await client.query('INSERT INTO mart.analytics_partitions VALUES($1,$2,$3)',['a',partitionId,'2026-01-01']);
+   await client.query("INSERT INTO mart.analytics_monthly_bases VALUES($1,$2,'revenue','{}',999,1,'2026-01-15')",['a',partitionId]);
+  });
+  assert.equal((await tenantTransaction(fixture.db.runtime,'a',client=>client.query('SELECT * FROM mart.analytics_monthly_bases WHERE partition_id=$1',[partitionId]),true)).rowCount,0);
+  await assert.rejects(tenantTransaction(fixture.db.runtime,'a',client=>client.query("INSERT INTO mart.analytics_monthly_bases VALUES($1,$2,'revenue','{}',999,1,'2026-01-15')",['a',partitionId])),/permission denied/);
+  await fixture.db.migrator.query(`CREATE FUNCTION mart.corrupt_daily() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.value=NEW.value+1; RETURN NEW; END $$`);
+  await fixture.db.migrator.query(`CREATE TRIGGER corrupt_daily BEFORE INSERT ON mart.analytics_aggregate_bases FOR EACH ROW EXECUTE FUNCTION mart.corrupt_daily()`);
+  fixture.source.rows=[januaryFact()];await assert.rejects(fixture.run(),/Daily aggregate differs/);assert.equal(await januaryValue(fixture.repository),0);
+  await fixture.db.migrator.query('DROP TRIGGER corrupt_daily ON mart.analytics_aggregate_bases');assert.equal((await fixture.run()).status,'passed');
+ }finally{await fixture.db.close();}
+});

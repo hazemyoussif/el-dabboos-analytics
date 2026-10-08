@@ -8,12 +8,15 @@ import { numericOutput } from '../postgres/sql.ts';
 import { coveredSlot,isSnapshotQuery,coverageMetadata } from './coverage.ts';
 import type { ServingCoverage } from './coverage.ts';
 import { analyzeRows,compareValues } from '../postgres/query-analysis.ts';
+import {trustedRangePartitions} from './range-plan.ts';
+import type {TrustedRangePartition} from './range-plan.ts';
+import {plannedEventValues} from './planned-values.ts';
 const input=`mart.analytics_trusted_serving trusted JOIN mart.analytics_serving_members member ON member.tenant_id=trusted.tenant_id AND member.revision_id=trusted.revision_id JOIN mart.analytics_aggregate_bases base ON base.tenant_id=member.tenant_id AND base.partition_id=member.partition_id`;
 export async function servingRows(client:PoolClient,query:AnalyticsQuery,context:AnalyticsContext,coverage:ServingCoverage,maxGroups:number) {
  validateServingAnalysis(query);
  const params:unknown[]=[context.tenantId,requiredMeasures(query.metric)];
  const predicates=servingFilters(query,context,params);
- const sql={params,predicates,maxGroups};
+ const sql={params,predicates,maxGroups,partitions:isSnapshotQuery(query)?[]:await trustedRangePartitions(client,context.tenantId)};
  const keys=await servingKeys(client,query,sql);
  if(query.analysis?.movingAverage&&keys.length<query.analysis.movingAverage.window)throw new Error('Insufficient historical moving-average coverage');
  const slots=querySlots(query,keys);
@@ -47,22 +50,23 @@ async function servingKeys(client:PoolClient,query:AnalyticsQuery,sql:{params:un
  const result=await client.query(`SELECT DISTINCT base.dimensions->>${dimension} key FROM ${input} WHERE trusted.tenant_id=$1 AND base.measure_id=ANY($2::text[]) AND ${sql.predicates} AND base.dimensions->>${dimension} IS NOT NULL ${range} ORDER BY key LIMIT ${sql.maxGroups+1}`,params);
  if(result.rows.length>sql.maxGroups)throw new AnalyticsResultLimitError(query.groupBy!);return result.rows.map(row=>String(row.key));
 }
-async function slotValues(client:PoolClient,query:AnalyticsQuery,slots:QuerySlot[],sql:{params:unknown[];predicates:string},coverage:ServingCoverage) {
+async function slotValues(client:PoolClient,query:AnalyticsQuery,slots:QuerySlot[],sql:{params:unknown[];predicates:string;partitions:TrustedRangePartition[]},coverage:ServingCoverage) {
  if(!slots.length)return [];
  const metric=semanticCatalog[query.metric].semantics;const semantics=metric.kind==='comparison_derived'?semanticCatalog[metric.base].semantics:metric;
  const snapshot=semantics.kind==='snapshot'||semantics.kind==='ratio'&&semantics.basis==='snapshot';
  const eligible=snapshot?slots:slots.flatMap(slot=>{const covered=coveredSlot(slot,coverage);return covered?[covered]:[];});
  if(!eligible.length)return slots.map(()=>({value:null,through:null}));
- const params=[...sql.params,JSON.stringify(eligible)],slot=`$${params.length}`;
+ const params=[...sql.params];
+ if(snapshot)params.push(JSON.stringify(eligible));const slot=`$${params.length}`;
  const expression=servingExpression(semantics,params);
  let group='';
- if(query.groupBy&&!timeDimensions.includes(query.groupBy)){params.push(query.groupBy);group=`AND base.dimensions->>$${params.length}=slot.match_key`;}
+ if(snapshot&&query.groupBy&&!timeDimensions.includes(query.groupBy)){params.push(query.groupBy);group=`AND base.dimensions->>$${params.length}=slot.match_key`;}
  const range=snapshot?`AND base.business_date=(SELECT max(selected.business_date) FROM ${input.replace(/\bbase\b/g,'selected')} WHERE trusted.tenant_id=$1 AND selected.measure_id=ANY($2::text[]) AND selected.business_date<=slot."to")`:'AND base.business_date BETWEEN slot."from" AND slot."to"';
- const result=await client.query(`SELECT slot.key,values.* FROM jsonb_to_recordset(${slot}::jsonb) slot(key text,"from" date,"to" date,match_key text) CROSS JOIN LATERAL
-  (SELECT ${expression},max(base.business_date)::text through FROM ${input} WHERE trusted.tenant_id=$1 AND base.measure_id=ANY($2::text[]) AND ${sql.predicates} ${range} ${group}) values`,params);
+ const result=snapshot?await client.query(`SELECT slot.key,values.* FROM jsonb_to_recordset(${slot}::jsonb) slot(key text,"from" date,"to" date,match_key text) CROSS JOIN LATERAL
+  (SELECT ${expression},max(base.business_date)::text through FROM ${input} WHERE trusted.tenant_id=$1 AND base.measure_id=ANY($2::text[]) AND ${sql.predicates} ${range} ${group}) values`,params):await plannedEventValues(client,{query,slots:eligible,partitions:sql.partitions},{params,predicates:sql.predicates,expression});
  const byKey=new Map(result.rows.map(row=>[row.key,row]));
  return slots.map(item=>{
-  const row=byKey.get(item.key);if(!row)return {value:null,through:null};
+  const row=byKey.get(item.key);if(!row)return {value:!snapshot&&eligible.some(slot=>slot.key===item.key)&&semantics.kind!=='ratio'&&semantics.kind!=='duration_derived'?0:null,through:null};
   if(semantics.kind==='ratio'||semantics.kind==='duration_derived'){const denominator=numericOutput(row.denominator)!;return {value:denominator===0?null:numericOutput(row.numerator)!/denominator*semantics.scale,through:row.through as string|null};}
   return {value:numericOutput(row.value),through:row.through as string|null};
  });

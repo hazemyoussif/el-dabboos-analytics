@@ -32,7 +32,8 @@
     "staging": "node --experimental-transform-types --disable-warning=ExperimentalWarning apps/api/src/staging-cli.ts",
     "auth:local": "node --experimental-transform-types --disable-warning=ExperimentalWarning apps/api/src/auth/cli.ts",
     "mart:publication": "node --experimental-transform-types --disable-warning=ExperimentalWarning apps/api/src/mart-publication-cli.ts",
-    "analytics": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --experimental-transform-types --disable-warning=ExperimentalWarning apps/api/src/analytics-status-cli.ts"
+    "analytics": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --experimental-transform-types --disable-warning=ExperimentalWarning apps/api/src/analytics-status-cli.ts",
+    "event:aggregates": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --experimental-transform-types --disable-warning=ExperimentalWarning scripts/integration/event-aggregates.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

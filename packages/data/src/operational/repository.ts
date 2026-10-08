@@ -9,6 +9,7 @@ import type { HistoricalRepositoryOptions } from '../postgres/historical-reposit
 import { servingLabels } from './serving-labels.ts';
 import {FinanceSnapshotRepository,financeMetric} from './finance-repository.ts';
 import {discoverCustomers} from './customer-discovery.ts';
+import {dailyEventCapabilities} from './daily-capabilities.ts';
 import { servingRows,operationalServingInput,servingFilters } from './serving-query.ts';
 /** Reads only a stored trusted manifest and approved capability projection. No source or proof port. */
 export class TrustedAnalyticsRepository implements AnalyticsRepository,DimensionValueRepository {
@@ -27,7 +28,7 @@ export class TrustedAnalyticsRepository implements AnalyticsRepository,Dimension
   if(publishedQueryIssues(authorizedQuery,stored.capabilities).length&&stored.anchorCapabilities&&!publishedQueryIssues(authorizedQuery,stored.anchorCapabilities).length)return this.anchorResult(query,context,stored.anchorCapabilities);
   return tenantTransaction(this.pool,context.tenantId,async client=>{
    const stored=(await client.query(`SELECT baseline.capabilities,baseline.period_from::text coverage_from,baseline.reporting_currency,trusted.revision_id,coalesce(cursor.cutoff,revision.cutoff) cutoff,(coalesce(cursor.cutoff,revision.cutoff) AT TIME ZONE (baseline.specification->0->'measures'->0->>'timeZone'))::date::text cutoff_day,ARRAY(SELECT month::text FROM mart.analytics_serving_members WHERE tenant_id=baseline.tenant_id AND revision_id=trusted.revision_id) months,CASE WHEN EXISTS(SELECT 1 FROM mart.analytics_serving_members WHERE tenant_id=baseline.tenant_id AND revision_id=trusted.revision_id AND month>baseline.period_to) THEN (coalesce(cursor.cutoff,revision.cutoff) AT TIME ZONE (baseline.specification->0->'measures'->0->>'timeZone'))::date::text ELSE baseline.period_to::text END current_through FROM mart.analytics_baselines baseline JOIN mart.analytics_trusted_serving trusted USING(tenant_id) JOIN mart.analytics_serving_revisions revision USING(tenant_id,revision_id) LEFT JOIN mart.analytics_source_cursors cursor USING(tenant_id) WHERE baseline.tenant_id=$1`,[context.tenantId])).rows[0];
-   stored.capabilities=extendCapabilities(stored.capabilities,stored.current_through);
+   stored.capabilities=await dailyEventCapabilities(client,context.tenantId,extendCapabilities(stored.capabilities,stored.current_through));
    authorizeStored(query,context,stored.capabilities);
    const selected=await servingRows(client,query,context,{from:stored.coverage_from,to:stored.current_through,cutoff:stored.cutoff.toISOString(),cutoffDay:stored.cutoff_day,months:stored.months.map((month:string)=>month.slice(0,7))},this.maxGroups),metric=semanticCatalog[query.metric];
    const dimensionLabels=query.groupBy?await servingLabels(client,query.groupBy,context,query,selected.rows.map(row=>row.key)):{};
@@ -67,7 +68,7 @@ export class TrustedAnalyticsRepository implements AnalyticsRepository,Dimension
     const currency=this.options.reportingCurrency?await this.options.reportingCurrency(tenantId):this.options.reportingCurrencies[tenantId];
     if(currency!==row.reporting_currency)throw new Error('Uncertified reporting currency mismatch');
    }
-   return row?{capabilities:extendCapabilities(row.capabilities,row.current_through),anchorCapabilities:row.anchor_caps?anchorSnapshotPeriods(row.anchor_caps):null}:null;
+   return row?{capabilities:await dailyEventCapabilities(client,tenantId,extendCapabilities(row.capabilities,row.current_through)),anchorCapabilities:row.anchor_caps?anchorSnapshotPeriods(row.anchor_caps):null}:null;
   },true,this.options.statementTimeoutMs??15000);
  }
 }

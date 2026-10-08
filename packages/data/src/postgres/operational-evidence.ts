@@ -1,5 +1,6 @@
 import type { Pool, PoolClient } from 'pg';
 import type { AnalyticsCursor, AnalyticsJobRun, AnalyticsOperationalStatus, OperationalRunSummary } from '@el-dabboos/domain';
+import {eventAggregateStatus} from '../operational/aggregate-status.ts';
 import { tenantTransaction } from './session.ts';
 
 /** Use the lifecycle's transaction; a failed audit/cursor write rolls back its promotion. */
@@ -40,7 +41,7 @@ export class PostgresOperationalStatus {
       const failure=(await client.query('SELECT run_id,kind,failed_at FROM mart.analytics_operation_failures WHERE tenant_id=$1 ORDER BY failed_at DESC LIMIT 1',[tenantId])).rows[0];
       const binding=(await client.query('SELECT dataset_id FROM mart.serving_bindings WHERE tenant_id=$1',[tenantId])).rows[0]?.dataset_id ?? null;
       const history=(await client.query('SELECT reference,period_from::text,period_to::text FROM mart.historical_serving_bindings WHERE tenant_id=$1',[tenantId])).rows[0] ?? null;
-      return {tenantId,trustedServingRevision:trusted,pendingCandidateRun:pending,freshnessAgeSeconds:lastSuccessfulSync?Math.max(0,Math.floor((Date.now()-lastSuccessfulSync.source_cutoff.getTime())/1000)):null,latestFailure:failure?{runId:failure.run_id,kind:failure.kind,failedAt:failure.failed_at.toISOString()}:null,freshnessTargetSeconds:this.freshnessTargetSeconds,cursor:cursor?{cutoff:cursor.cutoff.toISOString(),objects:cursor.object_cursors}:null,latest:latest.map(operationSummary),lastSuccessfulSync:lastSuccessfulSync?operationSummary(lastSuccessfulSync):null,trustedCertificationRelease:binding,historicalCoverage:history?{reference:history.reference,from:history.period_from,to:history.period_to}:null};
+      return {tenantId,eventAggregates:await eventAggregateStatus(client,tenantId),trustedServingRevision:trusted,pendingCandidateRun:pending,freshnessAgeSeconds:lastSuccessfulSync?Math.max(0,Math.floor((Date.now()-lastSuccessfulSync.source_cutoff.getTime())/1000)):null,latestFailure:failure?{runId:failure.run_id,kind:failure.kind,failedAt:failure.failed_at.toISOString()}:null,freshnessTargetSeconds:this.freshnessTargetSeconds,cursor:cursor?{cutoff:cursor.cutoff.toISOString(),objects:cursor.object_cursors}:null,latest:latest.map(operationSummary),lastSuccessfulSync:lastSuccessfulSync?operationSummary(lastSuccessfulSync):null,trustedCertificationRelease:binding,historicalCoverage:history?{reference:history.reference,from:history.period_from,to:history.period_to}:null};
     },true);
   }
 }

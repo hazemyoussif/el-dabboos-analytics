@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { Pool,PoolClient } from 'pg';
-import type { AnalyticsCursor,AnalyticsJobRequest,AnalyticsJobRun,AnalyticsOperationalStore,AnalyticsOperationalTransaction,AnalyticsPartition,AnalyticsSourceSnapshot,OperationalReconciliation } from '@el-dabboos/domain';
+import type { AnalyticsCursor,AnalyticsJobRequest,AnalyticsJobRun,AnalyticsOperationalStore,AnalyticsOperationalTransaction,AnalyticsPartition,AnalyticsSourceSnapshot,OperationalReconciliation,FactRevisionChange } from '@el-dabboos/domain';
 import { tenantTransaction } from '../postgres/session.ts';
 import { recordOperationalRun,writeOperationalCursor } from '../postgres/operational-evidence.ts';
 import type { OperationDetails,OperationalBaseline,OperationalSnapshot } from './contracts.ts';
@@ -27,6 +27,7 @@ export class PostgresOperationalStore implements AnalyticsOperationalStore {
  }
 }
 class OperationalTransaction implements AnalyticsOperationalTransaction {
+ private changes:readonly FactRevisionChange[]=[];
  private source:OperationalSnapshot|undefined;private cases:PersistedExactCase[]=[];private rejected=false;
  private readonly details:OperationDetails={rowsDiscovered:0,newRows:0,updatedRows:0,canonicalRevisions:0,partitions:[],previousCursor:null,newCursor:null,refreshedMonths:[],durations:{}};
  constructor(private readonly client:PoolClient,private readonly baseline:OperationalBaseline,private readonly runId:string) {}
@@ -37,14 +38,15 @@ class OperationalTransaction implements AnalyticsOperationalTransaction {
  async trustedRelease():Promise<string|null> {return (await this.client.query('SELECT revision_id FROM mart.analytics_trusted_serving WHERE tenant_id=$1',[this.baseline.tenantId])).rows[0]?.revision_id??null;}
  async ingest(snapshot:AnalyticsSourceSnapshot,cursor:AnalyticsCursor|null) {
   const source=this.requireSource(snapshot);
-  return ingestOperationalCandidate(this.client,{baseline:this.baseline,source,cursor,details:this.details,parent:await this.trustedRelease()});
+  const candidate=await ingestOperationalCandidate(this.client,{baseline:this.baseline,source,cursor,details:this.details,parent:await this.trustedRelease()});
+  this.changes=candidate.changes;return candidate;
  }
  async sweep(snapshot:AnalyticsSourceSnapshot) {
   const source=this.requireSource(snapshot);
   const changes=await sweepOperationalFacts(this.client,this.baseline,source);
   for await(const page of source.snapshots(this.baseline,await this.cursor(),true))for(const fact of page.facts){const change=await persistOperationalFact(this.client,this.baseline,fact);if(change)changes.push(change);}
   this.details.canonicalRevisions=changes.length;this.details.updatedRows=new Set(changes.map(change=>JSON.stringify([change.next.sourceObject,change.next.sourceRecordId]))).size;
-  return changes;
+  this.changes=changes;return changes;
  }
  async reconcile(snapshot:AnalyticsSourceSnapshot,partitions:readonly AnalyticsPartition[],kind:AnalyticsJobRequest['kind']) {
   const source=this.requireSource(snapshot),start=performance.now();
@@ -58,7 +60,7 @@ class OperationalTransaction implements AnalyticsOperationalTransaction {
  }
  async refresh(partitions:readonly AnalyticsPartition[]) {
   const start=performance.now(),release=randomUUID();
-  this.details.refreshedMonths=await refreshOperationalMonths(this.client,{tenantId:this.baseline.tenantId,revisionId:release,parent:await this.trustedRelease(),runId:this.runId,cutoff:this.source!.cutoff},affectedMonths(partitions));
+  this.details.refreshedMonths=await refreshOperationalMonths(this.client,{tenantId:this.baseline.tenantId,revisionId:release,parent:await this.trustedRelease(),runId:this.runId,cutoff:this.source!.cutoff,...(this.changes.length?{days:[...new Set(this.changes.flatMap(change=>[...(change.previous?[change.previous.businessDate]:[]),change.next.businessDate]))]}:{})},affectedMonths(partitions));
   this.details.durations.refreshMs=performance.now()-start;return release;
  }
  async promote(release:string,_evidence:OperationalReconciliation) {

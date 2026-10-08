@@ -61,3 +61,7 @@ The [operational analytics milestone](../integration/operational-analytics-v1.md
 records historical range/ratio/snapshot improvements, stored operational evidence,
 read-only status, and the unimplemented production job/serving adapters. Do not
 interpret the application transaction ports as a configured synchronization job.
+
+Trusted event range serving reuses daily full-dimensional bases and selects exact
+monthly rollups plus daily edges. See [event aggregate operations](../integration/event-serving-aggregates.md)
+for migration 034, resumable backfill, planner diagnostics and staging grants.
