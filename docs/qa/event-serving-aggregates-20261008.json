@@ -1,0 +1,1288 @@
+{
+  "rerun": [
+    {
+      "month": "2025-10-01",
+      "status": "already-proved"
+    },
+    {
+      "month": "2025-11-01",
+      "status": "already-proved"
+    },
+    {
+      "month": "2025-12-01",
+      "status": "already-proved"
+    },
+    {
+      "month": "2026-01-01",
+      "status": "already-proved"
+    },
+    {
+      "month": "2026-02-01",
+      "status": "already-proved"
+    },
+    {
+      "month": "2026-03-01",
+      "status": "already-proved"
+    },
+    {
+      "month": "2026-04-01",
+      "status": "already-proved"
+    },
+    {
+      "month": "2026-05-01",
+      "status": "already-proved"
+    },
+    {
+      "month": "2026-06-01",
+      "status": "already-proved"
+    },
+    {
+      "month": "2026-07-01",
+      "status": "already-proved"
+    },
+    {
+      "month": "2026-08-01",
+      "status": "already-proved"
+    },
+    {
+      "month": "2026-09-01",
+      "status": "already-proved"
+    },
+    {
+      "month": "2026-10-01",
+      "status": "already-proved"
+    }
+  ],
+  "plans": {
+    "partitions": [
+      {
+        "month": "2025-10-01",
+        "daily_rows": "14208",
+        "monthly_rows": "9564"
+      },
+      {
+        "month": "2025-11-01",
+        "daily_rows": "14243",
+        "monthly_rows": "9714"
+      },
+      {
+        "month": "2025-12-01",
+        "daily_rows": "14212",
+        "monthly_rows": "9939"
+      },
+      {
+        "month": "2026-01-01",
+        "daily_rows": "14671",
+        "monthly_rows": "10143"
+      },
+      {
+        "month": "2026-02-01",
+        "daily_rows": "12983",
+        "monthly_rows": "9252"
+      },
+      {
+        "month": "2026-03-01",
+        "daily_rows": "13655",
+        "monthly_rows": "9344"
+      },
+      {
+        "month": "2026-04-01",
+        "daily_rows": "15595",
+        "monthly_rows": "10249"
+      },
+      {
+        "month": "2026-05-01",
+        "daily_rows": "14662",
+        "monthly_rows": "10291"
+      },
+      {
+        "month": "2026-06-01",
+        "daily_rows": "13525",
+        "monthly_rows": "8908"
+      },
+      {
+        "month": "2026-07-01",
+        "daily_rows": "15306",
+        "monthly_rows": "9806"
+      },
+      {
+        "month": "2026-08-01",
+        "daily_rows": "13768",
+        "monthly_rows": "9929"
+      },
+      {
+        "month": "2026-09-01",
+        "daily_rows": "14525",
+        "monthly_rows": "10106"
+      },
+      {
+        "month": "2026-10-01",
+        "daily_rows": "174",
+        "monthly_rows": "149"
+      }
+    ],
+    "hybrid": [
+      {
+        "key": null,
+        "match_key": null,
+        "from": "2026-04-17",
+        "to": "2026-04-30",
+        "partition_id": "03554245-578f-4261-bd10-4a77e50a0edd",
+        "grain": "daily"
+      },
+      {
+        "key": null,
+        "match_key": null,
+        "from": "2026-05-01",
+        "to": "2026-05-31",
+        "partition_id": "ef96f404-0307-4aa5-bc22-c0d04c618a3a",
+        "grain": "monthly"
+      },
+      {
+        "key": null,
+        "match_key": null,
+        "from": "2026-06-01",
+        "to": "2026-06-30",
+        "partition_id": "3bc7fee4-ae7b-4d31-b0f5-2b52a65a207a",
+        "grain": "monthly"
+      },
+      {
+        "key": null,
+        "match_key": null,
+        "from": "2026-07-01",
+        "to": "2026-07-12",
+        "partition_id": "55d685af-694d-48fe-985f-61b53b2c8c9c",
+        "grain": "daily"
+      }
+    ]
+  },
+  "equality": {
+    "cases": 117394,
+    "mismatches": 0
+  },
+  "september": {
+    "net_invoiced_revenue": 1447166500,
+    "invoiced_revenue": 1465712000,
+    "refund_value": 18545500,
+    "order_revenue": 1461335500,
+    "order_count": 2895,
+    "net_aged_receivable": 1359461092.61
+  },
+  "trends": [
+    {
+      "groupBy": "date",
+      "groups": 31,
+      "total": 1617027750,
+      "samplesMs": [
+        39.870993999999996,
+        14.485081999999977
+      ]
+    },
+    {
+      "groupBy": "month",
+      "groups": 1,
+      "total": 1617027750,
+      "samplesMs": [
+        10.844651999999996,
+        9.318296000000032
+      ]
+    }
+  ],
+  "status": {
+    "tenantId": "el-dabboos-iq",
+    "eventAggregates": {
+      "from": "2025-10-01",
+      "throughMonth": "2026-10-01",
+      "dailyPartitions": 13,
+      "monthlyPartitions": 13,
+      "pendingPartitions": 0,
+      "dailyRows": 171527,
+      "monthlyRows": 117394,
+      "latestRefresh": "2026-10-08T03:09:40.536Z"
+    },
+    "trustedServingRevision": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54",
+    "pendingCandidateRun": null,
+    "freshnessAgeSeconds": 10470,
+    "latestFailure": {
+      "runId": "d5351974-56ce-48d7-b86c-38e11927087a",
+      "kind": "daily",
+      "failedAt": "2026-10-07T23:32:33.382Z"
+    },
+    "freshnessTargetSeconds": 600,
+    "cursor": {
+      "cutoff": "2026-10-08T00:21:08.728Z"
+    },
+    "latest": [
+      {
+        "kind": "affected",
+        "runId": "987fe7ad-2764-4276-a5ae-7b5b2ea791dc",
+        "status": "passed",
+        "sourceCutoff": "2026-10-07T23:40:20.136Z",
+        "completedAt": "2026-10-07T23:40:25.706Z",
+        "recordsChanged": 0,
+        "partitionsAffected": 0,
+        "caseCount": 202,
+        "mismatchCount": 0,
+        "servingRelease": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+      },
+      {
+        "kind": "daily",
+        "runId": "15e50a0c-aa25-4874-8671-ff21e02c0fe4",
+        "status": "passed",
+        "sourceCutoff": "2026-10-07T23:34:16.242Z",
+        "completedAt": "2026-10-07T23:35:30.412Z",
+        "recordsChanged": 0,
+        "partitionsAffected": 0,
+        "caseCount": 248,
+        "mismatchCount": 0,
+        "servingRelease": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+      },
+      {
+        "kind": "sweep",
+        "runId": "c5f3508b-479f-4f82-8adf-7414a0a918fe",
+        "status": "unchanged",
+        "sourceCutoff": "2026-10-07T23:27:34.850Z",
+        "completedAt": "2026-10-07T23:29:01.054Z",
+        "recordsChanged": 0,
+        "partitionsAffected": 0,
+        "caseCount": 0,
+        "mismatchCount": 0,
+        "servingRelease": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+      },
+      {
+        "kind": "sync",
+        "runId": "b9d983de-1530-4906-b590-9e3ea4241390",
+        "status": "unchanged",
+        "sourceCutoff": "2026-10-08T00:21:08.728Z",
+        "completedAt": "2026-10-08T00:21:27.623Z",
+        "recordsChanged": 0,
+        "partitionsAffected": 0,
+        "caseCount": 0,
+        "mismatchCount": 0,
+        "servingRelease": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+      }
+    ],
+    "lastSuccessfulSync": {
+      "kind": "sync",
+      "runId": "b9d983de-1530-4906-b590-9e3ea4241390",
+      "status": "unchanged",
+      "sourceCutoff": "2026-10-08T00:21:08.728Z",
+      "completedAt": "2026-10-08T00:21:27.623Z",
+      "recordsChanged": 0,
+      "partitionsAffected": 0,
+      "caseCount": 0,
+      "mismatchCount": 0,
+      "servingRelease": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+    },
+    "trustedCertificationRelease": "el-dabboos-finance-202609-v6",
+    "historicalCoverage": {
+      "reference": "el-dabboos-history-202510-202609-v1",
+      "from": "2025-10-01",
+      "to": "2026-09-30"
+    }
+  },
+  "crossTenant": {
+    "monthly": "0",
+    "proofs": "0"
+  },
+  "queryPlans": {
+    "samples": [
+      {
+        "mode": "daily-only",
+        "groups": 64,
+        "total": 17690355501,
+        "elapsedMs": 65.29030200000011,
+        "executionMs": 79.561,
+        "planningMs": 0.56,
+        "sharedHits": 4472,
+        "sharedReads": 0,
+        "tempReadBlocks": 0,
+        "tempWrittenBlocks": 0
+      },
+      {
+        "mode": "hybrid",
+        "groups": 64,
+        "total": 17690355501,
+        "elapsedMs": 41.75615499999992,
+        "executionMs": 45.804,
+        "planningMs": 0.557,
+        "sharedHits": 23647,
+        "sharedReads": 0,
+        "tempReadBlocks": 0,
+        "tempWrittenBlocks": 0
+      }
+    ],
+    "rawOperator": {
+      "executionMs": 1539.098,
+      "sharedHits": 881793,
+      "sharedReads": 50873,
+      "tempReadBlocks": 7049
+    }
+  },
+  "rangeProofs": [
+    {
+      "range": {
+        "from": "2026-05-01",
+        "to": "2026-05-31"
+      },
+      "cases": 10291,
+      "mismatches": 0,
+      "unprovedPartitions": 0
+    },
+    {
+      "range": {
+        "from": "2026-05-07",
+        "to": "2026-05-23"
+      },
+      "cases": 7899,
+      "mismatches": 0,
+      "unprovedPartitions": 0
+    },
+    {
+      "range": {
+        "from": "2026-07-03",
+        "to": "2026-09-30"
+      },
+      "cases": 15484,
+      "mismatches": 0,
+      "unprovedPartitions": 0
+    },
+    {
+      "range": {
+        "from": "2026-04-01",
+        "to": "2026-09-30"
+      },
+      "cases": 19314,
+      "mismatches": 0,
+      "unprovedPartitions": 0
+    },
+    {
+      "range": {
+        "from": "2025-10-01",
+        "to": "2026-09-30"
+      },
+      "cases": 27124,
+      "mismatches": 0,
+      "unprovedPartitions": 0
+    },
+    {
+      "range": {
+        "from": "2026-04-17",
+        "to": "2026-07-12"
+      },
+      "cases": 14948,
+      "mismatches": 0,
+      "unprovedPartitions": 0
+    }
+  ],
+  "finance": {
+    "net_aged_receivable": {
+      "expected": 1359461092.61,
+      "actual": 1359461092.61,
+      "equal": true
+    },
+    "gross_open_receivable_components": {
+      "expected": 1532751636.39,
+      "actual": 1532751636.39,
+      "equal": true
+    },
+    "credit_balances": {
+      "expected": -173290543.78,
+      "actual": -173290543.78,
+      "equal": true
+    },
+    "aged_at_date": {
+      "expected": 759020481.15,
+      "actual": 759020481.15,
+      "equal": true
+    },
+    "aged_1_30": {
+      "expected": 218464001.82,
+      "actual": 218464001.82,
+      "equal": true
+    },
+    "aged_31_60": {
+      "expected": 69135500.55,
+      "actual": 69135500.55,
+      "equal": true
+    },
+    "aged_61_90": {
+      "expected": 25871000.18,
+      "actual": 25871000.18,
+      "equal": true
+    },
+    "aged_91_120": {
+      "expected": 33782500.14,
+      "actual": 33782500.14,
+      "equal": true
+    },
+    "aged_over_120": {
+      "expected": 253187608.77,
+      "actual": 253187608.77,
+      "equal": true
+    },
+    "total_overdue_receivable": {
+      "expected": 600440611.46,
+      "actual": 600440611.46,
+      "equal": true
+    }
+  },
+  "financeTrend": [
+    {
+      "elapsedMs": 107.61984700000005,
+      "points": 12
+    },
+    {
+      "elapsedMs": 50.91911200000004,
+      "points": 12
+    }
+  ],
+  "finalPointers": {
+    "revisionId": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54",
+    "cutoff": "2026-10-08T00:21:08.728Z",
+    "binding": "el-dabboos-finance-202609-v6",
+    "history": "el-dabboos-history-202510-202609-v1"
+  },
+  "pointersUnchanged": true,
+  "preOptimizationRuntimeTiming": [
+    {
+      "name": "september",
+      "groupBy": null,
+      "samplesMs": [
+        15.752166999999645,
+        9.636392000000342
+      ],
+      "groups": 1,
+      "total": 1461335500
+    },
+    {
+      "name": "september",
+      "groupBy": "business_line",
+      "samplesMs": [
+        109.87377799999922,
+        82.18995799999993
+      ],
+      "groups": 1,
+      "total": 1461335500
+    },
+    {
+      "name": "september",
+      "groupBy": "salesperson",
+      "samplesMs": [
+        139.5028229999998,
+        140.8476300000002
+      ],
+      "groups": 40,
+      "total": 1461335500
+    },
+    {
+      "name": "partial",
+      "groupBy": null,
+      "samplesMs": [
+        6.536428000000342,
+        7.901527999999416
+      ],
+      "groups": 1,
+      "total": 1154846250
+    },
+    {
+      "name": "partial",
+      "groupBy": "business_line",
+      "samplesMs": [
+        82.08093699999972,
+        79.11208299999998
+      ],
+      "groups": 1,
+      "total": 1154846250
+    },
+    {
+      "name": "partial",
+      "groupBy": "salesperson",
+      "samplesMs": [
+        127.10720799999945,
+        123.444117
+      ],
+      "groups": 39,
+      "total": 1154846250
+    },
+    {
+      "name": "90-days",
+      "groupBy": null,
+      "samplesMs": [
+        13.490456999999878,
+        12.59986200000003
+      ],
+      "groups": 1,
+      "total": 4173868000
+    },
+    {
+      "name": "90-days",
+      "groupBy": "business_line",
+      "samplesMs": [
+        89.02608099999998,
+        89.71684500000083
+      ],
+      "groups": 1,
+      "total": 4173868000
+    },
+    {
+      "name": "90-days",
+      "groupBy": "salesperson",
+      "samplesMs": [
+        291.82041599999957,
+        276.49808200000007
+      ],
+      "groups": 50,
+      "total": 4173868000
+    },
+    {
+      "name": "six-months",
+      "groupBy": null,
+      "samplesMs": [
+        24.766932000000452,
+        16.741227999999865
+      ],
+      "groups": 1,
+      "total": 8546665500
+    },
+    {
+      "name": "six-months",
+      "groupBy": "business_line",
+      "samplesMs": [
+        99.22743300000002,
+        95.3628949999993
+      ],
+      "groups": 1,
+      "total": 8546665500
+    },
+    {
+      "name": "six-months",
+      "groupBy": "salesperson",
+      "samplesMs": [
+        548.127665,
+        545.9983030000003
+      ],
+      "groups": 55,
+      "total": 8546665500
+    },
+    {
+      "name": "annual",
+      "groupBy": null,
+      "samplesMs": [
+        37.49901000000045,
+        28.268810999999914
+      ],
+      "groups": 1,
+      "total": 17690355501
+    },
+    {
+      "name": "annual",
+      "groupBy": "business_line",
+      "samplesMs": [
+        142.9480249999997,
+        162.44462099999964
+      ],
+      "groups": 1,
+      "total": 17690355501
+    },
+    {
+      "name": "annual",
+      "groupBy": "salesperson",
+      "samplesMs": [
+        1200.6097639999998,
+        1221.583634999999
+      ],
+      "groups": 64,
+      "total": 17690355501
+    },
+    {
+      "name": "mixed",
+      "groupBy": null,
+      "samplesMs": [
+        12.742475999999442,
+        11.463772000000972
+      ],
+      "groups": 1,
+      "total": 4167425000
+    },
+    {
+      "name": "mixed",
+      "groupBy": "business_line",
+      "samplesMs": [
+        89.34818000000087,
+        93.77353399999993
+      ],
+      "groups": 1,
+      "total": 4167425000
+    },
+    {
+      "name": "mixed",
+      "groupBy": "salesperson",
+      "samplesMs": [
+        283.5961979999993,
+        275.81832399999985
+      ],
+      "groups": 49,
+      "total": 4167425000
+    }
+  ],
+  "httpsAcceptance": {
+    "samples": [
+      {
+        "report": "Executive",
+        "window": "september",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.216,
+        "upstream": "0.216",
+        "bytes": 6390,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Executive",
+        "window": "partial",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.114,
+        "upstream": "0.114",
+        "bytes": 6390,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Executive",
+        "window": "90-days",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.138,
+        "upstream": "0.138",
+        "bytes": 6388,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Executive",
+        "window": "six-months",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.212,
+        "upstream": "0.211",
+        "bytes": 6396,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Executive",
+        "window": "annual",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.415,
+        "upstream": "0.415",
+        "bytes": 6400,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Executive",
+        "window": "six-months-warm",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.129,
+        "upstream": "0.129",
+        "bytes": 6396,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Executive",
+        "window": "annual-warm",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.167,
+        "upstream": "0.167",
+        "bytes": 6400,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Executive",
+        "window": "mixed",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.121,
+        "upstream": "0.121",
+        "bytes": 6390,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Business Line",
+        "window": "september",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.433,
+        "upstream": "0.433",
+        "bytes": 10422,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Business Line",
+        "window": "partial",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.369,
+        "upstream": "0.369",
+        "bytes": 10422,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Business Line",
+        "window": "90-days",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.423,
+        "upstream": "0.423",
+        "bytes": 10420,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Business Line",
+        "window": "six-months",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.616,
+        "upstream": "0.616",
+        "bytes": 10430,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Business Line",
+        "window": "annual",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.778,
+        "upstream": "0.778",
+        "bytes": 10440,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Business Line",
+        "window": "six-months-warm",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.512,
+        "upstream": "0.512",
+        "bytes": 10430,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Business Line",
+        "window": "annual-warm",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.619,
+        "upstream": "0.619",
+        "bytes": 10440,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Business Line",
+        "window": "mixed",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.412,
+        "upstream": "0.412",
+        "bytes": 10422,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Salesperson",
+        "window": "september",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.488,
+        "upstream": "0.488",
+        "bytes": 73926,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Salesperson",
+        "window": "partial",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.477,
+        "upstream": "0.477",
+        "bytes": 72824,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Salesperson",
+        "window": "90-days",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.524,
+        "upstream": "0.524",
+        "bytes": 86380,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Salesperson",
+        "window": "six-months",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.638,
+        "upstream": "0.639",
+        "bytes": 93922,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Salesperson",
+        "window": "annual",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.856,
+        "upstream": "0.856",
+        "bytes": 114187,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Salesperson",
+        "window": "six-months-warm",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.65,
+        "upstream": "0.650",
+        "bytes": 93922,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Salesperson",
+        "window": "annual-warm",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.857,
+        "upstream": "0.856",
+        "bytes": 114187,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Salesperson",
+        "window": "mixed",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.557,
+        "upstream": "0.557",
+        "bytes": 83517,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Invoice and Refund",
+        "window": "september",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.415,
+        "upstream": "0.415",
+        "bytes": 47134,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Invoice and Refund",
+        "window": "partial",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.416,
+        "upstream": "0.416",
+        "bytes": 46770,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Invoice and Refund",
+        "window": "90-days",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.471,
+        "upstream": "0.471",
+        "bytes": 52300,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Invoice and Refund",
+        "window": "six-months",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.571,
+        "upstream": "0.571",
+        "bytes": 56098,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Invoice and Refund",
+        "window": "annual",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.783,
+        "upstream": "0.783",
+        "bytes": 69341,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Invoice and Refund",
+        "window": "six-months-warm",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.596,
+        "upstream": "0.596",
+        "bytes": 56098,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Invoice and Refund",
+        "window": "annual-warm",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.799,
+        "upstream": "0.799",
+        "bytes": 69341,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Invoice and Refund",
+        "window": "mixed",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.493,
+        "upstream": "0.493",
+        "bytes": 50157,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Receivables",
+        "window": "september",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.422,
+        "upstream": "0.423",
+        "bytes": 2503355,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Receivables",
+        "window": "six-months",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.415,
+        "upstream": "0.415",
+        "bytes": 2503355,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Receivables",
+        "window": "annual",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.338,
+        "upstream": "0.338",
+        "bytes": 2503355,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Receivables",
+        "window": "six-months-warm",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.324,
+        "upstream": "0.324",
+        "bytes": 2503355,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Receivables",
+        "window": "annual-warm",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.313,
+        "upstream": "0.313",
+        "bytes": 2503355,
+        "displayedFailedWidgets": 0
+      },
+      {
+        "report": "Monthly Executive Trend",
+        "window": "september",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.043,
+        "upstream": "0.043",
+        "bytes": 4770,
+        "displayedFailedWidgets": 0,
+        "pointsPerSeries": 1
+      },
+      {
+        "report": "Monthly Executive Trend",
+        "window": "six-months",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.062,
+        "upstream": "0.062",
+        "bytes": 6770,
+        "displayedFailedWidgets": 0,
+        "pointsPerSeries": 6
+      },
+      {
+        "report": "Monthly Executive Trend",
+        "window": "annual",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.077,
+        "upstream": "0.077",
+        "bytes": 9170,
+        "displayedFailedWidgets": 0,
+        "pointsPerSeries": 12
+      },
+      {
+        "report": "Unsaved Daily Invoice Trend",
+        "window": "september",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.049,
+        "upstream": "0.049",
+        "bytes": 7976,
+        "displayedFailedWidgets": 0,
+        "dailyPoints": 30,
+        "invoiceTotal": 1447166500
+      },
+      {
+        "report": "Unsaved Daily Invoice Trend",
+        "window": "partial",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.05,
+        "upstream": "0.050",
+        "bytes": 6534,
+        "displayedFailedWidgets": 0,
+        "dailyPoints": 17,
+        "invoiceTotal": 1091435250
+      },
+      {
+        "report": "Unsaved Daily Invoice Trend",
+        "window": "six-months",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.065,
+        "upstream": "0.065",
+        "bytes": 26312,
+        "displayedFailedWidgets": 0,
+        "dailyPoints": 183,
+        "invoiceTotal": 8443871500
+      },
+      {
+        "report": "Unsaved Daily Invoice Trend",
+        "window": "annual",
+        "route": "/api/dashboards/execute",
+        "method": "POST",
+        "status": 200,
+        "seconds": 0.107,
+        "upstream": "0.107",
+        "bytes": 48124,
+        "displayedFailedWidgets": 0,
+        "dailyPoints": 365,
+        "invoiceTotal": 17453365250
+      }
+    ],
+    "executionRequests": 46,
+    "http200Count": 46,
+    "analyticsSeriesFailureLogCount": 0,
+    "warmSamplesAreNotColdCacheMeasurements": true,
+    "manualDraftSaved": false
+  },
+  "verification": {
+    "fullGateRun": [
+      {
+        "command": "pnpm install --frozen-lockfile",
+        "exitCode": 0,
+        "elapsedSeconds": 0.192,
+        "log": "/tmp/event-gate-1.log"
+      },
+      {
+        "command": "pnpm run lint",
+        "exitCode": 0,
+        "elapsedSeconds": 4.858,
+        "log": "/tmp/event-gate-2.log"
+      },
+      {
+        "command": "pnpm run check:architecture",
+        "exitCode": 0,
+        "elapsedSeconds": 0.814,
+        "log": "/tmp/event-gate-3.log"
+      },
+      {
+        "command": "pnpm run check:quality",
+        "exitCode": 0,
+        "elapsedSeconds": 1.62,
+        "log": "/tmp/event-gate-4.log"
+      },
+      {
+        "command": "pnpm run typecheck",
+        "exitCode": 0,
+        "elapsedSeconds": 8.607,
+        "log": "/tmp/event-gate-5.log"
+      },
+      {
+        "command": "pnpm test",
+        "exitCode": 0,
+        "elapsedSeconds": 46.304,
+        "log": "/tmp/event-gate-6.log"
+      },
+      {
+        "command": "pnpm run test:postgres",
+        "exitCode": 1,
+        "elapsedSeconds": 102.941,
+        "log": "/tmp/event-gate-7.log"
+      },
+      {
+        "command": "pnpm run build",
+        "exitCode": 0,
+        "elapsedSeconds": 4.26,
+        "log": "/tmp/event-gate-8.log"
+      },
+      {
+        "command": "pnpm run check:diff",
+        "exitCode": 0,
+        "elapsedSeconds": 0.349,
+        "log": "/tmp/event-gate-9.log"
+      }
+    ],
+    "postgresFullRun": {
+      "pass": 168,
+      "fail": 1,
+      "skipped": 0
+    },
+    "postgresFixtureRepair": {
+      "pass": 1,
+      "fail": 0,
+      "skipped": 0
+    },
+    "finalAffectedTests": {
+      "pass": 35,
+      "fail": 0,
+      "skipped": 0,
+      "postgresCases": 28,
+      "plannerCases": 7
+    },
+    "verifiedUniqueUnitApiWebCases": 714,
+    "verifiedUniquePostgresCases": 169,
+    "finalLintArchitectureQualityTypecheckPassed": true,
+    "finalHistoricalCorrectionFixture": {
+      "pass": 1,
+      "fail": 0,
+      "skipped": 0
+    }
+  },
+  "safety": {
+    "FinanceReceivablesSemanticsChanged": false,
+    "ReceivablesSnapshotsSummed": false,
+    "eventRatiosAveraged": false,
+    "untrustedAggregateUsed": false,
+    "monthlyRequiredForCorrectness": false,
+    "rawCanonicalFactsDeleted": false,
+    "historicalCertificationOverwritten": false,
+    "immutableReconciliationEvidenceRewritten": false,
+    "fullHistoryRebuiltPerSmallCorrection": false,
+    "historicalCorrectionPropagationIgnored": false,
+    "deleteTombstonePropagationIgnored": false,
+    "RLSBypassed": false,
+    "authorizationWeakened": false,
+    "timeoutsIncreasedToHideSlowQueries": false,
+    "runtimeLLMUsed": false,
+    "OdooSourceWrites": false,
+    "credentialsExposedOrCommitted": false,
+    "productionExternalDeployment": false,
+    "externalCDConfigured": false,
+    "pushed": false,
+    "merged": false
+  },
+  "finalImage": {
+    "api": "sha256:4c2f7c2a8156b5f81cd7d2f6df9019437850fac780498eed7c63f39a2475011f",
+    "web": "sha256:a2b1338aa01be7cd7ce3b46b3a8be02b35d3be2ac041774f396f73d96f3d5d60",
+    "rangePlannerSha256": "ca9b3cf3ae25619dca69f6d681ea15b3eb368f6c97fd4894b2be9a2a077e1446",
+    "repositoryMatchesImage": true,
+    "readinessHttpStatus": 200,
+    "temporaryTimingConfigurationRestored": true
+  },
+  "finalImageDailySmoke": {
+    "http": {
+      "route": "/api/dashboards/execute",
+      "method": "POST",
+      "status": 200,
+      "seconds": 0.111,
+      "upstream": "0.111",
+      "bytes": 7976
+    },
+    "dailyPoints": 30,
+    "invoiceTotal": 1447166500,
+    "failedWidgets": 0
+  },
+  "finalOperatorChecks": {
+    "octoberPlan": [
+      {
+        "grain": "daily",
+        "from": "2026-10-01",
+        "to": "2026-10-08"
+      }
+    ],
+    "hybridRangeCases": 14948,
+    "mismatches": 0
+  },
+  "historicalCorrectionFixture": {
+    "discoveryCutoff": "2026-10-07T12:00:00.000Z",
+    "businessDay": "2026-01-15",
+    "oldValue": 100,
+    "newValue": 200,
+    "untouchedJan20": 100,
+    "januaryMonthlyAfterCorrection": 300,
+    "moveTo": "2026-02-03",
+    "oldDimension": "cairo",
+    "newDimension": "baghdad",
+    "januaryAfterMove": 100,
+    "februaryAfterMove": 200,
+    "testPass": true
+  },
+  "manualLimitations": [
+    "Browser automation stalled at the confirmation to discard the temporary unsaved daily trend draft. No dashboard was saved. The prompt/tab may need user cleanup."
+  ]
+}

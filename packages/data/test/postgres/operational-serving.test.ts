@@ -289,12 +289,16 @@ test('old-day correction and business-date/dimension move replace both daily and
  const fixture=await setup();try {
   const untouched=januaryFact({sourceRecordId:'unchanged-day',businessDate:'2026-01-20'});
   fixture.source.rows=[januaryFact(),untouched];await fixture.run();
+  const corrected=januaryFact({value:'200.000000',currency:{mode:'native',transactionCurrency:'IQD',transactionValue:'200.000000',reportingCurrency:'IQD',policyReference:'test-native'},sourceVersion:'October-correction',sourceRevision:'3'});
+  fixture.source.rows=[corrected,untouched];assert.equal((await fixture.run()).status,'passed');assert.equal(await januaryValue(fixture.repository),300);
+  const correctedDaily=(await tenantTransaction(fixture.db.runtime,'a',client=>client.query(`SELECT base.value::text value FROM mart.analytics_trusted_serving trusted JOIN mart.analytics_serving_members member USING(tenant_id,revision_id) JOIN mart.analytics_aggregate_bases base USING(tenant_id,partition_id) WHERE trusted.tenant_id='a' AND base.business_date='2026-01-15'`),true)).rows[0].value;
+  assert.equal(correctedDaily,'200.000000');
   const proofCount=(await fixture.db.admin.query('SELECT count(*) FROM mart.analytics_aggregate_proofs')).rows[0].count;
-  fixture.source.rows=[januaryFact({businessDate:'2026-02-03',dimensions:{branch:'baghdad'},sourceVersion:'move',sourceRevision:'3'}),untouched];
+  fixture.source.rows=[{...corrected,businessDate:'2026-02-03',dimensions:{branch:'baghdad'},sourceVersion:'move',sourceRevision:'4'},untouched];
   assert.equal((await fixture.run()).status,'passed');
   assert.equal(await januaryValue(fixture.repository),100);
   const bases=(await tenantTransaction(fixture.db.runtime,'a',client=>client.query(`SELECT base.business_date::text AS day,base.dimensions->>'branch' branch,base.value::text value FROM mart.analytics_trusted_serving trusted JOIN mart.analytics_serving_members member USING(tenant_id,revision_id) JOIN mart.analytics_aggregate_bases base USING(tenant_id,partition_id) WHERE trusted.tenant_id='a' ORDER BY day`),true)).rows;
-  assert.deepEqual(bases,[{day:'2026-01-20',branch:'cairo',value:'100.000000'},{day:'2026-02-03',branch:'baghdad',value:'100.000000'}]);
+  assert.deepEqual(bases,[{day:'2026-01-20',branch:'cairo',value:'100.000000'},{day:'2026-02-03',branch:'baghdad',value:'200.000000'}]);
   assert.equal(Number((await fixture.db.admin.query('SELECT count(*) FROM mart.analytics_aggregate_proofs')).rows[0].count),Number(proofCount)+2);
   await assert.rejects(tenantTransaction(fixture.db.ingestor,'a',client=>client.query(`INSERT INTO mart.analytics_monthly_bases SELECT tenant_id,partition_id,'order_count','{}',1,1,'2026-01-01' FROM mart.analytics_aggregate_proofs LIMIT 1`)),/frozen/);
  }finally{await fixture.db.close();}
