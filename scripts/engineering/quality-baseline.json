@@ -494,24 +494,6 @@
       "ceiling": 94
     },
     {
-      "file": "packages/application/src/executor.ts",
-      "symbol": "align/keys.sort:callback0/binding:a",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/application/src/executor.ts",
-      "symbol": "align/keys.sort:callback0/binding:b",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/application/src/executor.ts",
-      "symbol": "align/keys.map:callback0/item.rows.find:callback0/binding:r",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
       "file": "packages/application/src/planner.ts",
       "symbol": "MockDashboardPlanner/edit/replace/current.widgets.find:callback0/binding:w",
       "metric": "shortNames",

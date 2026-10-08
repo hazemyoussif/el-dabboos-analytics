@@ -1,6 +1,9 @@
+import { analyticsIntentFromGenerationPlan, validateAnalyticsIntent } from './analytics-intent.ts';
+import { analyticsSeriesSchema, compileAnalyticsSeries, preferredAnalyticsSeries } from './analytics-series.ts';
+import type { AnalyticsSeriesIntent } from './analytics-series.ts';
 import Ajv2020 from 'ajv/dist/2020.js';
-import { defaultDashboardLayout, dimensions, relativeDatePresets, semanticCatalog, validateDashboardSpec, validDateRange, governedPalettes, visualizationIssues } from '@el-dabboos/domain';
-import type { AnalysisSpec, DateRange, DashboardSchemaIssue, DashboardSpec, DashboardWidget, DimensionId, Locale, MetricId, TenantProfile, WidgetPresentation } from '@el-dabboos/domain';
+import { defaultDashboardLayout, dimensions, relativeDatePresets, validateDashboardSpec, validDateRange, governedPalettes, visualizationIssues } from '@el-dabboos/domain';
+import type { DateRange, DashboardSchemaIssue, DashboardSpec, DashboardWidget, DimensionId, Locale, TenantProfile, WidgetPresentation } from '@el-dabboos/domain';
 import { resolveGenerationWidget } from './visualization-intent.ts';
 import type { DatePreset } from './templates.ts';
 
@@ -33,20 +36,10 @@ export type GroupedGenerationWidget = GenerationTitles & {
   requestedPresentation?: Exclude<RequestedPresentation, { type: 'kpi' }>;
 };
 export type GenerationWidget = SummaryGenerationWidget | GroupedGenerationWidget;
-export interface GenerationSeries {
-  metric: MetricId; comparison?: AnalysisSpec['comparison']; movingAverageWindow?: number;
-  runningTotal?: boolean; percentageContribution?: boolean; ranking?: boolean;
-  topNDirection?: 'top' | 'bottom'; topNLimit?: number;
-}
+export type GenerationSeries = AnalyticsSeriesIntent;
 const text = { type: 'string', minLength: 1, maxLength: 160 };
 const choice = (values: readonly string[]) => ({ enum: values });
 const object = <T extends object>(properties: T, required: string[]) => ({ type: 'object', additionalProperties: false, properties, required });
-const seriesSchema = object({
-  metric: choice(Object.keys(semanticCatalog)), comparison: choice(['previous_period', 'month_over_month', 'year_over_year']),
-  movingAverageWindow: { type: 'integer', minimum: 2, maximum: 24 },
-  runningTotal: { type: 'boolean' }, percentageContribution: { type: 'boolean' }, ranking: { type: 'boolean' },
-  topNDirection: choice(['top', 'bottom']), topNLimit: { type: 'integer', minimum: 1, maximum: 100 },
-}, ['metric']);
 const palette = { $ref: '#/$defs/palette' };
 const legend = choice(['show', 'hide']);
 const dataLabels = legend;
@@ -70,7 +63,7 @@ const widgetSchema = { oneOf: [
     requestedPresentation: requestedPresentationSchema,
   }, ['dimension', 'series']),
 ] as const };
-export const dashboardGenerationPlanSchema = { $defs: { series: seriesSchema, palette: choice(governedPalettes), dimension: choice(dimensions) }, ...object({ titleEn: text, titleAr: text,
+export const dashboardGenerationPlanSchema = { $defs: { series: analyticsSeriesSchema, palette: choice(governedPalettes), dimension: choice(dimensions) }, ...object({ titleEn: text, titleAr: text,
   datePreset: choice(relativeDatePresets),
   dateFrom: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' }, dateTo: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
   filters: { type: 'array', maxItems: 14, items: object({ dimension: { $ref: '#/$defs/dimension' },
@@ -109,18 +102,13 @@ export function compileDashboardGenerationPlan(plan: DashboardGenerationPlan, _p
   void _now; // Compatibility argument; relative intent is deliberately not resolved here.
   validateDashboardGenerationPlan(plan);
   plan = preferredGenerationMetrics(plan,_profile);
+  validateAnalyticsIntent(analyticsIntentFromGenerationPlan(plan));
   const widgets: DashboardWidget[] = plan.widgets.map((widget, index) => {
     const id = `widget-${index + 1}`;
     return { id, ...resolveGenerationWidget({ ...(widget.dimension ? { dimension: widget.dimension } : {}),
       ...(widget.requestedPresentation ? { requestedPresentation: widget.requestedPresentation } : {}),
       series: widget.series.map((series, seriesIndex) => {
-        const analysis: AnalysisSpec = {};
-        if (series.comparison) analysis.comparison = series.comparison;
-        if (series.movingAverageWindow !== undefined) analysis.movingAverage = { window: series.movingAverageWindow };
-        for (const key of ['runningTotal', 'percentageContribution', 'ranking'] as const) if (series[key]) analysis[key] = true;
-        if (series.topNDirection && series.topNLimit !== undefined) analysis.topN = { direction: series.topNDirection, limit: series.topNLimit };
-        return { id: `${id}-series-${seriesIndex + 1}`, metric: series.metric,
-          ...(Object.keys(analysis).length ? { analysis } : {}) };
+        return { id: `${id}-series-${seriesIndex + 1}`, ...compileAnalyticsSeries(series) };
       }) }),
       ...(widget.titleEn !== undefined && widget.titleAr !== undefined ? { title: { en: widget.titleEn, ar: widget.titleAr } } : {}) };
   });
@@ -145,8 +133,21 @@ export function compileDashboardGenerationPlan(plan: DashboardGenerationPlan, _p
 function preferredGenerationMetrics(plan: DashboardGenerationPlan,profile: TenantProfile): DashboardGenerationPlan {
   if (!profile.preferredMetrics) return plan;
   return { ...plan,widgets: plan.widgets.map(widget => ({ ...widget,series: widget.series.map(series => {
-    const metric = profile.preferredMetrics?.[series.metric] ?? series.metric;
-    if (!Object.hasOwn(semanticCatalog,metric)) throw new Error('Invalid preferred business metric');
-    return { ...series,metric };
+    return preferredAnalyticsSeries(series,profile);
   }) } as GenerationWidget)) };
+}
+
+/** Consume already interpreted semantics; presentation choices do not invoke a second model. */
+export function compileDashboardFromAnalyticsIntent(intent: import('./analytics-intent.ts').AnalyticsIntent, presentation: {titleEn:string;titleAr:string;widgets?:RequestedPresentation[]}, profile:TenantProfile, locale:Locale, now:Date):DashboardSpec {
+  validateAnalyticsIntent(intent);
+  if (intent.analyses.some(analysis => analysis.context || analysis.rank)) throw new Error('Unsupported dashboard per-analysis selection');
+  const widgets = intent.analyses.flatMap((analysis,index) => {
+    const requestedPresentation = presentation.widgets?.[index];
+    if (!analysis.dimension && analysis.series.length > 1) return analysis.series.map(series => ({series:[series]} as SummaryGenerationWidget));
+    return [{...(analysis.dimension ? {dimension:analysis.dimension} : {}),series:structuredClone(analysis.series),...(requestedPresentation ? {requestedPresentation} : {})} as GenerationWidget];
+  });
+  return compileDashboardGenerationPlan({titleEn:presentation.titleEn,titleAr:presentation.titleAr,widgets,
+    ...(intent.context.datePreset ? {datePreset:intent.context.datePreset} : {}),
+    ...(intent.context.dateRange ? {dateFrom:intent.context.dateRange.from,dateTo:intent.context.dateRange.to} : {}),
+    ...(intent.context.dimensions ? {filters:intent.context.dimensions} : {})},profile,locale,now);
 }

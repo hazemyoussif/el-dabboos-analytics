@@ -1,9 +1,10 @@
+import { alignAnalyticsSeries } from './analytics-alignment.ts';
 import { validateDashboardOverrideDimensions, resolveDashboardFilters } from './dashboard-filters.ts';
 import type { DashboardExecutionScope, EffectiveDashboardFilters } from './dashboard-filters.ts';
 import { analyticsQueryIdentity, executionConcurrency, normalizeAnalyticsQuery, runBounded } from './query-execution.ts';
 import type { DashboardExecutionOptions } from './query-execution.ts';
 import { validateDashboardSpec, validateQuery,AnalyticsResultLimitError } from '@el-dabboos/domain';
-import type { AnalyticsContext, AnalyticsQuery, AnalyticsRepository, AnalyticsResult, AnalyticsRow, DashboardSpec, DashboardWidget } from '@el-dabboos/domain';
+import type { AnalyticsContext, AnalyticsQuery, AnalyticsRepository, AnalyticsResult, AnalyticsRow, DashboardSpec } from '@el-dabboos/domain';
 
 export type SeriesExecution = { status: 'success'; result: AnalyticsResult } | { status: 'error'; error: { code: string; message: string } };
 export type AlignedSeriesValue = Pick<AnalyticsRow, 'value' | 'comparisonValue' | 'absoluteChange' | 'percentageChange' | 'rank'>;
@@ -17,34 +18,6 @@ export interface DashboardExecutionResult {
   dashboard: DashboardSpec;
   widgetResults: Record<string, WidgetExecution>;
   metadata: { effectiveFilters?: EffectiveDashboardFilters; executedAt: string; succeeded: number; failed: number; succeededSeries: number; failedSeries: number };
-}
-function align(widget: DashboardWidget, results: Record<string, SeriesExecution>): AlignedWidgetRow[] {
-  const selected = widget.series[0];
-  if (selected?.analysis?.topN && results[selected.id]?.status !== 'success') return [];
-  const successful = widget.series.flatMap(series => {
-    const entry = results[series.id];
-    return entry?.status === 'success' ? [{ series, rows: entry.result.rows }] : [];
-  });
-  if (successful.length === 0) return [];
-  const keys: Array<string | null> = [];
-  const seen = new Set<string | null>();
-  const keySources = selected?.analysis?.topN ? successful.slice(0, 1) : successful;
-  for (const item of keySources) {
-    for (const row of item.rows) if (!seen.has(row.key)) { seen.add(row.key); keys.push(row.key); }
-  }
-  if (widget.dimension && ['date', 'month', 'quarter', 'year'].includes(widget.dimension)) keys.sort((a, b) => String(a).localeCompare(String(b)));
-  return keys.map(key => {
-    const series: Record<string, AlignedSeriesValue | null> = {};
-    for (const item of successful) {
-      const row = item.rows.find(r => r.key === key);
-      series[item.series.id] = row ? { value: row.value,
-        ...(row.comparisonValue !== undefined ? { comparisonValue: row.comparisonValue } : {}),
-        ...(row.absoluteChange !== undefined ? { absoluteChange: row.absoluteChange } : {}),
-        ...(row.percentageChange !== undefined ? { percentageChange: row.percentageChange } : {}),
-        ...(row.rank !== undefined ? { rank: row.rank } : {}) } : null;
-    }
-    return { key, series };
-  });
 }
 export class DashboardExecutor {
   private readonly concurrency: number;
@@ -87,7 +60,7 @@ export class DashboardExecutor {
       const succeeded = seriesEntries.filter(([, value]) => value.status === 'success').length;
       const selectionFailed = Boolean(widget.series[0]?.analysis?.topN && seriesResults[widget.series[0].id]?.status !== 'success');
       const execution: WidgetExecution = { status: selectionFailed || succeeded === 0 ? 'error' : succeeded === seriesEntries.length ? 'success' : 'partial',
-        seriesResults, alignedRows: align(widget, seriesResults) };
+        seriesResults, alignedRows: alignAnalyticsSeries(widget, seriesResults) };
       return [widget.id, execution] as const;
     });
     const widgetResults = Object.fromEntries(entries) as Record<string, WidgetExecution>;
