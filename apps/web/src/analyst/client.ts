@@ -1,0 +1,12 @@
+import type { AnalystConversation, DashboardSpec, DrillRequest } from '@el-dabboos/domain';
+import type { AnalystTurn, DashboardExecutionResult } from '@el-dabboos/application';
+import { request } from '../api/client.ts';
+import type { ApiSession } from '../api/client.ts';
+const base='/api/ai-analyst/conversations';
+export const createConversation=(session:ApiSession)=>request<AnalystConversation>(session,base,'POST');
+export const listConversations=(session:ApiSession)=>request<{conversations:Array<Pick<AnalystConversation,'id'|'createdAt'|'updatedAt'>>}>(session,base,'GET');
+export const getConversation=(session:ApiSession,id:string)=>request<AnalystConversation>(session,`${base}/${encodeURIComponent(id)}`,'GET');
+export const sendQuestion=(session:ApiSession,id:string,turn:AnalystTurn)=>request<AnalystConversation>(session,`${base}/${encodeURIComponent(id)}/messages`,'POST',turn);
+const action=(id:string,messageId:string)=>`${base}/${encodeURIComponent(id)}/messages/${encodeURIComponent(messageId)}`;
+export const answerDashboard=(session:ApiSession,id:string,messageId:string)=>request<{dashboard:DashboardSpec;execution:DashboardExecutionResult}>(session,`${action(id,messageId)}/dashboard`,'POST');
+export const answerDetails=(session:ApiSession,id:string,messageId:string,panel:number,key:string|null)=>request<{selection:DrillRequest}>(session,`${action(id,messageId)}/details`,'POST',{panel,key});

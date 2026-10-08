@@ -10,7 +10,7 @@ export async function loadWorkspaceReport(session:ApiSession,route:WorkspaceRout
  const {record,onOptions}=discovery;
  const first=templates.templates.find(item=>item.id===templates.defaultTemplateId&&item.availability==='available')??templates.templates.find(item=>item.availability==='available');
  const special=isManagementRoute(route,templates.templates.some(item=>item.id==='customer-performance'&&item.availability==='available'));
- const destination=route.kind==='report'?route.id:first?.id;
+ const destination=route.kind==='ask'?undefined:route.kind==='report'?route.id:first?.id;
  if(!record&&destination&&!special)navigateWorkspace({kind:'report',id:destination},route.kind==='workspace');
  const report=async()=>{
   if(record)return {opened:savedDocument(record),openedExecution:await executeSavedDashboard(session,record.id)};

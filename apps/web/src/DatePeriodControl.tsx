@@ -12,8 +12,8 @@ export const periodCopy = {
   en: { period: 'Date period', relative: 'Relative period', fixed: 'Fixed dates', all: 'All time', preset: 'Period', from: 'From', to: 'To', apply: 'Apply dates', filters: 'View filters', temporary: 'Temporary filters', reset: 'Reset to saved defaults', saved: 'Dashboard defaults' },
   ar: { period: 'الفترة الزمنية', relative: 'فترة نسبية', fixed: 'تواريخ ثابتة', all: 'كل الفترات', preset: 'الفترة', from: 'من', to: 'إلى', apply: 'تطبيق التواريخ', filters: 'مرشحات العرض', temporary: 'مرشحات مؤقتة', reset: 'إعادة الضبط إلى القيم المحفوظة', saved: 'إعدادات اللوحة الافتراضية' },
 };
-export function DatePeriodControl({ filters, effectiveRange, timeZone, locale, disabled, onChange }: {
-  filters: DashboardSpec['filters']; effectiveRange?: DateRange; timeZone: string; locale: Locale; disabled?: boolean;
+export function DatePeriodControl({ filters, effectiveRange, timeZone, locale, disabled, excludeAllTime, onChange }: {
+  filters: DashboardSpec['filters']; effectiveRange?: DateRange; timeZone: string; locale: Locale; disabled?: boolean; excludeAllTime?:boolean;
   onChange: (selection: DashboardDateSelection | null) => void;
 }) {
   const t = periodCopy[locale];
@@ -28,7 +28,7 @@ export function DatePeriodControl({ filters, effectiveRange, timeZone, locale, d
         const next = filters.dateRange ?? effectiveRange ?? resolveRelativeDatePreset(filters.datePreset ?? 'current_year', timeZone, new Date());
         setRange(next); onChange({ mode: 'absolute', range: next });
       }
-    }}><option value="relative">{t.relative}</option><option value="absolute">{t.fixed}</option><option value="all">{t.all}</option></select></label>
+    }}><option value="relative">{t.relative}</option><option value="absolute">{t.fixed}</option><option value="all" hidden={excludeAllTime} disabled={excludeAllTime}>{t.all}</option></select></label>
     {mode === 'relative' && <label>{t.preset}<select value={filters.datePreset} onChange={event => onChange({ mode: 'relative', preset: event.target.value as RelativeDatePreset })}>{relativeDatePresets.map(preset => <option key={preset} value={preset}>{periodLabels[locale][preset]}</option>)}</select></label>}
     {mode === 'absolute' && <div className="builder-dates"><label>{t.from}<input type="date" value={range.from} onChange={event => setRange({ ...range, from: event.target.value })} /></label><label>{t.to}<input type="date" value={range.to} onChange={event => setRange({ ...range, to: event.target.value })} /></label><button type="button" disabled={!validDateRange(range) || range.from === filters.dateRange?.from && range.to === filters.dateRange?.to} onClick={() => onChange({ mode: 'absolute', range })}>{t.apply}</button></div>}
   </fieldset>;

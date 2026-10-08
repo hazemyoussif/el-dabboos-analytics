@@ -1,3 +1,5 @@
+import { AnalystArea, AnalystBreadcrumb, AnalystNavigation } from './analyst/AnalystWorkspace.tsx';
+import { navigateWorkspace } from './workspace-route.ts';
 import { useAnalyticsOperations } from './reports/useAnalyticsOperations.ts';
 import { GlobalMetricCatalog } from './metrics/GlobalMetricCatalog.tsx';
 import { ReportOperationalSurface,OperationalStatusPage } from './reports/AnalyticsOperations.tsx';
@@ -75,17 +77,19 @@ export default function App({ authenticatedUser,onLogout,authenticationError }: 
   const periodSelection = builder.history || showAiEditor(flow.panel) ? activeDashboard?.filters : viewFilters.selection;
   return <DimensionDiscoveryContext value={loadDimensions}><MetricPublicationContext value={published}><MetricCurrencyContext value={profile?.reportingCurrency}><div className="app-shell">
     <WorkspaceNavigation {...workspaceNavigationPermissions(workspace)} locale={locale} onNew={()=>{management.close();flow.launchNew();}} onTemplates={() => {management.close();flow.enterCreation('choose-template');}} dataMode={workspaceDataMode(published)} drawerOpen={drawerOpen} onDrawerClose={() => setDrawerOpen(false)}>
+      <AnalystNavigation workspace={workspace} onOpen={()=>{if(!workspace.confirmAbandon())return;builder.reset();planner.reset();flow.close();setAdminPage(null);setDrawerOpen(false);navigateWorkspace({kind:'ask'});}}/>
       <WorkspaceAdministrationNavigation workspace={workspace} page={adminPage} onPage={setAdminPage} closeDrawer={() => setDrawerOpen(false)} />
       {<ManagementNavigation published={published} allowed={permissions.includes('analytics:query')} templates={templates} locale={locale} activeId={management.page??workspace.activeTemplateId} onSelect={management.select}/>}
       <DashboardLibrary key={`${userId}-${profile?.id}`} records={savedDashboards} userId={userId} locale={locale} controller={library} loading={loading} activeId={workspace.activeSavedId} onOpen={id => { setAdminPage(null); flow.openSaved(id); setDrawerOpen(false); }} />
     </WorkspaceNavigation>
     <main className="main-content">
-      <header className="topbar"><NavigationTrigger locale={locale} onClick={() => setDrawerOpen(true)} /><div className="breadcrumb">{t.workspace} <span>/</span> {isCreating ? t.newDashboard : <>{breadcrumb} <span>/</span> {activeTitle}</>}</div>
+      <header className="topbar"><NavigationTrigger locale={locale} onClick={() => setDrawerOpen(true)} /><div className="breadcrumb">{t.workspace} <span>/</span> <AnalystBreadcrumb workspace={workspace}>{isCreating ? t.newDashboard : <>{breadcrumb} <span>/</span> {activeTitle}</>}</AnalystBreadcrumb></div>
         <div className="top-actions"><AccountControls user={authenticatedUser} locale={locale} onLogout={onLogout} userId={userId} demoUsers={demoUsers} onIdentity={flow.switchIdentity} />
           <label className="topbar-control"><span>{t.market}</span><select aria-label={t.market} value={profile?.id ?? 'demo-iq'} onChange={event => { const next = profiles.find(item => item.id === event.target.value); if (next) flow.selectTenant(next); }}>{profiles.map(item => <option key={item.id} value={item.id}>{item.labels[locale]}</option>)}</select></label>
           <div className="topbar-control"><span>{t.language}</span><div className="language-toggle" role="group" aria-label={t.language}><button className={locale === 'en' ? 'selected' : ''} onClick={() => workspace.selectLocale('en' as Locale)}>EN</button><button className={locale === 'ar' ? 'selected' : ''} onClick={() => workspace.selectLocale('ar' as Locale)}>عربي</button></div></div></div></header>
       <div className="page-content">
         <WorkspaceContent page={adminPage} workspace={workspace}><>
+        <AnalystArea workspace={workspace} onDashboard={(spec,result)=>{builder.reset();planner.reset();flow.close();workspace.openGenerated(spec,result);}}>
         <ManagementArea statusView={<OperationalStatusPage operations={operations} locale={locale} profile={profile}/>} page={management.page} locale={locale} profile={profile} published={published} metadata={metadata} review={management.review} reviewLoading={management.loading} reviewError={management.error} onRetry={()=>void management.reload()}>
         <DashboardCreationPanel panel={flow.panel} locale={locale} profile={profile} templates={templates} prompt={planner.prompt} onPrompt={planner.setPrompt}
           activity={planner} loading={loading} canGenerate={permissions.includes('ai:generate')} onChooseAi={() => flow.enterCreation('create-ai')}
@@ -114,7 +118,7 @@ export default function App({ authenticatedUser,onLogout,authenticationError }: 
         </>} />}
 
         {flow.nameDialog && <DashboardNameDialog key={`${flow.nameDialog.operation}-${locale}`} spec={flow.nameDialog.spec} locale={locale} busy={loading} onConfirm={spec => void flow.confirmName(spec)} onClose={() => flow.setNameDialog(null)} />}
-        </ManagementArea>
+        </ManagementArea></AnalystArea>
         </></WorkspaceContent>
         <footer className="footer">© {new Date().getFullYear()} El Dabboos · {locale === 'ar' ? 'منصة تحليلات تجريبية' : 'Analytics prototype'}</footer>
       </div>

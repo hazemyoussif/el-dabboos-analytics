@@ -1,12 +1,15 @@
 import {useSyncExternalStore} from 'react';
-export type WorkspaceRoute={kind:'report'|'saved';id:string}|{kind:'workspace'};
+export type WorkspaceRoute={kind:'report'|'saved';id:string}|{kind:'workspace'}|{kind:'ask';id?:string};
 const routeEvent='el-dabboos-workspace-route';
 export function parseWorkspaceRoute(path:string):WorkspaceRoute {
+ if(path==='/ask-business')return {kind:'ask'};
+ const analyst=path.match(/^\/ask-business\/([a-zA-Z0-9-]+)$/);if(analyst)return {kind:'ask',id:analyst[1]!};
  const match=path.match(/^\/(reports|dashboards)\/([^/]+)$/);
  if(!match)return {kind:'workspace'};
  try{return {kind:match[1]==='reports'?'report':'saved',id:decodeURIComponent(match[2]!)};}catch{return {kind:'workspace'};}
 }
 export function workspaceRoutePath(route:WorkspaceRoute) {
+ if(route.kind==='ask')return `/ask-business${route.id?'/'+encodeURIComponent(route.id):''}`;
  return route.kind==='workspace'?'/':`/${route.kind==='report'?'reports':'dashboards'}/${encodeURIComponent(route.id)}`;
 }
 export function navigateWorkspace(route:WorkspaceRoute,replace=false) {
