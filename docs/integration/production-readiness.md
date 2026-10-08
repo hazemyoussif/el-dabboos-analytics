@@ -65,3 +65,14 @@ Control persistence milestone: [PostgreSQL control plane](postgres-control-plane
 Local identity milestone: [local authentication](../security/local-authentication.md) and ADR 030 provide governed offline initial setup, framework-owned hashing, revocable sessions, safe security audit and fresh authorization. This closes the local implementation slice; HTTPS deployment, approved employee credential handoff/activation, MFA/recovery policy, privacy/retention and upstream security review remain launch gates. No Odoo auth, invitation email or source sync is enabled.
 
 Phase 1 certification policy update, 6 October 2026: [ADR 031](../architecture/adr/031-certified-release-promotion.md) accepts explicit authorized business/product approval combined with exact source-to-mart reconciliation. Odoo UI labels/filter screenshots are supporting evidence, not a mandatory prerequisite on this path. Failed reconciliation remains unpublishable. Certified promotion and serving are explicit offline operations; broader production readiness gates remain separate.
+
+## Local operational v1 evidence
+
+Concrete incremental jobs, transactional cursor/promotion guards, stored exact
+reconciliation, affected aggregate refresh and governed presence sweeps are now
+executable locally. See [operational v1](operational-analytics-v1.md) and the
+[acceptance handoff](../qa/operational-analytics-acceptance.md). This evidence does
+not approve an online rollout, an external scheduler, a longer source lease or a
+new business mapping. Fixed overlap still needs a validated production source
+transaction/watermark policy. Component-level Finance operational promotion is
+future scope; current September customer outputs retain their original anchor.

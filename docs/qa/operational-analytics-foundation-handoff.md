@@ -98,3 +98,9 @@ presence/deletion handling and actual report/performance acceptance.
 - Live historical release acceptance, actual source synchronization, complete
   operational/browser action acceptance and real performance evidence remain
   unverified or unimplemented as itemized above.
+
+The concrete operational implementation and live acceptance now follow this
+foundation milestone. See [operational analytics acceptance](operational-analytics-acceptance.md)
+and [the current operational scope](../integration/operational-analytics-v1.md).
+The foundation's incomplete milestone description is a historical handoff, not
+the current implementation status.

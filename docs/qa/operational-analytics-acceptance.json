@@ -1,0 +1,1210 @@
+{
+  "scope": "Approved local staging, read-only source; no raw source/customer identities or labels in this artifact. Composite watermark positions are operator metadata.",
+  "foundationCommit": "c6b381b",
+  "liveChangedSync": {
+    "run": {
+      "tenantId": "el-dabboos-iq",
+      "kind": "sync",
+      "actorId": "local-operator",
+      "trigger": "operator",
+      "runId": "e8aa1419-8f4e-4e02-b97a-c22358100f73",
+      "startedAt": "2026-10-07T23:03:41.628Z",
+      "completedAt": "2026-10-07T23:04:10.673Z",
+      "sourceCutoff": "2026-10-07T23:03:43.456Z",
+      "sourceRevision": "pg-mvcc:7193b276483599ac8839182555fc818f0d433a727309f8793d930b2f15ed4897",
+      "mappingVersion": "1",
+      "definitionVersion": "b186c03dba16e55843d34f1a2cef4081b5ece9e905787537d1477eb144636bc0",
+      "status": "passed",
+      "recordsChanged": 141,
+      "partitionsAffected": 495,
+      "caseCount": 202,
+      "mismatchCount": 0,
+      "evidenceHash": "44ee25176f0d8981f243dda243e7fa0adbcee97b2b30113109f17e11619c64ef",
+      "servingRelease": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+    },
+    "details": {
+      "newRows": 141,
+      "durations": {
+        "refreshMs": 18.131399999998393,
+        "ingestionMs": 22371.352833,
+        "reconciliationMs": 4506.719802
+      },
+      "newCursor": {
+        "cutoff": "2026-10-07T23:03:43.456Z",
+        "objects": {
+          "sale_order": "[\"2026-10-07 19:05:56.466834\",\"70364\"]",
+          "account_move": "[\"2026-10-07 19:05:56.466834\",\"247171\"]"
+        }
+      },
+      "updatedRows": 0,
+      "previousCursor": {
+        "cutoff": "2026-10-07T15:38:27.277Z",
+        "objects": {}
+      },
+      "rowsDiscovered": 12,
+      "refreshedMonths": [
+        "2026-10"
+      ],
+      "canonicalRevisions": 513,
+      "partitionRowsSeeded": 141
+    },
+    "affectedMonths": [
+      "2026-10"
+    ],
+    "affectedMetrics": [
+      "average_confirmed_order_value",
+      "average_invoice_value",
+      "average_order_value",
+      "customers_served",
+      "invoice_count",
+      "invoiced_revenue",
+      "net_invoiced_revenue",
+      "order_count",
+      "order_revenue",
+      "refund_count",
+      "refund_value"
+    ],
+    "affectedDimensions": [
+      "business_line",
+      "city",
+      "customer",
+      "salesperson",
+      "state"
+    ],
+    "affectedPartitionCount": 495,
+    "durationMs": 29184.411943
+  },
+  "immediateFreshCutoffRerun": {
+    "run": {
+      "tenantId": "el-dabboos-iq",
+      "kind": "sync",
+      "actorId": "local-operator",
+      "trigger": "operator",
+      "runId": "9ee6d5c4-52ec-4f35-bae9-329c474778e2",
+      "startedAt": "2026-10-07T23:04:59.808Z",
+      "completedAt": "2026-10-07T23:05:20.587Z",
+      "sourceCutoff": "2026-10-07T23:05:02.141Z",
+      "sourceRevision": "pg-mvcc:98bf73fea035f332ff7666fe76474b4146530040ad36aefdf536cfd644ff07c6",
+      "mappingVersion": "1",
+      "definitionVersion": "b186c03dba16e55843d34f1a2cef4081b5ece9e905787537d1477eb144636bc0",
+      "status": "unchanged",
+      "recordsChanged": 0,
+      "partitionsAffected": 0,
+      "caseCount": 0,
+      "mismatchCount": 0,
+      "evidenceHash": "no-changes",
+      "servingRelease": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+    },
+    "details": {
+      "newRows": 0,
+      "durations": {
+        "ingestionMs": 18198.847009999998
+      },
+      "newCursor": {
+        "cutoff": "2026-10-07T23:05:02.141Z",
+        "objects": {
+          "sale_order": "[\"2026-10-07 19:05:56.466834\",\"70364\"]",
+          "account_move": "[\"2026-10-07 19:05:56.466834\",\"247171\"]"
+        }
+      },
+      "updatedRows": 0,
+      "previousCursor": {
+        "cutoff": "2026-10-07T23:03:43.456Z",
+        "objects": {
+          "sale_order": "[\"2026-10-07 19:05:56.466834\",\"70364\"]",
+          "account_move": "[\"2026-10-07 19:05:56.466834\",\"247171\"]"
+        }
+      },
+      "rowsDiscovered": 0,
+      "refreshedMonths": [],
+      "canonicalRevisions": 0
+    },
+    "affectedMonths": [],
+    "affectedMetrics": [],
+    "affectedDimensions": [],
+    "affectedPartitionCount": 0,
+    "durationMs": 20936.308987
+  },
+  "sameBoundedSnapshotReplay": {
+    "sameCutoff": true,
+    "sameSourceRevision": true,
+    "results": [
+      {
+        "run": {
+          "tenantId": "el-dabboos-iq",
+          "kind": "sync",
+          "actorId": "bounded-replay-operator",
+          "trigger": "operator",
+          "runId": "6d926c9b-24b4-4434-b550-4f86480c46bb",
+          "startedAt": "2026-10-07T23:37:53.716Z",
+          "completedAt": "2026-10-07T23:38:15.965Z",
+          "sourceCutoff": "2026-10-07T23:37:53.466Z",
+          "sourceRevision": "pg-mvcc:71686c62eefd2d0127e1bc2b1fd096a102737766a9461426fc1ba50eefab05c6",
+          "mappingVersion": "1",
+          "definitionVersion": "b186c03dba16e55843d34f1a2cef4081b5ece9e905787537d1477eb144636bc0",
+          "status": "unchanged",
+          "recordsChanged": 0,
+          "partitionsAffected": 0,
+          "caseCount": 0,
+          "mismatchCount": 0,
+          "evidenceHash": "no-changes",
+          "servingRelease": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+        },
+        "details": {
+          "newRows": 0,
+          "durations": {
+            "ingestionMs": 22243.555433999998
+          },
+          "newCursor": {
+            "cutoff": "2026-10-07T23:37:53.466Z",
+            "objects": {
+              "sale_order": "[\"2026-10-07 19:05:56.466834\",\"70364\"]",
+              "account_move": "[\"2026-10-07 19:05:56.466834\",\"247171\"]"
+            }
+          },
+          "partitions": [],
+          "updatedRows": 0,
+          "previousCursor": {
+            "cutoff": "2026-10-07T23:05:02.141Z",
+            "objects": {
+              "sale_order": "[\"2026-10-07 19:05:56.466834\",\"70364\"]",
+              "account_move": "[\"2026-10-07 19:05:56.466834\",\"247171\"]"
+            }
+          },
+          "rowsDiscovered": 0,
+          "refreshedMonths": [],
+          "canonicalRevisions": 0
+        },
+        "durationMs": 22389.386989
+      },
+      {
+        "run": {
+          "tenantId": "el-dabboos-iq",
+          "kind": "sync",
+          "actorId": "bounded-replay-operator",
+          "trigger": "operator",
+          "runId": "e7ba3f5d-624c-4c30-b371-c9d2b68dcc82",
+          "startedAt": "2026-10-07T23:38:16.105Z",
+          "completedAt": "2026-10-07T23:38:42.004Z",
+          "sourceCutoff": "2026-10-07T23:37:53.466Z",
+          "sourceRevision": "pg-mvcc:71686c62eefd2d0127e1bc2b1fd096a102737766a9461426fc1ba50eefab05c6",
+          "mappingVersion": "1",
+          "definitionVersion": "b186c03dba16e55843d34f1a2cef4081b5ece9e905787537d1477eb144636bc0",
+          "status": "unchanged",
+          "recordsChanged": 0,
+          "partitionsAffected": 0,
+          "caseCount": 0,
+          "mismatchCount": 0,
+          "evidenceHash": "no-changes",
+          "servingRelease": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+        },
+        "details": {
+          "newRows": 0,
+          "durations": {
+            "ingestionMs": 25891.386549
+          },
+          "newCursor": {
+            "cutoff": "2026-10-07T23:37:53.466Z",
+            "objects": {
+              "sale_order": "[\"2026-10-07 19:05:56.466834\",\"70364\"]",
+              "account_move": "[\"2026-10-07 19:05:56.466834\",\"247171\"]"
+            }
+          },
+          "partitions": [],
+          "updatedRows": 0,
+          "previousCursor": {
+            "cutoff": "2026-10-07T23:37:53.466Z",
+            "objects": {
+              "sale_order": "[\"2026-10-07 19:05:56.466834\",\"70364\"]",
+              "account_move": "[\"2026-10-07 19:05:56.466834\",\"247171\"]"
+            }
+          },
+          "rowsDiscovered": 0,
+          "refreshedMonths": [],
+          "canonicalRevisions": 0
+        },
+        "durationMs": 26112.408383
+      }
+    ]
+  },
+  "presenceSweep": {
+    "run": {
+      "tenantId": "el-dabboos-iq",
+      "kind": "sweep",
+      "actorId": "local-operator",
+      "trigger": "operator",
+      "runId": "c5f3508b-479f-4f82-8adf-7414a0a918fe",
+      "startedAt": "2026-10-07T23:27:32.980Z",
+      "completedAt": "2026-10-07T23:29:01.054Z",
+      "sourceCutoff": "2026-10-07T23:27:34.850Z",
+      "sourceRevision": "pg-mvcc:f5c37b85b9ba35c909b07e533bf9d6ade82a063ded679d62015b8c34f547ce48",
+      "mappingVersion": "1",
+      "definitionVersion": "b186c03dba16e55843d34f1a2cef4081b5ece9e905787537d1477eb144636bc0",
+      "status": "unchanged",
+      "recordsChanged": 0,
+      "partitionsAffected": 0,
+      "caseCount": 0,
+      "mismatchCount": 0,
+      "evidenceHash": "no-changes",
+      "servingRelease": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+    },
+    "details": {
+      "newRows": 0,
+      "durations": {},
+      "newCursor": null,
+      "updatedRows": 0,
+      "previousCursor": null,
+      "rowsDiscovered": 0,
+      "refreshedMonths": [],
+      "canonicalRevisions": 0
+    },
+    "affectedMonths": [],
+    "affectedMetrics": [],
+    "affectedDimensions": [],
+    "affectedPartitionCount": 0,
+    "durationMs": 88347.321142
+  },
+  "dailyReconciliation": {
+    "run": {
+      "tenantId": "el-dabboos-iq",
+      "kind": "daily",
+      "actorId": "local-operator",
+      "trigger": "operator",
+      "runId": "15e50a0c-aa25-4874-8671-ff21e02c0fe4",
+      "startedAt": "2026-10-07T23:34:14.305Z",
+      "completedAt": "2026-10-07T23:35:30.412Z",
+      "sourceCutoff": "2026-10-07T23:34:16.242Z",
+      "sourceRevision": "pg-mvcc:b365a38c90498cc46d269f51a55c47a635346a97cd0bda658439a229c71533ef",
+      "mappingVersion": "1",
+      "definitionVersion": "b186c03dba16e55843d34f1a2cef4081b5ece9e905787537d1477eb144636bc0",
+      "status": "passed",
+      "recordsChanged": 0,
+      "partitionsAffected": 0,
+      "caseCount": 248,
+      "mismatchCount": 0,
+      "evidenceHash": "a0596019a75c6ddc5db28dd07f6c5ceba2a024707c95d916aebb23625d1be650",
+      "servingRelease": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+    },
+    "details": {
+      "newRows": 0,
+      "durations": {
+        "reconciliationMs": 73918.65466999999
+      },
+      "newCursor": null,
+      "updatedRows": 0,
+      "previousCursor": null,
+      "rowsDiscovered": 0,
+      "refreshedMonths": [],
+      "canonicalRevisions": 0
+    },
+    "affectedMonths": [
+      "2025-10",
+      "2025-11",
+      "2025-12",
+      "2026-01",
+      "2026-02",
+      "2026-03",
+      "2026-04",
+      "2026-05",
+      "2026-06",
+      "2026-07",
+      "2026-08",
+      "2026-09",
+      "2026-10"
+    ],
+    "affectedMetrics": [
+      "aged_1_30",
+      "aged_31_60",
+      "aged_61_90",
+      "aged_91_120",
+      "aged_at_date",
+      "aged_over_120",
+      "average_confirmed_order_value",
+      "average_invoice_value",
+      "cancelled_orders",
+      "credit_balances",
+      "gross_open_receivable_components",
+      "invoice_count",
+      "invoiced_revenue",
+      "net_aged_receivable",
+      "net_invoiced_revenue",
+      "order_count",
+      "order_revenue",
+      "overdue_receivable_percentage",
+      "refund_count",
+      "refund_value",
+      "total_overdue_receivable"
+    ],
+    "affectedDimensions": [],
+    "affectedPartitionCount": 262,
+    "durationMs": 79228.051963
+  },
+  "anchorsAndScalarReadTimings": [
+    {
+      "metric": "net_invoiced_revenue",
+      "from": "2026-09-01",
+      "value": 1447166500,
+      "durationMs": 37.025777000000005
+    },
+    {
+      "metric": "invoiced_revenue",
+      "from": "2026-09-01",
+      "value": 1465712000,
+      "durationMs": 12.622931000000051
+    },
+    {
+      "metric": "refund_value",
+      "from": "2026-09-01",
+      "value": 18545500,
+      "durationMs": 7.163769000000002
+    },
+    {
+      "metric": "order_revenue",
+      "from": "2026-09-01",
+      "value": 1461335500,
+      "durationMs": 10.58294699999999
+    },
+    {
+      "metric": "order_count",
+      "from": "2026-09-01",
+      "value": 2895,
+      "durationMs": 11.049962999999991
+    },
+    {
+      "metric": "average_confirmed_order_value",
+      "from": "2026-09-01",
+      "value": 504779.1018998273,
+      "durationMs": 52.51543000000004
+    },
+    {
+      "metric": "net_aged_receivable",
+      "from": "2026-09-01",
+      "value": 1359461092.61,
+      "asOf": "2026-09-30",
+      "durationMs": 6.005782000000011
+    },
+    {
+      "metric": "net_invoiced_revenue",
+      "from": "2026-04-01",
+      "value": 8443871500,
+      "durationMs": 37.47558700000002
+    },
+    {
+      "metric": "invoiced_revenue",
+      "from": "2026-04-01",
+      "value": 8561092500,
+      "durationMs": 32.27162400000003
+    },
+    {
+      "metric": "refund_value",
+      "from": "2026-04-01",
+      "value": 117221000,
+      "durationMs": 8.280304999999998
+    },
+    {
+      "metric": "order_revenue",
+      "from": "2026-04-01",
+      "value": 8546665500,
+      "durationMs": 29.31750599999998
+    },
+    {
+      "metric": "order_count",
+      "from": "2026-04-01",
+      "value": 17346,
+      "durationMs": 35.47798999999998
+    },
+    {
+      "metric": "average_confirmed_order_value",
+      "from": "2026-04-01",
+      "value": 492716.79349705984,
+      "durationMs": 46.87702100000001
+    },
+    {
+      "metric": "net_aged_receivable",
+      "from": "2026-04-01",
+      "value": 1359461092.61,
+      "asOf": "2026-09-30",
+      "durationMs": 5.6885240000000294
+    },
+    {
+      "metric": "net_invoiced_revenue",
+      "from": "2025-10-01",
+      "value": 17453365250,
+      "durationMs": 52.966596000000095
+    },
+    {
+      "metric": "invoiced_revenue",
+      "from": "2025-10-01",
+      "value": 17696424250,
+      "durationMs": 58.028501000000006
+    },
+    {
+      "metric": "refund_value",
+      "from": "2025-10-01",
+      "value": 243059000,
+      "durationMs": 11.473993000000064
+    },
+    {
+      "metric": "order_revenue",
+      "from": "2025-10-01",
+      "value": 17690355501,
+      "durationMs": 44.20863799999995
+    },
+    {
+      "metric": "order_count",
+      "from": "2025-10-01",
+      "value": 33876,
+      "durationMs": 49.055972999999994
+    },
+    {
+      "metric": "average_confirmed_order_value",
+      "from": "2025-10-01",
+      "value": 522209.1008678711,
+      "durationMs": 64.90018599999996
+    },
+    {
+      "metric": "net_aged_receivable",
+      "from": "2025-10-01",
+      "value": 1359461092.61,
+      "asOf": "2026-09-30",
+      "durationMs": 4.521415000000047
+    }
+  ],
+  "representativeReportAndStatusTimings": {
+    "reports": [
+      {
+        "from": "2026-09-01",
+        "metric": "net_invoiced_revenue",
+        "groupBy": "month",
+        "rows": 1,
+        "firstMs": 30.69828799999999,
+        "warmMs": 6.150184999999965
+      },
+      {
+        "from": "2026-09-01",
+        "metric": "order_revenue",
+        "groupBy": "business_line",
+        "rows": 2,
+        "firstMs": 161.73175099999997,
+        "warmMs": 120.18754200000006
+      },
+      {
+        "from": "2026-09-01",
+        "metric": "net_aged_receivable",
+        "rows": 1,
+        "firstMs": 4.607553000000053,
+        "warmMs": 3.8072690000000193
+      },
+      {
+        "from": "2026-04-01",
+        "metric": "net_invoiced_revenue",
+        "groupBy": "month",
+        "rows": 6,
+        "firstMs": 14.816675999999916,
+        "warmMs": 13.643674000000033
+      },
+      {
+        "from": "2026-04-01",
+        "metric": "order_revenue",
+        "groupBy": "business_line",
+        "rows": 2,
+        "firstMs": 128.58265900000004,
+        "warmMs": 132.955151
+      },
+      {
+        "from": "2026-04-01",
+        "metric": "net_aged_receivable",
+        "rows": 1,
+        "firstMs": 4.621911000000068,
+        "warmMs": 3.407656000000088
+      },
+      {
+        "from": "2025-10-01",
+        "metric": "net_invoiced_revenue",
+        "groupBy": "month",
+        "rows": 12,
+        "firstMs": 58.78813799999989,
+        "warmMs": 25.11578499999996
+      },
+      {
+        "from": "2025-10-01",
+        "metric": "order_revenue",
+        "groupBy": "business_line",
+        "rows": 2,
+        "firstMs": 165.8724790000001,
+        "warmMs": 176.39857899999993
+      },
+      {
+        "from": "2025-10-01",
+        "metric": "net_aged_receivable",
+        "rows": 1,
+        "firstMs": 4.026409999999942,
+        "warmMs": 3.5769319999999425
+      },
+      {
+        "metric": "net_aged_receivable",
+        "groupBy": "customer",
+        "from": "2026-09-01",
+        "rows": 2217,
+        "firstMs": 2383.1780609999996,
+        "warmMs": 2229.6052430000004,
+        "independentlyPinnedAnchor": true
+      },
+      {
+        "metric": "overdue_receivable_percentage",
+        "groupBy": "customer",
+        "from": "2026-09-01",
+        "rows": 2217,
+        "firstMs": 2587.0927340000007,
+        "warmMs": 2729.869141000001,
+        "independentlyPinnedAnchor": true
+      }
+    ],
+    "status": {
+      "firstMs": 7.021126999999979,
+      "warmMs": 2.197958999999173
+    }
+  },
+  "queryPlanEvidence": {
+    "presenceBefore": {
+      "executionMs": 210.125,
+      "sharedHitBlocks": 8722
+    },
+    "presenceAfter": {
+      "executionMs": 0.844,
+      "sharedHitBlocks": 4
+    },
+    "sourceSummaryBefore": {
+      "executionMs": 8181.523,
+      "sharedHitBlocks": 5875755
+    },
+    "sourceSummaryAfter": {
+      "executionMs": 1566.692,
+      "sharedHitBlocks": 1418949
+    },
+    "syntheticMonthReconciliation": {
+      "facts": 5000,
+      "selectedMonthFacts": 100,
+      "beforeExecutionMs": 14.927,
+      "afterExecutionMs": 0.406,
+      "beforeSharedHits": 15051,
+      "afterSharedHits": 304
+    }
+  },
+  "sourceDeadlines": {
+    "statementMs": 15000,
+    "snapshotLeaseMs": 120000,
+    "increased": false
+  },
+  "scopeLimits": [
+    "Daily and deep v1 check complete approved summary coverage; categorical cases are checked for affected sync changes.",
+    "Phase-A snapshot input changes conservatively recheck all published summary cutoffs because no previous component-date ledger exists.",
+    "September categorical Finance outputs remain independently pinned and are not incrementally promoted by the summary adapter.",
+    "Fixed overlap does not prove discovery of arbitrarily long source transactions.",
+    "Report timings are backend queries, not browser/network load timings."
+  ],
+  "affectedReconciliation": {
+    "run": {
+      "tenantId": "el-dabboos-iq",
+      "kind": "affected",
+      "actorId": "local-operator",
+      "trigger": "operator",
+      "runId": "987fe7ad-2764-4276-a5ae-7b5b2ea791dc",
+      "startedAt": "2026-10-07T23:40:17.970Z",
+      "completedAt": "2026-10-07T23:40:25.706Z",
+      "sourceCutoff": "2026-10-07T23:40:20.136Z",
+      "sourceRevision": "pg-mvcc:d963ffac523688195cc3dcad9d85da6cc49a9baf452687b80cf8bf416a7677e9",
+      "mappingVersion": "1",
+      "definitionVersion": "b186c03dba16e55843d34f1a2cef4081b5ece9e905787537d1477eb144636bc0",
+      "status": "passed",
+      "recordsChanged": 0,
+      "partitionsAffected": 0,
+      "caseCount": 202,
+      "mismatchCount": 0,
+      "evidenceHash": "eac9c8323fde212547e5854d2c218217ff3a36006a0973422f098da7372d10c4",
+      "servingRelease": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+    },
+    "durationMs": 8013.629715000001,
+    "durations": {
+      "reconciliationMs": 5321.417751000001
+    }
+  },
+  "syntheticOperationalBenchmarks": [
+    {
+      "kind": "sync",
+      "status": "passed",
+      "recordsChanged": 1,
+      "partitionsAffected": 6,
+      "caseCount": 1,
+      "operationMs": 265.2563060000002,
+      "refreshMs": 15.004277000000002,
+      "ingestionMs": 14.487497000000076,
+      "reconciliationMs": 18.837430999999924
+    },
+    {
+      "kind": "sync",
+      "status": "unchanged",
+      "recordsChanged": 0,
+      "partitionsAffected": 0,
+      "caseCount": 0,
+      "operationMs": 38.181790999999976,
+      "ingestionMs": 7.980642999999873
+    },
+    {
+      "kind": "sync",
+      "status": "passed",
+      "recordsChanged": 1,
+      "partitionsAffected": 6,
+      "caseCount": 1,
+      "operationMs": 100.16756799999985,
+      "refreshMs": 12.204553999999916,
+      "ingestionMs": 13.171443000000181,
+      "reconciliationMs": 14.367489999999634
+    },
+    {
+      "kind": "sync",
+      "status": "failed",
+      "recordsChanged": 1,
+      "partitionsAffected": 6,
+      "caseCount": 1,
+      "operationMs": 60.204099999999926,
+      "ingestionMs": 19.691247999999177,
+      "reconciliationMs": 3.7897039999998015
+    },
+    {
+      "kind": "sync",
+      "status": "passed",
+      "recordsChanged": 1,
+      "partitionsAffected": 6,
+      "caseCount": 1,
+      "operationMs": 75.4147780000003,
+      "refreshMs": 9.163658000000396,
+      "ingestionMs": 4.020084000000679,
+      "reconciliationMs": 11.382340999999542
+    },
+    {
+      "kind": "sync",
+      "status": "passed",
+      "recordsChanged": 1,
+      "partitionsAffected": 6,
+      "caseCount": 1,
+      "operationMs": 120.4124180000008,
+      "refreshMs": 10.82645600000069,
+      "ingestionMs": 8.005511999999726,
+      "reconciliationMs": 4.708712999999989
+    },
+    {
+      "kind": "sync",
+      "status": "passed",
+      "recordsChanged": 1,
+      "partitionsAffected": 6,
+      "caseCount": 1,
+      "operationMs": 108.14626700000008,
+      "refreshMs": 18.305576000000656,
+      "ingestionMs": 41.9469480000007,
+      "reconciliationMs": 6.431524999999965
+    },
+    {
+      "kind": "sync",
+      "status": "passed",
+      "recordsChanged": 1,
+      "partitionsAffected": 6,
+      "caseCount": 1,
+      "operationMs": 168.9812699999984,
+      "refreshMs": 5.771253000000797,
+      "ingestionMs": 35.55164500000137,
+      "reconciliationMs": 10.030923999998777
+    },
+    {
+      "kind": "sync",
+      "status": "passed",
+      "recordsChanged": 1,
+      "partitionsAffected": 12,
+      "caseCount": 2,
+      "operationMs": 39.8351649999986,
+      "refreshMs": 10.904005999998844,
+      "ingestionMs": 7.1377640000009706,
+      "reconciliationMs": 8.336993999999322
+    },
+    {
+      "kind": "sync",
+      "status": "passed",
+      "recordsChanged": 1,
+      "partitionsAffected": 4,
+      "caseCount": 2,
+      "operationMs": 100.70506899999964,
+      "refreshMs": 14.046619999999166,
+      "ingestionMs": 17.680576999999175,
+      "reconciliationMs": 12.846203999999489
+    },
+    {
+      "kind": "sync",
+      "status": "passed",
+      "recordsChanged": 1,
+      "partitionsAffected": 12,
+      "caseCount": 2,
+      "operationMs": 75.81561499999953,
+      "refreshMs": 13.998606999999538,
+      "ingestionMs": 14.08904799999982,
+      "reconciliationMs": 5.253209000000425
+    },
+    {
+      "kind": "sweep",
+      "status": "passed",
+      "recordsChanged": 1,
+      "partitionsAffected": 12,
+      "caseCount": 2,
+      "operationMs": 29.703449000000546,
+      "refreshMs": 2.74740600000041,
+      "reconciliationMs": 2.9811220000010508
+    },
+    {
+      "kind": "sweep",
+      "status": "unchanged",
+      "recordsChanged": 0,
+      "partitionsAffected": 0,
+      "caseCount": 0,
+      "operationMs": 14.38824299999942
+    },
+    {
+      "kind": "sync",
+      "status": "passed",
+      "recordsChanged": 1,
+      "partitionsAffected": 6,
+      "caseCount": 1,
+      "operationMs": 50.82524899999953,
+      "refreshMs": 8.866938999999547,
+      "ingestionMs": 7.61852700000054,
+      "reconciliationMs": 5.5327350000006845
+    },
+    {
+      "kind": "sync",
+      "status": "passed",
+      "recordsChanged": 1,
+      "partitionsAffected": 6,
+      "caseCount": 1,
+      "operationMs": 35.70302199999969,
+      "refreshMs": 3.4530070000000705,
+      "ingestionMs": 10.14057800000046,
+      "reconciliationMs": 3.7497389999989537
+    },
+    {
+      "kind": "sync",
+      "status": "unchanged",
+      "recordsChanged": 0,
+      "partitionsAffected": 0,
+      "caseCount": 0,
+      "operationMs": 31.324016000000483,
+      "ingestionMs": 0.8934790000002977
+    },
+    {
+      "kind": "sync",
+      "status": "passed",
+      "recordsChanged": 2,
+      "partitionsAffected": 20,
+      "caseCount": 4,
+      "operationMs": 161.76344800000152,
+      "refreshMs": 19.523214000000735,
+      "ingestionMs": 38.28243099999963,
+      "reconciliationMs": 22.165430000000924
+    },
+    {
+      "kind": "daily",
+      "status": "failed",
+      "recordsChanged": 0,
+      "partitionsAffected": 0,
+      "caseCount": 3,
+      "operationMs": 55.268842999998014,
+      "reconciliationMs": 18.965531000001647
+    },
+    {
+      "kind": "sync",
+      "status": "passed",
+      "recordsChanged": 1,
+      "partitionsAffected": 6,
+      "caseCount": 1,
+      "operationMs": 278.978486,
+      "refreshMs": 26.18614399999933,
+      "ingestionMs": 22.77396900000167,
+      "reconciliationMs": 121.56649800000014
+    },
+    {
+      "kind": "sync",
+      "status": "passed",
+      "recordsChanged": 2,
+      "partitionsAffected": 12,
+      "caseCount": 2,
+      "operationMs": 104.93609199999992,
+      "refreshMs": 17.72117200000139,
+      "ingestionMs": 13.675716000001557,
+      "reconciliationMs": 17.498741999999766
+    },
+    {
+      "kind": "sync",
+      "status": "passed",
+      "recordsChanged": 1,
+      "partitionsAffected": 6,
+      "caseCount": 1,
+      "operationMs": 126.33160900000075,
+      "refreshMs": 20.932262000002083,
+      "ingestionMs": 16.01661199999944,
+      "reconciliationMs": 5.124144000001252
+    }
+  ],
+  "verification": {
+    "unitApiWeb": 698,
+    "postgres": 159,
+    "skips": 0,
+    "fullSuitesPassed": true,
+    "frozenInstall": true,
+    "lint": true,
+    "architecture": true,
+    "quality": true,
+    "typecheck": true,
+    "build": true,
+    "diff": true
+  },
+  "implementationCommits": {
+    "incrementalSource": "d4a9925",
+    "trustedLifecycle": "e8ec5bf"
+  },
+  "finalRepresentativeReportAndStatusTimings": {
+    "reports": [
+      {
+        "from": "2026-09-01",
+        "metric": "net_invoiced_revenue",
+        "groupBy": "month",
+        "rows": 1,
+        "firstMs": 135.83657200000005,
+        "warmMs": 7.45483999999999
+      },
+      {
+        "from": "2026-09-01",
+        "metric": "order_revenue",
+        "groupBy": "business_line",
+        "rows": 2,
+        "firstMs": 839.748114,
+        "warmMs": 137.04821900000002
+      },
+      {
+        "from": "2026-09-01",
+        "metric": "net_aged_receivable",
+        "rows": 1,
+        "firstMs": 8.867672999999968,
+        "warmMs": 4.2455710000001545
+      },
+      {
+        "from": "2026-04-01",
+        "metric": "net_invoiced_revenue",
+        "groupBy": "month",
+        "rows": 6,
+        "firstMs": 320.848786,
+        "warmMs": 54.85939399999984
+      },
+      {
+        "from": "2026-04-01",
+        "metric": "order_revenue",
+        "groupBy": "business_line",
+        "rows": 2,
+        "firstMs": 141.837626,
+        "warmMs": 171.67057799999998
+      },
+      {
+        "from": "2026-04-01",
+        "metric": "net_aged_receivable",
+        "rows": 1,
+        "firstMs": 7.435324000000037,
+        "warmMs": 6.240471999999954
+      },
+      {
+        "from": "2025-10-01",
+        "metric": "net_invoiced_revenue",
+        "groupBy": "month",
+        "rows": 12,
+        "firstMs": 348.32735,
+        "warmMs": 22.856795000000147
+      },
+      {
+        "from": "2025-10-01",
+        "metric": "order_revenue",
+        "groupBy": "business_line",
+        "rows": 2,
+        "firstMs": 183.71592499999997,
+        "warmMs": 168.77163999999993
+      },
+      {
+        "from": "2025-10-01",
+        "metric": "net_aged_receivable",
+        "rows": 1,
+        "firstMs": 4.805339000000004,
+        "warmMs": 4.695508000000245
+      },
+      {
+        "metric": "net_aged_receivable",
+        "groupBy": "customer",
+        "from": "2026-09-01",
+        "rows": 2217,
+        "firstMs": 3628.9093169999996,
+        "warmMs": 2429.987397,
+        "independentlyPinnedAnchor": true
+      },
+      {
+        "metric": "overdue_receivable_percentage",
+        "groupBy": "customer",
+        "from": "2026-09-01",
+        "rows": 2217,
+        "firstMs": 3056.796223000001,
+        "warmMs": 2709.8460059999998,
+        "independentlyPinnedAnchor": true
+      }
+    ],
+    "status": {
+      "firstMs": 10.104749000000083,
+      "warmMs": 2.5052019999984623
+    }
+  },
+  "storedStatus": {
+    "tenantId": "el-dabboos-iq",
+    "trustedServingRevision": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54",
+    "pendingCandidateRun": null,
+    "freshnessAgeSeconds": 59,
+    "latestFailure": {
+      "runId": "d5351974-56ce-48d7-b86c-38e11927087a",
+      "kind": "daily",
+      "failedAt": "2026-10-07T23:32:33.382Z"
+    },
+    "freshnessTargetSeconds": 600,
+    "cursor": {
+      "cutoff": "2026-10-08T00:21:08.728Z",
+      "objects": {
+        "sale_order": "[\"2026-10-07 19:05:56.466834\",\"70364\"]",
+        "account_move": "[\"2026-10-07 19:05:56.466834\",\"247171\"]"
+      }
+    },
+    "latest": [
+      {
+        "kind": "affected",
+        "runId": "987fe7ad-2764-4276-a5ae-7b5b2ea791dc",
+        "status": "passed",
+        "sourceCutoff": "2026-10-07T23:40:20.136Z",
+        "completedAt": "2026-10-07T23:40:25.706Z",
+        "recordsChanged": 0,
+        "partitionsAffected": 0,
+        "caseCount": 202,
+        "mismatchCount": 0,
+        "servingRelease": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+      },
+      {
+        "kind": "daily",
+        "runId": "15e50a0c-aa25-4874-8671-ff21e02c0fe4",
+        "status": "passed",
+        "sourceCutoff": "2026-10-07T23:34:16.242Z",
+        "completedAt": "2026-10-07T23:35:30.412Z",
+        "recordsChanged": 0,
+        "partitionsAffected": 0,
+        "caseCount": 248,
+        "mismatchCount": 0,
+        "servingRelease": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+      },
+      {
+        "kind": "sweep",
+        "runId": "c5f3508b-479f-4f82-8adf-7414a0a918fe",
+        "status": "unchanged",
+        "sourceCutoff": "2026-10-07T23:27:34.850Z",
+        "completedAt": "2026-10-07T23:29:01.054Z",
+        "recordsChanged": 0,
+        "partitionsAffected": 0,
+        "caseCount": 0,
+        "mismatchCount": 0,
+        "servingRelease": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+      },
+      {
+        "kind": "sync",
+        "runId": "b9d983de-1530-4906-b590-9e3ea4241390",
+        "status": "unchanged",
+        "sourceCutoff": "2026-10-08T00:21:08.728Z",
+        "completedAt": "2026-10-08T00:21:27.623Z",
+        "recordsChanged": 0,
+        "partitionsAffected": 0,
+        "caseCount": 0,
+        "mismatchCount": 0,
+        "servingRelease": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+      }
+    ],
+    "lastSuccessfulSync": {
+      "kind": "sync",
+      "runId": "b9d983de-1530-4906-b590-9e3ea4241390",
+      "status": "unchanged",
+      "sourceCutoff": "2026-10-08T00:21:08.728Z",
+      "completedAt": "2026-10-08T00:21:27.623Z",
+      "recordsChanged": 0,
+      "partitionsAffected": 0,
+      "caseCount": 0,
+      "mismatchCount": 0,
+      "servingRelease": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+    },
+    "trustedCertificationRelease": "el-dabboos-finance-202609-v6",
+    "historicalCoverage": {
+      "reference": "el-dabboos-history-202510-202609-v1",
+      "from": "2025-10-01",
+      "to": "2026-09-30"
+    }
+  },
+  "finalGuardedLiveSync": {
+    "result": {
+      "run": {
+        "tenantId": "el-dabboos-iq",
+        "kind": "sync",
+        "actorId": "local-operator",
+        "trigger": "operator",
+        "runId": "b9d983de-1530-4906-b590-9e3ea4241390",
+        "startedAt": "2026-10-08T00:21:06.763Z",
+        "completedAt": "2026-10-08T00:21:27.623Z",
+        "sourceCutoff": "2026-10-08T00:21:08.728Z",
+        "sourceRevision": "pg-mvcc:fcc9dfc895cf390dbd4158d4256b0a4f0f3d1d410508cc4b200b6f314fac65ac",
+        "mappingVersion": "1",
+        "definitionVersion": "b186c03dba16e55843d34f1a2cef4081b5ece9e905787537d1477eb144636bc0",
+        "status": "unchanged",
+        "recordsChanged": 0,
+        "partitionsAffected": 0,
+        "caseCount": 0,
+        "mismatchCount": 0,
+        "evidenceHash": "no-changes",
+        "servingRelease": "7c752b1f-f1f4-46e8-b5eb-65ad79d8dc54"
+      },
+      "details": {
+        "newRows": 0,
+        "durations": {
+          "ingestionMs": 18566.549175
+        },
+        "newCursor": {
+          "cutoff": "2026-10-08T00:21:08.728Z",
+          "objects": {
+            "sale_order": "[\"2026-10-07 19:05:56.466834\",\"70364\"]",
+            "account_move": "[\"2026-10-07 19:05:56.466834\",\"247171\"]"
+          }
+        },
+        "updatedRows": 0,
+        "previousCursor": {
+          "cutoff": "2026-10-07T23:37:53.466Z",
+          "objects": {
+            "sale_order": "[\"2026-10-07 19:05:56.466834\",\"70364\"]",
+            "account_move": "[\"2026-10-07 19:05:56.466834\",\"247171\"]"
+          }
+        },
+        "rowsDiscovered": 0,
+        "refreshedMonths": [],
+        "canonicalRevisions": 0,
+        "affectedPartitionCount": 0,
+        "affectedMonths": [],
+        "affectedMetrics": [],
+        "affectedDimensions": []
+      }
+    },
+    "durationMs": 21646.232898000002
+  },
+  "finalGuardedReportAndStatusTimings": {
+    "reports": [
+      {
+        "from": "2026-09-01",
+        "metric": "net_invoiced_revenue",
+        "groupBy": "month",
+        "rows": 1,
+        "firstMs": 68.025599,
+        "warmMs": 12.706882000000064
+      },
+      {
+        "from": "2026-09-01",
+        "metric": "order_revenue",
+        "groupBy": "business_line",
+        "rows": 1,
+        "firstMs": 295.46944099999996,
+        "warmMs": 124.87272500000006
+      },
+      {
+        "from": "2026-09-01",
+        "metric": "net_aged_receivable",
+        "rows": 1,
+        "firstMs": 13.271867000000043,
+        "warmMs": 8.653567000000066
+      },
+      {
+        "from": "2026-04-01",
+        "metric": "net_invoiced_revenue",
+        "groupBy": "month",
+        "rows": 6,
+        "firstMs": 57.37694699999997,
+        "warmMs": 20.674514000000045
+      },
+      {
+        "from": "2026-04-01",
+        "metric": "order_revenue",
+        "groupBy": "business_line",
+        "rows": 1,
+        "firstMs": 158.84218999999985,
+        "warmMs": 200.01119299999982
+      },
+      {
+        "from": "2026-04-01",
+        "metric": "net_aged_receivable",
+        "rows": 1,
+        "firstMs": 7.502105000000029,
+        "warmMs": 7.480876999999964
+      },
+      {
+        "from": "2025-10-01",
+        "metric": "net_invoiced_revenue",
+        "groupBy": "month",
+        "rows": 12,
+        "firstMs": 80.51007099999993,
+        "warmMs": 32.644600999999966
+      },
+      {
+        "from": "2025-10-01",
+        "metric": "order_revenue",
+        "groupBy": "business_line",
+        "rows": 1,
+        "firstMs": 202.56607900000017,
+        "warmMs": 212.534629
+      },
+      {
+        "from": "2025-10-01",
+        "metric": "net_aged_receivable",
+        "rows": 1,
+        "firstMs": 6.317201000000068,
+        "warmMs": 8.314930000000004
+      },
+      {
+        "metric": "net_aged_receivable",
+        "groupBy": "customer",
+        "from": "2026-09-01",
+        "rows": 2217,
+        "firstMs": 3089.561189,
+        "warmMs": 2380.685904,
+        "independentlyPinnedAnchor": true
+      },
+      {
+        "metric": "overdue_receivable_percentage",
+        "groupBy": "customer",
+        "from": "2026-09-01",
+        "rows": 2217,
+        "firstMs": 2862.23073,
+        "warmMs": 2915.779848,
+        "independentlyPinnedAnchor": true
+      }
+    ],
+    "status": {
+      "firstMs": 9.592430000000604,
+      "warmMs": 3.025891999999658
+    }
+  },
+  "servingGuardRegressionCoverage": [
+    "approved-business-timezone coverage",
+    "selected-period categorical keys",
+    "returned-key-only labels",
+    "reporting currency mismatch fails closed",
+    "metric-definition mismatch requires explicit migration",
+    "enforced policy dimension capability intersection",
+    "missing cached anchor proof fails closed"
+  ]
+}

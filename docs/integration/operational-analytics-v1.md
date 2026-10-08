@@ -1,154 +1,170 @@
-# Operational analytics v1 — implementation status
+# Operational analytics v1
 
-This is an **incomplete implementation milestone**, not an operational release.
-The preserved September binding/certificates and historical collection are still
-serving. No source synchronization, presence sweep or aggregate promotion was
-run against the local historical data during this change. No deployment, push,
-merge, external scheduler or source mutation was performed.
+The deterministic Odoo-to-mart operational path is implemented. Operator jobs use
+read-only retained PostgreSQL source snapshots, versioned approved mappings,
+immutable operational fact revisions, independent exact controls, affected-month
+aggregate refresh and a pinned trusted manifest. Dashboard reads use that stored
+manifest and capability projection. No model, source connection, synchronization
+or certification reconstruction runs on the bootstrapped tenant's normal reads.
 
-## Historical queries
+## Operator setup and commands
 
-`HistoricalAnalyticsRepository` preserves the original certified anchor path.
-Historical event collections now support event ratios as well as additive
-metrics. Every member must independently certify the ratio output and both
-operands, with compatible mapping semantics and policy dimensions. The query
-sums exact PostgreSQL numerator and denominator bases before division; it never
-averages monthly averages. The collection exposes only the intersection of
-independently approved capabilities, and refuses ranges beyond coverage.
-
-For snapshot summaries, the latest independently governed month-end cutoff at
-or before the range end is selected. Explicit monthly trends sample each cutoff
-once. Categorical snapshot queries retain their grouping and filters. Snapshot
-results report `snapshotAsOf`; web rendering displays an English/Arabic as-of
-label. A published historical coverage notice accompanies normal view filters.
-The new `last_90_days` preset follows inclusive tenant-local calendar arithmetic,
-through the same canonical spec, patch and query validation paths as other
-presets. A preset extending beyond the available history fails instead of
-silently clipping. History currently ends September 30, 2026: presets ending
-in October are consequently not fully covered.
-
-## Deterministic lifecycle foundation
-
-`AnalyticsOperations` is an application use case with explicit source and
-transaction ports. It orchestrates candidate ingestion, impact resolution,
-reconciliation, affected refresh, trusted promotion, cursor write and audit.
-A mismatch preserves the previous trusted release and durable cursor. A
-transaction failure rolls back all writes, including a late cursor/audit failure.
-Source closure happens before transaction commit so cleanup failure cannot
-turn a committed sync into an apparently failed job. Zero-change runs skip
-reconciliation and aggregate refresh. These behaviors are tested using an
-isolated transactional synthetic adapter; they are **not yet wired to a
-production PostgreSQL job adapter**.
-
-The shared domain impact resolver compares both active revisions. It identifies
-old/new business months and supported old/new dimension identities. The semantic
-catalog discovers dependent metric outputs, including ratios. Materialized
-moving-average windows, running totals, future YoY comparisons and contributions
-have explicit invalidation footprints. A contribution denominator change
-invalidates the whole period's contributions. Derived group outputs retain
-their affected dimension identities.
-
-A snapshot dependency callback is mandatory: an adapter must explicitly prove
-which cutoffs remain dependent on a corrected invoice/payment/credit or entity
-snapshot. There is no default that silently ignores snapshot propagation.
-The concrete receivables dependency adapter remains outstanding.
-
-A synthetic October source correction of a January invoice tests old/new
-salespeople, January reconciliation and affected refresh before promotion. It
-also tests preservation of the trusted release on mismatches and failures in
-ingestion, reconciliation, refresh, promotion, cursor write and audit. This is
-application-port evidence, not proof of actual Odoo-to-mart synchronization.
-
-## Source cursor foundation
-
-Odoo paging retains composite modification identity `(write_date, id)` and its
-existing deterministic revisions, including lookup modification identity where
-already governed. Source SQL now also applies the retained snapshot's explicit
-upper cutoff. The scope supports a trusted modification lower bound; it never
-uses a business date as a cursor. Incremental mode retains records whose business
-dates moved outside the original backfill window, enabling full replacement and
-tombstone mapping rather than leaving an old contribution active.
-
-`odooIncrementalWindow` starts at the previous successful source cutoff minus a
-configurable overlap (default 120 seconds), with ID zero at the lower timestamp
-boundary. Page ties remain strictly ordered by modification time and record ID.
-The overlap is inclusive discovery, not a durable cursor advancement. It is
-intended to run under a bounded retained PostgreSQL read-only snapshot. Backward
-cutoffs and invalid bounds are refused. The durable cursor must advance to the
-bounded source cutoff only after the complete transactional lifecycle succeeds.
-
-A fixed overlap is **not a proof against arbitrarily long source transactions**
-whose write timestamps precede the overlap. Production wiring needs a validated
-source transaction/watermark policy plus broader deterministic content sweeps;
-a presence-only identity sweep cannot repair that condition. No exactly-once
-source-discovery claim is made at this milestone.
-
-## Stored reconciliation and status
-
-Migration 026 adds append-only `mart.analytics_operation_runs` referencing the
-existing `mart.reconciliation_evidence` case IDs. It stores tenant, actor,
-trigger, timestamps, cutoff/revision, mapping/definition versions, changed and
-partition counts, case/mismatch counts, evidence hash and serving identity.
-It does not replace the existing reconciliation or certification system.
-
-Database guards require a complete unique case set, exact approved zero-tolerance
-controls, matching frozen source revision, matching batch cutoff, and a hash
-computed from persisted case content. Old certificates are not updated.
-`analytics_source_cursors` only accepts successful sync evidence with the exact
-same cutoff; cutoffs cannot regress. These tables use forced tenant RLS. Runtime
-credentials receive SELECT only. The evidence/cursor helpers take the job's
-own `PoolClient`; they never open nested transactions.
-
-After explicitly applying migrations with the existing mart migration process:
+Apply migrations through the existing local staging migration command and grants
+workflow. Migration 030 includes an atomic owner-only scalar projection backfill;
+forced tenant RLS is restored before commit. Provisioning does not create an online
+service. Bootstrap is explicit, uses the publication operator, validates existing
+certified releases once and copies their facts into separate operational storage:
 
 ```bash
+pnpm analytics bootstrap --tenant el-dabboos-iq
+pnpm analytics sync --tenant el-dabboos-iq
+pnpm analytics sweep --tenant el-dabboos-iq
+pnpm analytics reconcile --tenant el-dabboos-iq --mode affected
+pnpm analytics reconcile --tenant el-dabboos-iq --mode daily
+pnpm analytics reconcile --tenant el-dabboos-iq --mode deep
 pnpm analytics status --tenant el-dabboos-iq
 ```
 
-The command permits only a loopback PostgreSQL URL and verifies the dedicated
-read-only runtime role. It reads stored latest evidence, the last successful sync,
-source cursor, preserved certification binding and historical coverage. The API
-provides the same read-only projection at `GET /api/analytics/status`, after
-membership and analytics permission validation. It never contacts Odoo,
-calculates reports or reconstructs a certification proof. Synthetic composition
-without this adapter returns explicit unavailability; it does not invent status.
-Freshness target is 600 seconds by default and configurable in the adapter/CLI.
-The API composition currently uses that default. Age/trust-state calculation and
-operational presentation remain outstanding.
+These commands require protected operator configuration for the intended local
+mart. Bootstrap uses `MART_MIGRATOR_URL`; jobs use `MART_INGESTOR_URL`; status uses
+and verifies `MART_RUNTIME_URL`. All three must be loopback destinations. The API
+uses the existing runtime role and membership/analytics authorization. Source
+credentials are resolved by the approved connection adapter. The existing broader
+staging credential exception requires explicit `ODOO_SOURCE_STAGING_PILOT=true`;
+all source transactions still run `REPEATABLE READ READ ONLY`. Do not put secrets
+in arguments, logs or Git. Operator output includes bounded scope metadata and omits partition identities
+and labels; exact cases remain in the governed evidence store. A failed
+reconciliation prints its stored result and
+exits nonzero. A technical failure returns a generic CLI error and separately
+records its run ID, kind, actor and timestamps. Concurrent tenant jobs fail fast
+instead of waiting out a source lease.
 
-## Work still required before operational release
+For the acceptance environment, the protected file supplied by the operator was
+loaded after the repository defaults. The exact command shape was:
 
-1. Implement the concrete source/job/PostgreSQL transaction adapters, including
-   durable failure and in-progress audits, overlap discovery, existing active
-   revision comparison and idempotent candidate retries.
-2. Introduce pinned trusted serving revisions and governed partition aggregates,
-   maintaining the previous usable trusted state on failures. Do not write into
-   the certified September datasets or invalidate their proof caches.
-3. Implement affected/current, daily and deep reconciliation scopes against
-   independently retained source controls using the existing certification path.
-4. Implement receivables snapshot dependency propagation, settlement bounds,
-   line/payment/credit discovery and affected snapshot reconstruction.
-5. Implement complete-scope identity/content sweeps and governed tombstones;
-   preserve immutable source/canonical revision history.
-6. Wire admin-authorized Sync Now, Reconcile Now and Verify Against Source to
-   those same jobs. Add actual privilege and tenant isolation regressions.
-7. Implement governed canonical-mart detail pagination, trusted-release policy
-   scopes, source comparison controls and bilingual operational trust details.
-8. Remove ordinary-read certification reconstruction fallbacks through validated
-   immutable stored proof projections. This milestone does not change those
-   existing historical proof checks.
-9. Collect actual September/6/12-month report timings, no-change/small-batch sync,
-   affected reconciliation and aggregate refresh timings, plus EXPLAIN ANALYZE
-   evidence. The small synthetic range test's timings are diagnostic only.
-10. Separate logical local commits from the pre-existing uncommitted historical
-    work and complete final full application/browser acceptance.
+```bash
+ODOO_SOURCE_STAGING_PILOT=true node \
+  --env-file-if-exists=.env --env-file-if-exists=.env.local \
+  --env-file=/home/hazem/.config/el-dabboos-local-staging/operator-host.env \
+  --experimental-transform-types --disable-warning=ExperimentalWarning \
+  apps/api/src/analytics-status-cli.ts sync --tenant el-dabboos-iq
+```
 
-Only the status command is currently runnable. **No `analytics sync`,
-`analytics reconcile` or `analytics sweep` command is implemented yet.** Do not
-schedule nonexistent commands. Future cadence remains approximately five-minute
-incremental/affected refresh, nightly strong reconciliation, daily presence
-sweep, and periodic deep certification. n8n may trigger repository-owned jobs
-or notifications only; formulas, mappings and cursor logic remain in this repo.
+Replace `sync` with `sweep`, or `reconcile` plus `--mode affected|daily|deep`.
+For status, source configuration and the staging source exception are unnecessary.
+Protected files are never loaded by automated tests.
 
-Runtime pipeline LLM dependency = zero in the new job/source/impact/evidence
-foundation. The complete operational runtime pipeline is not delivered yet.
+## Discovery, revisions and transactions
+
+Discovery uses composite `(write_date,id)` paging, an explicit upper source cutoff
+and inclusive 120-second overlap from the last successful cutoff. Business dates
+do not bound change discovery. Old/new fact revisions determine analytics months
+and dimension identities. An October modification of a January record refreshes
+January; a business-date move refreshes both months. Immutable fact payloads and
+old certifications remain intact. Equivalent overlap replays create no revision.
+Stored per-object positions and the successful cutoff advance only after audit,
+reconciliation, refresh and promotion succeed in one tenant transaction.
+
+Date-less ineligible invoice drafts retire an existing identity's old footprint;
+unseen drafts do not invent dated facts. Newly encountered business months are
+initialized with a bounded complete source-month read under the same snapshot.
+Otherwise independent whole-partition controls would correctly reject a partial
+new-month candidate. Existing months use incremental revision changes.
+
+The tenant transaction owns all mart writes. A candidate savepoint allows a failed
+exact reconciliation to roll back heads and serving changes while retaining the
+failed source/mart cases and audit. Technical failures roll back the transaction
+and record a separate failure. Source handles verify their owner lease before mart
+commit. Retained handles can deliberately share one cutoff for a bounded replay;
+each closes independently and the final handle releases the owner.
+
+A fixed overlap cannot prove discovery of arbitrarily long source transactions
+whose write timestamps predate the overlap. Presence sweeps detect deletion, not
+all such missed content updates. The production source watermark/transaction
+policy remains a deployment prerequisite; no exactly-once discovery claim is made.
+
+## Reconciliation and receivables
+
+Affected reconciliation uses the deterministic old/new impact footprint, filtered
+to approved metric/dimension capabilities. Controls batch requested months by
+measure and grouping, retaining distinct month/identity cases and explicit zero
+complements. Source sums/counts and mart sums/counts compare exact decimal values,
+with no tolerance. The immutable case set carries source cutoff/revision, mapping
+and definition versions; the database hashes the persisted ordered content.
+
+`affected` rechecks the last nonempty operational footprint. `daily` checks every
+current trusted event month and all published snapshot cutoffs, for all approved
+summary metrics. `deep` invokes the same bounded summary profile in v1; it does
+not grant a new business certificate or imply a full categorical certification.
+The existing deeper release/certification workflow remains separate. Categorical
+changes receive exact affected-case controls during sync.
+
+Receivable dependencies poll receivable lines, partial reconciliations, moves and
+payments independently of invoice-header timestamps. The existing historical
+Phase-A baseline contains company summaries, without a previous component-date
+ledger. Therefore a changed receivable input requires rechecking all published
+month-end cutoffs: that is the complete provable dependency set for a possible
+accounting-date move. Only changed balances create revisions, impact and aggregate
+refresh. Event months are not rebuilt by this conservative snapshot check.
+
+Full counterpart/state/company/date/current-residual quality is validated once
+for the complete published cutoff scope within the retained snapshot. Earlier
+cutoffs are subsets of that scope. Currency completeness includes settled
+components that can be open earlier. Canonical summary SQL independently sums
+signed debit/credit effects; the Finance control reconstructs a union of signed
+links and uses separate report bucket expressions. The optimized projection is
+verified against the canonical component mapper's maturity boundaries, credits,
+settlements and company isolation. Statement timeout stays 15 seconds; source
+lease stays 120 seconds. No optimizer setting is changed in the delivered path.
+
+## Trusted serving and current reports
+
+Immutable month partitions contain daily additive bases and complete categorical
+policy tuples. A new manifest reuses unaffected partition references. Deferred
+promotion guards require exact passed evidence, correct parent/version/cutoff,
+complete affected-month membership and unchanged unaffected references. Runtime
+RLS exposes only the current trusted manifest and its aggregates; candidate facts
+and unpublished aggregates cannot enter normal report SQL.
+
+Stored coverage uses the approved business timezone. Categorical keys are scoped
+to the selected event range or snapshot cutoff; label metadata is restricted to
+returned keys. Stored reporting currency and executable metric-definition version
+must match the runtime configuration; changes require an explicit certified
+migration. Capability discovery intersects enforced policy dimensions.
+
+Ratios divide summed full-period bases. Snapshots select one latest eligible
+cutoff per requested period, without summing dates. Monthly comparisons retain
+null outside certified prior coverage. Historical comparisons and moving averages
+require complete monthly buckets and supported windows. Group bounds remain
+explicit and configurable, without truncating accepted output.
+
+Original September categorical Finance outputs outside Phase A's summary scope
+remain independently pinned to their original certified anchor, including all
+2,217 customer identities. They are **not incrementally refreshed by this summary
+adapter**. Their metadata identifies that original release. The anchor path uses
+stored positive proofs only and fails closed if a proof is absent; it never
+reconstructs a full proof on a normal read. September as-of queries retain their
+certified month interval and compile categorical balances to the fixed cutoff.
+A future component-level operational scope is required to promote corrected
+customer Finance outputs together with their summaries. Do not represent this
+v1 summary scope as full component or drill-through serving.
+
+## Presence and status
+
+The sweep pages distinct active governed `sale_order` and `account_move` IDs, at
+most 1,000 per source check. It loads fact payloads only for missing identities,
+then writes governed tombstones retaining the previous business footprint and
+immutable revisions. Forced snapshot checks also detect deleted accounting inputs
+that cannot appear in `write_date` polling. Sweeps do not advance the sync cursor.
+
+Stored status includes latest sync, batch/affected and daily reconciliation,
+presence sweep, cursor, trusted serving revision, unresolved failed candidate,
+latest technical failure, source cutoff and freshness age/target (600 seconds by
+default). `GET /api/analytics/status` remains authorized and read-only. Daily audit
+success does not resolve a rejected sync candidate or advance source freshness.
+
+The commands are schedulable. Future orchestration may trigger sync about every
+five minutes and daily reconciliation/sweep; all formulas, mapping, cursor and
+promotion decisions remain in this repository. No scheduler, cloud staging,
+external CD, push or merge was created. Runtime sync/reconciliation/serving LLM
+dependency = zero. See the operational acceptance handoff for results and limits.

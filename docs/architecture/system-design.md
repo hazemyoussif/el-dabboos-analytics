@@ -100,3 +100,21 @@ Resource route modules in `apps/api/src/routes/administration/` validate each re
 ## Control database boundary
 
 [PostgreSQL control operations](../integration/postgres-control-plane.md) implement a separate control database with explicit immutable migrations, dedicated migrator/app identities, shared administration contracts and a transactional exact-row SQLite cutover tool. Source/company scope and governed mapping authoring live there; source secrets resolve externally. The Analytics mart retains immutable evidence/releases/bindings and independent serving authority. PostgreSQL control mode never opens metadata SQLite and refuses synthetic production authentication. Shared staging images, explicit offline bootstrap, separate staging database logins, safe deployment configuration, correlation logs and exact schema readiness are implemented; see [shared staging runbook](../integration/shared-staging.md). Local password/session identity now resolves provider + stable subject through current IdentityBinding/ProductUser, with authorization fresh on each protected operation; [ADR 030](adr/030-local-identity-provider.md) and [local auth runbook](../security/local-authentication.md). External deployment, employee activation and additional IdP integrations remain pending.
+
+## Operational serving v1
+
+The application-owned `AnalyticsOperations` lifecycle now composes a retained
+read-only Odoo source adapter and one tenant-owned PostgreSQL transaction. Separate
+immutable operational revisions and affected-month aggregate partitions reference
+approved baseline semantics; deferred exact-evidence guards control a pinned
+trusted manifest. Rejected candidates preserve current reads and successful source
+cursors. Runtime RLS permits current trusted aggregates only. Operator commands
+own synchronization, presence checks and reconciliation; no planner/model runs in
+these jobs or in stored trusted report retrieval.
+
+Historical Phase-A receivable summaries conservatively recheck their published
+cutoffs when a component dependency changes. Original September categorical
+Finance outputs remain independently certified and pinned, with cached-proof-only
+reads; they are not part of this summary adapter's incremental promotion scope.
+See [operational analytics v1](../integration/operational-analytics-v1.md) for exact
+scope, source watermark limits, migration/bootstrap ownership and command usage.

@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { controlComponentSql,controlQualitySql } from '../../../../scripts/integration/receivables-control-query.ts';
+import { receivableSummarySql,receivableReportBaseSql } from '../../src/operational/receivable-summary-sql.ts';
+import { mapReceivableSnapshots,receivableMeasures } from '../../src/receivable-aging.ts';
 import { database,enabled } from './support.ts';
 
 test('independent Finance control: maturity boundaries, historical reconciliations, installments, credits, currency and company isolation', {skip:!enabled},async()=>{
@@ -37,6 +39,11 @@ test('independent Finance control: maturity boundaries, historical reconciliatio
    INSERT INTO account_payment VALUES(1,1,19,'inbound','customer'),(2,1,20,'inbound','customer');`);
   const parameters=[1,'2026-09-30',100];
   const rows=(await fixture.admin.query(controlComponentSql('open'),parameters)).rows;
+  const summary=(await fixture.admin.query(receivableSummarySql,parameters.slice(0,2))).rows[0];
+  const mapped=mapReceivableSnapshots(rows.map(row=>({componentId:row.component_id,customerId:row.customer_id,accountingDate:row.accounting_date,maturityDate:row.due_date,residual:row.residual})),'2026-09-30');
+  for(const measure of receivableMeasures)assert.equal(BigInt(summary[measure].replace('.','')),mapped.reduce((total,row)=>total+BigInt(row.values[measure].replace('.','')),0n));
+  const report=(await fixture.admin.query(receivableReportBaseSql+" SELECT id::text,residual::numeric(30,6)::text residual FROM reconstructed WHERE residual<>0 ORDER BY reconstructed.id",parameters.slice(0,2))).rows;
+  assert.deepEqual(report,rows.map(row=>({id:row.component_id,residual:row.residual})));
   const byIdentity=new Map(rows.map(row=>[row.component_id,row]));
   assert.deepEqual(['1','2','3','4','5','6','7','8'].map(identity=>byIdentity.get(identity)?.bucket),['current','current','1_30','1_30','31_90','31_90','over_90','missing_due_date']);
   assert.equal(byIdentity.get('9')?.residual,'40.000000');
