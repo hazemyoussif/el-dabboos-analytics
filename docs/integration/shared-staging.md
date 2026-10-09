@@ -137,3 +137,23 @@ Never restore over developer, shared or production databases without explicit en
 Application rollback selects previously reviewed API/web image digests and matching configuration. It can proceed only when those artifacts support the current immutable DB history; exact-version readiness deliberately rejects old code against newer ledgers. Otherwise use a reviewed forward compatibility fix or an approved coordinated restore into new databases and switch connections. Never edit released migration SQL/checksums, delete history, or silently reverse database migrations. Preserve backups of the prior state and account for writes after the recovery point.
 
 Before external shared staging: select and verify the trusted employee IdP adapter and controlled binding/activation procedure; approve external infrastructure/network/TLS/secret injection; provision staging PostgreSQL roles; supply reviewed immutable release digests; test backups/restore under operational policy; and approve any LLM configuration. Business certification remains separately pending. Mapping v1 remains pending, serving bindings remain zero, sync and authentication remain unimplemented. No external deployment, push or merge is part of this milestone.
+
+### Ask Business local provider timing
+
+The Nginx Ask Business prefix uses a 300-second read timeout so an approved slow
+local provider can finish within the 240-second acceptance provider deadline,
+with room for bounded analytics and persistence. Keep the proxy deadline aligned
+with the operator-selected provider deadline; the API accepts other configured
+timeouts, so 300 seconds is not a universal upper bound. Other API prefixes retain
+their existing behavior. A longer proxy timeout is transport protection, not a
+latency improvement.
+
+Preserve the existing tested local provider profile when copying protected
+runtime configuration, including optional `LLM_REASONING_BUDGET_TOKENS` and
+`LLM_SEED` when supported and explicitly configured. In the October 9 acceptance,
+omitting the existing 512-token thinking budget and seed 42 caused generation
+to dominate 58–69 second requests. Restoring that profile reduced matched warm
+requests to 19–21 seconds without changing their prompt or schema. This is local
+Bonsai evidence, not a provider-neutral default or business-quality acceptance.
+Do not add credentials, endpoint addresses or model settings to domain contracts.
+See the [acceptance/performance evidence](../qa/ask-business-staging-2026-10-09.md).

@@ -1,0 +1,61 @@
+{
+  "checks": [
+    {
+      "name": "freshAuthenticatedScopedQA",
+      "passed": true,
+      "detail": "staging-viewer"
+    },
+    {
+      "name": "unauthenticatedRejected",
+      "passed": true,
+      "detail": 401
+    },
+    {
+      "name": "otherUserConversationPrivate",
+      "passed": true,
+      "detail": 404
+    },
+    {
+      "name": "otherUserHistoryPrivate",
+      "passed": true,
+      "detail": 1
+    },
+    {
+      "name": "wrongTenantRejected",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "name": "scopedLiveRanking",
+      "passed": true,
+      "detail": {
+        "status": "SUPPORTED",
+        "rowCount": 1,
+        "scopeAndValueMatchedIndependentControl": true,
+        "globalLeaderExcluded": true
+      }
+    },
+    {
+      "name": "scopeChangeInvalidatesOldConversation",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "name": "revokeSessions",
+      "passed": true,
+      "detail": 200
+    },
+    {
+      "name": "revokedSessionRejected",
+      "passed": true,
+      "detail": 401
+    }
+  ],
+  "cleanup": {
+    "membershipSuspended": true,
+    "rolesRestored": true,
+    "scopesRestored": true,
+    "allIdentitiesDisabled": true,
+    "activeSessions": 0
+  }
+}

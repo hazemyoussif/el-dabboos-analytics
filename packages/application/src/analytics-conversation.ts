@@ -25,6 +25,7 @@ export function resolveAnalyticsFollowUp(state:AnalyticsConversationState,identi
   if ('rank' in followUp) {
     intent.analyses = [intent.analyses[0]!];
     const analysis = intent.analyses[0]!;
+    if (!analysis.dimension || timeDimensions.includes(analysis.dimension) || !state.entities.some(group => group.dimension === analysis.dimension && group.ids.length > 0)) throw new Error('Unresolved ranked entity references');
     analysis.rank = followUp.rank;
     delete analysis.context;
     for (const series of analysis.series) { delete series.topNDirection;delete series.topNLimit;series.ranking=true; }

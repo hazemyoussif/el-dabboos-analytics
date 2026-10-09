@@ -1,0 +1,2966 @@
+{
+  "method": "Temporary server-side observer, actual authenticated HTTPS UI/API requests; timings/sizes/token usage/bounded canonical shape only. No prompts, reasoning, credentials or rows. Profile phase changes only existing thinking budget and seed; final phase includes focused semantic guidance and reference guards. Nonstream first token and separate reasoning tokens not exposed.",
+  "phases": {
+    "baseline": [
+      {
+        "component": "analyst-acceptance-observer",
+        "traceId": "a5117ac8-16b2-4025-963b-a79e66aa3a2b",
+        "events": [
+          {
+            "stage": "conversation_state_load",
+            "startMs": 19.013,
+            "endMs": 20.384,
+            "durationMs": 1.375
+          },
+          {
+            "stage": "provider_envelope_parsing",
+            "startMs": 58537.772,
+            "endMs": 58537.85,
+            "durationMs": 0.084
+          },
+          {
+            "stage": "structured_content_parsing",
+            "startMs": 58537.904,
+            "endMs": 58537.922,
+            "durationMs": 0.018
+          },
+          {
+            "stage": "planner_total",
+            "startMs": 22.421,
+            "endMs": 58540.041,
+            "durationMs": 58517.621
+          },
+          {
+            "stage": "trusted_execution",
+            "startMs": 58556.489,
+            "endMs": 58637.532,
+            "durationMs": 81.044
+          },
+          {
+            "stage": "answer_rendering",
+            "startMs": 58637.54,
+            "endMs": 58646.393,
+            "durationMs": 8.855
+          },
+          {
+            "stage": "execution_and_answer_rendering",
+            "startMs": 58556.392,
+            "endMs": 58646.894,
+            "durationMs": 90.502
+          },
+          {
+            "stage": "validation_execution_rendering",
+            "startMs": 58556.279,
+            "endMs": 58646.903,
+            "durationMs": 90.624
+          },
+          {
+            "stage": "optional_synthesis_gate",
+            "startMs": 58646.937,
+            "endMs": 58647.005,
+            "durationMs": 0.069
+          },
+          {
+            "stage": "audit_preparation",
+            "startMs": 58653.5,
+            "endMs": 58653.856,
+            "durationMs": 0.356
+          },
+          {
+            "stage": "persistence_audit_transaction",
+            "startMs": 58653.859,
+            "endMs": 58661.853,
+            "durationMs": 7.995
+          },
+          {
+            "stage": "message_orchestration",
+            "startMs": 18.784,
+            "endMs": 58661.86,
+            "durationMs": 58643.077
+          }
+        ],
+        "providerCalls": [
+          {
+            "startMs": 84.09,
+            "promptCharacters": 22789,
+            "systemCharacters": 22685,
+            "userCharacters": 104,
+            "schemaCharacters": 5533,
+            "maxTokens": 2048,
+            "temperature": 0,
+            "thinkingBudgetTokens": "unset",
+            "seed": "unset",
+            "stream": false,
+            "responseFormat": "json_schema",
+            "stateCharacters": 2,
+            "semanticKnowledgeCharacters": 499,
+            "catalogContextCharacters": 19938,
+            "transcriptCharacters": 0,
+            "evaluationQuestionsTransmitted": 0,
+            "headersReceivedMs": 58531.079,
+            "httpStatus": 200,
+            "completionMs": 58533.391,
+            "bodyReadMs": 1.935,
+            "finishReason": "stop",
+            "inputTokens": 5946,
+            "outputTokens": 1744,
+            "reasoningTokens": "not_exposed",
+            "serverTimings": {
+              "cache_n": 5913,
+              "prompt_n": 33,
+              "prompt_ms": 1478.562,
+              "prompt_per_token_ms": 44.804909090909085,
+              "prompt_per_second": 22.318982903659098,
+              "predicted_n": 1744,
+              "predicted_ms": 56853.412,
+              "predicted_per_token_ms": 32.618136546184736,
+              "predicted_per_second": 30.657790600149028
+            },
+            "outputCharacters": 234,
+            "schemaValid": true,
+            "outputShape": {
+              "status": "SUPPORTED",
+              "rootKeys": [
+                "status",
+                "intent"
+              ],
+              "analyses": [
+                {
+                  "dimension": "month",
+                  "series": [
+                    {
+                      "metric": "net_invoiced_revenue",
+                      "keys": [
+                        "metric"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            "observerParseValidationMs": 4.333
+          }
+        ],
+        "plannerCalls": 1,
+        "synthesisCalls": 0,
+        "plannerTimings": {
+          "plannerMs": 58514.830227,
+          "validationMs": 0.16605600000184495,
+          "capabilityMs": 1.843170000007376
+        },
+        "outcome": "SUPPORTED",
+        "executorTimings": {
+          "capabilityMs": 12.876591000007465,
+          "executionMs": 68.0010900000052
+        },
+        "answerStatus": "SUPPORTED",
+        "answerTimings": {
+          "plannerMs": 58514.830227,
+          "capabilityMs": 14.719761000014842,
+          "executionMs": 68.0010900000052,
+          "synthesisMs": 0,
+          "totalMs": 58634.401805
+        },
+        "totalHttpMs": 58662.331,
+        "httpStatus": 200,
+        "plannerRetries": 0,
+        "synthesisRetries": 0,
+        "totalProviderCalls": 1
+      },
+      {
+        "component": "analyst-acceptance-observer",
+        "traceId": "169b150c-eb40-49e9-bfbf-63f4fc84baea",
+        "events": [
+          {
+            "stage": "conversation_state_load",
+            "startMs": 12.055,
+            "endMs": 12.605,
+            "durationMs": 0.551
+          },
+          {
+            "stage": "provider_envelope_parsing",
+            "startMs": 68610.8,
+            "endMs": 68610.84,
+            "durationMs": 0.041
+          },
+          {
+            "stage": "structured_content_parsing",
+            "startMs": 68610.85,
+            "endMs": 68610.879,
+            "durationMs": 0.029
+          },
+          {
+            "stage": "planner_total",
+            "startMs": 12.679,
+            "endMs": 68611.036,
+            "durationMs": 68598.358
+          },
+          {
+            "stage": "execution_and_answer_rendering",
+            "startMs": 68642.199,
+            "endMs": 68642.25,
+            "durationMs": 0.052
+          },
+          {
+            "stage": "validation_execution_rendering",
+            "startMs": 68642.194,
+            "endMs": 68642.253,
+            "durationMs": 0.06
+          },
+          {
+            "stage": "optional_synthesis_gate",
+            "startMs": 68642.258,
+            "endMs": 68642.261,
+            "durationMs": 0.004
+          },
+          {
+            "stage": "audit_preparation",
+            "startMs": 68652.369,
+            "endMs": 68652.415,
+            "durationMs": 0.047
+          },
+          {
+            "stage": "persistence_audit_transaction",
+            "startMs": 68652.42,
+            "endMs": 68660.784,
+            "durationMs": 8.365
+          },
+          {
+            "stage": "message_orchestration",
+            "startMs": 12.05,
+            "endMs": 68660.79,
+            "durationMs": 68648.741
+          }
+        ],
+        "providerCalls": [
+          {
+            "startMs": 14.143,
+            "promptCharacters": 23266,
+            "systemCharacters": 22685,
+            "userCharacters": 581,
+            "schemaCharacters": 5533,
+            "maxTokens": 2048,
+            "temperature": 0,
+            "thinkingBudgetTokens": "unset",
+            "seed": "unset",
+            "stream": false,
+            "responseFormat": "json_schema",
+            "stateCharacters": 464,
+            "semanticKnowledgeCharacters": 499,
+            "catalogContextCharacters": 19938,
+            "transcriptCharacters": 0,
+            "evaluationQuestionsTransmitted": 0,
+            "headersReceivedMs": 68610.208,
+            "httpStatus": 200,
+            "completionMs": 68610.619,
+            "bodyReadMs": 0.396,
+            "finishReason": "length",
+            "inputTokens": 6116,
+            "outputTokens": 2048,
+            "reasoningTokens": "not_exposed",
+            "serverTimings": {
+              "cache_n": 5913,
+              "prompt_n": 203,
+              "prompt_ms": 769.984,
+              "prompt_per_token_ms": 3.793024630541872,
+              "prompt_per_second": 263.6418419084033,
+              "predicted_n": 2048,
+              "predicted_ms": 67668.24,
+              "predicted_per_token_ms": 33.057274059599415,
+              "predicted_per_second": 30.25052816505941
+            },
+            "outputCharacters": 0,
+            "schemaValid": false,
+            "validationFailure": "NON_JSON_OR_MISSING_CONTENT",
+            "observerParseValidationMs": 0.163
+          }
+        ],
+        "plannerCalls": 1,
+        "synthesisCalls": 0,
+        "plannerTimings": {
+          "plannerMs": 68597.91648100001,
+          "validationMs": 0.09291399997891858,
+          "capabilityMs": 0
+        },
+        "outcome": "INVALID_PLAN",
+        "answerStatus": "INVALID_PLAN",
+        "answerTimings": {
+          "plannerMs": 68597.91648100001,
+          "capabilityMs": 0,
+          "executionMs": 0,
+          "synthesisMs": 0,
+          "totalMs": 68640.21106
+        },
+        "totalHttpMs": 68661.156,
+        "httpStatus": 200,
+        "plannerRetries": 0,
+        "synthesisRetries": 0,
+        "totalProviderCalls": 1
+      },
+      {
+        "component": "analyst-acceptance-observer",
+        "traceId": "bd68afe1-e30b-47ac-b884-305cd9e719ea",
+        "events": [
+          {
+            "stage": "conversation_state_load",
+            "startMs": 10.831,
+            "endMs": 11.739,
+            "durationMs": 0.909
+          },
+          {
+            "stage": "provider_envelope_parsing",
+            "startMs": 47102.314,
+            "endMs": 47102.353,
+            "durationMs": 0.04
+          },
+          {
+            "stage": "structured_content_parsing",
+            "startMs": 47102.368,
+            "endMs": 47102.373,
+            "durationMs": 0.005
+          },
+          {
+            "stage": "planner_total",
+            "startMs": 11.799,
+            "endMs": 47103.775,
+            "durationMs": 47091.977
+          },
+          {
+            "stage": "trusted_execution",
+            "startMs": 47117.649,
+            "endMs": 47143.855,
+            "durationMs": 26.206
+          },
+          {
+            "stage": "answer_rendering",
+            "startMs": 47143.858,
+            "endMs": 47143.913,
+            "durationMs": 0.056
+          },
+          {
+            "stage": "execution_and_answer_rendering",
+            "startMs": 47117.637,
+            "endMs": 47144.024,
+            "durationMs": 26.387
+          },
+          {
+            "stage": "validation_execution_rendering",
+            "startMs": 47117.609,
+            "endMs": 47144.028,
+            "durationMs": 26.419
+          },
+          {
+            "stage": "optional_synthesis_gate",
+            "startMs": 47144.033,
+            "endMs": 47144.035,
+            "durationMs": 0.003
+          },
+          {
+            "stage": "audit_preparation",
+            "startMs": 47151.973,
+            "endMs": 47152.126,
+            "durationMs": 0.175
+          },
+          {
+            "stage": "persistence_audit_transaction",
+            "startMs": 47152.152,
+            "endMs": 47157.897,
+            "durationMs": 5.746
+          },
+          {
+            "stage": "message_orchestration",
+            "startMs": 10.822,
+            "endMs": 47157.901,
+            "durationMs": 47147.079
+          }
+        ],
+        "providerCalls": [
+          {
+            "startMs": 13.648,
+            "promptCharacters": 23243,
+            "systemCharacters": 22685,
+            "userCharacters": 558,
+            "schemaCharacters": 5533,
+            "maxTokens": 2048,
+            "temperature": 0,
+            "thinkingBudgetTokens": "unset",
+            "seed": "unset",
+            "stream": false,
+            "responseFormat": "json_schema",
+            "stateCharacters": 464,
+            "semanticKnowledgeCharacters": 499,
+            "catalogContextCharacters": 19938,
+            "transcriptCharacters": 0,
+            "evaluationQuestionsTransmitted": 0,
+            "headersReceivedMs": 47101.565,
+            "httpStatus": 200,
+            "completionMs": 47101.999,
+            "bodyReadMs": 0.419,
+            "finishReason": "stop",
+            "inputTokens": 6112,
+            "outputTokens": 1396,
+            "reasoningTokens": "not_exposed",
+            "serverTimings": {
+              "cache_n": 5913,
+              "prompt_n": 199,
+              "prompt_ms": 1589.64,
+              "prompt_per_token_ms": 7.988140703517589,
+              "prompt_per_second": 125.18557660854029,
+              "predicted_n": 1396,
+              "predicted_ms": 45350.873,
+              "predicted_per_token_ms": 32.509586379928315,
+              "predicted_per_second": 30.760157582854028
+            },
+            "outputCharacters": 63,
+            "schemaValid": true,
+            "outputShape": {
+              "status": "FOLLOW_UP",
+              "operation": "rank",
+              "rootKeys": [
+                "status",
+                "operation",
+                "rank"
+              ]
+            },
+            "observerParseValidationMs": 0.288
+          }
+        ],
+        "plannerCalls": 1,
+        "synthesisCalls": 0,
+        "plannerTimings": {
+          "plannerMs": 47090.13914300001,
+          "validationMs": 0.8681609999621287,
+          "capabilityMs": 0.4863640000112355
+        },
+        "outcome": "SUPPORTED",
+        "executorTimings": {
+          "capabilityMs": 11.36858900001971,
+          "executionMs": 14.819212000002153
+        },
+        "answerStatus": "SUPPORTED",
+        "answerTimings": {
+          "plannerMs": 47090.13914300001,
+          "capabilityMs": 11.854953000030946,
+          "executionMs": 14.819212000002153,
+          "synthesisMs": 0,
+          "totalMs": 47141.04274200002
+        },
+        "totalHttpMs": 47158.126,
+        "httpStatus": 200,
+        "plannerRetries": 0,
+        "synthesisRetries": 0,
+        "totalProviderCalls": 1
+      }
+    ],
+    "profile": [
+      {
+        "component": "analyst-acceptance-observer",
+        "traceId": "3e0cbd97-cf7d-4ed1-befe-496eee95e1be",
+        "events": [
+          {
+            "stage": "conversation_state_load",
+            "startMs": 21.045,
+            "endMs": 22.678,
+            "durationMs": 1.636
+          },
+          {
+            "stage": "provider_envelope_parsing",
+            "startMs": 20522.448,
+            "endMs": 20522.477,
+            "durationMs": 0.032
+          },
+          {
+            "stage": "structured_content_parsing",
+            "startMs": 20522.505,
+            "endMs": 20522.513,
+            "durationMs": 0.009
+          },
+          {
+            "stage": "planner_total",
+            "startMs": 23.932,
+            "endMs": 20524.218,
+            "durationMs": 20500.287
+          },
+          {
+            "stage": "trusted_execution",
+            "startMs": 20534.015,
+            "endMs": 20561.293,
+            "durationMs": 27.279
+          },
+          {
+            "stage": "answer_rendering",
+            "startMs": 20561.297,
+            "endMs": 20564.81,
+            "durationMs": 3.514
+          },
+          {
+            "stage": "execution_and_answer_rendering",
+            "startMs": 20533.93,
+            "endMs": 20565.152,
+            "durationMs": 31.222
+          },
+          {
+            "stage": "validation_execution_rendering",
+            "startMs": 20533.839,
+            "endMs": 20565.161,
+            "durationMs": 31.322
+          },
+          {
+            "stage": "optional_synthesis_gate",
+            "startMs": 20565.184,
+            "endMs": 20565.228,
+            "durationMs": 0.044
+          },
+          {
+            "stage": "audit_preparation",
+            "startMs": 20570.304,
+            "endMs": 20570.578,
+            "durationMs": 0.275
+          },
+          {
+            "stage": "persistence_audit_transaction",
+            "startMs": 20570.582,
+            "endMs": 20576.229,
+            "durationMs": 5.648
+          },
+          {
+            "stage": "message_orchestration",
+            "startMs": 20.868,
+            "endMs": 20576.234,
+            "durationMs": 20555.366
+          }
+        ],
+        "providerCalls": [
+          {
+            "startMs": 39.409,
+            "promptCharacters": 22789,
+            "systemCharacters": 22685,
+            "userCharacters": 104,
+            "schemaCharacters": 5533,
+            "maxTokens": 2048,
+            "temperature": 0,
+            "thinkingBudgetTokens": 512,
+            "seed": 42,
+            "stream": false,
+            "responseFormat": "json_schema",
+            "stateCharacters": 2,
+            "semanticKnowledgeCharacters": 499,
+            "catalogContextCharacters": 19938,
+            "transcriptCharacters": 0,
+            "evaluationQuestionsTransmitted": 0,
+            "headersReceivedMs": 20517.849,
+            "httpStatus": 200,
+            "completionMs": 20519.803,
+            "bodyReadMs": 1.723,
+            "finishReason": "stop",
+            "inputTokens": 5946,
+            "outputTokens": 594,
+            "reasoningTokens": "not_exposed",
+            "serverTimings": {
+              "cache_n": 5913,
+              "prompt_n": 33,
+              "prompt_ms": 1501.847,
+              "prompt_per_token_ms": 45.51051515151515,
+              "prompt_per_second": 21.972943981643937,
+              "predicted_n": 594,
+              "predicted_ms": 18883.255,
+              "predicted_per_token_ms": 31.84360033726813,
+              "predicted_per_second": 31.403484198036832
+            },
+            "outputCharacters": 234,
+            "schemaValid": true,
+            "outputShape": {
+              "status": "SUPPORTED",
+              "rootKeys": [
+                "status",
+                "intent"
+              ],
+              "analyses": [
+                {
+                  "dimension": "month",
+                  "series": [
+                    {
+                      "metric": "net_invoiced_revenue",
+                      "keys": [
+                        "metric"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            "observerParseValidationMs": 2.621
+          }
+        ],
+        "plannerCalls": 1,
+        "synthesisCalls": 0,
+        "plannerTimings": {
+          "plannerMs": 20498.112815,
+          "validationMs": 0.08976299999994808,
+          "capabilityMs": 1.566778999997041
+        },
+        "outcome": "SUPPORTED",
+        "executorTimings": {
+          "capabilityMs": 10.508429000001343,
+          "executionMs": 16.650080999999773
+        },
+        "answerStatus": "SUPPORTED",
+        "answerTimings": {
+          "plannerMs": 20498.112815,
+          "capabilityMs": 12.075207999998383,
+          "executionMs": 16.650080999999773,
+          "synthesisMs": 0,
+          "totalMs": 20549.204309
+        },
+        "totalHttpMs": 20576.717,
+        "httpStatus": 200,
+        "plannerRetries": 0,
+        "synthesisRetries": 0,
+        "totalProviderCalls": 1
+      },
+      {
+        "component": "analyst-acceptance-observer",
+        "traceId": "79140d4f-8667-4f89-92ca-91e1632de60a",
+        "events": [
+          {
+            "stage": "conversation_state_load",
+            "startMs": 20.377,
+            "endMs": 21.104,
+            "durationMs": 0.728
+          },
+          {
+            "stage": "provider_envelope_parsing",
+            "startMs": 20122.958,
+            "endMs": 20122.976,
+            "durationMs": 0.019
+          },
+          {
+            "stage": "structured_content_parsing",
+            "startMs": 20122.981,
+            "endMs": 20122.984,
+            "durationMs": 0.003
+          },
+          {
+            "stage": "planner_total",
+            "startMs": 21.218,
+            "endMs": 20123.136,
+            "durationMs": 20101.919
+          },
+          {
+            "stage": "execution_and_answer_rendering",
+            "startMs": 20128.484,
+            "endMs": 20128.517,
+            "durationMs": 0.034
+          },
+          {
+            "stage": "validation_execution_rendering",
+            "startMs": 20128.482,
+            "endMs": 20128.519,
+            "durationMs": 0.037
+          },
+          {
+            "stage": "optional_synthesis_gate",
+            "startMs": 20128.526,
+            "endMs": 20128.528,
+            "durationMs": 0.002
+          },
+          {
+            "stage": "audit_preparation",
+            "startMs": 20133.304,
+            "endMs": 20133.329,
+            "durationMs": 0.026
+          },
+          {
+            "stage": "persistence_audit_transaction",
+            "startMs": 20133.332,
+            "endMs": 20141.68,
+            "durationMs": 8.348
+          },
+          {
+            "stage": "message_orchestration",
+            "startMs": 20.373,
+            "endMs": 20141.686,
+            "durationMs": 20121.313
+          }
+        ],
+        "providerCalls": [
+          {
+            "startMs": 23.315,
+            "promptCharacters": 23266,
+            "systemCharacters": 22685,
+            "userCharacters": 581,
+            "schemaCharacters": 5533,
+            "maxTokens": 2048,
+            "temperature": 0,
+            "thinkingBudgetTokens": 512,
+            "seed": 42,
+            "stream": false,
+            "responseFormat": "json_schema",
+            "stateCharacters": 464,
+            "semanticKnowledgeCharacters": 499,
+            "catalogContextCharacters": 19938,
+            "transcriptCharacters": 0,
+            "evaluationQuestionsTransmitted": 0,
+            "headersReceivedMs": 20122.332,
+            "httpStatus": 200,
+            "completionMs": 20122.78,
+            "bodyReadMs": 0.439,
+            "finishReason": "stop",
+            "inputTokens": 6116,
+            "outputTokens": 561,
+            "reasoningTokens": "not_exposed",
+            "serverTimings": {
+              "cache_n": 5913,
+              "prompt_n": 203,
+              "prompt_ms": 1615.316,
+              "prompt_per_token_ms": 7.957221674876847,
+              "prompt_per_second": 125.67200473467729,
+              "predicted_n": 561,
+              "predicted_ms": 18139.808,
+              "predicted_per_token_ms": 32.392514285714284,
+              "predicted_per_second": 30.87133006038432
+            },
+            "outputCharacters": 114,
+            "schemaValid": true,
+            "outputShape": {
+              "status": "AMBIGUOUS",
+              "rootKeys": [
+                "status",
+                "choices"
+              ]
+            },
+            "observerParseValidationMs": 0.164
+          }
+        ],
+        "plannerCalls": 1,
+        "synthesisCalls": 0,
+        "plannerTimings": {
+          "plannerMs": 20101.537074,
+          "validationMs": 0.048509000000194646,
+          "capabilityMs": 0.06565699999919161
+        },
+        "outcome": "AMBIGUOUS",
+        "answerStatus": "AMBIGUOUS",
+        "answerTimings": {
+          "plannerMs": 20101.537074,
+          "capabilityMs": 0.06565699999919161,
+          "executionMs": 0,
+          "synthesisMs": 0,
+          "totalMs": 20112.85056
+        },
+        "totalHttpMs": 20142.135,
+        "httpStatus": 200,
+        "plannerRetries": 0,
+        "synthesisRetries": 0,
+        "totalProviderCalls": 1
+      },
+      {
+        "component": "analyst-acceptance-observer",
+        "traceId": "6ebecef6-3142-4799-8088-6b071704ce89",
+        "events": [
+          {
+            "stage": "conversation_state_load",
+            "startMs": 11.834,
+            "endMs": 12.711,
+            "durationMs": 0.878
+          },
+          {
+            "stage": "provider_envelope_parsing",
+            "startMs": 19176.52,
+            "endMs": 19176.55,
+            "durationMs": 0.031
+          },
+          {
+            "stage": "structured_content_parsing",
+            "startMs": 19176.563,
+            "endMs": 19176.567,
+            "durationMs": 0.004
+          },
+          {
+            "stage": "planner_total",
+            "startMs": 12.768,
+            "endMs": 19178.179,
+            "durationMs": 19165.412
+          },
+          {
+            "stage": "trusted_execution",
+            "startMs": 19198.477,
+            "endMs": 19220.051,
+            "durationMs": 21.575
+          },
+          {
+            "stage": "answer_rendering",
+            "startMs": 19220.054,
+            "endMs": 19220.135,
+            "durationMs": 0.082
+          },
+          {
+            "stage": "execution_and_answer_rendering",
+            "startMs": 19198.47,
+            "endMs": 19220.265,
+            "durationMs": 21.796
+          },
+          {
+            "stage": "validation_execution_rendering",
+            "startMs": 19198.455,
+            "endMs": 19220.27,
+            "durationMs": 21.815
+          },
+          {
+            "stage": "optional_synthesis_gate",
+            "startMs": 19220.279,
+            "endMs": 19220.282,
+            "durationMs": 0.003
+          },
+          {
+            "stage": "audit_preparation",
+            "startMs": 19226.079,
+            "endMs": 19226.206,
+            "durationMs": 0.127
+          },
+          {
+            "stage": "persistence_audit_transaction",
+            "startMs": 19226.21,
+            "endMs": 19236.063,
+            "durationMs": 9.854
+          },
+          {
+            "stage": "message_orchestration",
+            "startMs": 11.829,
+            "endMs": 19236.066,
+            "durationMs": 19224.237
+          }
+        ],
+        "providerCalls": [
+          {
+            "startMs": 14.175,
+            "promptCharacters": 23243,
+            "systemCharacters": 22685,
+            "userCharacters": 558,
+            "schemaCharacters": 5533,
+            "maxTokens": 2048,
+            "temperature": 0,
+            "thinkingBudgetTokens": 512,
+            "seed": 42,
+            "stream": false,
+            "responseFormat": "json_schema",
+            "stateCharacters": 464,
+            "semanticKnowledgeCharacters": 499,
+            "catalogContextCharacters": 19938,
+            "transcriptCharacters": 0,
+            "evaluationQuestionsTransmitted": 0,
+            "headersReceivedMs": 19175.909,
+            "httpStatus": 200,
+            "completionMs": 19176.301,
+            "bodyReadMs": 0.376,
+            "finishReason": "stop",
+            "inputTokens": 6112,
+            "outputTokens": 542,
+            "reasoningTokens": "not_exposed",
+            "serverTimings": {
+              "cache_n": 5913,
+              "prompt_n": 199,
+              "prompt_ms": 1725.868,
+              "prompt_per_token_ms": 8.672703517587939,
+              "prompt_per_second": 115.30429905415711,
+              "predicted_n": 542,
+              "predicted_ms": 17284.708,
+              "predicted_per_token_ms": 31.94955268022181,
+              "predicted_per_second": 31.29934274851505
+            },
+            "outputCharacters": 63,
+            "schemaValid": true,
+            "outputShape": {
+              "status": "FOLLOW_UP",
+              "operation": "rank",
+              "rootKeys": [
+                "status",
+                "operation",
+                "rank"
+              ]
+            },
+            "observerParseValidationMs": 0.204
+          }
+        ],
+        "plannerCalls": 1,
+        "synthesisCalls": 0,
+        "plannerTimings": {
+          "plannerMs": 19163.59021699999,
+          "validationMs": 0.9881569999997737,
+          "capabilityMs": 0.5752449999999953
+        },
+        "outcome": "SUPPORTED",
+        "executorTimings": {
+          "capabilityMs": 10.293304999999236,
+          "executionMs": 11.264005999997607
+        },
+        "answerStatus": "SUPPORTED",
+        "answerTimings": {
+          "plannerMs": 19163.59021699999,
+          "capabilityMs": 10.868549999999232,
+          "executionMs": 11.264005999997607,
+          "synthesisMs": 0,
+          "totalMs": 19214.138152
+        },
+        "totalHttpMs": 19236.29,
+        "httpStatus": 200,
+        "plannerRetries": 0,
+        "synthesisRetries": 0,
+        "totalProviderCalls": 1
+      },
+      {
+        "component": "analyst-acceptance-observer",
+        "traceId": "c9092d74-85c6-4184-8788-a34d17b9502e",
+        "events": [
+          {
+            "stage": "conversation_state_load",
+            "startMs": 10.028,
+            "endMs": 10.635,
+            "durationMs": 0.607
+          },
+          {
+            "stage": "provider_envelope_parsing",
+            "startMs": 27433.026,
+            "endMs": 27433.067,
+            "durationMs": 0.041
+          },
+          {
+            "stage": "structured_content_parsing",
+            "startMs": 27433.08,
+            "endMs": 27433.097,
+            "durationMs": 0.018
+          },
+          {
+            "stage": "planner_total",
+            "startMs": 10.7,
+            "endMs": 27433.318,
+            "durationMs": 27422.618
+          },
+          {
+            "stage": "execution_and_answer_rendering",
+            "startMs": 27447.482,
+            "endMs": 27447.518,
+            "durationMs": 0.037
+          },
+          {
+            "stage": "validation_execution_rendering",
+            "startMs": 27447.475,
+            "endMs": 27447.522,
+            "durationMs": 0.049
+          },
+          {
+            "stage": "optional_synthesis_gate",
+            "startMs": 27447.529,
+            "endMs": 27447.534,
+            "durationMs": 0.006
+          },
+          {
+            "stage": "audit_preparation",
+            "startMs": 27455.708,
+            "endMs": 27455.73,
+            "durationMs": 0.023
+          },
+          {
+            "stage": "persistence_audit_transaction",
+            "startMs": 27455.734,
+            "endMs": 27463.29,
+            "durationMs": 7.556
+          },
+          {
+            "stage": "message_orchestration",
+            "startMs": 10.025,
+            "endMs": 27463.297,
+            "durationMs": 27453.272
+          }
+        ],
+        "providerCalls": [
+          {
+            "startMs": 11.729,
+            "promptCharacters": 12524,
+            "systemCharacters": 12416,
+            "userCharacters": 108,
+            "schemaCharacters": 4882,
+            "maxTokens": 2048,
+            "temperature": 0,
+            "thinkingBudgetTokens": 512,
+            "seed": 42,
+            "stream": false,
+            "responseFormat": "json_schema",
+            "stateCharacters": 2,
+            "semanticKnowledgeCharacters": 499,
+            "catalogContextCharacters": 9669,
+            "transcriptCharacters": 0,
+            "evaluationQuestionsTransmitted": 0,
+            "headersReceivedMs": 27431.685,
+            "httpStatus": 200,
+            "completionMs": 27432.09,
+            "bodyReadMs": 0.388,
+            "finishReason": "stop",
+            "inputTokens": 3039,
+            "outputTokens": 687,
+            "reasoningTokens": "not_exposed",
+            "serverTimings": {
+              "cache_n": 0,
+              "prompt_n": 3039,
+              "prompt_ms": 5519.946,
+              "prompt_per_token_ms": 1.8163692003948666,
+              "prompt_per_second": 550.5488640649745,
+              "predicted_n": 687,
+              "predicted_ms": 21711.155,
+              "predicted_per_token_ms": 31.648913994169096,
+              "predicted_per_second": 31.596660794877106
+            },
+            "outputCharacters": 602,
+            "schemaValid": false,
+            "validationFailure": "Ordinal requires unrestricted ranked grouping",
+            "outputShape": {
+              "status": "SUPPORTED",
+              "rootKeys": [
+                "status",
+                "intent"
+              ],
+              "analyses": [
+                {
+                  "dimension": "undefined",
+                  "rank": 1,
+                  "series": [
+                    {
+                      "metric": "order_revenue",
+                      "keys": [
+                        "metric",
+                        "ranking"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            "observerParseValidationMs": 0.911
+          }
+        ],
+        "plannerCalls": 1,
+        "synthesisCalls": 0,
+        "plannerTimings": {
+          "plannerMs": 27422.285053000014,
+          "validationMs": 0.16896700000506826,
+          "capabilityMs": 0
+        },
+        "outcome": "INVALID_PLAN",
+        "answerStatus": "INVALID_PLAN",
+        "answerTimings": {
+          "plannerMs": 27422.285053000014,
+          "capabilityMs": 0,
+          "executionMs": 0,
+          "synthesisMs": 0,
+          "totalMs": 27445.649332
+        },
+        "totalHttpMs": 27463.59,
+        "httpStatus": 200,
+        "plannerRetries": 0,
+        "synthesisRetries": 0,
+        "totalProviderCalls": 1
+      }
+    ],
+    "corrected": [
+      {
+        "component": "analyst-acceptance-observer",
+        "traceId": "a09ed95d-d69f-478e-b4f3-f306a7917f56",
+        "events": [
+          {
+            "stage": "conversation_state_load",
+            "startMs": 23.348,
+            "endMs": 24.145,
+            "durationMs": 0.799
+          },
+          {
+            "stage": "provider_envelope_parsing",
+            "startMs": 29394.064,
+            "endMs": 29394.127,
+            "durationMs": 0.069
+          },
+          {
+            "stage": "structured_content_parsing",
+            "startMs": 29394.19,
+            "endMs": 29394.215,
+            "durationMs": 0.027
+          },
+          {
+            "stage": "planner_total",
+            "startMs": 25.31,
+            "endMs": 29402.065,
+            "durationMs": 29376.757
+          },
+          {
+            "stage": "trusted_execution",
+            "startMs": 29419.074,
+            "endMs": 31002.194,
+            "durationMs": 1583.121
+          },
+          {
+            "stage": "answer_rendering",
+            "startMs": 31002.203,
+            "endMs": 31011.934,
+            "durationMs": 9.733
+          },
+          {
+            "stage": "execution_and_answer_rendering",
+            "startMs": 29418.88,
+            "endMs": 31014.181,
+            "durationMs": 1595.303
+          },
+          {
+            "stage": "validation_execution_rendering",
+            "startMs": 29418.661,
+            "endMs": 31014.196,
+            "durationMs": 1595.537
+          },
+          {
+            "stage": "optional_synthesis_gate",
+            "startMs": 31014.26,
+            "endMs": 31014.37,
+            "durationMs": 0.111
+          },
+          {
+            "stage": "audit_preparation",
+            "startMs": 31034.118,
+            "endMs": 31035.183,
+            "durationMs": 1.067
+          },
+          {
+            "stage": "persistence_audit_transaction",
+            "startMs": 31035.193,
+            "endMs": 31052.927,
+            "durationMs": 17.736
+          },
+          {
+            "stage": "message_orchestration",
+            "startMs": 23.227,
+            "endMs": 31052.94,
+            "durationMs": 31029.714
+          }
+        ],
+        "providerCalls": [
+          {
+            "startMs": 76.065,
+            "promptCharacters": 23270,
+            "systemCharacters": 23162,
+            "userCharacters": 108,
+            "schemaCharacters": 5533,
+            "maxTokens": 2048,
+            "temperature": 0,
+            "thinkingBudgetTokens": 512,
+            "seed": 42,
+            "stream": false,
+            "responseFormat": "json_schema",
+            "stateCharacters": 2,
+            "semanticKnowledgeCharacters": 499,
+            "catalogContextCharacters": 19938,
+            "transcriptCharacters": 0,
+            "evaluationQuestionsTransmitted": 0,
+            "headersReceivedMs": 29387.103,
+            "httpStatus": 200,
+            "completionMs": 29389.282,
+            "bodyReadMs": 1.904,
+            "finishReason": "stop",
+            "inputTokens": 6029,
+            "outputTokens": 611,
+            "reasoningTokens": "not_exposed",
+            "serverTimings": {
+              "cache_n": 0,
+              "prompt_n": 6029,
+              "prompt_ms": 9619.556,
+              "prompt_per_token_ms": 1.5955475203184608,
+              "prompt_per_second": 626.7441033661013,
+              "predicted_n": 611,
+              "predicted_ms": 19553.681,
+              "predicted_per_token_ms": 32.05521475409836,
+              "predicted_per_second": 31.19617221944042
+            },
+            "outputCharacters": 304,
+            "schemaValid": true,
+            "outputShape": {
+              "status": "SUPPORTED",
+              "rootKeys": [
+                "status",
+                "intent"
+              ],
+              "analyses": [
+                {
+                  "dimension": "salesperson",
+                  "series": [
+                    {
+                      "metric": "order_revenue",
+                      "keys": [
+                        "metric",
+                        "ranking"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            "observerParseValidationMs": 4.723
+          }
+        ],
+        "plannerCalls": 1,
+        "synthesisCalls": 0,
+        "plannerTimings": {
+          "plannerMs": 29368.496494000006,
+          "validationMs": 0.1885139999940293,
+          "capabilityMs": 7.527265000011539
+        },
+        "outcome": "SUPPORTED",
+        "executorTimings": {
+          "capabilityMs": 32.583164999989094,
+          "executionMs": 1550.2550340000016
+        },
+        "answerStatus": "SUPPORTED",
+        "answerTimings": {
+          "plannerMs": 29368.496494000006,
+          "capabilityMs": 40.11043000000063,
+          "executionMs": 1550.2550340000016,
+          "synthesisMs": 0,
+          "totalMs": 31010.60561
+        },
+        "totalHttpMs": 31054.277,
+        "httpStatus": 200,
+        "plannerRetries": 0,
+        "synthesisRetries": 0,
+        "totalProviderCalls": 1
+      },
+      {
+        "component": "analyst-acceptance-observer",
+        "traceId": "a3e40d90-1d33-4153-9ea2-8e437da45cb9",
+        "events": [
+          {
+            "stage": "conversation_state_load",
+            "startMs": 19.65,
+            "endMs": 20.606,
+            "durationMs": 0.958
+          },
+          {
+            "stage": "provider_envelope_parsing",
+            "startMs": 20599.754,
+            "endMs": 20599.785,
+            "durationMs": 0.032
+          },
+          {
+            "stage": "structured_content_parsing",
+            "startMs": 20599.795,
+            "endMs": 20599.798,
+            "durationMs": 0.004
+          },
+          {
+            "stage": "planner_total",
+            "startMs": 20.743,
+            "endMs": 20601.158,
+            "durationMs": 20580.416
+          },
+          {
+            "stage": "trusted_execution",
+            "startMs": 20620.108,
+            "endMs": 20746.204,
+            "durationMs": 126.096
+          },
+          {
+            "stage": "answer_rendering",
+            "startMs": 20746.206,
+            "endMs": 20746.493,
+            "durationMs": 0.287
+          },
+          {
+            "stage": "execution_and_answer_rendering",
+            "startMs": 20620.08,
+            "endMs": 20746.643,
+            "durationMs": 126.563
+          },
+          {
+            "stage": "validation_execution_rendering",
+            "startMs": 20619.387,
+            "endMs": 20746.646,
+            "durationMs": 127.26
+          },
+          {
+            "stage": "optional_synthesis_gate",
+            "startMs": 20746.651,
+            "endMs": 20746.653,
+            "durationMs": 0.002
+          },
+          {
+            "stage": "audit_preparation",
+            "startMs": 20751.602,
+            "endMs": 20751.7,
+            "durationMs": 0.099
+          },
+          {
+            "stage": "persistence_audit_transaction",
+            "startMs": 20751.704,
+            "endMs": 20759.085,
+            "durationMs": 7.382
+          },
+          {
+            "stage": "message_orchestration",
+            "startMs": 19.646,
+            "endMs": 20759.091,
+            "durationMs": 20739.446
+          }
+        ],
+        "providerCalls": [
+          {
+            "startMs": 24.886,
+            "promptCharacters": 24876,
+            "systemCharacters": 23162,
+            "userCharacters": 1714,
+            "schemaCharacters": 5533,
+            "maxTokens": 2048,
+            "temperature": 0,
+            "thinkingBudgetTokens": 512,
+            "seed": 42,
+            "stream": false,
+            "responseFormat": "json_schema",
+            "stateCharacters": 1620,
+            "semanticKnowledgeCharacters": 499,
+            "catalogContextCharacters": 19938,
+            "transcriptCharacters": 0,
+            "evaluationQuestionsTransmitted": 0,
+            "headersReceivedMs": 20598.881,
+            "httpStatus": 200,
+            "completionMs": 20599.529,
+            "bodyReadMs": 0.635,
+            "finishReason": "stop",
+            "inputTokens": 6870,
+            "outputTokens": 542,
+            "reasoningTokens": "not_exposed",
+            "serverTimings": {
+              "cache_n": 5996,
+              "prompt_n": 874,
+              "prompt_ms": 2667.038,
+              "prompt_per_token_ms": 3.0515308924485125,
+              "prompt_per_second": 327.70436716687203,
+              "predicted_n": 542,
+              "predicted_ms": 17750.094,
+              "predicted_per_token_ms": 32.80978558225509,
+              "predicted_per_second": 30.478711831047203
+            },
+            "outputCharacters": 63,
+            "schemaValid": true,
+            "outputShape": {
+              "status": "FOLLOW_UP",
+              "operation": "rank",
+              "rootKeys": [
+                "status",
+                "operation",
+                "rank"
+              ]
+            },
+            "observerParseValidationMs": 0.207
+          }
+        ],
+        "plannerCalls": 1,
+        "synthesisCalls": 0,
+        "plannerTimings": {
+          "plannerMs": 20578.662738999992,
+          "validationMs": 0.9075920000032056,
+          "capabilityMs": 0.3883100000093691
+        },
+        "outcome": "SUPPORTED",
+        "executorTimings": {
+          "capabilityMs": 15.413698999996996,
+          "executionMs": 110.6607119999826
+        },
+        "answerStatus": "SUPPORTED",
+        "answerTimings": {
+          "plannerMs": 20578.662738999992,
+          "capabilityMs": 15.802009000006365,
+          "executionMs": 110.6607119999826,
+          "synthesisMs": 0,
+          "totalMs": 20731.833201999994
+        },
+        "totalHttpMs": 20759.492,
+        "httpStatus": 200,
+        "plannerRetries": 0,
+        "synthesisRetries": 0,
+        "totalProviderCalls": 1
+      },
+      {
+        "component": "analyst-acceptance-observer",
+        "traceId": "6a7ca7d2-a6ec-4248-860a-703a55bd97b1",
+        "events": [
+          {
+            "stage": "conversation_state_load",
+            "startMs": 11.003,
+            "endMs": 11.58,
+            "durationMs": 0.578
+          },
+          {
+            "stage": "provider_envelope_parsing",
+            "startMs": 25893.573,
+            "endMs": 25893.616,
+            "durationMs": 0.044
+          },
+          {
+            "stage": "structured_content_parsing",
+            "startMs": 25893.634,
+            "endMs": 25893.648,
+            "durationMs": 0.015
+          },
+          {
+            "stage": "planner_total",
+            "startMs": 11.632,
+            "endMs": 25895.3,
+            "durationMs": 25883.669
+          },
+          {
+            "stage": "trusted_execution",
+            "startMs": 25915.835,
+            "endMs": 25982.906,
+            "durationMs": 67.072
+          },
+          {
+            "stage": "answer_rendering",
+            "startMs": 25982.911,
+            "endMs": 25983.226,
+            "durationMs": 0.316
+          },
+          {
+            "stage": "execution_and_answer_rendering",
+            "startMs": 25915.824,
+            "endMs": 25983.364,
+            "durationMs": 67.54
+          },
+          {
+            "stage": "validation_execution_rendering",
+            "startMs": 25915.814,
+            "endMs": 25983.367,
+            "durationMs": 67.552
+          },
+          {
+            "stage": "optional_synthesis_gate",
+            "startMs": 25983.372,
+            "endMs": 25983.375,
+            "durationMs": 0.003
+          },
+          {
+            "stage": "audit_preparation",
+            "startMs": 25988.102,
+            "endMs": 25988.225,
+            "durationMs": 0.124
+          },
+          {
+            "stage": "persistence_audit_transaction",
+            "startMs": 25988.229,
+            "endMs": 25993.402,
+            "durationMs": 5.173
+          },
+          {
+            "stage": "message_orchestration",
+            "startMs": 10.999,
+            "endMs": 25993.406,
+            "durationMs": 25982.407
+          }
+        ],
+        "providerCalls": [
+          {
+            "startMs": 12.654,
+            "promptCharacters": 13001,
+            "systemCharacters": 12893,
+            "userCharacters": 108,
+            "schemaCharacters": 4882,
+            "maxTokens": 2048,
+            "temperature": 0,
+            "thinkingBudgetTokens": 512,
+            "seed": 42,
+            "stream": false,
+            "responseFormat": "json_schema",
+            "stateCharacters": 2,
+            "semanticKnowledgeCharacters": 499,
+            "catalogContextCharacters": 9669,
+            "transcriptCharacters": 0,
+            "evaluationQuestionsTransmitted": 0,
+            "headersReceivedMs": 25892.263,
+            "httpStatus": 200,
+            "completionMs": 25893.165,
+            "bodyReadMs": 0.882,
+            "finishReason": "stop",
+            "inputTokens": 3122,
+            "outputTokens": 612,
+            "reasoningTokens": "not_exposed",
+            "serverTimings": {
+              "cache_n": 0,
+              "prompt_n": 3122,
+              "prompt_ms": 4591.882,
+              "prompt_per_token_ms": 1.4708142216527866,
+              "prompt_per_second": 679.8955199632744,
+              "predicted_n": 612,
+              "predicted_ms": 19090.72,
+              "predicted_per_token_ms": 31.24504091653028,
+              "predicted_per_second": 32.00507890744822
+            },
+            "outputCharacters": 304,
+            "schemaValid": true,
+            "outputShape": {
+              "status": "SUPPORTED",
+              "rootKeys": [
+                "status",
+                "intent"
+              ],
+              "analyses": [
+                {
+                  "dimension": "salesperson",
+                  "series": [
+                    {
+                      "metric": "order_revenue",
+                      "keys": [
+                        "metric",
+                        "ranking"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            "observerParseValidationMs": 0.385
+          }
+        ],
+        "plannerCalls": 1,
+        "synthesisCalls": 0,
+        "plannerTimings": {
+          "plannerMs": 25881.877397999997,
+          "validationMs": 0.3485860000073444,
+          "capabilityMs": 1.2407360000070184
+        },
+        "outcome": "SUPPORTED",
+        "executorTimings": {
+          "capabilityMs": 11.327304999984335,
+          "executionMs": 55.732013000000734
+        },
+        "answerStatus": "SUPPORTED",
+        "answerTimings": {
+          "plannerMs": 25881.877397999997,
+          "capabilityMs": 12.568040999991354,
+          "executionMs": 55.732013000000734,
+          "synthesisMs": 0,
+          "totalMs": 25977.062524999987
+        },
+        "totalHttpMs": 25993.658,
+        "httpStatus": 200,
+        "plannerRetries": 0,
+        "synthesisRetries": 0,
+        "totalProviderCalls": 1
+      },
+      {
+        "component": "analyst-acceptance-observer",
+        "traceId": "123317e6-8df2-4177-9749-6fecd288db1b",
+        "events": [
+          {
+            "stage": "conversation_state_load",
+            "startMs": 11.193,
+            "endMs": 11.709,
+            "durationMs": 0.517
+          },
+          {
+            "stage": "provider_envelope_parsing",
+            "startMs": 32482.22,
+            "endMs": 32482.266,
+            "durationMs": 0.047
+          },
+          {
+            "stage": "structured_content_parsing",
+            "startMs": 32482.28,
+            "endMs": 32482.295,
+            "durationMs": 0.015
+          },
+          {
+            "stage": "planner_total",
+            "startMs": 11.758,
+            "endMs": 32483.918,
+            "durationMs": 32472.161
+          },
+          {
+            "stage": "trusted_execution",
+            "startMs": 32552.16,
+            "endMs": 32922.577,
+            "durationMs": 370.418
+          },
+          {
+            "stage": "answer_rendering",
+            "startMs": 32922.594,
+            "endMs": 32990.206,
+            "durationMs": 67.623
+          },
+          {
+            "stage": "execution_and_answer_rendering",
+            "startMs": 32552.143,
+            "endMs": 32991.147,
+            "durationMs": 439.004
+          },
+          {
+            "stage": "validation_execution_rendering",
+            "startMs": 32552.123,
+            "endMs": 32991.154,
+            "durationMs": 439.031
+          },
+          {
+            "stage": "optional_synthesis_gate",
+            "startMs": 32991.163,
+            "endMs": 32991.171,
+            "durationMs": 0.153
+          },
+          {
+            "stage": "audit_preparation",
+            "startMs": 33022.578,
+            "endMs": 33023.297,
+            "durationMs": 0.72
+          },
+          {
+            "stage": "persistence_audit_transaction",
+            "startMs": 33023.303,
+            "endMs": 33038.168,
+            "durationMs": 14.865
+          },
+          {
+            "stage": "message_orchestration",
+            "startMs": 11.189,
+            "endMs": 33038.174,
+            "durationMs": 33026.985
+          }
+        ],
+        "providerCalls": [
+          {
+            "startMs": 13.478,
+            "promptCharacters": 24925,
+            "systemCharacters": 23162,
+            "userCharacters": 1763,
+            "schemaCharacters": 5533,
+            "maxTokens": 2048,
+            "temperature": 0,
+            "thinkingBudgetTokens": 512,
+            "seed": 42,
+            "stream": false,
+            "responseFormat": "json_schema",
+            "stateCharacters": 1651,
+            "semanticKnowledgeCharacters": 499,
+            "catalogContextCharacters": 19938,
+            "transcriptCharacters": 0,
+            "evaluationQuestionsTransmitted": 0,
+            "headersReceivedMs": 32472.446,
+            "httpStatus": 200,
+            "completionMs": 32475.904,
+            "bodyReadMs": 3.302,
+            "finishReason": "stop",
+            "inputTokens": 6904,
+            "outputTokens": 640,
+            "reasoningTokens": "not_exposed",
+            "serverTimings": {
+              "cache_n": 0,
+              "prompt_n": 6904,
+              "prompt_ms": 10880.033,
+              "prompt_per_token_ms": 1.5759028099652375,
+              "prompt_per_second": 634.5568988623472,
+              "predicted_n": 640,
+              "predicted_ms": 21366.877,
+              "predicted_per_token_ms": 33.43799217527387,
+              "predicted_per_second": 29.906101860370143
+            },
+            "outputCharacters": 327,
+            "schemaValid": true,
+            "outputShape": {
+              "status": "SUPPORTED",
+              "rootKeys": [
+                "status",
+                "intent"
+              ],
+              "analyses": [
+                {
+                  "dimension": "customer",
+                  "series": [
+                    {
+                      "metric": "net_aged_receivable",
+                      "keys": [
+                        "metric"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            "observerParseValidationMs": 6.263
+          }
+        ],
+        "plannerCalls": 1,
+        "synthesisCalls": 0,
+        "plannerTimings": {
+          "plannerMs": 32470.37989500002,
+          "validationMs": 0.18149699998321012,
+          "capabilityMs": 1.0204720000037923
+        },
+        "outcome": "SUPPORTED",
+        "executorTimings": {
+          "capabilityMs": 62.620410000003176,
+          "executionMs": 307.72917400000733
+        },
+        "answerStatus": "SUPPORTED",
+        "answerTimings": {
+          "plannerMs": 32470.37989500002,
+          "capabilityMs": 63.64088200000697,
+          "executionMs": 307.72917400000733,
+          "synthesisMs": 0,
+          "totalMs": 33011.01238600002
+        },
+        "totalHttpMs": 33038.684,
+        "httpStatus": 200,
+        "plannerRetries": 0,
+        "synthesisRetries": 0,
+        "totalProviderCalls": 1
+      }
+    ],
+    "final": [
+      {
+        "component": "analyst-acceptance-observer",
+        "traceId": "d0616482-0845-41ef-b353-62b3429972af",
+        "route": "ask_business",
+        "events": [
+          {
+            "stage": "conversation_state_load",
+            "startMs": 16.287,
+            "endMs": 17.818,
+            "durationMs": 1.534
+          },
+          {
+            "stage": "provider_envelope_parsing",
+            "startMs": 30524.776,
+            "endMs": 30524.808,
+            "durationMs": 0.035
+          },
+          {
+            "stage": "structured_content_parsing",
+            "startMs": 30524.835,
+            "endMs": 30524.847,
+            "durationMs": 0.013
+          },
+          {
+            "stage": "planner_total",
+            "startMs": 19.019,
+            "endMs": 30524.978,
+            "durationMs": 30505.959
+          },
+          {
+            "stage": "execution_and_answer_rendering",
+            "startMs": 30531.197,
+            "endMs": 30531.406,
+            "durationMs": 0.21
+          },
+          {
+            "stage": "validation_execution_rendering",
+            "startMs": 30531.067,
+            "endMs": 30531.411,
+            "durationMs": 0.344
+          },
+          {
+            "stage": "optional_synthesis_gate",
+            "startMs": 30531.44,
+            "endMs": 30531.482,
+            "durationMs": 0.042
+          },
+          {
+            "stage": "audit_preparation",
+            "startMs": 30538.858,
+            "endMs": 30538.997,
+            "durationMs": 0.139
+          },
+          {
+            "stage": "persistence_audit_transaction",
+            "startMs": 30539.015,
+            "endMs": 30548.514,
+            "durationMs": 9.499
+          },
+          {
+            "stage": "message_orchestration",
+            "startMs": 16.152,
+            "endMs": 30548.52,
+            "durationMs": 30532.368
+          }
+        ],
+        "providerCalls": [
+          {
+            "startMs": 62.853,
+            "promptCharacters": 23603,
+            "systemCharacters": 23495,
+            "userCharacters": 108,
+            "schemaCharacters": 5533,
+            "maxTokens": 2048,
+            "temperature": 0,
+            "thinkingBudgetTokens": 512,
+            "seed": 42,
+            "stream": false,
+            "responseFormat": "json_schema",
+            "stateCharacters": 2,
+            "semanticKnowledgeCharacters": 499,
+            "catalogContextCharacters": 19938,
+            "transcriptCharacters": 0,
+            "evaluationQuestionsTransmitted": 0,
+            "headersReceivedMs": 30521.539,
+            "httpStatus": 200,
+            "completionMs": 30522.455,
+            "bodyReadMs": 0.783,
+            "finishReason": "stop",
+            "inputTokens": 6092,
+            "outputTokens": 635,
+            "reasoningTokens": "not_exposed",
+            "serverTimings": {
+              "cache_n": 0,
+              "prompt_n": 6092,
+              "prompt_ms": 9713.798,
+              "prompt_per_token_ms": 1.5945170715692714,
+              "prompt_per_second": 627.1491336344445,
+              "predicted_n": 635,
+              "predicted_ms": 20567.791,
+              "predicted_per_token_ms": 32.44131072555205,
+              "predicted_per_second": 30.824895099332736
+            },
+            "outputCharacters": 370,
+            "schemaValid": false,
+            "validationFailure": "Invalid analytics Top-N anchor",
+            "outputShape": {
+              "status": "SUPPORTED",
+              "rootKeys": [
+                "status",
+                "intent"
+              ],
+              "analyses": [
+                {
+                  "dimension": "undefined",
+                  "series": [
+                    {
+                      "metric": "order_revenue",
+                      "keys": [
+                        "metric",
+                        "topNLimit"
+                      ],
+                      "topNLimit": 1
+                    }
+                  ]
+                }
+              ]
+            },
+            "observerParseValidationMs": 2.292
+          }
+        ],
+        "plannerCalls": 1,
+        "synthesisCalls": 0,
+        "plannerTimings": {
+          "plannerMs": 30505.336753000003,
+          "validationMs": 0.07442299999820534,
+          "capabilityMs": 0
+        },
+        "outcome": "INVALID_PLAN",
+        "answerStatus": "INVALID_PLAN",
+        "answerTimings": {
+          "plannerMs": 30505.336753000003,
+          "capabilityMs": 0,
+          "executionMs": 0,
+          "synthesisMs": 0,
+          "totalMs": 30522.438787
+        },
+        "totalHttpMs": 30548.935,
+        "httpStatus": 200,
+        "plannerRetries": 0,
+        "synthesisRetries": 0,
+        "totalProviderCalls": 1
+      },
+      {
+        "component": "analyst-acceptance-observer",
+        "traceId": "33a707b2-1a1c-4efb-8f19-7aeb41766ea6",
+        "route": "ask_business",
+        "events": [
+          {
+            "stage": "conversation_state_load",
+            "startMs": 21.44,
+            "endMs": 22.616,
+            "durationMs": 1.177
+          },
+          {
+            "stage": "provider_envelope_parsing",
+            "startMs": 21533.732,
+            "endMs": 21533.753,
+            "durationMs": 0.021
+          },
+          {
+            "stage": "structured_content_parsing",
+            "startMs": 21533.758,
+            "endMs": 21533.764,
+            "durationMs": 0.006
+          },
+          {
+            "stage": "planner_total",
+            "startMs": 22.761,
+            "endMs": 21535.264,
+            "durationMs": 21512.504
+          },
+          {
+            "stage": "trusted_execution",
+            "startMs": 21540.003,
+            "endMs": 21800.812,
+            "durationMs": 260.81
+          },
+          {
+            "stage": "answer_rendering",
+            "startMs": 21800.818,
+            "endMs": 21804.787,
+            "durationMs": 3.971
+          },
+          {
+            "stage": "execution_and_answer_rendering",
+            "startMs": 21539.995,
+            "endMs": 21805.146,
+            "durationMs": 265.152
+          },
+          {
+            "stage": "validation_execution_rendering",
+            "startMs": 21539.946,
+            "endMs": 21805.15,
+            "durationMs": 265.205
+          },
+          {
+            "stage": "optional_synthesis_gate",
+            "startMs": 21805.156,
+            "endMs": 21805.158,
+            "durationMs": 0.003
+          },
+          {
+            "stage": "audit_preparation",
+            "startMs": 21809.941,
+            "endMs": 21810.371,
+            "durationMs": 0.431
+          },
+          {
+            "stage": "persistence_audit_transaction",
+            "startMs": 21810.374,
+            "endMs": 21818.086,
+            "durationMs": 7.712
+          },
+          {
+            "stage": "message_orchestration",
+            "startMs": 21.434,
+            "endMs": 21818.091,
+            "durationMs": 21796.657
+          }
+        ],
+        "providerCalls": [
+          {
+            "startMs": 25.371,
+            "promptCharacters": 23613,
+            "systemCharacters": 23495,
+            "userCharacters": 118,
+            "schemaCharacters": 5533,
+            "maxTokens": 2048,
+            "temperature": 0,
+            "thinkingBudgetTokens": 512,
+            "seed": 42,
+            "stream": false,
+            "responseFormat": "json_schema",
+            "stateCharacters": 2,
+            "semanticKnowledgeCharacters": 499,
+            "catalogContextCharacters": 19938,
+            "transcriptCharacters": 0,
+            "evaluationQuestionsTransmitted": 0,
+            "headersReceivedMs": 21533.266,
+            "httpStatus": 200,
+            "completionMs": 21533.51,
+            "bodyReadMs": 0.235,
+            "finishReason": "stop",
+            "inputTokens": 6095,
+            "outputTokens": 625,
+            "reasoningTokens": "not_exposed",
+            "serverTimings": {
+              "cache_n": 6059,
+              "prompt_n": 36,
+              "prompt_ms": 1343.266,
+              "prompt_per_token_ms": 37.31294444444445,
+              "prompt_per_second": 26.80035078681363,
+              "predicted_n": 625,
+              "predicted_ms": 19989.019,
+              "predicted_per_token_ms": 32.0336842948718,
+              "predicted_per_second": 31.217139770591043
+            },
+            "outputCharacters": 339,
+            "schemaValid": true,
+            "outputShape": {
+              "status": "SUPPORTED",
+              "rootKeys": [
+                "status",
+                "intent"
+              ],
+              "analyses": [
+                {
+                  "dimension": "salesperson",
+                  "series": [
+                    {
+                      "metric": "order_revenue",
+                      "keys": [
+                        "metric",
+                        "topNDirection",
+                        "topNLimit"
+                      ],
+                      "topNDirection": "top",
+                      "topNLimit": 1
+                    }
+                  ]
+                }
+              ]
+            },
+            "observerParseValidationMs": 0.209
+          }
+        ],
+        "plannerCalls": 1,
+        "synthesisCalls": 0,
+        "plannerTimings": {
+          "plannerMs": 21510.51058999999,
+          "validationMs": 0.17381399997975677,
+          "capabilityMs": 1.2765159999835305
+        },
+        "outcome": "SUPPORTED",
+        "executorTimings": {
+          "capabilityMs": 8.536773999978323,
+          "executionMs": 252.1115989999962
+        },
+        "answerStatus": "SUPPORTED",
+        "answerTimings": {
+          "plannerMs": 21510.51058999999,
+          "capabilityMs": 9.813289999961853,
+          "executionMs": 252.1115989999962,
+          "synthesisMs": 0,
+          "totalMs": 21788.428730999993
+        },
+        "totalHttpMs": 21818.375,
+        "httpStatus": 200,
+        "plannerRetries": 0,
+        "synthesisRetries": 0,
+        "totalProviderCalls": 1
+      },
+      {
+        "component": "analyst-acceptance-observer",
+        "traceId": "25fe5880-349b-49bf-b5f6-dd6a8bd002f4",
+        "route": "ask_business",
+        "events": [
+          {
+            "stage": "conversation_state_load",
+            "startMs": 21.453,
+            "endMs": 22.576,
+            "durationMs": 1.123
+          },
+          {
+            "stage": "provider_envelope_parsing",
+            "startMs": 19255.628,
+            "endMs": 19255.653,
+            "durationMs": 0.026
+          },
+          {
+            "stage": "structured_content_parsing",
+            "startMs": 19255.665,
+            "endMs": 19255.668,
+            "durationMs": 0.004
+          },
+          {
+            "stage": "planner_total",
+            "startMs": 22.658,
+            "endMs": 19257.247,
+            "durationMs": 19234.59
+          },
+          {
+            "stage": "trusted_execution",
+            "startMs": 19269.624,
+            "endMs": 19388.14,
+            "durationMs": 118.517
+          },
+          {
+            "stage": "answer_rendering",
+            "startMs": 19388.146,
+            "endMs": 19388.452,
+            "durationMs": 0.308
+          },
+          {
+            "stage": "execution_and_answer_rendering",
+            "startMs": 19269.614,
+            "endMs": 19388.614,
+            "durationMs": 119.001
+          },
+          {
+            "stage": "validation_execution_rendering",
+            "startMs": 19269.592,
+            "endMs": 19388.633,
+            "durationMs": 119.042
+          },
+          {
+            "stage": "optional_synthesis_gate",
+            "startMs": 19388.639,
+            "endMs": 19388.642,
+            "durationMs": 0.003
+          },
+          {
+            "stage": "audit_preparation",
+            "startMs": 19393.217,
+            "endMs": 19393.325,
+            "durationMs": 0.109
+          },
+          {
+            "stage": "persistence_audit_transaction",
+            "startMs": 19393.329,
+            "endMs": 19399.617,
+            "durationMs": 6.288
+          },
+          {
+            "stage": "message_orchestration",
+            "startMs": 21.449,
+            "endMs": 19399.623,
+            "durationMs": 19378.174
+          }
+        ],
+        "providerCalls": [
+          {
+            "startMs": 24.593,
+            "promptCharacters": 24150,
+            "systemCharacters": 23495,
+            "userCharacters": 655,
+            "schemaCharacters": 5533,
+            "maxTokens": 2048,
+            "temperature": 0,
+            "thinkingBudgetTokens": 512,
+            "seed": 42,
+            "stream": false,
+            "responseFormat": "json_schema",
+            "stateCharacters": 561,
+            "semanticKnowledgeCharacters": 499,
+            "catalogContextCharacters": 19938,
+            "transcriptCharacters": 0,
+            "evaluationQuestionsTransmitted": 0,
+            "headersReceivedMs": 19254.897,
+            "httpStatus": 200,
+            "completionMs": 19255.328,
+            "bodyReadMs": 0.413,
+            "finishReason": "stop",
+            "inputTokens": 6290,
+            "outputTokens": 542,
+            "reasoningTokens": "not_exposed",
+            "serverTimings": {
+              "cache_n": 6059,
+              "prompt_n": 231,
+              "prompt_ms": 1634.87,
+              "prompt_per_token_ms": 7.077359307359307,
+              "prompt_per_second": 141.29563818529914,
+              "predicted_n": 542,
+              "predicted_ms": 17389.031,
+              "predicted_per_token_ms": 32.14238632162662,
+              "predicted_per_second": 31.11156682623661
+            },
+            "outputCharacters": 63,
+            "schemaValid": true,
+            "outputShape": {
+              "status": "FOLLOW_UP",
+              "operation": "rank",
+              "rootKeys": [
+                "status",
+                "operation",
+                "rank"
+              ]
+            },
+            "observerParseValidationMs": 0.285
+          }
+        ],
+        "plannerCalls": 1,
+        "synthesisCalls": 0,
+        "plannerTimings": {
+          "plannerMs": 19232.845230000006,
+          "validationMs": 1.1056059999973513,
+          "capabilityMs": 0.398763000004692
+        },
+        "outcome": "SUPPORTED",
+        "executorTimings": {
+          "capabilityMs": 11.370441999984905,
+          "executionMs": 107.13283000001684
+        },
+        "answerStatus": "SUPPORTED",
+        "answerTimings": {
+          "plannerMs": 19232.845230000006,
+          "capabilityMs": 11.769204999989597,
+          "executionMs": 107.13283000001684,
+          "synthesisMs": 0,
+          "totalMs": 19371.67470099998
+        },
+        "totalHttpMs": 19399.95,
+        "httpStatus": 200,
+        "plannerRetries": 0,
+        "synthesisRetries": 0,
+        "totalProviderCalls": 1
+      },
+      {
+        "component": "analyst-acceptance-observer",
+        "traceId": "82a76bfc-54c8-4fe3-9ac8-e3a001d9b832",
+        "route": "ask_business",
+        "events": [
+          {
+            "stage": "conversation_state_load",
+            "startMs": 9.733,
+            "endMs": 10.31,
+            "durationMs": 0.578
+          },
+          {
+            "stage": "provider_envelope_parsing",
+            "startMs": 19865.312,
+            "endMs": 19865.355,
+            "durationMs": 0.045
+          },
+          {
+            "stage": "structured_content_parsing",
+            "startMs": 19865.372,
+            "endMs": 19865.379,
+            "durationMs": 0.007
+          },
+          {
+            "stage": "planner_total",
+            "startMs": 10.364,
+            "endMs": 19866.999,
+            "durationMs": 19856.637
+          },
+          {
+            "stage": "trusted_execution",
+            "startMs": 19886.229,
+            "endMs": 20216.862,
+            "durationMs": 330.634
+          },
+          {
+            "stage": "answer_rendering",
+            "startMs": 20216.869,
+            "endMs": 20217.533,
+            "durationMs": 0.665
+          },
+          {
+            "stage": "execution_and_answer_rendering",
+            "startMs": 19886.216,
+            "endMs": 20217.792,
+            "durationMs": 331.577
+          },
+          {
+            "stage": "validation_execution_rendering",
+            "startMs": 19886.2,
+            "endMs": 20217.797,
+            "durationMs": 331.597
+          },
+          {
+            "stage": "optional_synthesis_gate",
+            "startMs": 20217.804,
+            "endMs": 20217.808,
+            "durationMs": 0.004
+          },
+          {
+            "stage": "audit_preparation",
+            "startMs": 20224.32,
+            "endMs": 20224.46,
+            "durationMs": 0.141
+          },
+          {
+            "stage": "persistence_audit_transaction",
+            "startMs": 20224.466,
+            "endMs": 20230.354,
+            "durationMs": 5.889
+          },
+          {
+            "stage": "message_orchestration",
+            "startMs": 9.728,
+            "endMs": 20230.36,
+            "durationMs": 20220.632
+          }
+        ],
+        "providerCalls": [
+          {
+            "startMs": 12.326,
+            "promptCharacters": 24206,
+            "systemCharacters": 23495,
+            "userCharacters": 711,
+            "schemaCharacters": 5533,
+            "maxTokens": 2048,
+            "temperature": 0,
+            "thinkingBudgetTokens": 512,
+            "seed": 42,
+            "stream": false,
+            "responseFormat": "json_schema",
+            "stateCharacters": 598,
+            "semanticKnowledgeCharacters": 499,
+            "catalogContextCharacters": 19938,
+            "transcriptCharacters": 0,
+            "evaluationQuestionsTransmitted": 0,
+            "headersReceivedMs": 19864.537,
+            "httpStatus": 200,
+            "completionMs": 19864.979,
+            "bodyReadMs": 0.426,
+            "finishReason": "stop",
+            "inputTokens": 6328,
+            "outputTokens": 557,
+            "reasoningTokens": "not_exposed",
+            "serverTimings": {
+              "cache_n": 6059,
+              "prompt_n": 269,
+              "prompt_ms": 1835.137,
+              "prompt_per_token_ms": 6.82207063197026,
+              "prompt_per_second": 146.58306164607873,
+              "predicted_n": 557,
+              "predicted_ms": 17795.027,
+              "predicted_per_token_ms": 32.00544424460431,
+              "predicted_per_second": 31.24468425925963
+            },
+            "outputCharacters": 109,
+            "schemaValid": true,
+            "outputShape": {
+              "status": "FOLLOW_UP",
+              "operation": "compare_entities",
+              "rootKeys": [
+                "status",
+                "operation",
+                "count",
+                "datePreset"
+              ]
+            },
+            "observerParseValidationMs": 0.308
+          }
+        ],
+        "plannerCalls": 1,
+        "synthesisCalls": 0,
+        "plannerTimings": {
+          "plannerMs": 19854.86749200002,
+          "validationMs": 0.32359400001587346,
+          "capabilityMs": 1.2362909999792464
+        },
+        "outcome": "SUPPORTED",
+        "executorTimings": {
+          "capabilityMs": 13.237982000020565,
+          "executionMs": 317.37614500001655
+        },
+        "answerStatus": "PARTIAL_COVERAGE",
+        "answerTimings": {
+          "plannerMs": 19854.86749200002,
+          "capabilityMs": 14.474272999999812,
+          "executionMs": 317.37614500001655,
+          "synthesisMs": 0,
+          "totalMs": 20214.468188
+        },
+        "totalHttpMs": 20230.664,
+        "httpStatus": 200,
+        "plannerRetries": 0,
+        "synthesisRetries": 0,
+        "totalProviderCalls": 1
+      }
+    ],
+    "additional": [
+      {
+        "component": "analyst-acceptance-observer",
+        "traceId": "bb83e747-e096-4ab2-aa26-13fc64d06c88",
+        "route": "ask_business",
+        "events": [
+          {
+            "stage": "conversation_state_load",
+            "startMs": 12.855,
+            "endMs": 14.2,
+            "durationMs": 1.347
+          },
+          {
+            "stage": "provider_envelope_parsing",
+            "startMs": 20730.899,
+            "endMs": 20730.947,
+            "durationMs": 0.053
+          },
+          {
+            "stage": "structured_content_parsing",
+            "startMs": 20731,
+            "endMs": 20731.019,
+            "durationMs": 0.02
+          },
+          {
+            "stage": "planner_total",
+            "startMs": 15.236,
+            "endMs": 20734.103,
+            "durationMs": 20718.868
+          },
+          {
+            "stage": "trusted_execution",
+            "startMs": 20747.485,
+            "endMs": 20846.989,
+            "durationMs": 99.504
+          },
+          {
+            "stage": "answer_rendering",
+            "startMs": 20846.993,
+            "endMs": 20850.296,
+            "durationMs": 3.304
+          },
+          {
+            "stage": "execution_and_answer_rendering",
+            "startMs": 20747.374,
+            "endMs": 20850.641,
+            "durationMs": 103.267
+          },
+          {
+            "stage": "validation_execution_rendering",
+            "startMs": 20747.269,
+            "endMs": 20850.648,
+            "durationMs": 103.379
+          },
+          {
+            "stage": "optional_synthesis_gate",
+            "startMs": 20850.669,
+            "endMs": 20850.706,
+            "durationMs": 0.038
+          },
+          {
+            "stage": "audit_preparation",
+            "startMs": 20856.694,
+            "endMs": 20857.035,
+            "durationMs": 0.342
+          },
+          {
+            "stage": "persistence_audit_transaction",
+            "startMs": 20857.039,
+            "endMs": 20862.819,
+            "durationMs": 5.781
+          },
+          {
+            "stage": "message_orchestration",
+            "startMs": 12.742,
+            "endMs": 20862.826,
+            "durationMs": 20850.085
+          }
+        ],
+        "providerCalls": [
+          {
+            "startMs": 27.817,
+            "promptCharacters": 13334,
+            "systemCharacters": 13226,
+            "userCharacters": 108,
+            "schemaCharacters": 4882,
+            "maxTokens": 2048,
+            "temperature": 0,
+            "thinkingBudgetTokens": 512,
+            "seed": 42,
+            "stream": false,
+            "responseFormat": "json_schema",
+            "stateCharacters": 2,
+            "semanticKnowledgeCharacters": 499,
+            "catalogContextCharacters": 9669,
+            "transcriptCharacters": 0,
+            "evaluationQuestionsTransmitted": 0,
+            "headersReceivedMs": 20725.305,
+            "httpStatus": 200,
+            "completionMs": 20727.054,
+            "bodyReadMs": 1.425,
+            "finishReason": "stop",
+            "inputTokens": 3185,
+            "outputTokens": 618,
+            "reasoningTokens": "not_exposed",
+            "serverTimings": {
+              "cache_n": 3152,
+              "prompt_n": 33,
+              "prompt_ms": 1469.528,
+              "prompt_per_token_ms": 44.531151515151514,
+              "prompt_per_second": 22.456190014753037,
+              "predicted_n": 618,
+              "predicted_ms": 19169.803,
+              "predicted_per_token_ms": 31.069372771474878,
+              "predicted_per_second": 32.1860375925616
+            },
+            "outputCharacters": 323,
+            "schemaValid": true,
+            "outputShape": {
+              "status": "SUPPORTED",
+              "rootKeys": [
+                "status",
+                "intent"
+              ],
+              "analyses": [
+                {
+                  "dimension": "salesperson",
+                  "rank": 1,
+                  "series": [
+                    {
+                      "metric": "order_revenue",
+                      "keys": [
+                        "metric",
+                        "ranking"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            "observerParseValidationMs": 3.808
+          }
+        ],
+        "plannerCalls": 1,
+        "synthesisCalls": 0,
+        "plannerTimings": {
+          "plannerMs": 20715.41304500001,
+          "validationMs": 0.1833970000006957,
+          "capabilityMs": 2.82039999999688
+        },
+        "outcome": "SUPPORTED",
+        "executorTimings": {
+          "capabilityMs": 14.818419999995967,
+          "executionMs": 84.54807399999117
+        },
+        "answerStatus": "SUPPORTED",
+        "answerTimings": {
+          "plannerMs": 20715.41304500001,
+          "capabilityMs": 17.638819999992847,
+          "executionMs": 84.54807399999117,
+          "synthesisMs": 0,
+          "totalMs": 20843.780276000005
+        },
+        "totalHttpMs": 20863.475,
+        "httpStatus": 200,
+        "plannerRetries": 0,
+        "synthesisRetries": 0,
+        "totalProviderCalls": 1
+      },
+      {
+        "component": "analyst-acceptance-observer",
+        "traceId": "8968bd1c-4c90-4fa9-b47c-d28b7ebc1c72",
+        "route": "ask_business",
+        "events": [
+          {
+            "stage": "conversation_state_load",
+            "startMs": 11.168,
+            "endMs": 12.059,
+            "durationMs": 0.891
+          },
+          {
+            "stage": "provider_envelope_parsing",
+            "startMs": 10447.456,
+            "endMs": 10447.481,
+            "durationMs": 0.026
+          },
+          {
+            "stage": "structured_content_parsing",
+            "startMs": 10447.49,
+            "endMs": 10447.493,
+            "durationMs": 0.004
+          },
+          {
+            "stage": "planner_total",
+            "startMs": 12.13,
+            "endMs": 10447.625,
+            "durationMs": 10435.496
+          },
+          {
+            "stage": "execution_and_answer_rendering",
+            "startMs": 10479.113,
+            "endMs": 10479.205,
+            "durationMs": 0.094
+          },
+          {
+            "stage": "validation_execution_rendering",
+            "startMs": 10479.106,
+            "endMs": 10479.212,
+            "durationMs": 0.107
+          },
+          {
+            "stage": "optional_synthesis_gate",
+            "startMs": 10479.221,
+            "endMs": 10479.228,
+            "durationMs": 0.008
+          },
+          {
+            "stage": "audit_preparation",
+            "startMs": 10487.484,
+            "endMs": 10487.526,
+            "durationMs": 0.043
+          },
+          {
+            "stage": "persistence_audit_transaction",
+            "startMs": 10487.53,
+            "endMs": 10495.023,
+            "durationMs": 7.494
+          },
+          {
+            "stage": "message_orchestration",
+            "startMs": 11.164,
+            "endMs": 10495.03,
+            "durationMs": 10483.866
+          }
+        ],
+        "providerCalls": [
+          {
+            "startMs": 13.244,
+            "promptCharacters": 13329,
+            "systemCharacters": 13226,
+            "userCharacters": 103,
+            "schemaCharacters": 4882,
+            "maxTokens": 2048,
+            "temperature": 0,
+            "thinkingBudgetTokens": 512,
+            "seed": 42,
+            "stream": false,
+            "responseFormat": "json_schema",
+            "stateCharacters": 2,
+            "semanticKnowledgeCharacters": 499,
+            "catalogContextCharacters": 9669,
+            "transcriptCharacters": 0,
+            "evaluationQuestionsTransmitted": 0,
+            "headersReceivedMs": 10446.547,
+            "httpStatus": 200,
+            "completionMs": 10447.259,
+            "bodyReadMs": 0.694,
+            "finishReason": "stop",
+            "inputTokens": 3184,
+            "outputTokens": 321,
+            "reasoningTokens": "not_exposed",
+            "serverTimings": {
+              "cache_n": 3152,
+              "prompt_n": 32,
+              "prompt_ms": 298.687,
+              "prompt_per_token_ms": 9.33396875,
+              "prompt_per_second": 107.13556331544392,
+              "predicted_n": 321,
+              "predicted_ms": 9911.769,
+              "predicted_per_token_ms": 30.974278125,
+              "predicted_per_second": 32.28485248193334
+            },
+            "outputCharacters": 40,
+            "schemaValid": true,
+            "outputShape": {
+              "status": "UNSUPPORTED_CAPABILITY",
+              "rootKeys": [
+                "status"
+              ]
+            },
+            "observerParseValidationMs": 0.176
+          }
+        ],
+        "plannerCalls": 1,
+        "synthesisCalls": 0,
+        "plannerTimings": {
+          "plannerMs": 10435.219238999998,
+          "validationMs": 0.0656509999971604,
+          "capabilityMs": 0.010836999994353391
+        },
+        "outcome": "UNSUPPORTED_CAPABILITY",
+        "answerStatus": "UNSUPPORTED_CAPABILITY",
+        "answerTimings": {
+          "plannerMs": 10435.219238999998,
+          "capabilityMs": 0.010836999994353391,
+          "executionMs": 0,
+          "synthesisMs": 0,
+          "totalMs": 10476.272385000004
+        },
+        "totalHttpMs": 10495.283,
+        "httpStatus": 200,
+        "plannerRetries": 0,
+        "synthesisRetries": 0,
+        "totalProviderCalls": 1
+      },
+      {
+        "component": "analyst-acceptance-observer",
+        "traceId": "bfc3f160-2118-4c12-ae06-7a683d265b19",
+        "route": "ask_business",
+        "events": [
+          {
+            "stage": "conversation_state_load",
+            "startMs": 17.657,
+            "endMs": 18.67,
+            "durationMs": 1.013
+          },
+          {
+            "stage": "provider_envelope_parsing",
+            "startMs": 19299.315,
+            "endMs": 19299.34,
+            "durationMs": 0.026
+          },
+          {
+            "stage": "structured_content_parsing",
+            "startMs": 19299.353,
+            "endMs": 19299.36,
+            "durationMs": 0.008
+          },
+          {
+            "stage": "planner_total",
+            "startMs": 18.751,
+            "endMs": 19300.415,
+            "durationMs": 19281.664
+          },
+          {
+            "stage": "trusted_execution",
+            "startMs": 19314.465,
+            "endMs": 19340.104,
+            "durationMs": 25.639
+          },
+          {
+            "stage": "answer_rendering",
+            "startMs": 19340.108,
+            "endMs": 19340.426,
+            "durationMs": 0.318
+          },
+          {
+            "stage": "execution_and_answer_rendering",
+            "startMs": 19314.447,
+            "endMs": 19340.48,
+            "durationMs": 26.033
+          },
+          {
+            "stage": "validation_execution_rendering",
+            "startMs": 19314.423,
+            "endMs": 19340.482,
+            "durationMs": 26.059
+          },
+          {
+            "stage": "optional_synthesis_gate",
+            "startMs": 19340.486,
+            "endMs": 19340.489,
+            "durationMs": 0.003
+          },
+          {
+            "stage": "audit_preparation",
+            "startMs": 19345.729,
+            "endMs": 19345.847,
+            "durationMs": 0.119
+          },
+          {
+            "stage": "persistence_audit_transaction",
+            "startMs": 19345.85,
+            "endMs": 19352.94,
+            "durationMs": 7.091
+          },
+          {
+            "stage": "message_orchestration",
+            "startMs": 17.652,
+            "endMs": 19352.946,
+            "durationMs": 19335.294
+          }
+        ],
+        "providerCalls": [
+          {
+            "startMs": 19.97,
+            "promptCharacters": 13330,
+            "systemCharacters": 13226,
+            "userCharacters": 104,
+            "schemaCharacters": 4882,
+            "maxTokens": 2048,
+            "temperature": 0,
+            "thinkingBudgetTokens": 512,
+            "seed": 42,
+            "stream": false,
+            "responseFormat": "json_schema",
+            "stateCharacters": 2,
+            "semanticKnowledgeCharacters": 499,
+            "catalogContextCharacters": 9669,
+            "transcriptCharacters": 0,
+            "evaluationQuestionsTransmitted": 0,
+            "headersReceivedMs": 19298.605,
+            "httpStatus": 200,
+            "completionMs": 19299.018,
+            "bodyReadMs": 0.398,
+            "finishReason": "stop",
+            "inputTokens": 3185,
+            "outputTokens": 606,
+            "reasoningTokens": "not_exposed",
+            "serverTimings": {
+              "cache_n": 3152,
+              "prompt_n": 33,
+              "prompt_ms": 304.024,
+              "prompt_per_token_ms": 9.212848484848484,
+              "prompt_per_second": 108.54406231087019,
+              "predicted_n": 606,
+              "predicted_ms": 18852.987,
+              "predicted_per_token_ms": 31.161961983471077,
+              "predicted_per_second": 32.09040562113579
+            },
+            "outputCharacters": 276,
+            "schemaValid": true,
+            "outputShape": {
+              "status": "SUPPORTED",
+              "rootKeys": [
+                "status",
+                "intent"
+              ],
+              "analyses": [
+                {
+                  "dimension": "undefined",
+                  "series": [
+                    {
+                      "metric": "net_invoiced_revenue",
+                      "keys": [
+                        "metric",
+                        "ranking"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            "observerParseValidationMs": 0.282
+          }
+        ],
+        "plannerCalls": 1,
+        "synthesisCalls": 0,
+        "plannerTimings": {
+          "plannerMs": 19280.367796000006,
+          "validationMs": 0.21636200000648387,
+          "capabilityMs": 0.7929060000024037
+        },
+        "outcome": "SUPPORTED",
+        "executorTimings": {
+          "capabilityMs": 12.435983999996097,
+          "executionMs": 13.183395000000019
+        },
+        "answerStatus": "SUPPORTED",
+        "answerTimings": {
+          "plannerMs": 19280.367796000006,
+          "capabilityMs": 13.2288899999985,
+          "executionMs": 13.183395000000019,
+          "synthesisMs": 0,
+          "totalMs": 19328.044072999997
+        },
+        "totalHttpMs": 19353.235,
+        "httpStatus": 200,
+        "plannerRetries": 0,
+        "synthesisRetries": 0,
+        "totalProviderCalls": 1
+      },
+      {
+        "component": "analyst-acceptance-observer",
+        "traceId": "dca8323b-f32b-4668-bac1-6d5b0dcebebe",
+        "route": "ask_business",
+        "events": [
+          {
+            "stage": "conversation_state_load",
+            "startMs": 9.138,
+            "endMs": 9.748,
+            "durationMs": 0.611
+          },
+          {
+            "stage": "provider_envelope_parsing",
+            "startMs": 17557.708,
+            "endMs": 17557.726,
+            "durationMs": 0.019
+          },
+          {
+            "stage": "structured_content_parsing",
+            "startMs": 17557.734,
+            "endMs": 17557.736,
+            "durationMs": 0.003
+          },
+          {
+            "stage": "planner_total",
+            "startMs": 9.773,
+            "endMs": 17558.203,
+            "durationMs": 17548.431
+          },
+          {
+            "stage": "execution_and_answer_rendering",
+            "startMs": 17565.397,
+            "endMs": 17565.416,
+            "durationMs": 0.019
+          },
+          {
+            "stage": "validation_execution_rendering",
+            "startMs": 17565.393,
+            "endMs": 17565.418,
+            "durationMs": 0.026
+          },
+          {
+            "stage": "optional_synthesis_gate",
+            "startMs": 17565.422,
+            "endMs": 17565.426,
+            "durationMs": 0.004
+          },
+          {
+            "stage": "audit_preparation",
+            "startMs": 17572.175,
+            "endMs": 17572.196,
+            "durationMs": 0.054
+          },
+          {
+            "stage": "persistence_audit_transaction",
+            "startMs": 17572.234,
+            "endMs": 17578.835,
+            "durationMs": 6.601
+          },
+          {
+            "stage": "message_orchestration",
+            "startMs": 9.135,
+            "endMs": 17578.839,
+            "durationMs": 17569.704
+          }
+        ],
+        "providerCalls": [
+          {
+            "startMs": 10.874,
+            "promptCharacters": 13727,
+            "systemCharacters": 13226,
+            "userCharacters": 501,
+            "schemaCharacters": 4882,
+            "maxTokens": 2048,
+            "temperature": 0,
+            "thinkingBudgetTokens": 512,
+            "seed": 42,
+            "stream": false,
+            "responseFormat": "json_schema",
+            "stateCharacters": 453,
+            "semanticKnowledgeCharacters": 499,
+            "catalogContextCharacters": 9669,
+            "transcriptCharacters": 0,
+            "evaluationQuestionsTransmitted": 0,
+            "headersReceivedMs": 17557.231,
+            "httpStatus": 200,
+            "completionMs": 17557.497,
+            "bodyReadMs": 0.255,
+            "finishReason": "stop",
+            "inputTokens": 3340,
+            "outputTokens": 542,
+            "reasoningTokens": "not_exposed",
+            "serverTimings": {
+              "cache_n": 3152,
+              "prompt_n": 188,
+              "prompt_ms": 473.772,
+              "prompt_per_token_ms": 2.520063829787234,
+              "prompt_per_second": 396.815345778138,
+              "predicted_n": 542,
+              "predicted_ms": 16906.45,
+              "predicted_per_token_ms": 31.2503696857671,
+              "predicted_per_second": 31.99962144625276
+            },
+            "outputCharacters": 63,
+            "schemaValid": true,
+            "outputShape": {
+              "status": "FOLLOW_UP",
+              "operation": "rank",
+              "rootKeys": [
+                "status",
+                "operation",
+                "rank"
+              ]
+            },
+            "observerParseValidationMs": 0.199
+          }
+        ],
+        "plannerCalls": 1,
+        "synthesisCalls": 0,
+        "plannerTimings": {
+          "plannerMs": 17547.833492000005,
+          "validationMs": 0.4301010000053793,
+          "capabilityMs": 0
+        },
+        "outcome": "INVALID_PLAN",
+        "answerStatus": "INVALID_PLAN",
+        "answerTimings": {
+          "plannerMs": 17547.833492000005,
+          "capabilityMs": 0,
+          "executionMs": 0,
+          "synthesisMs": 0,
+          "totalMs": 17562.958541
+        },
+        "totalHttpMs": 17579.062,
+        "httpStatus": 200,
+        "plannerRetries": 0,
+        "synthesisRetries": 0,
+        "totalProviderCalls": 1
+      }
+    ]
+  }
+}

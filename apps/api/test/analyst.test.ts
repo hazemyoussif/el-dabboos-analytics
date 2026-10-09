@@ -3,6 +3,22 @@ import assert from 'node:assert/strict';
 import { analystFixture, analystHeaders, analystPeriod, scalarIntent } from './analyst-fixture.ts';
 import type { AnalystConversation } from '@el-dabboos/domain';
 const highest={status:'SUPPORTED',intent:{context:{},analyses:[{dimension:'salesperson',series:[{metric:'order_revenue',topNDirection:'top',topNLimit:1}]}]}};
+test('an ordinal cannot reuse a scalar answer or an older answer past an unresolved turn',async()=>{
+ const followUp={status:'FOLLOW_UP',operation:'rank',rank:2};
+ for(const preceding of [[scalarIntent],[highest,{status:'AMBIGUOUS',choices:['order_revenue','order_count']}],[highest,{status:'SUPPORTED',sql:'SELECT private'}]]) {
+  const fixture=await analystFixture([...preceding,followUp]);
+  try {
+   let conversation=await fixture.create();
+   conversation=(await fixture.ask(conversation,'Initial question',{pageContext:analystPeriod})).json();
+   if(preceding.length>1)conversation=(await fixture.ask(conversation,'An unresolved question')).json();
+   const response=await fixture.ask(conversation,'Ordinal follow-up');
+   assert.equal(response.statusCode,200,response.body);
+   assert.equal(response.json().messages.at(-1).answer.status,'INVALID_PLAN');
+   assert.equal(fixture.queries.length,1);
+   if(preceding.length>1)assert.equal(JSON.parse(fixture.provider.requests.at(-1)!.messages[1]!.content).state,undefined);
+  }finally{await fixture.close();}
+ }
+});
 for(const locale of ['en','ar'])test(`conversation ${locale}: inherits context, follows ordinal and two stable identities, persists audit and rejects lossy conversion`,async()=>{
  const fixture=await analystFixture([highest,{status:'FOLLOW_UP',operation:'rank',rank:2},{status:'FOLLOW_UP',operation:'compare_entities',count:2,datePreset:'last_6_months'}]),headers={...analystHeaders,'x-locale':locale};
  try {

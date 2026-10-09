@@ -39,7 +39,7 @@ export class AnalystConversations {
     let planning:Awaited<ReturnType<StructuredAnalyticsPlanner['plan']>>|undefined;
     const planningStarted=performance.now();
     if(this.runtime.planner)try {
-      planning=await this.runtime.planner.plan({...request,prompt:question,...(conversation.state?{state:conversation.state}:{}),...(pageContext?{pageContext}:{}),...(request.turn.choice?{clarification:request.turn.choice}:{})});
+      planning=await this.runtime.planner.plan({...request,prompt:question,...planningState(conversation,request.turn.choice),...(pageContext?{pageContext}:{}),...(request.turn.choice?{clarification:request.turn.choice}:{})});
     }catch{ /* Provider errors remain safe and do not affect ordinary analytics. */ }
     if(!planning && this.runtime.planner)answer.timing.plannerMs=performance.now()-planningStarted;
     const fresh=await request.refreshIdentity();assertFreshOwner(conversation,request.identity,fresh);
@@ -87,6 +87,12 @@ export class AnalystConversations {
     try{answer.synthesisReferences=await synthesizeAnalystHighlights(this.runtime.synthesis,answer,locale);}catch{ /* Deterministic answer survives unavailable or ungrounded synthesis. */ }
     answer.timing.synthesisMs=performance.now()-started;
   }
+}
+/** An unresolved latest question cannot refer back past a failed or pending turn. */
+function planningState(conversation:AnalystConversation,choice:MetricId|undefined) {
+ const latest=conversation.messages.at(-1)?.answer.status;
+ if(!conversation.state || (!choice && latest && !['SUPPORTED','PARTIAL_COVERAGE'].includes(latest)))return {};
+ return {state:conversation.state};
 }
 function turnQuestion(conversation:AnalystConversation,turn:AnalystTurn) {
   if(turn.choice) {

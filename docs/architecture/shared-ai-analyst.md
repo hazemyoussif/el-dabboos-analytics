@@ -187,3 +187,18 @@ page inheritance, dashboard action and detail action. Fake-provider contract res
 prove orchestration and execution fidelity, not live-model language accuracy. See
 [conversational QA handoff](../qa/ask-business-2026-10-08.md) for actual gates,
 browser evidence, performance and live-provider limitations.
+
+## Local staging acceptance follow-up — 2026-10-09
+
+An ordinal requires a prior categorical entity result; dimensionless totals and
+time groups cannot provide ranked entity references. Conversation planning also
+omits prior semantic state while the latest turn is unresolved or failed, unless
+the user supplies its offered canonical clarification. This prevents a following
+ordinal from answering an older, unrelated question. Successful and partial
+answers retain stable-ID continuation; history is preserved.
+
+The shared instructions distinguish explicitly named metrics from ambiguous
+measures and leave unrequested grouping to the application. Strict validation is
+unchanged: these instructions are guidance, not a reason to accept invalid output.
+Live Bonsai interpretation remains an acceptance gate; see the
+[local staging acceptance report](../qa/ask-business-staging-2026-10-09.md).
