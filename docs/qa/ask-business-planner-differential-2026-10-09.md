@@ -1,6 +1,6 @@
 # Bonsai planner differential and recovery — October 9, 2026
 
-**Overall local staging acceptance remains BLOCKED.** This continuation supersedes
+**Historical status: BLOCKED at this recovery handoff.** The remaining browser item is now closed by the [navigation acceptance report](ask-business-navigation-acceptance-2026-10-09.md); local staging business testing is ENABLED. The evidence below records the recovery-time state. This continuation supersedes
 the interpretation/provider-approval status in the initial acceptance report.
 Required final administrator browser checks remain incomplete. The tested Sales
 questions recovered with Bonsai; this evidence does not support an inherent model
