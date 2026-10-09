@@ -1,6 +1,8 @@
 # El Dabboos AI Analytics
 
-A source-independent, bilingual analytics prototype with two controlled synthetic markets, a ready-made dashboard library, a manual Dashboard Builder with saved dashboard records, and DashboardSpec v2 multi-metric visualizations. The default local tenant is Iraq (`demo-iq`); Egypt (`demo-eg`) uses the same templates and metrics.
+A governed bilingual analytics platform prototype: dashboards with manual/AI drafts and explicit Save, Ask Business with private semantic conversation history, trusted PostgreSQL serving, Finance snapshots and governed drill-through. Multi-tenant authorization and forced mart RLS protect production-style local staging. The default development mode uses synthetic Iraq (`demo-iq`) and Egypt (`demo-eg`) facts.
+
+The [current milestone](docs/management/current-milestone.md) records accepted capabilities, limitations and QA. Company staging/server deployment remains pending; its separate company-hosted LLM is configured through runtime environment.
 
 ## Local startup
 
@@ -11,6 +13,9 @@ pnpm install --frozen-lockfile
 # Optional safe demo configuration (mock analytics + planner):
 cp .env.example .env
 pnpm run seed demo.db
+# Governed demo metadata has an explicit schema/identity bootstrap.
+export DASHBOARD_DB_PATH="$PWD/dashboards.db"
+pnpm metadata:migrate "$DASHBOARD_DB_PATH" --demo
 pnpm run dev:api
 ```
 
@@ -30,20 +35,24 @@ For generation and editing through a configured model endpoint, see the [OpenAI-
 
 ```bash
 pnpm run lint
+pnpm run check:architecture
+pnpm run check:quality
 pnpm run typecheck
 pnpm test
+pnpm run test:postgres
 pnpm run build
+pnpm run check:diff
 ```
 
-CI runs frozen install, lint, typecheck, all tests, and both builds.
+CI runs frozen install and all listed gates, including disposable synthetic PostgreSQL coverage. It does not publish or deploy images. See the [testing guide](docs/developer/testing-guide.md) for database setup; tests do not use developer env files or live model/customer services.
 
 ## Product model
 
-`packages/domain` owns 24 executable canonical metric definitions, a wider available/planned product metric registry, two server-governed TenantProfiles, and DashboardSpec/Patch v2 schemas. V1 schema files remain for historical reference; new routes accept v2 only. `packages/application` owns the market-neutral template catalog, mock and structured planners, and per-series executor. `packages/data` owns canonical source measures, deterministic calculations, and tenant-scoped mock/SQLite adapters. React never talks to SQLite or constructs AnalyticsQuery.
+`packages/domain` owns canonical metric definitions, a wider available/planned product metric registry, server-governed TenantProfiles, and DashboardSpec/Patch v2 schemas. V1 schema files remain for historical reference; new routes accept v2 only. `packages/application` owns the market-neutral template catalog, mock and structured planners, and per-series executor. `packages/data` owns canonical source measures, deterministic calculations, and tenant-scoped mock/SQLite and trusted PostgreSQL adapters. API composes production control persistence and analytics serving; React calls HTTP rather than databases. [System design](docs/architecture/system-design.md) owns the five-layer boundaries.
 
 KPI widgets have one series. Line/bar widgets can combine compatible metrics such as revenue and gross profit, with one dimension and one presentation unit; currency and percentage cannot share a single axis. Tables may mix metric types and format each column independently. A failed series can leave the rest of its widget usable. Aligned rows retain null for missing values. Chronological ordering does not reverse in RTL.
 
-The browser receives currency, time zone, locale, and branch labels from the server's controlled profile. Synthetic Iraqi monetary facts are nominal IQD and Egyptian facts nominal EGP; there is no FX conversion. In an operational source, transaction currency, company/base currency, and reporting currency must be distinguished before any aggregation. Unrelated currencies must not be summed without an approved conversion policy. Arabic UI uses Modern Standard Arabic; Iraqi and Egyptian dialect synonyms support future planning/evaluation, not ordinary labels. The demo selector is not authentication. Dashboard records are stored separately from DashboardSpec in SQLite (`DASHBOARD_DB_PATH`, default `dashboards.db`), independently of the analytics provider.
+The browser receives currency, time zone, locale, and branch labels from the server's controlled profile. Synthetic Iraqi monetary facts are nominal IQD and Egyptian facts nominal EGP; there is no FX conversion. In an operational source, transaction currency, company/base currency, and reporting currency must be distinguished before any aggregation. Unrelated currencies must not be summed without an approved conversion policy. Arabic UI uses Modern Standard Arabic; Iraqi and Egyptian dialect synonyms support future planning/evaluation, not ordinary labels. The demo selector is not authentication. Dashboard records are stored separately from DashboardSpec, using local SQLite metadata (`DASHBOARD_DB_PATH`, default `dashboards.db`) or PostgreSQL control persistence in staging, independently of the analytics provider. Governed metadata requires [explicit migrations](docs/architecture/database-migrations.md) before startup.
 
 The fixture spans October 2024 through September 2026 with synthetic branch/customer geography. No branch or customer represents actual El Dabboos operations. Planned metric concepts are discoverable but cannot execute until their data/formulas are approved. See [current assumptions](docs/architecture/current-assumptions.md), [architecture overview](docs/architecture/overview.md), and [ADRs](docs/architecture/adr/).
 
@@ -66,8 +75,16 @@ screens stack widgets and disable direct grid manipulation.
 See [the grid adapter decision](docs/architecture/adr/020-dashboard-customization.md)
 and [all API environment settings](docs/architecture/openai-compatible-provider.md#native-api-environment-loading-node-24).
 
+## Ask Business and staging
+
+Ask Business shares validated Analytics Intent with dashboard AI and supports EN/AR, clarification, semantic follow-ups, deterministic trusted answers, provenance, View Details and supported answer-to-dashboard drafts. Its LLM plans intent; it never generates SQL, queries source databases or calculates authoritative values. [Shared AI architecture](docs/architecture/shared-ai-analyst.md) owns semantics; [QA evidence](docs/qa/README.md) records Bonsai recovery and final local acceptance.
+
+For reproducible production-style local staging, use the [staging runbook](docs/integration/shared-staging.md). The [deployment contract](docs/architecture/runtime-and-deployment.md) specifies single-server Linux staging, protected runtime configuration, a separate company LLM and future immutable-image CI/CD. No external deployment or GitHub deployment automation is activated.
+
 ## Documentation
 
+- [Current milestone](docs/management/current-milestone.md) and [QA index](docs/qa/README.md)
+- [Finance snapshot semantics](docs/integration/receivables-aging-v1.md) and [event serving](docs/integration/event-serving-aggregates.md)
 - [Product stories and acceptance](docs/product/user-stories.md)
 - [System design](docs/architecture/system-design.md) and [ADRs](docs/architecture/adr/)
 - [Developer handbook](docs/developer/handbook.md)

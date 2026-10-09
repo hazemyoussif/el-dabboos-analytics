@@ -45,6 +45,8 @@ Review `infra/staging/runtime.env.example` and `operator.env.example`. Their val
 | `STAGING_DATABASE_NETWORK` | Existing local PostgreSQL Docker network (not a new DB lifecycle) |
 | `STAGING_WEB_PORT`, `STAGING_API_IMAGE`, `STAGING_WEB_IMAGE` | Local loopback port / reviewed image tags or immutable digests |
 
+`AUTH_BASE_URL` and `AUTH_SECRET` configure reviewed HTTPS local sessions. `ANALYST_SYNTHESIS` defaults false; structured planning is sufficient for deterministic answers. Provider URL/model/authentication and timeout settings are existing runtime configuration, with no company endpoint embedded in application code. See the [company staging topology and release contract](../architecture/runtime-and-deployment.md); protected server env files must survive application updates unchanged.
+
 Existing pool/statement timeout, maximum groups/date span, execution concurrency and LLM limits retain the defaults/validation in `apps/api/src/startup-config.ts`. The runtime env contains only control app, mart runtime and optional LLM credentials. Source secret resolution remains `connectionRef=odoo-staging-main` through the existing Odoo configuration boundary; it belongs to a future worker's approved external secret environment. Neither the web nor API needs an SSH tunnel or Odoo credentials to start or serve mart queries. Do not run live extraction as a deployment smoke test.
 
 Local/shared session mode omits `x-demo-user-id`; that header is sent only after the API explicitly reports development synthetic mode. The server never accepts synthetic identity in staging, including on loopback; documented local-only demo mode is `ENVIRONMENT=development`, loopback API and existing SQLite synthetic seed. Arbitrary employee headers and email alone confer no identity. Local authentication now resolves verified session subject through the current binding and returns its trusted `IdentityBinding.id`; other providers remain future work.
@@ -74,7 +76,7 @@ pnpm staging bootstrap infra/staging/bootstrap.example.json
 pnpm staging verify
 ```
 
-Provision creates role groups/logins first, then the two databases. It only targets `el_dabboos_control_staging` and `el_dabboos_analytics_staging`. Explicit migrate applies control versions 001–007 and mart versions 001–008, verifies immutable histories/checksums and installs scoped login grants. Runtime startup never repairs or migrates a schema. The existing developer mart was deliberately left on its prior version 007; running this updated API against that developer database requires the separately authorized explicit `pnpm mart:migrate` to apply 008 first. Staging simulation already uses 008 and never changes developer pilot data. A partially completed explicit migration remains safe to rerun; never start API until `verify` succeeds. For managed services where the administrator cannot create these roles/databases, an authorized DBA must provide equivalent reviewed isolation and grants before migration. Do not weaken runtime checks to accommodate elevated credentials.
+Provision creates role groups/logins first, then the two databases. It only targets `el_dabboos_control_staging` and `el_dabboos_analytics_staging`. Explicit migrate applies the current control versions 001–008 and mart versions 001–037, verifies immutable histories/checksums and installs scoped login grants. See the [current migration inventory](../architecture/database-migrations.md). Runtime startup never repairs or migrates a schema. Older local databases require explicit approved migration before running the current API; no live database version is inferred from this runbook. A partially completed explicit migration remains safe to rerun; never start API until `verify` succeeds. For managed services where the administrator cannot create these roles/databases, an authorized DBA must provide equivalent reviewed isolation and grants before migration. Do not weaken runtime checks to accommodate elevated credentials.
 
 ## Governed bootstrap
 
@@ -85,6 +87,20 @@ The fresh bootstrap uses one advisory-locked transaction for protected roles, cu
 Placeholders reserve explicit non-authenticating provider/subject IDs. For local credentials use the reviewed offline [provisioning procedure](../security/local-authentication.md), followed by separate governed membership activation; changing the bootstrap manifest cannot activate users or overwrite configuration. Existing admin/analyst/viewer roles cover QA personas. The bootstrap audit records the declared inactive operator as an offline provisioning reference, not an authenticated session.
 
 ## Local staging simulation
+
+For authenticated production-style HTTPS reproduction, first follow the
+[local authentication runbook](../security/local-authentication.md): provision the
+reviewed local identity separately, activate governed membership explicitly and
+set `ACCESS_IDENTITY_MODE=local`, `AUTH_BASE_URL` and `AUTH_SECRET` in the protected
+runtime environment. Put an approved TLS reverse proxy in front of the loopback
+Web port; the accepted local endpoint was `https://localhost:8443`. Certificates
+and TLS ingress are operator-owned, outside application images. Match CORS and
+auth origin to that HTTPS endpoint. Configure the approved provider via existing
+`LLM_*` settings and `DASHBOARD_PLANNER=structured` when planning is authorized;
+keep synthesis false unless separately approved. Health checks do not call the
+provider, so authenticated planning and trusted report/drill smoke remain separate.
+The commands below demonstrate storage/application startup with identity disabled,
+before that reviewed HTTPS/activation step.
 
 Keep the existing persistent server running on port 55437. Do **not** run `down -v`, replace its volume, reset databases, or import the incomplete legacy metadata. For host CLI operator URLs use `127.0.0.1:55437`; for Compose secrets use the existing Docker network alias `postgres:5432`. All URLs within each operator env use the same endpoint.
 
@@ -136,7 +152,7 @@ Never restore over developer, shared or production databases without explicit en
 
 Application rollback selects previously reviewed API/web image digests and matching configuration. It can proceed only when those artifacts support the current immutable DB history; exact-version readiness deliberately rejects old code against newer ledgers. Otherwise use a reviewed forward compatibility fix or an approved coordinated restore into new databases and switch connections. Never edit released migration SQL/checksums, delete history, or silently reverse database migrations. Preserve backups of the prior state and account for writes after the recovery point.
 
-Before external shared staging: select and verify the trusted employee IdP adapter and controlled binding/activation procedure; approve external infrastructure/network/TLS/secret injection; provision staging PostgreSQL roles; supply reviewed immutable release digests; test backups/restore under operational policy; and approve any LLM configuration. Business certification remains separately pending. Mapping v1 remains pending, serving bindings remain zero, sync and authentication remain unimplemented. No external deployment, push or merge is part of this milestone.
+Before external shared staging: select and verify the trusted employee IdP adapter and controlled binding/activation procedure; approve external infrastructure/network/TLS/secret injection; provision staging PostgreSQL roles; supply reviewed immutable release digests; test backups/restore under operational policy; and approve any LLM configuration. Fresh bootstrap intentionally has no approved mapping, serving bindings or activated identity. Accepted local staging separately exercises certified trusted serving, manual operational synchronization and local sessions; bootstrap does not grant those capabilities. Broader company production certification and scheduled source sync remain gated. No external deployment, push or merge is part of this milestone.
 
 ### Ask Business local provider timing
 
@@ -161,5 +177,4 @@ See the [acceptance/performance evidence](../qa/ask-business-staging-2026-10-09.
 The subsequent [planner differential](../qa/ask-business-planner-differential-2026-10-09.md)
 identified prompt/schema orchestration defects with unchanged Bonsai inference
 settings. Controlled reference-provider diagnostics do not authorize normal
-runtime fallback. Recover and verify the configured provider before enabling
-Ask Business; retain the original disabled setting while acceptance is incomplete.
+runtime fallback. The subsequent [final navigation/business acceptance](../qa/ask-business-navigation-acceptance-2026-10-09.md) closes the remaining browser item: local business testing is ENABLED. The original planner-disabled runtime was restored after temporary smoke; enablement here is an acceptance classification, not a configuration change.

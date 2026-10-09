@@ -4,6 +4,10 @@ Pilot status, 5 October 2026: source adapter and immutable-candidate/paged-extra
 
 Status is evidence-based, not a claim that the prototype is production-ready. Owners named by role are proposed; Malik/business must assign individuals. [Questions](questions-for-malik.md), [source contract](real-data-contract.md), [reconciliation](reconciliation-plan.md).
 
+## Current milestone checkpoint — 9 October 2026
+
+The October 5 pilot statement above is historical. [Current milestone](../management/current-milestone.md) and [QA index](../qa/README.md) record accepted local trusted serving, historical/event/Finance analytics, drill-through, local authentication and Ask Business. Company staging hosting, employee activation, separate company LLM access, sustained-load approval and operational restore evidence remain gates. Earlier synthetic/pilot evidence is not a general production authorization.
+
 ## P0 — before real data
 
 | Gate | Current state | Required decision/evidence / proposed owner |
@@ -12,12 +16,12 @@ Status is evidence-based, not a claim that the prototype is production-ready. Ow
 | Currency policy | Tenant IQD/EGP display; no FX and no fact currency field | Transaction/base/reporting currency and approved conversion before aggregation; finance |
 | Tenant/company mapping | Validated demo membership and tenant-scoped facts | Stable source company/tenant/branch mapping and multi-company rules; source/security owners |
 | Production identity contract | Governed local credentials/cookie sessions; shared bootstrap remains inactive | Verified IdP/SSO principal, memberships, revocation and policy owner; identity/security |
-| Source adapter architecture | Owned PostgreSQL mart, writer and SQL serving tested with synthetic data; no connector | Approve source boundary, mapping and implementation evidence; integration |
+| Source adapter architecture | Read-only Odoo adapter and trusted mart serving implemented; accepted local evidence linked above | Approve source boundary, mapping and implementation evidence; integration |
 | Data-quality checks | Canonical finite/date/measure/snapshot validation | Missing/duplicate/state/unit/entity rules, rejects and correction processing; source owner |
 | Reconciliation | Deterministic synthetic contract tests | Approved source report, watermark, date/group totals and tolerance sign-off; business |
 | Bounded query execution | Implemented request dedup + default 8 unique concurrent calls (1..64) | Source-specific timeout/cancellation, process-wide capacity and scale evidence still needed; platform |
 | LLM privacy/data sharing | Authorized context and safe diagnostics; edit spec can contain identifiers | Endpoint policy for prompts/spec titles/filter IDs and retention/residency; security/tenant |
-| DB migration strategy | Five migrations with ledger/checksum/session lock and transaction rollback tested on PostgreSQL 18.6 | Runner/container/CI, grants/forced RLS and synthetic migration evidence implemented; production hosting, restore drills and metadata-store migration remain separate; platform |
+| DB migration strategy | [Current immutable heads](../architecture/database-migrations.md): mart 037, control 008, SQLite metadata 005 | Runner/container/CI, grants/forced RLS and synthetic migration evidence implemented; production hosting, restore drills and any approved legacy metadata cutover remain separate; platform |
 
 A document alone does not close a business gate. Do not ingest real data or send customer specs to external endpoints before approval.
 
@@ -25,16 +29,16 @@ A document alone does not close a business gate. Do not ingest real data or send
 
 | Item | Current state | Next evidence |
 | --- | --- | --- |
-| Structured logging | Safe allowlisted startup summary and opt-in bounded diagnostics | Approved structured operational fields and retention |
-| Request/trace IDs | Design only | Edge validation, propagation, adapter/provider spans, safe correlation |
-| Persistent audit | In-memory AuditSink | Durable sink, access, retention and tamper/recovery policy |
+| Structured logging | Safe request-ID/route/status/duration logs and opt-in bounded diagnostics | Approved structured operational fields and retention |
+| Request/trace IDs | Validated request IDs implemented; full tracing remains future | Edge validation, propagation, adapter/provider spans, safe correlation |
+| Persistent audit | Durable control security audit and atomic analyst question audit implemented | Company retention/access and recovery policy |
 | Liveness/readiness | Implemented live/ready plus health compatibility | Deployment probe wiring; source probe deadlines/cancellation |
 | Config schema validation | Implemented bounded root parser, safe fail-fast | Secret-manager/deployment override verification |
 | Query timeouts/cancellation | LLM timeout and PostgreSQL-native statement timeout implemented; SQLite remains synchronous | Source-native cancellation and bounded resource cleanup |
 | Connection pooling | DatabaseSync SQLite; opt-in mart pool with bounded size and checkout timeout | Real source pool/backpressure sized to concurrency |
-| Load/performance | Functional synthetic tests only | Expected rows/users/dashboards, p95 target and sustained-load evidence |
-| Deployment architecture | Local API + Vite; built API/web available | TLS/proxy/API replicas/durable DB and migration ownership |
-| Production CORS/security headers | Development permissive setup | Approved origin/session/CSRF/header policy |
+| Load/performance | Functional tests and bounded local serving/drill performance evidence | Expected rows/users/dashboards, p95 target and sustained-load evidence |
+| Deployment architecture | Containerized Web/API and production-style local PostgreSQL staging | Company single-server TLS/storage/access and operational ownership |
+| Production CORS/security headers | Shared-mode exact approved origin allowlist and local session checks implemented | Approved origin/session/CSRF/header policy |
 | Backup/recovery | Strategy proposed, no restore evidence | Approved RPO/RTO, encrypted consistent backup and drill |
 
 Readiness says storage shape available, not reconciled source/business freshness. Concurrency is per execution, not a global throttle. SQLite is synchronous and loads relevant tenant measures in memory.

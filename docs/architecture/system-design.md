@@ -4,7 +4,7 @@
 
 The approved production comparison pilot extends the offline mart through [ADR 029](adr/029-ingestion-certification-lifecycle.md): immutable candidate → bounded paged extraction → completed reconciliation → metadata approval → separately authorized serving binding. [ADR 031](adr/031-certified-release-promotion.md) adds append-only authorized business approval as an alternative to external-report evidence and exact transactional promotion into a separate staging mart. Odoo source transport stays inside data; the operator command stays in API configuration/composition. [Pilot status](../integration/odoo-postgres-pilot.md) explicitly separates synthetic evidence from unavailable live evidence.
 
-**Current:** governed bilingual analytics over synthetic IQ/EG canonical facts; templates, manual/AI working drafts, explicit versioned persistence, personal library organization, centralized presentation. The product is not an operational ERP, source ETL, employee identity deployment, SQL generation service or FX engine. **Proposed/future:** real source adapter, production identity, tracing, operational migrations and approved reconciliation. [Readiness](../integration/production-readiness.md) owns those gates.
+**Current:** governed bilingual dashboards and Ask Business with shared Analytics Intent, explicit versioned persistence and semantic conversation history; synthetic IQ/EG development plus accepted production-style local PostgreSQL staging. Read-only source ingestion, historical backfill, trusted event/snapshot serving, forced RLS, governed drill-through, local credentials/sessions and immutable migrations are implemented. [Current milestone](../management/current-milestone.md) and [QA index](../qa/README.md) delimit accepted evidence. **Future/gated:** company hosting, employee activation, company LLM access, scheduled source sync, full tracing and operational recovery approvals. The product remains an analytics system, not an ERP, SQL generation service or FX engine. [Readiness](../integration/production-readiness.md) owns launch gates.
 
 ## Five layers
 
@@ -67,7 +67,7 @@ Theme/UI locale are preferences outside spec and never imply Save. Layout-only c
 
 ## Current operational limits
 
-Node DatabaseSync executes synchronously; async repository facades and bounded concurrency do not make SQLite parallel/non-blocking. Analytics loads relevant tenant measure facts into memory for the deterministic engine. The opt-in PostgreSQL mart adapter has a pool, statement timeout, forced tenant RLS, versioned migrations and frozen synthetic reconciliation. Employee authentication rollout, source integration and production operational backup/restore evidence remain gated; local credentials/sessions and immutable security audit are implemented in the control database. Health probes check structure without business data and cannot interrupt synchronous blocking work. These are explicit integration risks, not completed production capabilities.
+Node DatabaseSync executes synchronously; async repository facades and bounded concurrency do not make SQLite parallel/non-blocking. Analytics loads relevant tenant measure facts into memory for the deterministic engine. The opt-in PostgreSQL mart adapter has a pool, statement timeout, forced tenant RLS, versioned migrations and frozen synthetic reconciliation. Company employee activation, additional source integration and production operational backup/restore evidence remain gated; local credentials/sessions and immutable security audit are implemented in the control database. Health probes check structure without business data and cannot interrupt synchronous blocking work. These are explicit integration risks, not completed production capabilities.
 
 ## Manual palette path
 
@@ -81,7 +81,7 @@ DashboardSpec v2 business filters persist a symbolic datePreset, fixed dateRange
 
 ## Offline production foundation
 
-[ADR 027](adr/027-production-data-foundation.md) establishes an El Dabboos-owned PostgreSQL mart, separate ingestion envelope, source reader, versioned mapping certification and reconciliation contracts. Domain validators, eight transactional SQL migrations, role/RLS enforcement, a mart writer, frozen reconciliation and bounded SQL-based serving are implemented and tested on PostgreSQL 18.6. [Operations](../integration/postgres-mart-operations.md) documents provisioning and limits. Existing mock/SQLite execution is unchanged. Production sources and mappings are unapproved.
+[ADR 027](adr/027-production-data-foundation.md) establishes an El Dabboos-owned PostgreSQL mart, separate ingestion envelope, source reader, versioned mapping certification and reconciliation contracts. Domain validators, the current [immutable migration set](database-migrations.md), role/RLS enforcement, a mart writer, frozen reconciliation and bounded SQL-based serving are implemented and tested on PostgreSQL 18.6. [Operations](../integration/postgres-mart-operations.md) documents provisioning and limits. Existing mock/SQLite execution is unchanged. Additional production sources/mappings require separate approval; accepted local publications do not authorize general production rollout.
 
 ## Administration architecture checkpoint
 
