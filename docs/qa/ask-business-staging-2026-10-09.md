@@ -2,13 +2,18 @@
 
 **Ask Business local staging business testing = BLOCKED.**
 
-Latency regression is resolved by restoring the existing local Bonsai runtime
-profile. Infrastructure, persistent storage, safe audit, authenticated privacy,
-scoped execution and source-independent serving passed. Reachable Bonsai still
-fails required English business interpretation. Do not treat faster invalid
-answers as business acceptance. Further browser action checks are blocked by an
-unresponsive browser after conversion; the user was asked to clear its prompt.
-Optional external Gemini execution is awaiting specific egress approval.
+The initial acceptance and the subsequent provider differential are recorded separately.
+The [current differential and recovery report](ask-business-planner-differential-2026-10-09.md)
+supersedes the initial interpretation failures and provider-approval status below.
+Bonsai interpretation recovered in bounded live tests without changing model settings.
+Full business enablement remains blocked by incomplete final administrator/browser
+checks. The original planner-disabled runtime is restored after validation.
+
+## Initial acceptance phase (historical evidence)
+
+The following sections describe the first acceptance pass, before the approved
+Gemini reference and historical Dashboard investigation. Counts and failed cases
+in this section are phase-specific, not the final recovery results.
 
 ## Repository and local runtime
 

@@ -157,3 +157,9 @@ requests to 19–21 seconds without changing their prompt or schema. This is loc
 Bonsai evidence, not a provider-neutral default or business-quality acceptance.
 Do not add credentials, endpoint addresses or model settings to domain contracts.
 See the [acceptance/performance evidence](../qa/ask-business-staging-2026-10-09.md).
+
+The subsequent [planner differential](../qa/ask-business-planner-differential-2026-10-09.md)
+identified prompt/schema orchestration defects with unchanged Bonsai inference
+settings. Controlled reference-provider diagnostics do not authorize normal
+runtime fallback. Recover and verify the configured provider before enabling
+Ask Business; retain the original disabled setting while acceptance is incomplete.

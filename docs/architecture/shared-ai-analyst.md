@@ -137,6 +137,18 @@ preflight and before persistence. The append transaction rechecks live membershi
 roles, tenant/customer status and policy scope, then atomically saves a versioned
 conversation plus safe question audit. No provider call runs inside that transaction.
 
+Direct planning uses bounded, authorized contract examples and distinguishes grouped
+analyses from summaries in its schema: enabled ranking and Top-N require grouping.
+Named months use fixed dates, even if the visible page period currently matches.
+Dimension labels and synonyms are vocabulary, not entity values. A supplied canonical
+metric choice resolves ambiguity; unresolved revenue measures still require a choice.
+The planner checks new entity filter values against the current tenant/policy-scoped
+dimension repository; values already supplied by page context or owned semantic state
+remain references. Unknown values produce INVALID_PLAN before analytics execution,
+rather than a misleading successful empty answer. Lookup values stay local and never
+enter the model prompt. Missing grounding evidence fails closed. This uses the existing
+domain dimension-value port and provider-neutral transport; it adds no model fallback.
+
 `/api/ai-analyst/conversations` supports authenticated create/list;
 `/:id` loads private history, and `/:id/messages` accepts question, pageContext,
 expectedVersion and optional canonical choice. Owner predicates apply to every

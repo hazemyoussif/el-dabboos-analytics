@@ -1,0 +1,296 @@
+{
+  "provider": "configured Bonsai; no fallback",
+  "evidence": "normal authenticated HTTPS, fresh approved Sales-scoped QA identity",
+  "cases": [
+    {
+      "locale": "en",
+      "question": "What was net invoiced revenue in September?",
+      "trustedScopedResultVerified": true,
+      "httpStatus": 200,
+      "status": "SUPPORTED",
+      "timing": {
+        "plannerMs": 16922.436438999997,
+        "capabilityMs": 20.700035000001662,
+        "executionMs": 65.34465300000011,
+        "synthesisMs": 0,
+        "totalMs": 17048.663133000002
+      },
+      "executedPanels": 1,
+      "queries": [
+        {
+          "metric": "net_invoiced_revenue",
+          "dateRange": {
+            "from": "2026-09-01",
+            "to": "2026-09-30"
+          }
+        }
+      ]
+    },
+    {
+      "locale": "en",
+      "question": "Who had the highest order revenue in September?",
+      "trustedScopedResultVerified": true,
+      "httpStatus": 200,
+      "status": "SUPPORTED",
+      "timing": {
+        "plannerMs": 15105.849566999997,
+        "capabilityMs": 31.495481000005384,
+        "executionMs": 151.67836700000043,
+        "synthesisMs": 0,
+        "totalMs": 15317.63507399999
+      },
+      "executedPanels": 1,
+      "queries": [
+        {
+          "metric": "order_revenue",
+          "groupBy": "salesperson",
+          "dateRange": {
+            "from": "2026-09-01",
+            "to": "2026-09-30"
+          },
+          "analysis": {
+            "topN": {
+              "direction": "top",
+              "limit": 1
+            }
+          }
+        }
+      ]
+    },
+    {
+      "locale": "en",
+      "question": "Show me the salesperson with the highest order revenue in September.",
+      "trustedScopedResultVerified": true,
+      "httpStatus": 200,
+      "status": "SUPPORTED",
+      "timing": {
+        "plannerMs": 13793.709657,
+        "capabilityMs": 31.5279329999903,
+        "executionMs": 109.61940599999798,
+        "synthesisMs": 0,
+        "totalMs": 13963.34135100001
+      },
+      "executedPanels": 1,
+      "queries": [
+        {
+          "metric": "order_revenue",
+          "groupBy": "salesperson",
+          "dateRange": {
+            "from": "2026-09-01",
+            "to": "2026-09-30"
+          },
+          "analysis": {
+            "topN": {
+              "direction": "top",
+              "limit": 1
+            }
+          }
+        }
+      ]
+    },
+    {
+      "locale": "en",
+      "question": "Compare General and No Sugar order revenue in September.",
+      "trustedScopedResultVerified": true,
+      "httpStatus": 200,
+      "status": "SUPPORTED",
+      "timing": {
+        "plannerMs": 20403.021750999993,
+        "capabilityMs": 40.2107149999938,
+        "executionMs": 131.99441299999307,
+        "synthesisMs": 0,
+        "totalMs": 20604.735732
+      },
+      "executedPanels": 1,
+      "queries": [
+        {
+          "metric": "order_revenue",
+          "groupBy": "business_line",
+          "dateRange": {
+            "from": "2026-09-01",
+            "to": "2026-09-30"
+          }
+        }
+      ]
+    },
+    {
+      "locale": "en",
+      "question": "Compare General and No Sugar revenue.",
+      "httpStatus": 200,
+      "status": "AMBIGUOUS",
+      "timing": {
+        "plannerMs": 17347.838107000003,
+        "capabilityMs": 0.08683000000019092,
+        "executionMs": 0,
+        "synthesisMs": 0,
+        "totalMs": 17379.087924000007
+      },
+      "choices": [
+        "order_revenue",
+        "net_invoiced_revenue",
+        "invoiced_revenue"
+      ],
+      "executedPanels": 0,
+      "queries": []
+    },
+    {
+      "locale": "en",
+      "question": "canonical clarification: order_revenue",
+      "originalQuestion": "Compare General and No Sugar revenue.",
+      "trustedScopedResultVerified": true,
+      "httpStatus": 200,
+      "status": "SUPPORTED",
+      "executedPanels": 1,
+      "queries": [
+        {
+          "metric": "order_revenue",
+          "groupBy": "business_line",
+          "dateRange": {
+            "from": "2026-09-01",
+            "to": "2026-09-30"
+          }
+        }
+      ],
+      "timing": {
+        "plannerMs": 17448.528668,
+        "capabilityMs": 14.743193000002066,
+        "executionMs": 72.67483399997582,
+        "synthesisMs": 0,
+        "totalMs": 17553.43982
+      }
+    },
+    {
+      "locale": "en",
+      "question": "Who is the best salesperson?",
+      "httpStatus": 200,
+      "status": "AMBIGUOUS",
+      "timing": {
+        "plannerMs": 17251.78242599999,
+        "capabilityMs": 0.03334899997571483,
+        "executionMs": 0,
+        "synthesisMs": 0,
+        "totalMs": 17287.03743299999
+      },
+      "choices": [
+        "net_invoiced_revenue",
+        "order_revenue",
+        "order_count"
+      ],
+      "executedPanels": 0,
+      "queries": []
+    },
+    {
+      "locale": "en",
+      "question": "canonical clarification: order_revenue",
+      "originalQuestion": "Who is the best salesperson?",
+      "trustedScopedResultVerified": true,
+      "httpStatus": 200,
+      "status": "SUPPORTED",
+      "executedPanels": 1,
+      "queries": [
+        {
+          "metric": "order_revenue",
+          "groupBy": "salesperson",
+          "dateRange": {
+            "from": "2026-09-01",
+            "to": "2026-09-30"
+          },
+          "analysis": {
+            "topN": {
+              "direction": "top",
+              "limit": 1
+            }
+          }
+        }
+      ],
+      "timing": {
+        "plannerMs": 17886.816875999997,
+        "capabilityMs": 34.298563999996986,
+        "executionMs": 114.32093700001133,
+        "synthesisMs": 0,
+        "totalMs": 18067.468983999977
+      }
+    },
+    {
+      "locale": "ar",
+      "question": "ما صافي إيرادات الفواتير في سبتمبر؟",
+      "trustedScopedResultVerified": true,
+      "httpStatus": 200,
+      "status": "SUPPORTED",
+      "timing": {
+        "plannerMs": 11699.446876000002,
+        "capabilityMs": 28.14567500000703,
+        "executionMs": 30.87161199998809,
+        "synthesisMs": 0,
+        "totalMs": 11791.301498999994
+      },
+      "executedPanels": 1,
+      "queries": [
+        {
+          "metric": "net_invoiced_revenue",
+          "dateRange": {
+            "from": "2026-09-01",
+            "to": "2026-09-30"
+          }
+        }
+      ]
+    },
+    {
+      "locale": "ar",
+      "question": "من حقق أعلى إيرادات الطلبات في سبتمبر؟",
+      "trustedScopedResultVerified": true,
+      "httpStatus": 200,
+      "status": "SUPPORTED",
+      "timing": {
+        "plannerMs": 16132.861463000008,
+        "capabilityMs": 30.982950000005076,
+        "executionMs": 107.81771600001957,
+        "synthesisMs": 0,
+        "totalMs": 16298.20081000001
+      },
+      "executedPanels": 1,
+      "queries": [
+        {
+          "metric": "order_revenue",
+          "groupBy": "salesperson",
+          "dateRange": {
+            "from": "2026-09-01",
+            "to": "2026-09-30"
+          },
+          "analysis": {
+            "topN": {
+              "direction": "top",
+              "limit": 1
+            }
+          }
+        }
+      ]
+    },
+    {
+      "locale": "en",
+      "question": "Which products are trending this month?",
+      "httpStatus": 200,
+      "status": "UNSUPPORTED_CAPABILITY",
+      "timing": {
+        "plannerMs": 6390.443300999992,
+        "capabilityMs": 0.006350999989081174,
+        "executionMs": 0,
+        "synthesisMs": 0,
+        "totalMs": 6409.396184000012
+      },
+      "executedPanels": 0,
+      "queries": []
+    }
+  ],
+  "cleanup": {
+    "membershipSuspended": true,
+    "rolesRestored": true,
+    "scopesRestored": true,
+    "allIdentitiesDisabled": true,
+    "activeSessions": 0
+  },
+  "resultRowsIncluded": false,
+  "entityIdentitiesIncluded": false,
+  "exactRequestsOutputs": "private local files outside Git",
+  "manualAcceptance": "BLOCKED: remaining administrator browser checks"
+}

@@ -83,7 +83,7 @@ if (plannerMode === 'structured') {
         } : undefined;
     const llmProvider = new OpenAICompatibleLLMProvider({ baseUrl, modelId,
         ...(apiKey ? { apiKey } : {}), temperature: config.llm.temperature, maxTokens: config.llm.maxTokens, ...(config.llm.reasoningBudgetTokens !== undefined ? { reasoningBudgetTokens: config.llm.reasoningBudgetTokens } : {}), ...(config.llm.seed !== undefined ? { seed: config.llm.seed } : {}), timeoutMs, ...(config.llm.diagnostics ? { diagnostics: event => process.stderr.write(`${JSON.stringify(event)}\n`) } : {}) });
-    analystPlanner=new StructuredAnalyticsPlanner(llmProvider);
+    analystPlanner=new StructuredAnalyticsPlanner(llmProvider,{dimensionValues:repository});
     if(config.llm.analystSynthesis)analystSynthesis=llmProvider;
     planner=new StructuredDashboardPlanner(llmProvider, { maxRepairAttempts, ...(diagnostics ? { diagnostics } : {}) });
 }

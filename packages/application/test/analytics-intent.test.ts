@@ -16,6 +16,7 @@ import type { AnalyticsIntent } from '../src/analytics-intent.ts';
 import { DashboardExecutor } from '../src/executor.ts';
 import { analyticsConversationState, resolveAnalyticsFollowUp } from '../src/analytics-conversation.ts';
 import { projectProviderSchema } from '../src/provider-schema.ts';
+import { analyticsPlanningExamples } from '../src/analytics-planning-instructions.ts';
 const clock=()=>new Date('2026-10-08T12:00:00Z'),profile=tenantProfiles['demo-iq'];
 const identity=new DemoIdentityProvider().resolve('demo-iq-admin','demo-iq','en');
 const policy=new DefaultAuthorizationPolicy();
@@ -39,7 +40,7 @@ class Provider implements LLMProvider {
 }
 for(const item of analyticsEvaluationCases)test(`ground truth ${item.id}: bounded planner output and dashboard/direct parity`,async()=>{
   const provider=new Provider(item.expected),locale=item.language;
-  const output=await new StructuredAnalyticsPlanner(provider,{clock}).plan({prompt:item.question,identity:{...identity,locale},profile,published});
+  const output=await new StructuredAnalyticsPlanner(provider,{clock,dimensionValues:repository}).plan({prompt:item.question,identity:{...identity,locale},profile,published});
   assert.deepEqual(output.outcome,item.expected);
   if(item.expected.status!=='SUPPORTED')return;
   const intent=item.expected.intent,spec=compileDashboardFromAnalyticsIntent(intent,{titleEn:'Analysis',titleAr:'تحليل'},profile,locale,clock());
@@ -81,6 +82,39 @@ test('invalid IDs, SQL, missing fields, extra presentation, malformed dates and 
 test('provider schema stays portable and compact while canonical validation rejects dropped constraints',()=>{
   const schema=projectProviderSchema(analyticsPlanningSchema),encoded=JSON.stringify(schema);
   assert.ok(encoded.length<16000);assert.ok(!encoded.includes('discriminator'));assert.ok(!encoded.includes('function_call'));assert.ok(encoded.includes('topNLimit'));
+});
+test('selection plans require grouping while multi-metric summaries and explicit false ranking remain valid',()=>{
+  for (const series of [{metric:'order_revenue',topNDirection:'top',topNLimit:1},{metric:'order_revenue',ranking:true}])
+    assert.throws(()=>validateAnalyticsIntent({context:period,analyses:[{series:[series]}]}));
+  const summary={context:period,analyses:[{series:[{metric:'order_revenue',ranking:false},{metric:'refund_value'}]}]};
+  validateAnalyticsIntent(summary);
+  validateAnalyticsIntent({...ranking,analyses:[{dimension:'salesperson',series:[{metric:'order_revenue',topNDirection:'top',topNLimit:1}]}]});
+});
+test('invented entity filters fail closed and valid filters are checked within the current tenant scope',async()=>{
+  const intent={...ranking,context:{...period,dimensions:[{dimension:'salesperson' as const,values:['salesperson']}]}};
+  const request={prompt:'Show me the highest salesperson',identity,profile,published};
+  const invalid=await new StructuredAnalyticsPlanner(new Provider({status:'SUPPORTED',intent}),{clock,dimensionValues:repository}).plan(request);
+  assert.equal(invalid.outcome.status,'INVALID_PLAN');
+  const valid={...intent,context:{...period,dimensions:[{dimension:'salesperson' as const,values:['rep:b']}]}};
+  assert.equal((await new StructuredAnalyticsPlanner(new Provider({status:'SUPPORTED',intent:valid}),{clock,dimensionValues:repository}).plan(request)).outcome.status,'SUPPORTED');
+  const absent={...valid,context:{...period,dimensions:[{dimension:'salesperson' as const,values:['rep:egypt']}]}};
+  assert.equal((await new StructuredAnalyticsPlanner(new Provider({status:'SUPPORTED',intent:absent}),{clock,dimensionValues:repository}).plan(request)).outcome.status,'INVALID_PLAN');
+  assert.equal((await new StructuredAnalyticsPlanner(new Provider({status:'SUPPORTED',intent:valid}),{clock}).plan(request)).outcome.status,'INVALID_PLAN');
+});
+test('all provider series definitions and contract examples respect the published metric and selection surface',async()=>{
+  const limited={...published,releases:published.releases.map(release=>({...release,capabilities:release.capabilities.filter(capability=>capability.metric==='order_revenue')}))};
+  const provider=new Provider({status:'SUPPORTED',intent:ranking});
+  await new StructuredAnalyticsPlanner(provider,{clock}).plan({prompt:'Top order revenue',identity,profile,published:limited});
+  const definitions=provider.requests[0]!.responseFormat.jsonSchema.$defs as Record<string,{properties:{metric:{enum:string[]}}}>;
+  for(const definition of Object.values(definitions))assert.deepEqual(definition.properties.metric.enum,['order_revenue']);
+  const options={metricIds:['order_revenue'] as const,templateIds:[],actions:['ai:generate'] as const,published:limited};
+  for(const example of analyticsPlanningExamples(options)){
+    validateAnalyticsIntent(example.outcome.intent);
+    const output=await new StructuredAnalyticsPlanner(new Provider(example.outcome),{clock}).plan({prompt:example.question,identity,profile,published:limited});
+    assert.equal(output.outcome.status,'SUPPORTED');
+  }
+  const withoutSelection={...options,published:{...limited,releases:limited.releases.map(release=>({...release,capabilities:release.capabilities.map(capability=>({...capability,analyses:[]}))}))}};
+  assert.ok(analyticsPlanningExamples(withoutSelection).every(example=>example.outcome.intent.analyses.every(analysis=>analysis.series.every(series=>series.topNLimit===undefined))));
 });
 test('deduplicated scalar execution uses one call, isolates clones and records stages',async()=>{
   let calls=0;

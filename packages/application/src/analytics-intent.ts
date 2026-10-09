@@ -13,21 +13,29 @@ export type AnalyticsPlanningOutcome = { status: 'SUPPORTED'; intent: AnalyticsI
   | {status:'FOLLOW_UP';operation:'compare_entities';count:number;datePreset:'last_6_months'}
   | { status: 'AMBIGUOUS'; choices: MetricId[] }
   | { status: 'UNSUPPORTED_CAPABILITY' | 'DATA_NOT_READY' };
-const object = (properties: object, required: string[] = []) => ({ type: 'object', additionalProperties: false, properties, required });
+const object = <Properties extends object>(properties: Properties, required: string[] = []) => ({ type: 'object', additionalProperties: false, properties, required });
 const date = { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' };
 const contextSchema = object({
   datePreset: { enum: relativeDatePresets }, dateRange: object({ from: date, to: date }, ['from','to']),
   dimensions: { type: 'array', maxItems: 14, items: object({ dimension: { enum: dimensions },
     values: { type: 'array', minItems: 1, maxItems: 100, items: { type: 'string', minLength: 1, maxLength: 160 } } }, ['dimension','values']) },
 });
-export const analyticsIntentSchema = { $defs: { series: analyticsSeriesSchema }, ...object({
+const summarySeriesProperties: Record<string, unknown> = { ...analyticsSeriesSchema.properties, ranking: { enum: [false] } };
+delete summarySeriesProperties.topNDirection;
+delete summarySeriesProperties.topNLimit;
+const seriesDefinitions = { series: analyticsSeriesSchema, summarySeries: object(summarySeriesProperties, ['metric']) };
+const analysisSeries = { type: 'array', minItems: 1, maxItems: 8, items: { $ref: '#/$defs/series' } };
+const intentContract = object({
   context: contextSchema,
-  analyses: { type: 'array', minItems: 1, maxItems: 24, items: object({ dimension: { enum: dimensions },
-    series: { type: 'array', minItems: 1, maxItems: 8, items: { $ref: '#/$defs/series' } }, context: contextSchema,
-    rank: { type: 'integer', minimum: 1, maximum: 100 } }, ['series']) },
-}, ['context','analyses']) };
+  analyses: { type: 'array', minItems: 1, maxItems: 24, items: { oneOf: [
+    object({ dimension: { enum: dimensions }, series: analysisSeries, context: contextSchema,
+      rank: { type: 'integer', minimum: 1, maximum: 100 } }, ['dimension','series']),
+    object({ series: { ...analysisSeries, items: { $ref: '#/$defs/summarySeries' } }, context: contextSchema }, ['series']),
+  ] } },
+}, ['context','analyses']);
+export const analyticsIntentSchema = { $defs: seriesDefinitions, ...intentContract };
 export const analyticsPlanningSchema = { $defs: analyticsIntentSchema.$defs, oneOf: [
-  object({ status: { enum: ['SUPPORTED'] }, intent: analyticsIntentSchema }, ['status','intent']),
+  object({ status: { enum: ['SUPPORTED'] }, intent: intentContract }, ['status','intent']),
   object({status:{enum:['FOLLOW_UP']},operation:{enum:['rank']},rank:{type:'integer',minimum:1,maximum:100}},['status','operation','rank']),
   object({status:{enum:['FOLLOW_UP']},operation:{enum:['compare_entities']},count:{type:'integer',minimum:2,maximum:100},datePreset:{enum:['last_6_months']}},['status','operation','count','datePreset']),
   object({ status: { enum: ['AMBIGUOUS'] }, choices: { type: 'array', minItems: 2, maxItems: 8, uniqueItems: true,
