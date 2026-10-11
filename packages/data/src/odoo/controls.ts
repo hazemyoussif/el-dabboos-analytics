@@ -73,7 +73,7 @@ export async function readOdooControls(pool: Pool,scope: OdooControlScope,snapsh
       if (!rows.length) continue;
       sets.push(rows.map(row => ({ caseId: 'db-'+createHash('sha256').update(JSON.stringify([scope.reportReference,mapping.datasetId,source.object,measure.measure,grouping,row.key])).digest('hex'),
         tenantId: mapping.tenantId,datasetId: mapping.datasetId,mappingVersion: mapping.mappingVersion,measureId: measure.measure,sourceReportReference: scope.reportReference,frozenRevision: source.frozenRevision,
-        from: source.from,to: source.to,grouping,groupKey: row.key,expectedValue: row[`${measure.measure}_value`]!,expectedCount: row[`${measure.measure}_count`]!,actualValue: '0.000000',actualCount: '0',tolerance: scope.tolerance })));
+        from: source.from,to: source.to,grouping,groupKey: grouping===null ? null : row.key!,expectedValue: row[`${measure.measure}_value`]!,expectedCount: row[`${measure.measure}_count`]!,actualValue: '0.000000',actualCount: '0',tolerance: scope.tolerance })));
     }
     await snapshot.assertAlive();
     await client.query('COMMIT');
