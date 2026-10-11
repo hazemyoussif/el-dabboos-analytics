@@ -13,7 +13,7 @@ test('new requests and unmount invalidate earlier load and mutation responses', 
 
 test('page-specific payloads preserve versions and omit unrelated membership scopes', async () => {
   const serializers = await import('../src/admin/form-requests.ts');
-  const form = new FormData(); form.set('name', 'Reviewed'); form.set('description', 'Description'); form.set('permission', 'dashboard:view'); form.set('domain', 'sales'); form.set('role', 'viewer'); form.set('userId', 'candidate'); form.set('branch', 'retained'); form.set('scope', 'restricted'); form.set('membership', 'dormant'); form.set('defaultLocale', 'ar'); form.set('displayName', 'Reviewed user'); form.set('status', 'suspended'); form.set('market', 'EG');
+  const form = new FormData(); form.set('name', 'Reviewed'); form.set('description', 'Description'); form.set('permission', 'dashboard:view'); form.set('domain', 'sales'); form.set('role', 'viewer'); form.set('userId', 'candidate'); form.set('branch', 'retained'); form.set('scope', 'restricted'); form.set('membership', 'dormant'); form.set('defaultLocale', 'ar'); form.set('displayName', 'Reviewed user'); form.set('email', 'person@example.test'); form.set('password', 'initial-passphrase'); form.set('status', 'suspended'); form.set('market', 'EG');
   const base = '/api/tenants/tenant/admin';
   // Serialized fields are what HTTP receives; unrelated fields are intentionally present in the form.
   const record = { id: 'record/id', version: 7 };
@@ -28,6 +28,7 @@ test('page-specific payloads preserve versions and omit unrelated membership sco
   assert.deepEqual(serializers.workspaceFormRequest(form, record as Parameters<typeof serializers.workspaceFormRequest>[1], base).body, { expectedVersion: 7, name: 'Reviewed', defaultLocale: 'ar' });
   assert.deepEqual(serializers.customerFormRequest(form, record as Parameters<typeof serializers.customerFormRequest>[1]).body, { name: 'Reviewed', expectedVersion: 7, status: 'suspended' });
   assert.deepEqual(serializers.tenantFormRequest(form, null, 'customer/id'), { path: '/api/platform/customers/customer%2Fid/tenants', method: 'POST', body: { name: 'Reviewed', configuration: { countryCode: 'EG', arabicDialect: 'eg', reportingCurrency: 'EGP', timeZone: 'Africa/Cairo', defaultLocale: 'ar' } } });
+  assert.deepEqual(serializers.userFormRequest(form, null), { path: '/api/platform/users', method: 'POST', body: { displayName: 'Reviewed user', preferredLocale: 'ar', email: 'person@example.test', password: 'initial-passphrase' } });
   assert.deepEqual(serializers.userFormRequest(form, record as Parameters<typeof serializers.userFormRequest>[1]).body, { expectedVersion: 7, displayName: 'Reviewed user', preferredLocale: 'ar', status: 'suspended' });
 });
 
