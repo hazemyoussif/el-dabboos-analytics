@@ -96,6 +96,7 @@ const operationalCommands=manualAnalyticsCommands(provider,process.env);
 const app = await buildApi({ analystRepository:administration.analyst,...(analystPlanner?{analystPlanner}:{}),...(analystSynthesis?{analystSynthesis}:{}), ...(drillThroughRepository?{drillThroughRepository}:{}), ...(operationalCommands?{operationalCommands}:{}), ...(operationalStatus?{operationalStatus}:{}), ...(provider==='postgres' ? { publishedCapabilities: repository as TrustedAnalyticsRepository } : {}),analyticsRepository: repository, dimensionValues: repository, executionConcurrency: config.executionConcurrency,
     readiness: { persistence: async () => { await localAuth?.ready(); return controlStorage.ready(); }, analytics: analyticsReady },
     administration: { unitOfWork: administration, directory: administration.directory, profiles: administration.profiles, dataReady,
+        ...(localAuth ? { provisionEmployee: localAuth.provisionEmployee } : {}),
         authenticate: async (headers) => {
             if (localAuth) return (await localAuth.principal(headers)).binding.id;
             if (!syntheticIdentity)
