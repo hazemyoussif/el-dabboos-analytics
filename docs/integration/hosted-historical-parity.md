@@ -12,7 +12,7 @@ The trusted repository includes the existing historical capability projection an
 
 ## Post-merge staging commands
 
-Run from the merged checkout **on the approved staging host**, using the existing protected environment files and database network. Rebuild/redeploy the API with the merged source using the established staging deployment workflow first; the API image now includes `scripts/integration`. The commands below use Docker's env-file mechanism and never load developer `.env` files. The operator env file must contain `ENVIRONMENT=staging`, the hosted `MART_MIGRATOR_URL`, `MART_RUNTIME_URL`, existing control app configuration and the approved read-only Odoo source configuration/tunnel. In-place publication uses only `MART_MIGRATOR_URL`. Activation uses `MART_PUBLICATION_TARGET_URL`, supplied inside the container from that same URL.
+Run from the merged checkout **on the approved staging host**, using the existing protected environment files and database network. Rebuild/redeploy the API with the merged source using the established staging deployment workflow first; the API image now includes `scripts/integration`. The commands below use Docker's env-file mechanism and never load developer `.env` files. Hosted deployments may keep mart/control credentials and the approved read-only Odoo source configuration in separate protected files. The operator container must receive both sets plus `ENVIRONMENT=staging`; no protected file needs to be rewritten or printed. In-place publication uses only `MART_MIGRATOR_URL`. Activation uses `MART_PUBLICATION_TARGET_URL`, supplied inside the container from that same URL.
 
 Set these **path/image/network values**, not connection strings:
 
@@ -20,10 +20,11 @@ Set these **path/image/network values**, not connection strings:
 export STAGING_OPERATOR_ENV_FILE=/protected/path/to/existing-staging-operator.env
 export STAGING_DATABASE_NETWORK=existing-staging-database-network
 export STAGING_API_IMAGE=merged-staging-api-image
+export ODOO_SOURCE_ENV_FILE=/protected/path/to/existing-odoo-source.env
 export HISTORY_CHECKPOINT_DIR=/protected/persistent/history-202510-202609
 ```
 
-The checkpoint directory must belong to this hosted mart and be readable/writable by the image's `node` user. Retain all immutable extraction checkpoints, publication receipts and approvals; back them up with the database. Local-mart checkpoints are not proof of hosted extraction. Before the full-range rerun, retain the already-completed **hosted September historical** event/aging checkpoints in this directory: the existing backfill validates and skips them. If those files are missing, recover their original exact evidence files before running; do not re-extract September or author substitute checkpoints.
+The checkpoint directory must belong to this hosted mart and be readable/writable by the image's `node` user. Retain all immutable extraction checkpoints, publication receipts and approvals; back them up with the database. Local-mart checkpoints are not proof of hosted extraction. If exact hosted September historical checkpoints already exist, retain them and let the backfill validate/skip them. If no hosted September historical member/checkpoint exists, do not copy local evidence or author substitute files: run the normal hosted September extraction. The event path enforces the certified September anchor regression and both event/aging paths still require exact source-to-mart reconciliation before publication.
 
 Use the existing `business-approval.json` when any member is already certified; do not replace its reference, approver or approvedAt. For a wholly new hosted job only, create that file exclusively with the authorized task-owner staging reference. `approvedAt` records when this approval evidence is written, while the reference identifies the 2026-10-11 authorization. It does not claim Finance approved these outputs or invent an earlier timestamp.
 
@@ -48,6 +49,8 @@ Define a reusable operator wrapper with durable checkpoints:
 history_operator() {
   docker run --rm --network "$STAGING_DATABASE_NETWORK" \
     --env-file "$STAGING_OPERATOR_ENV_FILE" \
+    --env-file "$ODOO_SOURCE_ENV_FILE" \
+    -e ENVIRONMENT=staging -e CONTROL_PROVIDER=postgres \
     --mount "type=bind,src=$HISTORY_CHECKPOINT_DIR,dst=/history" \
     --read-only --tmpfs /tmp \
     --entrypoint node "$STAGING_API_IMAGE" \
@@ -55,7 +58,7 @@ history_operator() {
 }
 ```
 
-1. Backfill/reconcile monthly candidates. This does not publish or bind:
+1. Backfill/reconcile monthly candidates. This does not publish or bind. The hosted job uses the maximum bounded 1,000-row Odoo page and consolidated exact control scans so the retained snapshot is spent on evidence rather than repeated source scans. Failed/incomplete attempts remain immutable; after their lease guard expires, rerun the affected range with `--retry-incomplete`.
 
 ```sh
 history_operator scripts/integration/historical-backfill.ts backfill \
