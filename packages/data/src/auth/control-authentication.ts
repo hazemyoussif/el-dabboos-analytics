@@ -44,6 +44,39 @@ export class PostgresLocalIdentityProvisioner implements LocalIdentityProvisione
         } catch (error) { await client.query('ROLLBACK'); throw error; } finally { client.release(); }
     }
 }
+/** Platform-admin employee creation using the normal control-app role. Product user, credential, identity and audit commit atomically. */
+export class PostgresEmployeeProvisioner {
+    constructor(private readonly pool: Pool) {}
+    async create(actorIdentityId: string,input:{displayName:string;preferredLocale:'en'|'ar';email:string},credential:{subject:string;passwordHash:string}) {
+        const displayName=input.displayName.trim(),email=input.email.trim().toLowerCase();
+        if (!displayName || displayName.length>200 || !['en','ar'].includes(input.preferredLocale) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length>254) throw new Error('Invalid employee provisioning');
+        const client=await this.pool.connect();
+        try {
+            await client.query('BEGIN'); await client.query('SELECT pg_advisory_xact_lock(738421,11)');
+            const actor=(await client.query(`SELECT product_user.id
+              FROM control.identities identity
+              JOIN control.users product_user ON product_user.id=identity.user_id
+              JOIN control.platform_assignments assignment ON assignment.user_id=product_user.id
+              JOIN control.platform_assignment_roles assignment_role ON assignment_role.user_id=assignment.user_id
+              JOIN control.roles role ON role.id=assignment_role.role_id
+              JOIN control.role_permissions permission ON permission.role_id=role.id
+              WHERE identity.id=$1 AND identity.status='active' AND product_user.status='active'
+                AND assignment.status='active' AND role.scope='platform'
+                AND permission.permission='platform:users:manage'
+              LIMIT 1`,[actorIdentityId])).rows[0];
+            if(!actor) throw new Error('Employee provisioning denied');
+            const userId=crypto.randomUUID(),identityId=crypto.randomUUID(),now=new Date().toISOString();
+            await client.query('INSERT INTO control.users(id,display_name,preferred_locale,status,version,created_at,updated_at) VALUES($1,$2,$3,\'active\',1,$4,$4)',[userId,displayName,input.preferredLocale,now]);
+            await client.query('INSERT INTO auth."user"(id,name,email) VALUES($1,$2,$3)',[credential.subject,displayName,email]);
+            await client.query('INSERT INTO auth.account(id,"accountId","providerId","userId",password) VALUES($1,$2,\'credential\',$2,$3)',[crypto.randomUUID(),credential.subject,credential.passwordHash]);
+            await client.query('INSERT INTO control.identities(id,user_id,provider,provider_subject,login_hint,status) VALUES($1,$2,\'local\',$3,$4,\'active\')',[identityId,userId,credential.subject,email]);
+            await client.query("INSERT INTO control.authentication_security_events(id,event,user_id,operator_reference) VALUES($1,'local_identity_provisioned',$2,'platform-admin-create')",[crypto.randomUUID(),userId]);
+            await client.query("INSERT INTO control.admin_audit_events(event_id,actor_user_id,target_id,action,result,occurred_at) VALUES($1,$2,$3,'user.updated','allowed',$4)",[crypto.randomUUID(),actor.id,userId,now]);
+            await client.query('COMMIT');
+            return {id:userId,displayName,preferredLocale:input.preferredLocale,status:'active' as const,version:1,createdAt:now,updatedAt:now,identity:{id:identityId,provider:'local',status:'active' as const,loginHint:email}};
+        } catch(error) { await client.query('ROLLBACK'); throw error; } finally { client.release(); }
+    }
+}
 /** Separate framework pool fixes its namespace without affecting product-repository sessions. */
 export function createAuthenticationPool(connectionString: string, max = 4) {
     return new Pool({ connectionString,max,connectionTimeoutMillis: 5000,options: '-c search_path=auth,pg_catalog' });
