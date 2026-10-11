@@ -39,7 +39,6 @@ export function createAdministration(...dependencies: ConstructorParameters<type
         updateCustomer: customers.updateCustomer.bind(null, runtime),
         createTenant: tenants.createTenant.bind(null, runtime),
         updateTenant: tenants.updateTenant.bind(null, runtime),
-        createUser: users.createUser.bind(null, runtime),
         provisionUserForTenant: users.provisionUserForTenant.bind(null, runtime),
         updateUser: users.updateUser.bind(null, runtime),
         disableIdentity: users.disableIdentity.bind(null, runtime),
