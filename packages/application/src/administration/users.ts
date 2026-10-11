@@ -2,17 +2,6 @@ import type { ProductUser } from '@el-dabboos/domain';
 import { authorizePlatform } from '../access-control.ts';
 import type { PlatformAdministrationCommand } from './commands.ts';
 import { AdministrationRuntime, fail, found, saved } from './runtime.ts';
-export async function createUser(runtime: AdministrationRuntime, identityId: string, command: Omit<Extract<PlatformAdministrationCommand, {
-    action: 'user.create';
-}>, 'action'>) {
-    const id = crypto.randomUUID();
-    return runtime.platformWrite({ identityId, action: 'user.created', targetId: id }, async (transaction, actor) => {
-        authorizePlatform(actor, 'platform:users:manage');
-        const user = await transaction.users.createUser({ ...runtime.metadata(), id, displayName: command.displayName, preferredLocale: command.preferredLocale, status: 'invited' });
-        await runtime.audit(transaction, actor, 'user.created', user.id);
-        return user;
-    });
-}
 export async function provisionUserForTenant(runtime: AdministrationRuntime, identityId: string, command: Omit<Extract<PlatformAdministrationCommand, {
     action: 'user.tenant_candidate';
 }>, 'action'>) {
