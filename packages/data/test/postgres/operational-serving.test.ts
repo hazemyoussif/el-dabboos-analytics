@@ -508,10 +508,11 @@ test('drill lineage migration backfills exact populated partitions and refuses i
    DROP TABLE mart.analytics_drill_partitions CASCADE;DROP TABLE mart.analytics_partition_facts CASCADE;
    DROP FUNCTION IF EXISTS mart.freeze_drill_membership();DROP FUNCTION IF EXISTS mart.drill_partition_exact(text,text);
    ALTER TABLE mart.analytics_fact_revisions DROP COLUMN measure_id, DROP COLUMN business_date;
+   DROP INDEX mart.analytics_serving_members_partition_lookup;
    DROP POLICY IF EXISTS trusted_only ON mart.analytics_fact_revisions;
    REVOKE SELECT ON mart.analytics_fact_revisions FROM dabboos_runtime;
    DELETE FROM mart_admin.mart_schema_migrations WHERE version>=35`);
-  assert.deepEqual(await migratePostgres(fixture.db.migrator),[35,36,37]);
+  assert.deepEqual(await migratePostgres(fixture.db.migrator),[35,36,37,38]);
   const drill=new TrustedDrillThroughRepository(fixture.db.runtime,scope=>fixture.repository.getPublishedCapabilities(scope));
   await assert.rejects(drill.drill({query:january,release,sourceAsOf:summary.metadata.sourceAsOf!},context),/DRILL_NOT_READY/);
   const exact=await drill.drill({query:february,release,sourceAsOf:summary.metadata.sourceAsOf!},context);assert.equal(exact.value,'50.000000');
