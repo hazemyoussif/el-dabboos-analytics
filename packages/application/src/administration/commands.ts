@@ -56,6 +56,14 @@ export type TenantAdministrationCommand = {
     grants: readonly DashboardGrant[];
 };
 export type PlatformAdministrationCommand = {
+    action: 'user.create';
+    displayName: string;
+    preferredLocale: 'en' | 'ar';
+} | {
+    action: 'user.tenant_candidate';
+    userId: string;
+    tenantId: string;
+} | {
     action: 'customer.create';
     name: string;
 } | {
