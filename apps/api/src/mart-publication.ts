@@ -1,5 +1,5 @@
-import type { ReleaseCertification } from '@el-dabboos/domain';
-import { activateLocalRelease,createMartPool,PostgresMappingReleases,PostgresReleaseCertification,PostgresReleasePromotion,tenantTransaction } from '@el-dabboos/data';
+import type { DerivedMetricCertification,DimensionId,MetricId,ReleaseCertification,ReconciliationCase } from '@el-dabboos/domain';
+import { activateLocalRelease,createMartPool,PostgresDerivedMetricCertification,PostgresMappingReleases,PostgresReleaseCertification,PostgresReleasePromotion,tenantTransaction } from '@el-dabboos/data';
 import type { ReleasePromotionScope } from '@el-dabboos/data';
 
 function publicationUrl(environment: NodeJS.ProcessEnv,key: string): string {
@@ -17,6 +17,7 @@ export async function executeMartPublication(command: string,manifest: unknown,e
     try { await new PostgresReleaseCertification(pool).record(manifest as ReleaseCertification); return { status: 'certified' }; }
     finally { await pool.end(); }
   }
+  if (command==='certify-derived') return certifyDerivedOutputs(derivedApprovalManifest(manifest),environment);
   const scope = publicationScope(manifest);
   if (command==='approve') return approveRelease(scope,environment);
   if (command==='activate-local') {
@@ -44,4 +45,62 @@ async function approveRelease(scope: ReleasePromotionScope,environment: NodeJS.P
     await new PostgresMappingReleases(pool).approve({ ...scope,caseIds: certification.caseIds,approvedAt: certification.approvedAt });
     return { status: 'approved' };
   } finally { await pool.end(); }
+}
+
+
+interface DerivedApprovalManifest {
+  tenantId:string;
+  datasetId:string;
+  approvalReference:string;
+  technicalReference:string;
+}
+function derivedApprovalManifest(value:unknown):DerivedApprovalManifest {
+  if (!value || typeof value!=='object' || Object.keys(value).sort().join(',')!=='approvalReference,datasetId,technicalReference,tenantId') throw new Error('Invalid derived approval manifest');
+  const manifest=value as Record<string,unknown>;
+  for(const key of ['tenantId','datasetId','approvalReference','technicalReference'] as const) if(typeof manifest[key]!=='string'||!manifest[key]!.trim()) throw new Error('Invalid derived approval manifest');
+  return manifest as unknown as DerivedApprovalManifest;
+}
+async function certifyDerivedOutputs(manifest:DerivedApprovalManifest,environment:NodeJS.ProcessEnv) {
+  const pool=createMartPool(localPublicationUrl(environment),1);
+  try {
+    const evidence=await tenantTransaction(pool,manifest.tenantId,async client=>{
+      const mapping=(await client.query('SELECT mapping_version,approval_status FROM mart.mapping_releases WHERE tenant_id=$1 AND dataset_id=$2',[manifest.tenantId,manifest.datasetId])).rows[0];
+      if(!mapping||mapping.approval_status!=='approved')throw new Error('Approved mapping required');
+      const rows=await client.query<{specification:ReconciliationCase}>(
+        `SELECT evidence.specification
+         FROM mart.reconciliation_evidence evidence
+         JOIN mart.mapping_releases mapping USING(tenant_id,dataset_id)
+         WHERE evidence.tenant_id=$1 AND evidence.dataset_id=$2
+           AND evidence.case_id=ANY(mapping.approval_case_ids)
+           AND evidence.status='passed' AND evidence.group_completeness=true
+         ORDER BY evidence.case_id`,
+        [manifest.tenantId,manifest.datasetId],
+      );
+      return {mappingVersion:String(mapping.mapping_version),cases:rows.rows.map(row=>row.specification)};
+    },true);
+    const approvedAt=new Date().toISOString();
+    const definitions=[
+      {metric:'average_confirmed_order_value' as MetricId,operands:['order_revenue','order_count'],businessSemantics:'Average confirmed order value = confirmed order revenue divided by confirmed order count.'},
+      {metric:'average_invoice_value' as MetricId,operands:['invoiced_revenue','invoice_count'],businessSemantics:'Average invoice value = posted invoice value divided by posted customer invoice count; refunds are excluded from both operands.'},
+    ] as const;
+    const groupings:[DimensionId|null,...(DimensionId|null)[]]=[null,'business_line','salesperson'];
+    const certification=new PostgresDerivedMetricCertification(pool);
+    const recorded:string[]=[];
+    for(const definition of definitions)for(const grouping of groupings){
+      const cases=evidence.cases.filter(control=>control.grouping===grouping&&definition.operands.includes(control.measureId as never));
+      if(!cases.length)throw new Error(`Exact derived inputs unavailable: ${definition.metric}/${grouping??'summary'}`);
+      const periods=[...new Set(cases.map(control=>`${control.from}/${control.to}`))];
+      if(periods.length!==1)throw new Error('One exact derived period required');
+      const [from,to]=periods[0]!.split('/');
+      const scope:DerivedMetricCertification={
+        tenantId:manifest.tenantId,datasetId:manifest.datasetId,mappingVersion:evidence.mappingVersion,
+        reference:`${manifest.approvalReference}:${definition.metric}:${grouping??'summary'}`,
+        metric:definition.metric,grouping,from:from!,to:to!,caseIds:cases.map(control=>control.caseId),
+        approvalReference:manifest.approvalReference,approvedAt,businessSemantics:definition.businessSemantics,
+        technicalReference:manifest.technicalReference,
+      };
+      await certification.record(scope);recorded.push(`${definition.metric}:${grouping??'summary'}`);
+    }
+    return {status:'derived-certified',recorded};
+  } finally {await pool.end();}
 }
