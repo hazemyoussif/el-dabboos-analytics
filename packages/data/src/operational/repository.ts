@@ -22,13 +22,14 @@ export class TrustedAnalyticsRepository implements AnalyticsRepository,Dimension
  async isDataReady(tenantId:string){return await this.stored(tenantId)!==null||this.fallback.isDataReady(tenantId);}
  async getPublishedCapabilities(context:AnalyticsContext):Promise<PublishedAnalyticsCapabilities>{
   const stored=await this.stored(context.tenantId);if(!stored)return this.fallback.getPublishedCapabilities(context);
-  const [finance,anchor]=await Promise.all([this.finance.capabilities(context),this.refreshedAnchor(context,stored)]);
-  return policyCapabilities({...stored.capabilities,releases:[...stored.capabilities.releases,...(anchor?.releases??[]),...(finance?.releases??[])]},context);
+  const [finance,anchor,history]=await Promise.all([this.finance.capabilities(context),this.refreshedAnchor(context,stored),this.fallback.getPublishedCapabilities(context)]);
+  return policyCapabilities({...stored.capabilities,releases:[...stored.capabilities.releases,...history.releases,...(anchor?.releases??[]),...(finance?.releases??[])]},context);
  }
  async execute(query:AnalyticsQuery,context:AnalyticsContext):Promise<AnalyticsResult> {
   validateQuery(query,context);
   const stored=await this.stored(context.tenantId);if(!stored)return this.fallback.execute(query,context);
   if(financeMetric(query.metric)){const capabilities=await this.finance.capabilities(context);if(capabilities)return this.finance.execute(query,context,capabilities);}
+  if(query.dateRange && query.dateRange.from<stored.capabilities.releases[0]!.period!.from)return this.fallback.execute(query,context);
   const authorizedQuery={...query,filters:[...(query.filters??[]),...(context.enforcedFilters??[])]};
   if(publishedQueryIssues(authorizedQuery,stored.capabilities).length){const anchor=await this.refreshedAnchor(context,stored);if(anchor&&!publishedQueryIssues(authorizedQuery,anchor).length)return this.anchorResult(query,context,anchor);}
   return tenantTransaction(this.pool,context.tenantId,async client=>{

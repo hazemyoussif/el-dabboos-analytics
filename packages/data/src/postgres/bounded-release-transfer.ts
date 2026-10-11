@@ -10,9 +10,7 @@ import type {ReleasePromotionScope} from './release-promotion.ts';
 export async function promoteBoundedRelease(source:Pool,target:Pool,scope:ReleasePromotionScope) {
   return tenantTransaction(source,scope.tenantId,async reader=>{
     await reader.query("SET LOCAL TIME ZONE 'UTC'");
-    await assertCertifiedRelease(reader,scope);
-    const certified=(await reader.query('SELECT certificate.specification FROM mart.release_certifications certificate JOIN mart.mapping_releases mapping USING(tenant_id,dataset_id) WHERE mapping.tenant_id=$1 AND mapping.dataset_id=$2 AND certificate.reference=mapping.approval_reference',[scope.tenantId,scope.datasetId])).rows[0]?.specification;
-    validateMonthlyCertificate(certified);
+    await assertCertifiedMonthlyRelease(reader,scope);
     const schema=await martSchemaFingerprint(reader);
     return tenantTransaction(target,scope.tenantId,async writer=>{
       await writer.query("SET LOCAL TIME ZONE 'UTC'");
@@ -69,6 +67,11 @@ async function walkRelease(client:PoolClient,scope:ReleasePromotionScope,consume
   hash.update(']');return hash.digest('hex');
 }
 export function boundedReleaseFingerprint(client:PoolClient,scope:ReleasePromotionScope) {return walkRelease(client,scope);}
+export async function assertCertifiedMonthlyRelease(client:PoolClient,scope:ReleasePromotionScope) {
+  await assertCertifiedRelease(client,scope);
+  const certified=(await client.query('SELECT certificate.specification FROM mart.release_certifications certificate JOIN mart.mapping_releases mapping USING(tenant_id,dataset_id) WHERE mapping.tenant_id=$1 AND mapping.dataset_id=$2 AND certificate.reference=mapping.approval_reference',[scope.tenantId,scope.datasetId])).rows[0]?.specification;
+  validateMonthlyCertificate(certified);
+}
 function validateMonthlyCertificate(certificate:{from:string;to:string}|undefined) {
   if (!certificate || !certificate.from.endsWith('-01')) throw new Error('Bounded promotion requires one certified calendar month');
   const first=new Date(`${certificate.from}T00:00:00Z`);

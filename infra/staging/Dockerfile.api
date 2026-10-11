@@ -4,7 +4,8 @@ RUN npm install --global pnpm@12.6.0
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
 COPY packages ./packages
 COPY apps ./apps
-RUN chmod -R a+rX /workspace/packages /workspace/apps \
+COPY scripts/integration ./scripts/integration
+RUN chmod -R a+rX /workspace/packages /workspace/apps /workspace/scripts/integration \
  && pnpm install --frozen-lockfile \
  && pnpm --filter @el-dabboos/api build
 FROM build AS runtime
