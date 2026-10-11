@@ -7,7 +7,9 @@ export async function ingestOperationalCandidate(client:PoolClient,scope:{baseli
  const {baseline,source,cursor,details,parent}=scope;
  const start=performance.now(),objects={...cursor?.objects};details.previousCursor=cursor;
  const months=(await client.query("SELECT to_char(month,'YYYY-MM') AS period FROM mart.analytics_serving_members WHERE tenant_id=$1 AND revision_id=$2",[baseline.tenantId,parent])).rows.map(row=>String(row.period));
- const candidate=new CandidateFacts(client,baseline,details,new Set(months));
+ const knownMonths=new Set(months);
+ const candidate=new CandidateFacts(client,baseline,details,knownMonths);
+ for(const month of missingOperationalMonths(baseline,source.cutoff,knownMonths))candidate.newMonths.add(month);
  for await(const page of source.records(baseline,cursor)) {
   details.rowsDiscovered+=page.rows;if(page.cursor)objects[page.object]=page.cursor;
   const facts=[...page.facts];for(const retired of page.retired??[])facts.push(...await retiredOperationalFacts(client,baseline.tenantId,retired,source));
@@ -31,4 +33,31 @@ class CandidateFacts {
    if(!this.identities.has(key)){this.identities.add(key);if(change.previous)this.details.updatedRows++;else this.details.newRows++;}
   }
  }
+}
+
+
+export function missingOperationalMonths(
+ baseline:Pick<OperationalBaseline,'to'|'mappings'>,
+ sourceCutoff:string,
+ knownMonths:ReadonlySet<string>,
+):string[] {
+ const timeZone=baseline.mappings[0]?.measures[0]?.timeZone;
+ if(!timeZone)throw new Error('Approved operational timezone required');
+ const cutoff=new Date(sourceCutoff);
+ if(!Number.isFinite(cutoff.getTime()))throw new Error('Valid source cutoff required');
+ const parts=new Intl.DateTimeFormat('en-CA',{timeZone,year:'numeric',month:'2-digit'}).formatToParts(cutoff);
+ const year=parts.find(part=>part.type==='year')?.value,month=parts.find(part=>part.type==='month')?.value;
+ if(!year||!month)throw new Error('Operational cutoff month unavailable');
+ const through=`${year}-${month}`,result:string[]=[];
+ for(let candidate=nextOperationalMonth(baseline.to.slice(0,7));candidate<=through;candidate=nextOperationalMonth(candidate)) {
+  if(result.length>=120)throw new Error('Operational month catch-up exceeds bound');
+  if(!knownMonths.has(candidate))result.push(candidate);
+ }
+ return result;
+}
+function nextOperationalMonth(month:string) {
+ const date=new Date(`${month}-01T00:00:00Z`);
+ if(!Number.isFinite(date.getTime()))throw new Error('Valid operational month required');
+ date.setUTCMonth(date.getUTCMonth()+1);
+ return date.toISOString().slice(0,7);
 }

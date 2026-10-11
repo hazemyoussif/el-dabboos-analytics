@@ -39,3 +39,18 @@ test('official Business Line display and Unassigned semantics preserve stable id
  assert.equal(formatKey('unassigned','salesperson','en',tenantProfiles['demo-iq']),'Unassigned');
  assert.equal(formatDimensionLabel('Unchanged source name','salesperson','ar'),'Unchanged source name');
 });
+
+
+test('management navigation disables incompatible templates instead of retaining the previous report',async()=>{
+ const server=await createServer({root:fileURLToPath(new URL('../',import.meta.url)),server:{middlewareMode:true},optimizeDeps:{noDiscovery:true},appType:'custom'});
+ try {
+  const {ManagementNavigation}=await server.ssrLoadModule('/src/reports/ManagementReports.tsx');
+  const templates=[
+   {id:'executive-sales-invoicing',name:{en:'Executive',ar:'تنفيذي'},description:{en:'',ar:''},domain:'executive',tags:['management'],datePreset:'previous_month',layout:{columns:1},widgets:[],availability:'available'},
+   {id:'business-line-performance',name:{en:'Business Line',ar:'خط الأعمال'},description:{en:'',ar:''},domain:'sales',tags:['management'],datePreset:'previous_month',layout:{columns:1},widgets:[],availability:'incompatible'},
+  ];
+  const html=renderToStaticMarkup(createElement(ManagementNavigation,{templates,locale:'en',onSelect(){throw new Error('render only');},published,allowed:true}));
+  assert.match(html,/Business Line/);
+  assert.match(html,/disabled/);
+ } finally {await server.close();}
+});
