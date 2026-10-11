@@ -1,7 +1,7 @@
 import { trustedDimensionOptions } from './dimension-options.ts';
 import type { Pool } from 'pg';
 import { validateQuery,publishedQueryIssues,semanticCatalog,categoricalDimensions,requiredMeasures,timeDimensions } from '@el-dabboos/domain';
-import type { AnalyticsContext,AnalyticsQuery,AnalyticsRepository,AnalyticsResult,DimensionId,DimensionValueRepository,PublishedAnalyticsCapabilities } from '@el-dabboos/domain';
+import type { AnalyticsContext,AnalyticsQuery,AnalyticsRepository,AnalyticsResult,DimensionId,DimensionValueRepository,PublishedAnalyticsCapabilities,SourceMapping } from '@el-dabboos/domain';
 import { operationalDefinitionVersion } from './definition-version.ts';
 import { tenantTransaction } from '../postgres/session.ts';
 import { PostgresAnalyticsRepository } from '../postgres/repository.ts';
@@ -20,13 +20,17 @@ export class TrustedAnalyticsRepository implements AnalyticsRepository,Dimension
  private readonly finance:FinanceSnapshotRepository;
  constructor(private readonly pool:Pool,private readonly options:HistoricalRepositoryOptions){this.maxGroups=options.historicalMaxGroups??options.maxGroups??4000;if(!Number.isInteger(this.maxGroups)||this.maxGroups<1||this.maxGroups>5000)throw new Error('Invalid trusted group bound');this.fallback=new HistoricalAnalyticsRepository(pool,options);this.anchor=new PostgresAnalyticsRepository(pool,{...options,storedProofsOnly:true});this.finance=new FinanceSnapshotRepository(pool,options.statementTimeoutMs,this.maxGroups);}
  async isDataReady(tenantId:string){return await this.stored(tenantId)!==null||this.fallback.isDataReady(tenantId);}
- async getPublishedCapabilities(context:AnalyticsContext):Promise<PublishedAnalyticsCapabilities>{const stored=await this.stored(context.tenantId);if(!stored)return this.fallback.getPublishedCapabilities(context);const finance=await this.finance.capabilities(context);return policyCapabilities({...stored.capabilities,releases:[...stored.capabilities.releases,...(stored.anchorCapabilities?.releases??[]),...(finance?.releases??[])]},context);}
+ async getPublishedCapabilities(context:AnalyticsContext):Promise<PublishedAnalyticsCapabilities>{
+  const stored=await this.stored(context.tenantId);if(!stored)return this.fallback.getPublishedCapabilities(context);
+  const [finance,anchor]=await Promise.all([this.finance.capabilities(context),this.refreshedAnchor(context,stored)]);
+  return policyCapabilities({...stored.capabilities,releases:[...stored.capabilities.releases,...(anchor?.releases??[]),...(finance?.releases??[])]},context);
+ }
  async execute(query:AnalyticsQuery,context:AnalyticsContext):Promise<AnalyticsResult> {
   validateQuery(query,context);
   const stored=await this.stored(context.tenantId);if(!stored)return this.fallback.execute(query,context);
   if(financeMetric(query.metric)){const capabilities=await this.finance.capabilities(context);if(capabilities)return this.finance.execute(query,context,capabilities);}
   const authorizedQuery={...query,filters:[...(query.filters??[]),...(context.enforcedFilters??[])]};
-  if(publishedQueryIssues(authorizedQuery,stored.capabilities).length&&stored.anchorCapabilities&&!publishedQueryIssues(authorizedQuery,stored.anchorCapabilities).length)return this.anchorResult(query,context,stored.anchorCapabilities);
+  if(publishedQueryIssues(authorizedQuery,stored.capabilities).length){const anchor=await this.refreshedAnchor(context,stored);if(anchor&&!publishedQueryIssues(authorizedQuery,anchor).length)return this.anchorResult(query,context,anchor);}
   return tenantTransaction(this.pool,context.tenantId,async client=>{
    const stored=(await client.query(`SELECT baseline.capabilities,baseline.period_from::text coverage_from,baseline.reporting_currency,trusted.revision_id,coalesce(cursor.cutoff,revision.cutoff) cutoff,(coalesce(cursor.cutoff,revision.cutoff) AT TIME ZONE (baseline.specification->0->'measures'->0->>'timeZone'))::date::text cutoff_day,ARRAY(SELECT month::text FROM mart.analytics_serving_members WHERE tenant_id=baseline.tenant_id AND revision_id=trusted.revision_id) months,CASE WHEN EXISTS(SELECT 1 FROM mart.analytics_serving_members WHERE tenant_id=baseline.tenant_id AND revision_id=trusted.revision_id AND month>baseline.period_to) THEN (coalesce(cursor.cutoff,revision.cutoff) AT TIME ZONE (baseline.specification->0->'measures'->0->>'timeZone'))::date::text ELSE baseline.period_to::text END current_through FROM mart.analytics_baselines baseline JOIN mart.analytics_trusted_serving trusted USING(tenant_id) JOIN mart.analytics_serving_revisions revision USING(tenant_id,revision_id) LEFT JOIN mart.analytics_source_cursors cursor USING(tenant_id) WHERE baseline.tenant_id=$1`,[context.tenantId])).rows[0];
    stored.capabilities=await dailyEventCapabilities(client,context.tenantId,extendCapabilities(stored.capabilities,stored.current_through));
@@ -60,14 +64,41 @@ export class TrustedAnalyticsRepository implements AnalyticsRepository,Dimension
  }
  private stored(tenantId:string) {
   return tenantTransaction(this.pool,tenantId,async client=>{
-   const row=(await client.query<{capabilities:PublishedAnalyticsCapabilities;current_through:string;reporting_currency:string;definition_version:string;anchor_caps:PublishedAnalyticsCapabilities|null}>(`SELECT baseline.capabilities,baseline.reporting_currency,baseline.definition_version,ancillary.capabilities anchor_caps,CASE WHEN EXISTS(SELECT 1 FROM mart.analytics_serving_members WHERE tenant_id=baseline.tenant_id AND revision_id=trusted.revision_id AND month>baseline.period_to) THEN (coalesce(cursor.cutoff,revision.cutoff) AT TIME ZONE (baseline.specification->0->'measures'->0->>'timeZone'))::date::text ELSE baseline.period_to::text END current_through FROM mart.analytics_baselines baseline JOIN mart.analytics_trusted_serving trusted USING(tenant_id) JOIN mart.analytics_serving_revisions revision USING(tenant_id,revision_id) LEFT JOIN mart.analytics_source_cursors cursor USING(tenant_id) LEFT JOIN mart.analytics_anchor_capabilities ancillary USING(tenant_id) WHERE tenant_id=$1`,[tenantId])).rows[0];
+   const row=(await client.query<{capabilities:PublishedAnalyticsCapabilities;current_through:string;reporting_currency:string;definition_version:string;anchor_caps:PublishedAnalyticsCapabilities|null;anchor_dataset_id:string|null;specification:SourceMapping[]}>(`SELECT baseline.capabilities,baseline.reporting_currency,baseline.definition_version,baseline.specification,ancillary.capabilities anchor_caps,ancillary.dataset_id anchor_dataset_id,CASE WHEN EXISTS(SELECT 1 FROM mart.analytics_serving_members WHERE tenant_id=baseline.tenant_id AND revision_id=trusted.revision_id AND month>baseline.period_to) THEN (coalesce(cursor.cutoff,revision.cutoff) AT TIME ZONE (baseline.specification->0->'measures'->0->>'timeZone'))::date::text ELSE baseline.period_to::text END current_through FROM mart.analytics_baselines baseline JOIN mart.analytics_trusted_serving trusted USING(tenant_id) JOIN mart.analytics_serving_revisions revision USING(tenant_id,revision_id) LEFT JOIN mart.analytics_source_cursors cursor USING(tenant_id) LEFT JOIN mart.analytics_anchor_capabilities ancillary USING(tenant_id) WHERE tenant_id=$1`,[tenantId])).rows[0];
    if(row){
     if(row.definition_version!==operationalDefinitionVersion())throw new Error('Explicit metric-definition migration required');
     const currency=this.options.reportingCurrency?await this.options.reportingCurrency(tenantId):this.options.reportingCurrencies[tenantId];
     if(currency!==row.reporting_currency)throw new Error('Uncertified reporting currency mismatch');
    }
-   return row?{capabilities:await dailyEventCapabilities(client,tenantId,extendCapabilities(row.capabilities,row.current_through)),anchorCapabilities:row.anchor_caps?anchorSnapshotPeriods(row.anchor_caps):null}:null;
+   return row?{capabilities:await dailyEventCapabilities(client,tenantId,extendCapabilities(row.capabilities,row.current_through)),anchorCapabilities:row.anchor_caps?anchorSnapshotPeriods(row.anchor_caps):null,anchorDatasetId:row.anchor_dataset_id,mappings:row.specification}:null;
   },true,this.options.statementTimeoutMs??15000);
+ }
+
+ private async refreshedAnchor(context:AnalyticsContext,stored:NonNullable<Awaited<ReturnType<TrustedAnalyticsRepository['stored']>>>):Promise<PublishedAnalyticsCapabilities|null>{
+  const anchor=stored.anchorCapabilities,datasetId=stored.anchorDatasetId;if(!anchor||!datasetId)return anchor;
+  const mapping=stored.mappings.find(candidate=>candidate.datasetId===datasetId);if(!mapping)return anchor;
+  const ratios=mapping.capabilities.filter(capability=>semanticCatalog[capability.metric].semantics.kind==='ratio');
+  if(!ratios.length)return anchor;
+  const coverage=await tenantTransaction(this.pool,context.tenantId,async client=>{
+   await client.query("SELECT set_config('mart.stored_proofs_only','on',true)");
+   const rows:Array<{metric:string;grouping:string|null;period_from:string;period_to:string}>=[];
+   for(const capability of ratios){
+    const result=await client.query<{metric:string;grouping:string|null;period_from:string;period_to:string}>('SELECT metric,"grouping",period_from,period_to FROM mart.published_derived_coverage($1,$2,$3,$4,$5)',[context.tenantId,datasetId,capability.metric,null,true]);
+    rows.push(...result.rows);
+   }
+   return rows;
+  },true,this.options.statementTimeoutMs??15000);
+  return {...anchor,releases:anchor.releases.map(release=>{
+   if(release.datasetId!==datasetId||!release.period)return release;
+   const additions=ratios.flatMap(candidate=>{
+    const rows=coverage.filter(row=>row.metric===candidate.metric&&row.period_from===release.period!.from&&row.period_to===release.period!.to);
+    if(!rows.some(row=>row.grouping===null))return [];
+    const dimensions=candidate.dimensions.filter(dimension=>rows.some(row=>row.grouping===dimension));
+    return [{metric:candidate.metric,summary:true,dimensions,analyses:[]}];
+   });
+   const added=new Set(additions.map(capability=>capability.metric));
+   return {...release,capabilities:[...release.capabilities.filter(capability=>!added.has(capability.metric)),...additions]};
+  })};
  }
 }
 function authorizeStored(query:AnalyticsQuery,context:AnalyticsContext,capabilities:PublishedAnalyticsCapabilities) {

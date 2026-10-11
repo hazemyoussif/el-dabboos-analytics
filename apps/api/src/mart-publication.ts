@@ -102,6 +102,7 @@ async function certifyDerivedOutputs(manifest:DerivedApprovalManifest,environmen
       const exists=await tenantTransaction(pool,manifest.tenantId,async client=>(await client.query('SELECT 1 FROM mart.derived_metric_certifications WHERE tenant_id=$1 AND dataset_id=$2 AND reference=$3',[scope.tenantId,scope.datasetId,scope.reference])).rowCount===1,true);
       if(!exists)await certification.record(scope);recorded.push(`${definition.metric}:${grouping??'summary'}`);
     }
+    await tenantTransaction(pool,manifest.tenantId,async client=>{await client.query('SELECT mart.refresh_proof_results($1,$2)',[manifest.tenantId,manifest.datasetId]);});
     return {status:'derived-certified',recorded};
   } finally {await pool.end();}
 }
