@@ -1,4 +1,5 @@
 import { Pool } from 'pg';
+import { AccessControlError } from '@el-dabboos/domain';
 import type { AuthenticatedExternalIdentity,AuthenticationDirectory,AuthenticationSecurityAudit,AuthenticationSecurityEvent,LocalIdentityProvision,LocalIdentityProvisioner,LocalSessionRevoker } from '@el-dabboos/domain';
 import { controlConnection } from '../control/session.ts';
 import { usersRepository } from '../metadata/administration/users.ts';
@@ -49,7 +50,7 @@ export class PostgresEmployeeProvisioner {
     constructor(private readonly pool: Pool) {}
     async create(actorIdentityId: string,input:{displayName:string;preferredLocale:'en'|'ar';email:string},credential:{subject:string;passwordHash:string}) {
         const displayName=input.displayName.trim(),email=input.email.trim().toLowerCase();
-        if (!displayName || displayName.length>200 || !['en','ar'].includes(input.preferredLocale) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length>254) throw new Error('Invalid employee provisioning');
+        if (!displayName || displayName.length>200 || !['en','ar'].includes(input.preferredLocale) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length>254) throw new AccessControlError('INVALID_ADMIN_INPUT');
         const client=await this.pool.connect();
         try {
             await client.query('BEGIN'); await client.query('SELECT pg_advisory_xact_lock(738421,11)');
@@ -64,7 +65,7 @@ export class PostgresEmployeeProvisioner {
                 AND assignment.status='active' AND role.scope='platform'
                 AND permission.permission='platform:users:manage'
               LIMIT 1`,[actorIdentityId])).rows[0];
-            if(!actor) throw new Error('Employee provisioning denied');
+            if(!actor) throw new AccessControlError('PLATFORM_FORBIDDEN');
             const userId=crypto.randomUUID(),identityId=crypto.randomUUID(),now=new Date().toISOString();
             await client.query('INSERT INTO control.users(id,display_name,preferred_locale,status,version,created_at,updated_at) VALUES($1,$2,$3,\'active\',1,$4,$4)',[userId,displayName,input.preferredLocale,now]);
             await client.query('INSERT INTO auth."user"(id,name,email) VALUES($1,$2,$3)',[credential.subject,displayName,email]);
