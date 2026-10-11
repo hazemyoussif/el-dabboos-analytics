@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { missingOperationalMonths } from '../src/operational/ingestion.ts';
+import type { OperationalBaseline } from '../src/operational/contracts.ts';
 
-const baseline={to:'2026-09-30',mappings:[{measures:[{timeZone:'Asia/Baghdad'}]}]} as any;
+const baseline={to:'2026-09-30',mappings:[{measures:[{timeZone:'Asia/Baghdad'}]}]} as unknown as Pick<OperationalBaseline,'to'|'mappings'>;
 
 test('operational bootstrap catch-up seeds missing current month from certified boundary',()=>{
  assert.deepEqual(
