@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { PostgresReleasePromotion } from '../../src/postgres/release-promotion.ts';
+import { activateLocalRelease,PostgresReleasePromotion } from '../../src/postgres/release-promotion.ts';
 import { PostgresMappingReleases } from '../../src/postgres/mapping-releases.ts';
 import { PostgresReconciliation } from '../../src/postgres/reconciliation.ts';
 import { PostgresMartWriter } from '../../src/postgres/writer.ts';
@@ -68,6 +68,20 @@ test('authorized exact certification is immutable; promotion preserves facts, is
     await assert.rejects(repository.execute({ metric: 'revenue' },{ tenantId: 'other',locale: 'en' }),/binding/);
     assert.equal((await promotion.promote(scope)).alreadyPromoted,true);
   } finally { await Promise.all([source.close(),target.close()]); }
+});
+
+test('single-mart activation keeps certification gates and does not invent a promotion receipt',{skip:!enabled},async()=>{
+  const db=await database();
+  const repository=new PostgresAnalyticsRepository(db.runtime,{reportingCurrencies:{a:'IQD'}});
+  try {
+    const caseIds=await reconcile(db);
+    await assert.rejects(activateLocalRelease(db.migrator,scope),/Approved certified/);
+    await authorize(db,caseIds);
+    assert.equal(await activateLocalRelease(db.migrator,scope),'a/release');
+    assert.equal(await activateLocalRelease(db.migrator,scope),'a/release');
+    assert.equal((await tenantTransaction(db.migrator,'a',client=>client.query('SELECT count(*)::int count FROM mart.release_promotions'),true)).rows[0].count,0);
+    assert.equal((await repository.execute({metric:'revenue'},{tenantId:'a',locale:'en'})).rows[0]?.value,100);
+  } finally { await db.close(); }
 });
 
 test('human approval cannot override failed reconciliation; failed transfer rolls back target publication', { skip: !enabled },async () => {
