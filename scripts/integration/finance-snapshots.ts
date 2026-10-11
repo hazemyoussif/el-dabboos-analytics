@@ -3,7 +3,7 @@ import {resolveOdooSourceConfig} from '../../apps/api/src/source-connections.ts'
 import {historicalMonths} from '../../apps/api/src/historical-months.ts';
 import {readFinanceCustomers} from '../../packages/data/src/operational/finance-source.ts';
 import {publishFinanceSnapshot} from '../../packages/data/src/operational/finance-publication.ts';
-import {receivableMeasures} from '../../packages/data/src/receivable-aging.ts';
+import {readPublishedFinanceSummary} from '../../packages/data/src/operational/finance-summary.ts';
 const tenantId='el-dabboos-iq',anchorDataset='el-dabboos-finance-202609-v6';
 if(!process.env.MART_MIGRATOR_URL)throw new Error('Protected publication operator configuration required');
 const mart=createMartPool(process.env.MART_MIGRATOR_URL,1);
@@ -18,10 +18,7 @@ try {
   const started=performance.now();
   try {
    const customers=await readFinanceCustomers(source,lease,config,period.to);
-   const totals=await tenantTransaction(mart,tenantId,async client=>Object.fromEntries((await client.query(`SELECT base.measure_id,sum(base.value)::numeric(30,6)::text value
-    FROM mart.analytics_trusted_serving trusted JOIN mart.analytics_serving_members member USING(tenant_id,revision_id)
-    JOIN mart.analytics_aggregate_bases base USING(tenant_id,partition_id) WHERE trusted.tenant_id=$1 AND base.business_date=$2 AND base.measure_id=ANY($3::text[]) GROUP BY base.measure_id`,[tenantId,period.to,receivableMeasures])).rows.map(row=>[row.measure_id,row.value])),true);
-   if(Object.keys(totals).length!==receivableMeasures.length)throw new Error('Published historical summary anchor required');
+   const totals=await readPublishedFinanceSummary(mart,tenantId,period.to);
    await lease.assertAlive();
    const result=await publishFinanceSnapshot(mart,{tenantId,date:period.to,anchorDataset,currency:'IQD',sourceCutoff:lease.evidence.sourceAsOf,sourceRevision:lease.evidence.frozenRevision,totals,customers},()=>lease.assertAlive());
    console.log(JSON.stringify({date:period.to,status:'published',customers:customers.length,snapshotId:result.snapshotId,sourceCutoff:lease.evidence.sourceAsOf,elapsedMs:Math.round(performance.now()-started)}));

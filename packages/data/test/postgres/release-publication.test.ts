@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { activateLocalRelease,PostgresReleasePromotion } from '../../src/postgres/release-promotion.ts';
+import {promoteLocalBoundedRelease} from '../../src/postgres/local-bounded-promotion.ts';
 import { PostgresMappingReleases } from '../../src/postgres/mapping-releases.ts';
 import { PostgresReconciliation } from '../../src/postgres/reconciliation.ts';
 import { PostgresMartWriter } from '../../src/postgres/writer.ts';
@@ -11,6 +12,34 @@ import { database,enabled } from './support.ts';
 import { batch,certify,clock,deploy,evidence,fact,mapping } from './fixtures.ts';
 
 const scope = { tenantId: 'a',datasetId: 'release',reference: 'SYNTHETIC PROMOTION ONLY' };
+test('in-place monthly publication requires certification, preserves all rows and serving, and refuses conflicting receipts',{skip:!enabled},async()=>{
+  const db=await database();
+  try {
+    const caseIds=await reconcile(db);
+    await assert.rejects(promoteLocalBoundedRelease(db.migrator,scope),/Approved certified/);
+    await authorize(db,caseIds);
+    const before=await tenantTransaction(db.migrator,'a',client=>readReleaseRows(client,scope),true);
+    const expected=releaseFingerprint(before);
+    await db.admin.query(`CREATE FUNCTION mart.fail_transfer() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'NO RELEASE COPY'; END $$; CREATE TRIGGER synthetic_failure BEFORE INSERT ON mart.fact_revisions FOR EACH ROW EXECUTE FUNCTION mart.fail_transfer()`);
+    assert.deepEqual(await promoteLocalBoundedRelease(db.migrator,scope),{fingerprint:expected,alreadyPromoted:false});
+    assert.deepEqual(await promoteLocalBoundedRelease(db.migrator,scope),{fingerprint:expected,alreadyPromoted:true});
+    assert.deepEqual(await tenantTransaction(db.migrator,'a',client=>readReleaseRows(client,scope),true),before);
+    const state=await tenantTransaction(db.migrator,'a',async client=>({receipts:(await client.query('SELECT * FROM mart.release_promotions')).rowCount,bindings:(await client.query('SELECT * FROM mart.serving_bindings')).rowCount}),true);
+    assert.deepEqual(state,{receipts:1,bindings:0});
+    await assert.rejects(promoteLocalBoundedRelease(db.migrator,{...scope,reference:'changed'}),/receipt mismatch/);
+    await assert.rejects(promoteLocalBoundedRelease(db.ingestor,scope),/dedicated migrator authority/);
+    await assert.rejects(promoteLocalBoundedRelease(db.migrator,{...scope,tenantId:'other'}),/Approved certified/);
+  } finally {await db.close();}
+});
+test('in-place monthly publication refuses stored fingerprint mismatch without adding receipts',{skip:!enabled},async()=>{
+  const db=await database();
+  try {
+    await authorize(db,await reconcile(db));
+    await tenantTransaction(db.migrator,'a',client=>client.query('INSERT INTO mart.release_promotions(tenant_id,dataset_id,reference,release_fingerprint) VALUES($1,$2,$3,$4)',['a','release',scope.reference,'0'.repeat(64)]));
+    await assert.rejects(promoteLocalBoundedRelease(db.migrator,scope),/receipt mismatch/);
+    assert.equal((await tenantTransaction(db.migrator,'a',client=>client.query('SELECT * FROM mart.release_promotions'),true)).rowCount,1);
+  } finally {await db.close();}
+});
 test('bounded monthly promotion preserves the existing canonical fingerprint and independently reruns without writes',{skip:!enabled},async()=>{
   const source=await database(),target=await database(),failed=await database();
   try {
