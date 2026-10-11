@@ -10,7 +10,7 @@ export interface OdooControlScope {
   reportReference: string;
   groupings?: readonly ('business_line'|'salesperson'|'customer'|null)[];
 }
-interface ControlMeasure { measure: FactMeasureId; eligible: string; expression: string }
+interface ControlMeasure { measure: FactMeasureId; eligible: string; expression: string; negate?: boolean }
 type ControlGrouping = 'business_line'|'salesperson'|'customer'|null;
 function controlMeasures(object: OdooReadScope['object']): ControlMeasure[] {
   if (object==='sale_order') return [
@@ -20,7 +20,7 @@ function controlMeasures(object: OdooReadScope['object']): ControlMeasure[] {
   ];
   return [
     { measure: 'invoiced_revenue',eligible: "state='posted' AND move_type='out_invoice'",expression: 'sum(amount_untaxed_signed)' },
-    { measure: 'refund_value',eligible: "state='posted' AND move_type='out_refund'",expression: '-sum(amount_untaxed_signed)' },
+    { measure: 'refund_value',eligible: "state='posted' AND move_type='out_refund'",expression: 'sum(amount_untaxed_signed)',negate: true },
     { measure: 'net_invoiced_revenue',eligible: "state='posted' AND move_type IN ('out_invoice','out_refund')",expression: 'sum(amount_untaxed_signed)' },
     { measure: 'invoice_count',eligible: "state='posted' AND move_type='out_invoice'",expression: 'count(*)' },
     { measure: 'refund_count',eligible: "state='posted' AND move_type='out_refund'",expression: 'count(*)' },
@@ -35,8 +35,9 @@ function controlGrouping(grouping: ControlGrouping,source: OdooReadScope): strin
 function controlProjection(measures: readonly ControlMeasure[]): string {
   return measures.flatMap(measure => {
     const aggregate = `${measure.expression} FILTER (WHERE ${measure.eligible})`;
+    const value = measure.negate ? `-(${aggregate})` : aggregate;
     return [
-      `coalesce(${aggregate},0)::numeric(30,6)::text "${measure.measure}_value"`,
+      `coalesce(${value},0)::numeric(30,6)::text "${measure.measure}_value"`,
       `count(*) FILTER (WHERE ${measure.eligible})::text "${measure.measure}_count"`,
     ];
   }).join(',');
