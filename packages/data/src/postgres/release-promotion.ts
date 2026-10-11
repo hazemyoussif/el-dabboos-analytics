@@ -71,6 +71,22 @@ export class PostgresReleasePromotion {
     });
   }
 }
+
+/** Hosted single-mart activation. The release is already in the serving mart, so there is no transfer receipt.
+ * Existing database guards still require exact reconciliation, immutable business certification and mapping approval. */
+export async function activateLocalRelease(pool: Pool,scope: ReleasePromotionScope): Promise<string> {
+  validatePromotionScope(scope);
+  return tenantTransaction(pool,scope.tenantId,async client => {
+    await client.query("SET LOCAL TIME ZONE 'UTC'");
+    await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',[JSON.stringify([scope.tenantId,scope.datasetId])]);
+    await assertCertifiedRelease(client,scope);
+    await client.query('INSERT INTO mart.serving_bindings(tenant_id,dataset_id) VALUES ($1,$2) ON CONFLICT (tenant_id) DO NOTHING',[scope.tenantId,scope.datasetId]);
+    const binding = (await client.query('SELECT dataset_id FROM mart.serving_bindings WHERE tenant_id=$1',[scope.tenantId])).rows[0];
+    if (binding?.dataset_id!==scope.datasetId) throw new Error('Existing serving binding belongs to another release');
+    return `${scope.tenantId}/${scope.datasetId}`;
+  });
+}
+
 async function approvePromotedMapping(client: import('pg').PoolClient,transfer: ReleaseTransfer): Promise<void> {
   const mapping = JSON.parse(transfer.tables.mapping_releases![0]!);
   await client.query(`UPDATE mart.mapping_releases SET approval_status='approved',approval_reference=$3,approved_at=$4,approval_case_ids=$5
