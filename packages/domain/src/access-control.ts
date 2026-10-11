@@ -127,7 +127,7 @@ export interface TenantInvitation extends VersionedMetadata {
     tokenDigest: string;
 }
 export const adminAuditActions = ['customer.created', 'customer.updated', 'tenant.created', 'tenant.updated', 'tenant.suspended',
-    'user.created', 'user.updated', 'user.suspended', 'identity.disabled', 'membership.created', 'membership.candidate_provisioned', 'membership.updated', 'membership.suspended',
+    'user.updated', 'user.suspended', 'identity.disabled', 'membership.created', 'membership.candidate_provisioned', 'membership.updated', 'membership.suspended',
     'membership.roles_changed', 'membership.scope_changed', 'role.created', 'role.updated', 'role.deleted',
     'dashboard.access_changed', 'invitation.created', 'invitation.revoked', 'invitation.accepted', 'platform.access_changed'] as const;
 export interface AdminAuditEvent {
