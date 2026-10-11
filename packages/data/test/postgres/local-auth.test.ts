@@ -20,6 +20,9 @@ async function fixture() {
         await transaction.customers.createCustomer({ ...metadata,id: 'test-customer',name: 'Synthetic customer',status: 'active' });
         for (const id of ['tenant-a','tenant-b']) await transaction.customers.createTenant({ ...metadata,id,customerId: 'test-customer',name: 'Synthetic tenant',status: 'active',configuration: { countryCode: 'IQ',reportingCurrency: 'IQD',timeZone: 'Asia/Baghdad',arabicDialect: 'iq',defaultLocale: 'en' } });
         for (const id of ['login-user','no-membership']) await transaction.users.createUser({ ...metadata,id,displayName: 'Synthetic user',preferredLocale: 'en',status: 'invited' });
+        await transaction.users.createUser({ ...metadata,id:'platform-admin-user',displayName:'Platform Admin',preferredLocale:'en',status:'active' });
+        await transaction.users.bindIdentity({ id:'platform-admin-binding',userId:'platform-admin-user',provider:'synthetic',providerSubject:'platform-admin',status:'active' });
+        await transaction.users.provisionPlatformAssignment({ ...metadata,userId:'platform-admin-user',roleIds:['platform-admin'],status:'active' },null);
         await transaction.tenants.createMembership({ ...metadata,id: 'membership-a',userId: 'login-user',tenantId: 'tenant-a',status: 'active',roleIds: ['viewer'],dataScopes: [{ dimension: 'branch',values: ['baghdad'] }] });
     });
     const runtime = await openLocalAuthentication(database.appUrl,config), analytics = new MockAnalyticsRepository([]);
@@ -36,6 +39,23 @@ function cookies(response: { headers: Record<string,unknown> }): string {
     const raw = response.headers['set-cookie'];
     return (Array.isArray(raw) ? raw : [raw]).map(value => String(value).split(';')[0]).join('; ');
 }
+test('platform admin can atomically create a login-ready employee without exposing the password', { skip: !enabled },async () => {
+    const system = await fixture();
+    try {
+        const created = await system.runtime.provisionEmployee('platform-admin-binding',{ displayName:'New Employee',preferredLocale:'ar',email:'employee@example.test',password });
+        assert.equal(created.status,'active'); assert.equal(created.identity.loginHint,'employee@example.test');
+        assert.equal((await system.database.app.query('SELECT count(*)::int count FROM control.users WHERE id=$1',[created.id])).rows[0].count,1);
+        const account=(await system.database.admin.query('SELECT password FROM auth.account JOIN auth."user" ON auth."user".id=auth.account."userId" WHERE auth."user".email=$1',['employee@example.test'])).rows[0];
+        assert.ok(account.password.length>64); assert.notEqual(account.password,password);
+        const signedIn=await login(system.app,'employee@example.test'); assert.equal(signedIn.statusCode,200);
+        const before=(await system.database.admin.query('SELECT count(*)::int count FROM control.users')).rows[0].count;
+        await assert.rejects(system.runtime.provisionEmployee('platform-admin-binding',{ displayName:'Duplicate',preferredLocale:'en',email:'employee@example.test',password }));
+        assert.equal((await system.database.admin.query('SELECT count(*)::int count FROM control.users')).rows[0].count,before);
+        const audit=await system.database.admin.query('SELECT * FROM control.authentication_security_events WHERE user_id=$1',[created.id]);
+        assert.equal(audit.rowCount,1); assert.ok(!JSON.stringify(audit.rows).includes(password));
+        await assert.rejects(system.runtime.provisionEmployee('missing-binding',{ displayName:'Denied',preferredLocale:'en',email:'denied@example.test',password }));
+    } finally { await system.close(); }
+});
 test('local auth: stable subject, reviewed hashing, safe login failures and no signup/linking', { skip: !enabled },async () => {
     const system = await fixture();
     try {
