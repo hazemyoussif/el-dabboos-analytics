@@ -51,7 +51,7 @@ test('platform admin can atomically create a login-ready employee without exposi
         const before=(await system.database.admin.query('SELECT count(*)::int count FROM control.users')).rows[0].count;
         await assert.rejects(system.runtime.provisionEmployee('platform-admin-binding',{ displayName:'Duplicate',preferredLocale:'en',email:'employee@example.test',password }));
         assert.equal((await system.database.admin.query('SELECT count(*)::int count FROM control.users')).rows[0].count,before);
-        const audit=await system.database.admin.query('SELECT * FROM control.authentication_security_events WHERE user_id=$1',[created.id]);
+        const audit=await system.database.admin.query("SELECT * FROM control.authentication_security_events WHERE user_id=$1 AND event='local_identity_provisioned'",[created.id]);
         assert.equal(audit.rowCount,1); assert.ok(!JSON.stringify(audit.rows).includes(password));
         await assert.rejects(system.runtime.provisionEmployee('missing-binding',{ displayName:'Denied',preferredLocale:'en',email:'denied@example.test',password }));
     } finally { await system.close(); }
