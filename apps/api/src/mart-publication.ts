@@ -83,11 +83,11 @@ async function certifyDerivedOutputs(manifest:DerivedApprovalManifest,environmen
       {metric:'average_confirmed_order_value' as MetricId,operands:['order_revenue','order_count'],businessSemantics:'Average confirmed order value = confirmed order revenue divided by confirmed order count.'},
       {metric:'average_invoice_value' as MetricId,operands:['invoiced_revenue','invoice_count'],businessSemantics:'Average invoice value = posted invoice value divided by posted customer invoice count; refunds are excluded from both operands.'},
     ] as const;
-    const groupings:[DimensionId|null,...(DimensionId|null)[]]=[null,'business_line','salesperson'];
+    const groupings:readonly (DimensionId|null)[]=[null,'business_line','salesperson'];
     const certification=new PostgresDerivedMetricCertification(pool);
     const recorded:string[]=[];
     for(const definition of definitions)for(const grouping of groupings){
-      const cases=evidence.cases.filter(control=>control.grouping===grouping&&definition.operands.includes(control.measureId as never));
+      const cases=evidence.cases.filter(control=>control.grouping===grouping&&definition.operands.some(operand=>operand===control.measureId));
       if(!cases.length)throw new Error(`Exact derived inputs unavailable: ${definition.metric}/${grouping??'summary'}`);
       const periods=[...new Set(cases.map(control=>`${control.from}/${control.to}`))];
       if(periods.length!==1)throw new Error('One exact derived period required');
@@ -99,7 +99,8 @@ async function certifyDerivedOutputs(manifest:DerivedApprovalManifest,environmen
         approvalReference:manifest.approvalReference,approvedAt,businessSemantics:definition.businessSemantics,
         technicalReference:manifest.technicalReference,
       };
-      await certification.record(scope);recorded.push(`${definition.metric}:${grouping??'summary'}`);
+      const exists=await tenantTransaction(pool,manifest.tenantId,async client=>(await client.query('SELECT 1 FROM mart.derived_metric_certifications WHERE tenant_id=$1 AND dataset_id=$2 AND reference=$3',[scope.tenantId,scope.datasetId,scope.reference])).rowCount===1,true);
+      if(!exists)await certification.record(scope);recorded.push(`${definition.metric}:${grouping??'summary'}`);
     }
     return {status:'derived-certified',recorded};
   } finally {await pool.end();}
