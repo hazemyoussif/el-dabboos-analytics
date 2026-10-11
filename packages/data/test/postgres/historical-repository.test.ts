@@ -19,7 +19,7 @@ import { database,enabled } from './support.ts';
 import { mapping,deploy,batch,fact,evidence,clock } from './fixtures.ts';
 type Database=Awaited<ReturnType<typeof database>>;
 
-async function member(db:Database,month:string,kind:'events'|'aging',value:string,options?:string|{publicationOnly:true;finance?:boolean}) {
+async function member(db:Database,month:string,kind:'events'|'aging',value:string,options?:string|{publicationOnly:true;finance?:boolean;customer?:boolean}) {
   const orders=typeof options==='string'?options:undefined;
   const from=`${month}-01`,to=new Date(Date.UTC(Number(month.slice(0,4)),Number(month.slice(5)),0)).toISOString().slice(0,10);
   const datasetId=`synthetic-${month}-${kind}`,measureId=kind==='events'?(orders?'order_revenue':'revenue'):'net_aged_receivable';
@@ -27,6 +27,8 @@ async function member(db:Database,month:string,kind:'events'|'aging',value:strin
   const candidate:SourceMapping={...baseline,datasetId,mappingId:kind,approval:{status:'pending'},measures:baseline.measures.filter(rule=>rule.measureId===(kind==='events'?'revenue':'outstanding_amount')).map(rule=>({...rule,measureId,dimensionMappings:kind==='events'?rule.dimensionMappings:{}})),capabilities:[{metric:measureId,dimensions:kind==='events'?['branch','month']:[]}]};
   const finance=typeof options==='object' && options.finance;
   if(finance){candidate.measures=receivableMeasures.map(measureId=>({...candidate.measures[0]!,measureId}));candidate.capabilities=receivableMeasures.map(metric=>({metric,dimensions:[]}));}
+  const customer=typeof options==='object' && options.customer;
+  if(customer){candidate.measures=candidate.measures.map(rule=>({...rule,dimensionMappings:{customer:'Synthetic stable customer'}}));candidate.capabilities=[{metric:measureId,dimensions:['customer','month']}];}
   if(orders) {
     candidate.capabilities=[{metric:measureId,dimensions:['salesperson','month']}];
     candidate.measures=[...candidate.measures,{...baseline.measures.find(rule=>rule.measureId==='order_count')!}];
@@ -36,10 +38,10 @@ async function member(db:Database,month:string,kind:'events'|'aging',value:strin
   const releases=new PostgresMappingReleases(db.migrator);await releases.registerCandidate(candidate);
   const extractionId=datasetId,batchId=datasetId;
   await new PostgresExtractionRuns(db.migrator,{a:['1']}).begin({tenantId:'a',datasetId,sourceId:'fixture',mappingId:kind,mappingVersion:'1',extractionId,sourceObjects:['fixture'],companyIds:['1'],from,to,sourceAsOf:'2026-10-01T10:00:00.000Z',frozenRevision:'freeze-1',freezeReference:'synthetic-only',completeness:'complete_scope'});
-  const facts=candidate.measures.filter(rule=>rule.measureId!=='order_count').map(rule=>fact(datasetId,{datasetId,mappingId:kind,batchId,measureId:rule.measureId,businessDate:to,value:finance&&!['net_aged_receivable','aged_at_date','gross_open_receivable_components'].includes(rule.measureId)?'0.000000':value,dimensions:kind==='events'?(orders?{salesperson:'cairo'}:{branch:'cairo'}):{},...(kind==='aging'?{entityId:'company-1'}:{})}));
+  const facts=candidate.measures.filter(rule=>rule.measureId!=='order_count').map(rule=>fact(datasetId,{datasetId,mappingId:kind,batchId,measureId:rule.measureId,businessDate:to,value:finance&&!['net_aged_receivable','aged_at_date','gross_open_receivable_components'].includes(rule.measureId)?'0.000000':value,dimensions:kind==='events'?(customer?{customer:'historical-only'}:orders?{salesperson:'cairo'}:{branch:'cairo'}):{},...(customer?{displayLabels:{customer:'Historical Customer'}}:{}),...(kind==='aging'?{entityId:'company-1'}:{})}));
   if(orders)facts.push(fact(datasetId,{datasetId,mappingId:kind,batchId,measureId:'order_count',businessDate:to,value:orders,dimensions:{salesperson:'cairo'}}));
   await new PostgresMartWriter(db.migrator,{a:['1']},clock).commit({...batch(batchId,1),datasetId,mappingId:kind,companyIds:['1']},[{facts}],{...evidence,completeness:'complete_scope',page:{extractionId,pageNumber:1}});
-  const cases:ReconciliationCase[]=[null,...(kind==='events'?[orders?'salesperson' as const:'branch' as const]:[])].map(grouping=>({tenantId:'a',datasetId,mappingVersion:'1',caseId:`${datasetId}-${grouping ?? 'summary'}`,measureId,sourceReportReference:'SYNTHETIC independent control',frozenRevision:'freeze-1',batchIds:[batchId],from,to,grouping,groupKey:grouping?'cairo':null,expectedValue:value,actualValue:value,expectedCount:'1',actualCount:'1',tolerance:{status:'approved',absoluteValue:'0.000000',absoluteCount:'0',approvalReference:'SYNTHETIC ONLY'}}));
+  const cases:ReconciliationCase[]=[null,...(kind==='events'?[customer?'customer' as const:orders?'salesperson' as const:'branch' as const]:[])].map(grouping=>({tenantId:'a',datasetId,mappingVersion:'1',caseId:`${datasetId}-${grouping ?? 'summary'}`,measureId,sourceReportReference:'SYNTHETIC independent control',frozenRevision:'freeze-1',batchIds:[batchId],from,to,grouping,groupKey:grouping?(customer?'historical-only':'cairo'):null,expectedValue:value,actualValue:value,expectedCount:'1',actualCount:'1',tolerance:{status:'approved',absoluteValue:'0.000000',absoluteCount:'0',approvalReference:'SYNTHETIC ONLY'}}));
   if(orders)cases.push(...cases.map(control=>({...control,caseId:`${control.caseId}-count`,measureId:'order_count' as const,expectedValue:orders,actualValue:orders})));
   if(finance)cases.push(...facts.filter(row=>row.measureId!==measureId).map(row=>({...cases[0]!,caseId:`${datasetId}-${row.measureId}`,measureId:row.measureId,expectedValue:row.value,actualValue:row.value})));
   for (const control of cases) await new PostgresReconciliation(db.migrator).record([control],'IQD');
@@ -59,11 +61,11 @@ test('hosted historical activation requires exact complete receipts, reruns, and
     const cursor=(await db.admin.query('SELECT * FROM mart.analytics_source_cursors')).rows;
     const publication=new PostgresHistoricalPublication(db.migrator);
     const members=[];
-    for(const kind of ['events','aging'] as const){
-      const datasetId=await member(db,'2025-12',kind,kind==='events'?'150.000000':'900.000000',{publicationOnly:true,finance:kind==='aging'});
-      members.push({datasetId,from:'2025-12-01',to:'2025-12-31',kind,fingerprint:''});
+    for(const month of ['2025-12','2026-01'])for(const kind of ['events','aging'] as const){
+      const datasetId=await member(db,month,kind,kind==='events'?'150.000000':'900.000000',{publicationOnly:true,finance:kind==='aging',customer:kind==='events'});
+      members.push({datasetId,from:`${month}-01`,to:`${month}-31`,kind,fingerprint:''});
     }
-    const manifest={tenantId:'a',reference:'synthetic-history',anchorDatasetId:'release',from:'2025-12-01',to:'2025-12-31',approvalReference:'SYNTHETIC ONLY',members};
+    const manifest={tenantId:'a',reference:'synthetic-history',anchorDatasetId:'release',from:'2025-12-01',to:'2026-01-31',approvalReference:'SYNTHETIC ONLY',members};
     await assert.rejects(publication.activate(manifest),/Exact immutable monthly promotion/);
     for(const entry of members)entry.fingerprint=(await promoteLocalBoundedRelease(db.migrator,{tenantId:'a',datasetId:entry.datasetId,reference:'SYNTHETIC ONLY'})).fingerprint;
     await assert.rejects(publication.activate({...manifest,members:[members[0]!]}),/complete event and snapshot/);
@@ -79,11 +81,19 @@ test('hosted historical activation requires exact complete receipts, reruns, and
     assert.ok(capabilities.releases.some(release=>release.datasetId==='synthetic-history'));
     assert.equal((await repository.execute({metric:'revenue',dateRange:{from:'2025-12-01',to:'2025-12-31'}},context)).rows[0]?.value,150);
     assert.equal((await repository.execute({metric:'revenue',dateRange:{from:'2026-01-01',to:'2026-01-31'}},context)).rows[0]?.value,0);
+    const historicalCustomer=await repository.execute({metric:'revenue',groupBy:'customer',dateRange:{from:'2026-01-01',to:'2026-01-31'}},context);
+    assert.deepEqual(historicalCustomer.rows,[{key:'historical-only',value:150}]);
+    const options=await repository.listDimensionOptions('customer',context);
+    assert.deepEqual(options,[{id:'historical-only',label:'Historical Customer'}]);
+    const page=await repository.searchDimensionOptions('customer',context,{metric:'revenue',asOf:'2025-12-31',search:'Historical',selectedIds:['historical-only']});
+    assert.deepEqual(page.values,options);assert.deepEqual(page.selected,options);
+    const hidden=await repository.searchDimensionOptions('customer',{...context,enforcedFilters:[{dimension:'customer',values:['absent']}]},{metric:'revenue',asOf:'2025-12-31'});
+    assert.deepEqual(hidden.values,[]);
     const totals=await readPublishedFinanceSummary(db.migrator,'a','2025-12-31');
     assert.equal(totals.net_aged_receivable,'900.000000');assert.equal(totals.credit_balances,'0.000000');assert.equal(Object.keys(totals).length,10);
     await assert.rejects(readPublishedFinanceSummary(db.migrator,'a','2025-11-30'),/summary anchor required/);
     await assert.rejects(readPublishedFinanceSummary(db.migrator,'b','2025-12-31'),/summary anchor required/);
-    await assert.rejects(repository.execute({metric:'revenue',dateRange:{from:'2025-12-01',to:'2025-12-31'}},{...context,enforcedFilters:[{dimension:'customer',values:['unapproved']}]}),/Uncertified/);
+    await assert.rejects(repository.execute({metric:'revenue',dateRange:{from:'2025-12-01',to:'2025-12-31'}},{...context,enforcedFilters:[{dimension:'salesperson',values:['unapproved']}]}),/Uncertified/);
   } finally {await db.close();}
 });
 

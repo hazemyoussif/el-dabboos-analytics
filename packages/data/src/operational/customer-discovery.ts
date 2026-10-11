@@ -4,7 +4,8 @@ import {publishedQueryIssues,validDateRange,requiredMeasures} from '@el-dabboos/
 import type {AnalyticsContext,DimensionDiscoveryRequest,DimensionDiscoveryPage,PublishedAnalyticsCapabilities} from '@el-dabboos/domain';
 import {tenantTransaction} from '../postgres/session.ts';
 import {sourceDisplayLabel} from '../postgres/query-labels.ts';
-import {operationalServingInput,servingFilters} from './serving-query.ts';
+import {servingFilters} from './serving-query.ts';
+import {publishedDiscoveryInput} from './discovery-input.ts';
 import {financeMetric,financeFilters} from './finance-repository.ts';
 /** Bounded, policy-bound keyset discovery. Selected identities hydrate independently of a page. */
 export async function discoverCustomers(pool:Pool,context:AnalyticsContext,request:DimensionDiscoveryRequest,capabilities:PublishedAnalyticsCapabilities,timeout:number):Promise<DimensionDiscoveryPage>{
@@ -21,7 +22,7 @@ export async function discoverCustomers(pool:Pool,context:AnalyticsContext,reque
   }else{
    params.push(requiredMeasures(metric));const measures=`$${params.length}`;
    const filters=servingFilters({metric},context,params);
-   input=`${operationalServingInput} WHERE trusted.tenant_id=$1 AND base.measure_id=ANY(${measures}::text[]) AND ${filters}`;identity="base.dimensions->>'customer'";label="base.labels->>'customer'";
+   input=`${publishedDiscoveryInput} WHERE trusted.tenant_id=$1 AND base.measure_id=ANY(${measures}::text[]) AND ${filters}`;identity="base.dimensions->>'customer'";label="base.labels->>'customer'";
   }
   params.push(after,`%${search.replace(/[\\%_]/g,'\\$&')}%`,selected);const offset=params.length-2;
   const result=await client.query(`WITH candidates AS MATERIALIZED (SELECT ${identity} id,min(${label}) label FROM ${input} AND ${identity} IS NOT NULL GROUP BY ${identity}),

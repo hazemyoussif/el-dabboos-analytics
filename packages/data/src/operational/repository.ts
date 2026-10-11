@@ -31,7 +31,7 @@ export class TrustedAnalyticsRepository implements AnalyticsRepository,Dimension
   if(financeMetric(query.metric)){const capabilities=await this.finance.capabilities(context);if(capabilities)return this.finance.execute(query,context,capabilities);}
   if(query.dateRange && query.dateRange.from<stored.capabilities.releases[0]!.period!.from)return this.fallback.execute(query,context);
   const authorizedQuery={...query,filters:[...(query.filters??[]),...(context.enforcedFilters??[])]};
-  if(publishedQueryIssues(authorizedQuery,stored.capabilities).length){const anchor=await this.refreshedAnchor(context,stored);if(anchor&&!publishedQueryIssues(authorizedQuery,anchor).length)return this.anchorResult(query,context,anchor);}
+  if(publishedQueryIssues(authorizedQuery,stored.capabilities).length){const anchor=await this.refreshedAnchor(context,stored);if(anchor&&!publishedQueryIssues(authorizedQuery,anchor).length)return this.anchorResult(query,context,anchor);return this.fallback.execute(query,context);}
   return tenantTransaction(this.pool,context.tenantId,async client=>{
    const stored=(await client.query(`SELECT baseline.capabilities,baseline.period_from::text coverage_from,baseline.reporting_currency,trusted.revision_id,coalesce(cursor.cutoff,revision.cutoff) cutoff,(coalesce(cursor.cutoff,revision.cutoff) AT TIME ZONE (baseline.specification->0->'measures'->0->>'timeZone'))::date::text cutoff_day,ARRAY(SELECT month::text FROM mart.analytics_serving_members WHERE tenant_id=baseline.tenant_id AND revision_id=trusted.revision_id) months,CASE WHEN EXISTS(SELECT 1 FROM mart.analytics_serving_members WHERE tenant_id=baseline.tenant_id AND revision_id=trusted.revision_id AND month>baseline.period_to) THEN (coalesce(cursor.cutoff,revision.cutoff) AT TIME ZONE (baseline.specification->0->'measures'->0->>'timeZone'))::date::text ELSE baseline.period_to::text END current_through FROM mart.analytics_baselines baseline JOIN mart.analytics_trusted_serving trusted USING(tenant_id) JOIN mart.analytics_serving_revisions revision USING(tenant_id,revision_id) LEFT JOIN mart.analytics_source_cursors cursor USING(tenant_id) WHERE baseline.tenant_id=$1`,[context.tenantId])).rows[0];
    stored.capabilities=await dailyEventCapabilities(client,context.tenantId,extendCapabilities(stored.capabilities,stored.current_through));
@@ -57,7 +57,8 @@ export class TrustedAnalyticsRepository implements AnalyticsRepository,Dimension
  async listDimensionOptions(dimension:DimensionId,context:AnalyticsContext) {
   const stored=await this.stored(context.tenantId);if(!stored)return this.fallback.listDimensionOptions(dimension,context);
   if(!categoricalDimensions.includes(dimension))throw new Error('Unsupported discovery dimension');
-  const eligible=stored.capabilities.releases.flatMap(release=>release.capabilities).filter(capability=>capability.dimensions.includes(dimension)&&(context.enforcedFilters??[]).every(filter=>capability.dimensions.includes(filter.dimension)));
+  const capabilities=await this.getPublishedCapabilities(context);
+  const eligible=capabilities.releases.flatMap(release=>release.capabilities).filter(capability=>capability.dimensions.includes(dimension)&&(context.enforcedFilters??[]).every(filter=>capability.dimensions.includes(filter.dimension)));
   if(!eligible.length)throw new Error('Uncertified discovery/policy dimension');
   return tenantTransaction(this.pool,context.tenantId,async client=>{
    return trustedDimensionOptions(client,{dimension,context,metric:eligible[0]!.metric,measures:[...new Set(eligible.flatMap(capability=>requiredMeasures(capability.metric)))],maxGroups:this.maxGroups});
