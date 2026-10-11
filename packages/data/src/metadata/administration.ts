@@ -59,7 +59,7 @@ export class SqliteAdministrationStore implements AdministrationUnitOfWork {
             bootstrapCompleted: async () => Boolean(await connection.one("SELECT 1 FROM bootstrap_state WHERE id='completed'")),
             initializeProtectedRoles: async timestamp => { seedProtectedAccessRoles(this.db, timestamp); },
             completeBootstrap: async (reference, timestamp) => { await connection.run('INSERT INTO bootstrap_state(id,reference,completed_at) VALUES (?,?,?)', 'completed', reference, timestamp); },
-            createAssignmentCandidate: async (tenantId, userId) => { await connection.run('INSERT INTO tenant_assignment_candidates(tenant_id,user_id) VALUES (?,?)', tenantId, userId); },
+            createAssignmentCandidate: async (tenantId, userId) => { await connection.run('INSERT OR IGNORE INTO tenant_assignment_candidates(tenant_id,user_id) VALUES (?,?)', tenantId, userId); },
         });
     }
 }
