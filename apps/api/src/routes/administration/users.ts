@@ -3,6 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import type { RouteContext } from '../../context.ts';
 import { body, status, text, version } from './schemas.ts';
 import { ApiError } from '../../errors.ts';
+import { AccessControlError } from '@el-dabboos/domain';
 import type { PlatformParams } from './support.ts';
 import { administration, cursor } from './support.ts';
 export function registerUsersRoutes(app: FastifyInstance, context: RouteContext) {
@@ -15,8 +16,12 @@ export function registerUsersRoutes(app: FastifyInstance, context: RouteContext)
     }>('/api/platform/users', { schema: body({ displayName: text, preferredLocale: status(['en','ar']), email: { type:'string',minLength:3,maxLength:254 }, password: { type:'string',minLength:8,maxLength:1024 } }) }, async (request) => {
         const provision = context.deps.administration?.provisionEmployee;
         if (!provision) throw new ApiError(503,'AUTH_UNAVAILABLE','Local employee provisioning is unavailable.');
-        try { return await provision(await context.identityId(request.headers),request.body); }
-        catch { throw new ApiError(409,'USER_PROVISIONING_FAILED','Unable to create this user. Review the email and account state.'); }
+        const identityId=await context.identityId(request.headers);
+        try { return await provision(identityId,request.body); }
+        catch (error) {
+            if (error instanceof AccessControlError) throw error;
+            throw new ApiError(409,'USER_PROVISIONING_FAILED','Unable to create this user. Review the email and account state.');
+        }
     });
     app.get<{
         Params: PlatformParams;
