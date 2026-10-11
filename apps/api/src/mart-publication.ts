@@ -1,5 +1,5 @@
 import type { ReleaseCertification } from '@el-dabboos/domain';
-import { createMartPool,PostgresMappingReleases,PostgresReleaseCertification,PostgresReleasePromotion,tenantTransaction } from '@el-dabboos/data';
+import { activateLocalRelease,createMartPool,PostgresMappingReleases,PostgresReleaseCertification,PostgresReleasePromotion,tenantTransaction } from '@el-dabboos/data';
 import type { ReleasePromotionScope } from '@el-dabboos/data';
 
 function publicationUrl(environment: NodeJS.ProcessEnv,key: string): string {
@@ -7,15 +7,23 @@ function publicationUrl(environment: NodeJS.ProcessEnv,key: string): string {
   if (!url) throw new Error('Missing publication operator configuration');
   return url;
 }
+function localPublicationUrl(environment: NodeJS.ProcessEnv): string {
+  return environment.MART_PUBLICATION_SOURCE_URL ?? publicationUrl(environment,'MART_MIGRATOR_URL');
+}
 /** Offline composition only; runtime never receives publication credentials. */
 export async function executeMartPublication(command: string,manifest: unknown,environment: NodeJS.ProcessEnv) {
   if (command==='certify') {
-    const pool = createMartPool(publicationUrl(environment,'MART_PUBLICATION_SOURCE_URL'),1);
+    const pool = createMartPool(localPublicationUrl(environment),1);
     try { await new PostgresReleaseCertification(pool).record(manifest as ReleaseCertification); return { status: 'certified' }; }
     finally { await pool.end(); }
   }
   const scope = publicationScope(manifest);
   if (command==='approve') return approveRelease(scope,environment);
+  if (command==='activate-local') {
+    const pool = createMartPool(localPublicationUrl(environment),1);
+    try { return { bindingId: await activateLocalRelease(pool,scope) }; }
+    finally { await pool.end(); }
+  }
   if (!['promote','bind'].includes(command)) throw new Error('Unknown publication operation');
   const source = createMartPool(publicationUrl(environment,'MART_PUBLICATION_SOURCE_URL'),1);
   const target = createMartPool(publicationUrl(environment,'MART_PUBLICATION_TARGET_URL'),1);
@@ -29,7 +37,7 @@ function publicationScope(value: unknown): ReleasePromotionScope {
   return value as ReleasePromotionScope;
 }
 async function approveRelease(scope: ReleasePromotionScope,environment: NodeJS.ProcessEnv) {
-  const pool = createMartPool(publicationUrl(environment,'MART_PUBLICATION_SOURCE_URL'),1);
+  const pool = createMartPool(localPublicationUrl(environment),1);
   try {
     const certification = await tenantTransaction(pool,scope.tenantId,async client => (await client.query('SELECT specification FROM mart.release_certifications WHERE tenant_id=$1 AND dataset_id=$2 AND reference=$3',[scope.tenantId,scope.datasetId,scope.reference])).rows[0]?.specification as ReleaseCertification | undefined,true);
     if (!certification) throw new Error('Completed certification required');
