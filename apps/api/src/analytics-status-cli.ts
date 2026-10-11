@@ -1,6 +1,7 @@
 import type { AnalyticsPartition } from '@el-dabboos/domain';
 import { executeAnalyticsJob } from './analytics-jobs.ts';
 import { createMartPool, PostgresOperationalStatus, verifyMartRuntimeRole } from '@el-dabboos/data';
+import { assertHostedMartUrl } from './hosted-mart-url.ts';
 
 async function main() {
   const [command,flag,tenantId,...extra]=process.argv.slice(2);
@@ -12,8 +13,7 @@ async function main() {
     if('run' in result&&result.run.status==='failed')process.exitCode=1;return;
   }
   if(extra.length)throw new Error('Unexpected status flags');
-  const connection=process.env.MART_RUNTIME_URL;
-  if(!connection || !['localhost','127.0.0.1','[::1]'].includes(new URL(connection).hostname))throw new Error('Local read-only mart configuration required');
+  const connection=assertHostedMartUrl(process.env.MART_RUNTIME_URL,process.env,'Local read-only mart configuration required');
   const target=Number(process.env.ANALYTICS_FRESHNESS_TARGET_SECONDS ?? '600');
   const pool=createMartPool(connection,1);
   try {
