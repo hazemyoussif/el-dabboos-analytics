@@ -3,10 +3,10 @@ import { AnalyticsOperations } from '@el-dabboos/application';
 import { createMartPool,createOdooSourcePool,tenantTransaction,OdooOperationalSource,PostgresOperationalStore,readBaseline,bootstrapOperationalServing } from '@el-dabboos/data';
 import type { AnalyticsJobRequest } from '@el-dabboos/domain';
 import { resolveOdooSourceConfig } from './source-connections.ts';
+import { assertHostedMartUrl } from './hosted-mart-url.ts';
 
 export async function executeAnalyticsJob(command:string,tenantId:string,mode:string|undefined,environment:NodeJS.ProcessEnv) {
- const url=command==='bootstrap'?environment.MART_MIGRATOR_URL:environment.MART_INGESTOR_URL;
- if(!url||!['localhost','127.0.0.1','[::1]'].includes(new URL(url).hostname))throw new Error('Local operational mart configuration required');
+ const url=assertHostedMartUrl(command==='bootstrap'?environment.MART_MIGRATOR_URL:environment.MART_INGESTOR_URL,environment,'Local operational mart configuration required');
  const mart=createMartPool(url,1);
  try {
   if(command==='bootstrap')return await bootstrapOperationalServing(mart,tenantId);
