@@ -44,7 +44,7 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository, Dimensi
   async getPublishedCapabilities(context: AnalyticsContext, query?: AnalyticsQuery): Promise<PublishedAnalyticsCapabilities> {
     return tenantTransaction(this.pool,context.tenantId,async client => {
       if(this.options.storedProofsOnly)await client.query("SELECT set_config('mart.stored_proofs_only','on',true)");
-      if (!this.options.historicalDatasetId && !(await client.query('SELECT 1 FROM mart.serving_bindings WHERE tenant_id=$1',[context.tenantId])).rowCount) return { tenantId: context.tenantId,mode: 'certified',releases: [] };
+      if (!(await client.query('SELECT 1 FROM mart.serving_bindings WHERE tenant_id=$1',[context.tenantId])).rowCount) return { tenantId: context.tenantId,mode: 'certified',releases: [] };
       const mapping = await this.release(client,context);
       const coverage = (await client.query<PublishedReconciliationCoverage>('SELECT * FROM mart.published_reconciliation_coverage($1,$2)',[context.tenantId,mapping.datasetId])).rows;
       const derived=await readDerivedCoverage(client,context.tenantId,mapping.datasetId,{metrics:mapping.capabilities.filter(capability=>semanticCatalog[capability.metric].semantics.kind==='ratio' && (!query || capability.metric===query.metric)).map(capability=>capability.metric)});
@@ -54,7 +54,7 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository, Dimensi
   async isDataReady(tenantId: string): Promise<boolean> {
     return tenantTransaction(this.pool, tenantId, async client => {
       if(this.options.storedProofsOnly)await client.query("SELECT set_config('mart.stored_proofs_only','on',true)");
-      if (!this.options.historicalDatasetId && !(await client.query("SELECT 1 FROM mart.serving_bindings b JOIN mart.mapping_releases m USING (tenant_id,dataset_id) WHERE b.tenant_id=$1 AND m.approval_status='approved'", [tenantId])).rowCount) return false;
+      if (!(await client.query("SELECT 1 FROM mart.serving_bindings b JOIN mart.mapping_releases m USING (tenant_id,dataset_id) WHERE b.tenant_id=$1 AND m.approval_status='approved'", [tenantId])).rowCount) return false;
       await this.release(client, { tenantId, locale: 'en' }); return true;
     });
   }
