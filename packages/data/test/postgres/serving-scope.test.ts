@@ -37,6 +37,7 @@ test('statement scope preserves runtime visibility, unbound/pending exclusion, t
   await rm(new URL('035_drill_fact_lineage.sql',baseline));
   await rm(new URL('036_drill_revision_lookup.sql',baseline));
   await rm(new URL('037_drill_revision_range.sql',baseline));
+  await rm(new URL('038_trusted_partition_membership_index.sql',baseline));
   await migratePostgres(db.migrator,baseline);
   for(const tenant of ['a','b','unbound']) {
    await deploy(db.migrator,mapping(tenant));
