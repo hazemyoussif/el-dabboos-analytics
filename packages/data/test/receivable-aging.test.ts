@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mapReceivableSnapshots } from '../src/receivable-aging.ts';
+import { mapReceivableSnapshots, receivableMeasures, receivableSummaryCandidate } from '../src/receivable-aging.ts';
 import { executeFacts } from '../src/engine.ts';
 import { validateQuery } from '@el-dabboos/domain';
 test('signed aging preserves cutoff/maturity fallback, zero complements, credit bridge and exact derived buckets', () => {
@@ -11,6 +11,14 @@ test('signed aging preserves cutoff/maturity fallback, zero complements, credit 
  ],'2026-09-30');
  assert.deepEqual(snapshots[0]?.values, {net_aged_receivable:'150.000000',aged_at_date:'100.000000',aged_1_30:'60.000000',aged_31_60:'-10.000000',aged_61_90:'0.000000',aged_91_120:'0.000000',aged_over_120:'0.000000',total_overdue_receivable:'50.000000',gross_open_receivable_components:'160.000000',credit_balances:'-10.000000'});
  assert.throws(() => mapReceivableSnapshots([{componentId:'bad',customerId:'customer',accountingDate:'2026-10-01',maturityDate:null,residual:'10.000000'}],'2026-09-30'));
+});
+test('historical receivable summary mapping is canonical and does not depend on a prior dataset', () => {
+ const mapping=receivableSummaryCandidate({tenantId:'el-dabboos-iq',sourceId:'el-dabboos-odoo18-pg',datasetId:'history-aging-october',mappingId:'historical-signed-aging-summary',mappingVersion:'1',businessOwner:'Finance standing metric-design approval',reportingCurrency:'IQD',timeZone:'Asia/Baghdad',cutoff:'2025-10-31'});
+ assert.equal(mapping.approval.status,'pending');
+ assert.deepEqual(mapping.measures.map(rule=>rule.measureId),receivableMeasures);
+ assert.ok(mapping.measures.every(rule=>rule.sourceObject==='receivable_cutoff'&&rule.currencyPolicy==='native-IQD'&&Object.keys(rule.dimensionMappings).length===0));
+ assert.deepEqual(mapping.capabilities.map(capability=>capability.metric),[...receivableMeasures,'overdue_receivable_percentage']);
+ assert.throws(()=>receivableSummaryCandidate({tenantId:'el-dabboos-iq',sourceId:'el-dabboos-odoo18-pg',datasetId:'bad',mappingId:'historical-signed-aging-summary',mappingVersion:'1',businessOwner:'Finance',reportingCurrency:'IQD',timeZone:'Asia/Baghdad',cutoff:'2025-10-30x'}));
 });
 test('snapshot overdue percentage uses latest entity operands, signed denominator, null zero and refuses snapshot summing', () => {
  const context = {tenantId:'demo-iq',locale:'en' as const};

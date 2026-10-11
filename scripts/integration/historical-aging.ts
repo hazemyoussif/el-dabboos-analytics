@@ -1,5 +1,5 @@
 import type { IngestionBatch, ProductionFact, ReconciliationCase, SourceMapping } from '../../packages/domain/src/index.ts';
-import { createMartPool, createOdooSourcePool, mapReceivableSnapshots, OdooSnapshotLease, PostgresExtractionRuns, PostgresMappingReleases, PostgresMartWriter, PostgresReconciliation, receivableMeasures, tenantTransaction } from '../../packages/data/src/index.ts';
+import { createMartPool, createOdooSourcePool, mapReceivableSnapshots, OdooSnapshotLease, PostgresExtractionRuns, PostgresMappingReleases, PostgresMartWriter, PostgresReconciliation, receivableMeasures, receivableSummaryCandidate, tenantTransaction } from '../../packages/data/src/index.ts';
 import { resolveOdooSourceConfig } from '../../apps/api/src/source-connections.ts';
 import type { HistoricalMonth } from '../../apps/api/src/historical-events.ts';
 import { validateHistoricalMonth, historicalRatioLedger } from '../../apps/api/src/historical-months.ts';
@@ -22,25 +22,24 @@ const sourceSummarySql = odooAgedReportBaseSql + ` SELECT count(*)::text compone
  coalesce(sum(residual) FILTER(WHERE residual<0),0)::numeric(30,6)::text credit FROM report_components`;
 const decimal = (value: bigint) => `${value < 0n ? '-' : ''}${(value < 0n ? -value : value)/1000000n}.${String((value < 0n ? -value : value)%1000000n).padStart(6,'0')}`;
 
-async function agingMapping(migrator: Pool, period: HistoricalMonth, datasetId: string): Promise<SourceMapping> {
-  const baseline = await tenantTransaction(migrator,tenantId,async client => (await client.query('SELECT specification FROM mart.mapping_releases WHERE tenant_id=$1 AND dataset_id=$2 AND approval_status=\'approved\'',[tenantId,'el-dabboos-finance-202609-v6'])).rows[0]?.specification,true) as SourceMapping | undefined;
-  if (!baseline) throw new Error('Proven September Finance mapping required');
-  const measures = baseline.measures.filter(rule => receivableMeasures.includes(rule.measureId as typeof receivableMeasures[number])).map(rule => ({ ...rule,grain: 'One company summary at month-end',identityRule: 'Stable source company summary identity; one immutable cutoff per monthly release',dimensionMappings: {} }));
-  if (measures.length !== receivableMeasures.length) throw new Error('Complete proven snapshot definitions required');
-  return { ...baseline,datasetId,mappingId: 'historical-signed-aging-summary',mappingVersion: '1',businessBasis: `Signed company-ledger month-end snapshot ${period.to}; Phase A summary`,approval: {status:'pending'},measures,capabilities: [...receivableMeasures.map(metric => ({metric,dimensions:[]})),{metric:'overdue_receivable_percentage',dimensions:[]}] };
+function agingMapping(period: HistoricalMonth, datasetId: string): SourceMapping {
+  return receivableSummaryCandidate({
+    tenantId,sourceId:'el-dabboos-odoo18-pg',datasetId,mappingId:'historical-signed-aging-summary',mappingVersion:'1',
+    businessOwner:'Finance standing metric-design approval 2026-10-07',reportingCurrency:'IQD',timeZone:'Asia/Baghdad',cutoff:period.to,
+  });
 }
 async function readComponents(client: PoolClient, cutoff: string, snapshot: OdooSnapshotLease) {
   const totals = Object.fromEntries(receivableMeasures.map(measure => [measure,0n])) as Record<typeof receivableMeasures[number],bigint>;
   let cursor = '0', rowsRead = 0;
   const sql = controlComponentSql('open').replace('WHERE residual<>0 ORDER BY reconstructed.id', 'WHERE residual<>0 AND reconstructed.id>$4::bigint ORDER BY reconstructed.id');
   while (true) {
-    const rows = (await client.query(sql,[1,cutoff,500,cursor])).rows;
+    const rows = (await client.query(sql,[1,cutoff,1000,cursor])).rows;
     if (!rows.length) break;
     const mapped = mapReceivableSnapshots(rows.map(row => ({componentId:row.component_id,customerId:row.customer_id ?? 'unassigned',accountingDate:row.accounting_date,maturityDate:row.due_date,residual:row.residual})),cutoff);
     for (const customer of mapped) for (const measure of receivableMeasures) totals[measure] += BigInt(customer.values[measure].replace('.',''));
     rowsRead += rows.length; cursor = rows.at(-1)!.component_id;
     await snapshot.assertAlive();
-    if (rows.length < 500) break;
+    if (rows.length < 1000) break;
   }
   return { totals,rowsRead };
 }
@@ -65,7 +64,7 @@ export async function extractHistoricalAging(period: HistoricalMonth, datasetId:
   let snapshot: OdooSnapshotLease | undefined, client: PoolClient | undefined;
   const began = performance.now();
   try {
-    const mapping = await agingMapping(migrator,period,datasetId);
+    const mapping = agingMapping(period,datasetId);
     await new PostgresMappingReleases(migrator).registerCandidate(mapping);
     snapshot = await OdooSnapshotLease.open(owner,config,config.snapshotMaxDurationMs,config.credentialPolicy);
     client = await source.connect();
