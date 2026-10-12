@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { historicalMonths, septemberAnchor, verifySeptemberAnchor, reconciliationLedger } from '../src/historical-months.ts';
+import { historicalMonths, verifyHistoricalCheckpoint, reconciliationLedger } from '../src/historical-months.ts';
 import type { ReconciliationCase } from '@el-dabboos/domain';
 test('historical wave contains twelve contiguous complete months, preserving September', () => {
   const months = historicalMonths(); assert.equal(months.length,12);
@@ -9,13 +9,23 @@ test('historical wave contains twelve contiguous complete months, preserving Sep
   assert.deepEqual(months[11],{month:'2026-09',from:'2026-09-01',to:'2026-09-30'});
   for (let index=1;index<months.length;index++) assert.equal(Date.parse(months[index]!.from)-Date.parse(months[index-1]!.to),86400000);
 });
-test('anchor checks source AND mart values, period and unique total evidence', () => {
-  const cases = Object.entries(septemberAnchor).map(([measureId,value]) => ({measureId,from:'2026-09-01',to:'2026-09-30',grouping:null,expectedValue:value,actualValue:value})) as ReconciliationCase[];
-  assert.doesNotThrow(() => verifySeptemberAnchor(cases));
-  assert.throws(() => verifySeptemberAnchor(cases.slice(1)),/regression/);
-  assert.throws(() => verifySeptemberAnchor([...cases,cases[0]!]),/regression/);
-  assert.throws(() => verifySeptemberAnchor(cases.map(control => ({...control,actualValue:'0.000000'}))),/regression/);
-  assert.throws(() => verifySeptemberAnchor(cases.map(control => ({...control,from:'2025-09-01'}))),/regression/);
+test('September accepts changed live values when frozen source and mart evidence still match', () => {
+  const period = {month:'2026-09',from:'2026-09-01',to:'2026-09-30'};
+  const control = {
+    caseId:'live-september',
+    measureId:'net_invoiced_revenue',
+    grouping:null,
+    from:period.from,
+    to:period.to,
+    frozenRevision:'snapshot-new',
+    expectedValue:'1500000000.000000',
+    actualValue:'1500000000.000000',
+    expectedCount:'1',
+    actualCount:'1'
+  } as ReconciliationCase;
+  const prior = {month:period.month,cases:[control],snapshot:{frozenRevision:'snapshot-new'}};
+  assert.doesNotThrow(() => verifyHistoricalCheckpoint(period,prior,[{specification:control,status:'passed',group_completeness:true}]));
+  assert.throws(() => verifyHistoricalCheckpoint(period,{...prior,cases:[{...control,actualValue:'1499999999.000000'}]},[{specification:control,status:'passed',group_completeness:true}]),/evidence conflict/);
 });
 test('ledger counts individual discrepancies instead of netting differences', () => {
   const cases = [{measureId:'order_revenue',grouping:'customer',expectedValue:'1.000000',actualValue:'2.000000',expectedCount:'1',actualCount:'1'}, {measureId:'order_revenue',grouping:'customer',expectedValue:'2.000000',actualValue:'1.000000',expectedCount:'1',actualCount:'1'}] as ReconciliationCase[];
