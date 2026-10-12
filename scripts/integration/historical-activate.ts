@@ -20,7 +20,9 @@ try {
   // Existing positive proof cache is transactional and invalidated by all mutable input writes.
   for (const member of members) await tenantTransaction(target,tenantId,client=>client.query('SELECT mart.refresh_proof_results($1,$2)',[tenantId,member.datasetId]),false,120000);
   const from=periods[0]!.from,to=periods.at(-1)!.to,reference=`el-dabboos-history-${from.slice(0,7).replace('-','')}-${to.slice(0,7).replace('-','')}-v1`;
-  const result=await new PostgresHistoricalPublication(target).activate({tenantId,reference,anchorDatasetId:'el-dabboos-finance-202609-v6',from,to,approvalReference:approval.reference,members});
+  const anchor=await tenantTransaction(target,tenantId,async client=>(await client.query('SELECT dataset_id FROM mart.serving_bindings WHERE tenant_id=$1',[tenantId])).rows[0]?.dataset_id,true);
+  if (!anchor) throw new Error('Current serving binding required before historical activation');
+  const result=await new PostgresHistoricalPublication(target).activate({tenantId,reference,anchorDatasetId:anchor,from,to,approvalReference:approval.reference,members});
   console.log(JSON.stringify({status:'historical-serving-active',...result,months:periods.length}));
   if (!result.alreadyBound) await writeHistoricalCheckpoint(join(outputDirectory,'historical-serving.json'),{...result,from,to,months:periods.length,members,approvalReference:approval.reference});
 } finally {await target.end();}
