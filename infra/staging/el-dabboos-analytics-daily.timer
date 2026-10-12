@@ -1,0 +1,9 @@
+[Unit]
+Description=Daily El Dabboos staging reconciliation and presence sweep
+
+[Timer]
+OnCalendar=*-*-* 00:00:00 UTC
+Unit=el-dabboos-analytics@daily.service
+
+[Install]
+WantedBy=timers.target

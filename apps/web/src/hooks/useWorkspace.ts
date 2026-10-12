@@ -43,6 +43,7 @@ export function useWorkspace(authenticatedUser?: DemoUser) {
   const nextNavigation = () => setNavigationRevision(value => value + 1);
   const requestId = useRef(0);
   const metadataScope = useRef(0);
+  const showFilterOptionsError = (selectedLocale:Locale,scope:number) => {if(scope===metadataScope.current)setError(selectedLocale==='ar'?'تعذر تحميل خيارات بعض المرشحات. أعد تحميل الصفحة للمحاولة مجدداً.':'Some filter choices could not load. Reload the page to retry.');};
   const beginRequest = () => ++requestId.current;
   const isCurrent = (id: number) => id === requestId.current;
   const session = (selectedProfile: TenantProfile = profile!, selectedLocale: Locale = locale, selectedUserId = userId): ApiSession =>
@@ -104,7 +105,7 @@ export function useWorkspace(authenticatedUser?: DemoUser) {
       if(!isCurrent(id))return;
       const capabilities=initialCapabilities;
       publishWorkspaceMetadata({users,membership,selected,nextLocale,nextUserId,catalogResponse,templatesResponse,capabilities,saved});
-      const report=await loadWorkspaceReport(selectedSession,requestedRoute,catalogResponse.metrics,templatesResponse,{record:resolved?.record,onOptions:options=>{if(scope===metadataScope.current)setFilterOptions(options);}});
+      const report=await loadWorkspaceReport(selectedSession,requestedRoute,catalogResponse.metrics,templatesResponse,{record:resolved?.record,onOptions:options=>{if(scope===metadataScope.current)setFilterOptions(options);},onOptionsError:()=>showFilterOptionsError(nextLocale,scope)});
       if (!isCurrent(id)) return;
       setDocument(report.opened);setExecution(report.openedExecution);
 
@@ -162,7 +163,7 @@ export function useWorkspace(authenticatedUser?: DemoUser) {
     setLocale(next); storeLocale(preferences(), next);
     if (profile) {
       const id = requestId.current;
-      void getFilterOptions(session(profile, next),[...new Set(Object.values(catalog).flatMap(metric=>metric.dimensions))]).then(options => { if (isCurrent(id)&&scope===metadataScope.current) setFilterOptions(options); })
+      void getFilterOptions(session(profile, next),[...new Set(Object.values(catalog).flatMap(metric=>metric.dimensions))],()=>showFilterOptionsError(next,scope)).then(options => { if (isCurrent(id)&&scope===metadataScope.current) setFilterOptions(options); })
         .catch(() => { if (isCurrent(id)&&scope===metadataScope.current) setFilterOptions({}); });
     }
   };

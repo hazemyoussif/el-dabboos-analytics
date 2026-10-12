@@ -42,11 +42,14 @@ export const getSavedDashboard = (session: ApiSession, id: string) => request<Da
 export const createSavedDashboard = (session: ApiSession, dashboard: DashboardSpec) => request<DashboardRecord>(session, '/api/saved-dashboards', 'POST', { dashboard });
 export const updateSavedDashboard = (session: ApiSession, id: string, dashboard: DashboardSpec, expectedVersion: number) => request<DashboardRecord>(session, `/api/saved-dashboards/${encodeURIComponent(id)}`, 'PUT', { dashboard, expectedVersion });
 export const executeDashboard = (session: ApiSession, dashboard: DashboardSpec, overrides?: DashboardFilterOverrides) => request<DashboardExecutionResult>(session, '/api/dashboards/execute', 'POST', { dashboard, ...(overrides ? { overrides } : {}) });
-export async function getFilterOptions(session: ApiSession,dimensions: readonly DimensionId[] = categoricalDimensions): Promise<FilterOptions> {
-  const values = await Promise.all(dimensions.filter(dimension=>dimension!=='customer'&&categoricalDimensions.includes(dimension)).map(async dimension => {
-    const response = await request<{ dimension: DimensionId; values: Array<{ id: string; label: string }> }>(session, `/api/dimensions/${dimension}/values`, 'GET');
-    return [dimension, response.values] as const;
-  }));
+export async function getFilterOptions(session: ApiSession,dimensions: readonly DimensionId[] = categoricalDimensions,onUnavailable?:(dimension:DimensionId)=>void): Promise<FilterOptions> {
+  const values: Array<readonly [DimensionId, Array<{id:string;label:string}>]> = [];
+  for(const dimension of dimensions.filter(dimension=>dimension!=='customer'&&categoricalDimensions.includes(dimension))) {
+    try {
+      const response = await request<{ dimension: DimensionId; values: Array<{ id: string; label: string }> }>(session, `/api/dimensions/${dimension}/values`, 'GET');
+      values.push([dimension,response.values]);
+    } catch(error) { if(!onUnavailable)throw error;onUnavailable(dimension); }
+  }
   return Object.fromEntries(values);
 }
 export const searchCustomers=(session:ApiSession,query:import('@el-dabboos/domain').DimensionDiscoveryRequest)=>request<import('@el-dabboos/domain').DimensionDiscoveryPage>(session,'/api/dimensions/customer/search','POST',query);

@@ -125,3 +125,16 @@ test('exact existing head content is accepted independently of JSON property ord
   assert.equal((await importCertifiedHistoricalMonth(db.migrator,scope)).alreadyImported,false);
  }finally{await db.close();}
 });
+
+test('bounded month import still rejects drift in an untouched trusted month',{skip:!enabled},async()=>{
+ const {db,scope}=await fixture();
+ try {
+  const before=(await db.admin.query('SELECT * FROM mart.analytics_trusted_serving')).rows;
+  const prior=(await db.admin.query("SELECT payload FROM mart.analytics_fact_heads head JOIN mart.analytics_fact_revisions revision USING(tenant_id,fact_key,revision_id) WHERE head.measure_id='order_revenue' AND head.business_month='2026-01' LIMIT 1")).rows[0].payload as ProductionFact;
+  const baseline=await tenantTransaction(db.ingestor,'a',client=>readBaseline(client,'a'),true);
+  await tenantTransaction(db.ingestor,'a',client=>persistOperationalFact(client,baseline,{...prior,value:'11.000000',sourceRevision:'2',sourceVersion:'untrusted-drift',currency:{...prior.currency!,transactionValue:'11.000000'}}));
+  await assert.rejects(importCertifiedHistoricalMonth(db.migrator,scope),/canonical heads to match/);
+  assert.deepEqual((await db.admin.query('SELECT * FROM mart.analytics_trusted_serving')).rows,before);
+  assert.equal((await db.admin.query('SELECT count(*)::int count FROM mart.analytics_historical_imports')).rows[0].count,0);
+ }finally{await db.close();}
+});
