@@ -22,6 +22,9 @@ test('migrations: empty, rerun, same-session concurrent runners and ledger', { s
     assert.ok(membership.indexdef.includes('(tenant_id, partition_id)'));
     const historicalGuard=(await db.migrator.query("SELECT pg_get_functiondef('mart.guard_historical_binding()'::regprocedure) AS definition")).rows[0].definition;
     assert.doesNotMatch(historicalGuard,/Historical September anchor regression|1447166500\.000000|1465712000\.000000|18545500\.000000|1461335500\.000000|2895\.000000/);
+    const financeGuard=(await db.migrator.query("SELECT pg_get_functiondef('mart.guard_finance_snapshot_publication()'::regprocedure) AS definition")).rows[0].definition;
+    assert.match(financeGuard,/historical_release_members/);
+    assert.doesNotMatch(financeGuard,/el-dabboos-finance-202609-v6/);
   } finally { await db.close(); }
 });
 test('migrations: checksum refusal, failed SQL rollback, gaps and newer database refusal', { skip: !enabled }, async () => {
