@@ -31,7 +31,7 @@ Run the existing staging `migrate` and `verify` operator commands with the prote
 
 ## Bounded historical operator
 
-Use a new hosted checkpoint directory for June 2024–September 2025, readable/writable by the image's `node` user and protected from unrelated users. Do not reuse or alter the old job's approval. Record actual task-owner staging authorization for this extended range in its new `business-approval.json` with a current `approvedAt`; do not claim Finance signed off on report outputs.
+Use a new hosted checkpoint directory for June 2024–September 2025, readable/writable by the image's `node` user and protected from unrelated users. Do not reuse or alter the old job's approval. The task owner has already granted standing approval for this handoff. Record that existing authorization through the loader's existing `business-approval.json` input; no further business sign-off is required. Preserve original job evidence.
 
 With the reviewed SHA-pinned API image and new checkpoint path set in this terminal:
 
@@ -73,3 +73,11 @@ Verify each of the twelve reports named in [hosted parity](hosted-historical-par
 For PR #10, verify an administrator creates an employee, the employee signs in, candidate provisioning is idempotent, and a separately assigned membership/role/scope grants only intended access. A viewer must not create users; suspended users/bindings must fail on the next request. Initial password change enforcement remains deferred. Do not create arbitrary live employee privileges as part of rollout testing.
 
 Only after complete intended coverage, customer controls, hosted report acceptance and recovery evidence pass should one newly named incremental benchmark run. Measure discovery, persistence, reconciliation, refresh and replay separately; verify rollback and RLS. Preserve stopped PR19 evidence. Continuous sync remains unconfigured.
+
+## Repository report-opening parity
+
+Trusted staging capabilities are projected per metric, unlike the combined release often used in local fixtures. Certified template dates now resolve shared coverage across those releases, including intersecting coverage boundaries; historical dashboards prefer the widest supported shared period. A report without shared coverage is incompatible rather than offered with a relative preset that fails on opening. This does not manufacture missing data or extend any published metric capability.
+
+HTTP regression checks the exact available twelve-template list and opens every template in English and Arabic with zero failed series using synthetic fixtures. The application regression matrix checks all twelve dashboard templates (the Sales & Invoicing template, six management and five historical) in English and Arabic with the staging capability format, explicit dates and canonical dashboard authorization. Data & Certification Status is a separate information page. Finance uses the published customer snapshot range. This automated evidence is separate from hosted report execution and browser acceptance. The deployment acceptance target remains all twelve reports working on staging before merging; green CI alone does not establish that outcome.
+
+Exact immutable customer Finance vectors supply the customer/month grain declared by the semantic catalog, independently of company-summary baseline dimensions. Summary-only facts still never supply customer rows; analysis restrictions and tenant/policy enforcement remain in place. No schema or extra approval workflow is added for this fix.

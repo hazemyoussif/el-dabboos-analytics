@@ -14,10 +14,10 @@ Failed reconciliation or a lost source lease rolls back the entire candidate.
 
 Capabilities come from approved definitions and exact evidence attached to trusted
 partitions. Late certificates do not expand an already trusted revision. Summary
-aging does not certify customer grouping. Exact customer vectors grant only dimensions
-approved in the stored mapping: summary-only metrics remain summary-only for
-customer queries and discovery. Snapshot month trends retain the approved calendar
-projection. Analyses are restricted to the approved capability and executor support.
+aging does not certify customer grouping. Exact customer vectors supply the customer/month dimensions declared by the semantic
+catalog, independently of company-summary baseline dimensions. Customer queries and
+discovery read only those trusted customer vectors; company summaries cannot supply
+customer rows. Snapshot month trends retain the governed calendar projection. Analyses are restricted to the approved capability and executor support.
 Customer snapshots require independent
 customer controls, exact customer-to-company totals, closed signed buckets and
 month-end dates. Summary queries choose the latest eligible trusted snapshot;

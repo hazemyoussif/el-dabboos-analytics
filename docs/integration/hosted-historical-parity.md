@@ -2,7 +2,7 @@
 
 ## Current scope and evidence
 
-All twelve reports are existing functionality: Executive Sales & Invoicing, Business Line Performance, Salesperson Performance, Customer Performance, Invoice & Refund Operations, Receivables & Aging, Historical Executive Trend, Sales vs Invoicing Trend, Business Line Trend, Salesperson Historical Analysis, Customer Historical Analysis, and Data & Certification Status.
+The twelve dashboard templates are Sales & Invoicing plus these eleven dashboard reports: Executive Sales & Invoicing, Business Line Performance, Salesperson Performance, Customer Performance, Invoice & Refund Operations, Receivables & Aging, Historical Executive Trend, Sales vs Invoicing Trend, Business Line Trend, Salesperson Historical Analysis, Customer Historical Analysis. Data & Certification Status is a separate information page.
 
 A read-only company-1 source probe on 2026-10-12 observed orders from 2024-08-03 through 2026-10-12 (69,195 headers), and posted customer invoices/refunds from 2024-06-26 through 2026-10-12 (70,943 headers). This establishes June 2024 as the first required historical month; it does not certify any source totals. Target closed-month coverage is June 2024–September 2026 (28 months), plus existing current October reporting. The previously accepted October 2025–September 2026 range and its 2026-10-11 approval remain immutable evidence.
 

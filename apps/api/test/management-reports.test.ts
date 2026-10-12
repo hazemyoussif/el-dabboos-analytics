@@ -21,3 +21,30 @@ test('published management default executes exact metrics while customer and Fin
   assert.equal((await app.inject({url:'/api/management-control-review',headers:{...headers,'x-tenant-id':'unrelated'}})).statusCode,403);
  } finally {await app.close();}
 });
+
+test('the twelve local dashboard templates are available and open through HTTP with staging per-metric releases in EN/AR',async()=>{
+ const {dashboardTemplates}=await import('@el-dabboos/application');
+ const {requiredMeasures,semanticCatalog}=await import('@el-dabboos/domain');
+ const templates=dashboardTemplates.filter(template=>template.periodStrategy==='certified');
+ assert.equal(templates.length,12);
+ const metrics=[...new Set(templates.flatMap(template=>template.widgets.flatMap(widget=>widget.series.map(series=>series.metric))))];
+ const measures=[...new Set(metrics.flatMap(metric=>requiredMeasures(metric)))];
+ const range={from:'2026-08-01',to:'2026-09-30'};
+ const repository=new MockAnalyticsRepository(['2026-08-31','2026-09-30'].flatMap(date=>measures.map(measureId=>({tenantId:'demo-iq',measureId,date,value:10,entityId:'customer:1',dimensions:{customer:'customer:1',business_line:'line:1',salesperson:'rep:1'}}))));
+ const app=await buildApi({analyticsRepository:repository,dimensionValues:repository,clock:()=>new Date('2026-10-12T12:00:00Z'),publishedCapabilities:{async getPublishedCapabilities(context){return {tenantId:context.tenantId,mode:'certified',releases:metrics.map(metric=>({datasetId:`trusted-${metric}`,sourceId:'synthetic-only',mappingId:'shared-definition',mappingVersion:'1',certificationReference:'synthetic-only',period:range,capabilities:[{metric,summary:true,dimensions:semanticCatalog[metric].dimensions.filter(dimension=>['month','customer','business_line','salesperson'].includes(dimension)),analyses:[]}]}))};}}});
+ try {
+  for(const locale of ['en','ar']){
+   const requestHeaders={...headers,'x-locale':locale};
+   const response=await app.inject({url:'/api/dashboard-templates',headers:requestHeaders});
+   assert.equal(response.statusCode,200);
+   const available=response.json().templates.filter((template:{availability:string})=>template.availability==='available');
+   assert.deepEqual(available.map((template:{id:string})=>template.id).sort(),templates.map(template=>template.id).sort());
+   for(const template of templates){
+    const opened=await app.inject({url:`/api/dashboard-templates/${template.id}/instantiate`,headers:requestHeaders});
+    assert.equal(opened.statusCode,200,`${template.id}/${locale}: ${opened.body}`);
+    assert.deepEqual(opened.json().dashboard.filters.dateRange,range,template.id);
+    assert.equal(opened.json().execution.metadata.failedSeries,0,template.id);
+   }
+  }
+ }finally{await app.close();}
+});

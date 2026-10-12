@@ -26,7 +26,7 @@ export class FinanceSnapshotRepository {
     const peers=approved.filter(peer=>peer.metric===capability.metric);
     return (peers.length?peers:[{metric:capability.metric,summary:true,dimensions:[],analyses:[]}]).map(peer=>({
      ...peer,
-     dimensions:[...new Set([...capability.dimensions.filter(dimension=>dimension==='customer'||dimension==='month'),...peer.dimensions.filter(dimension=>dimension==='month')])],
+     dimensions:semanticCatalog[capability.metric].dimensions.filter(dimension=>dimension==='customer'||dimension==='month'),
      analyses:peer.analyses.filter(analysis=>analysis==='ranking'||analysis==='topN'),
     }));
    });

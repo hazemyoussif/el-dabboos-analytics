@@ -53,7 +53,9 @@ test('forward migration adopts certified historical events and aging beside oper
   // A customer snapshot supersedes the same-date summary, without hiding later or earlier summaries.
   assert.equal((await repository.execute({metric:'net_aged_receivable',dateRange:range},context)).rows[0]?.value,900);
   assert.deepEqual((await repository.execute({metric:'net_aged_receivable',groupBy:'month',dateRange:{from:'2025-10-01',to:'2025-12-31'}},context)).rows.map(row=>row.value),[900,100,900]);
-  await assert.rejects(repository.execute({metric:'net_aged_receivable',groupBy:'customer',dateRange:range},context),/Uncertified/); // Exact rows do not expand the approved summary-only mapping.
+  const customer=await repository.execute({metric:'net_aged_receivable',groupBy:'customer',dateRange:range},context);
+  assert.deepEqual(customer.rows,[{key:'exact-customer',value:100}]);
+  assert.equal(customer.metadata.snapshotAsOf,'2025-11-30'); // Customer rows select their own grain, never the later company summary.
 
   assert.deepEqual((await db.admin.query('SELECT * FROM mart.historical_release_members ORDER BY period_from,kind')).rows,original);
   assert.equal((await db.admin.query('SELECT count(*)::int count FROM mart.analytics_trusted_serving')).rows[0].count,1);
