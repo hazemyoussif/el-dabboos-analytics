@@ -6,11 +6,12 @@ import { resolveOdooSourceConfig } from './source-connections.ts';
 import { assertHostedMartUrl } from './hosted-mart-url.ts';
 
 export async function executeAnalyticsJob(command:string,tenantId:string,mode:string|undefined,environment:NodeJS.ProcessEnv) {
+ const trigger=analyticsOperatorTrigger(environment);
  const url=assertHostedMartUrl(command==='bootstrap'?environment.MART_MIGRATOR_URL:environment.MART_INGESTOR_URL,environment,'Local operational mart configuration required');
  const mart=createMartPool(url,1);
  try {
   if(command==='bootstrap')return await bootstrapOperationalServing(mart,tenantId);
-  return await runConfiguredAnalyticsJob(mart,{tenantId,kind:jobKind(command,mode),actorId:environment.ANALYTICS_OPERATOR_ID??'local-operator',trigger:'operator'},environment);
+  return await runConfiguredAnalyticsJob(mart,{tenantId,kind:jobKind(command,mode),actorId:environment.ANALYTICS_OPERATOR_ID??'local-operator',trigger},environment);
  }finally{await mart.end();}
 }
 function jobKind(command:string,mode:string|undefined):AnalyticsJobRequest['kind'] {
@@ -38,4 +39,11 @@ export async function runConfiguredAnalyticsJob(mart:ReturnType<typeof createMar
   if(!lifecycleStarted)await store.recordFailure(request,runId,startedAt);
   throw error;
  }
+}
+
+/** Scheduled invocations retain their origin in the existing durable job audit. */
+export function analyticsOperatorTrigger(environment:NodeJS.ProcessEnv):'operator'|'scheduled' {
+ const trigger=environment.ANALYTICS_JOB_TRIGGER??'operator';
+ if(trigger!=='operator'&&trigger!=='scheduled')throw new Error('Invalid analytics operator trigger');
+ return trigger;
 }

@@ -163,10 +163,12 @@ latest technical failure, source cutoff and freshness age/target (600 seconds by
 default). `GET /api/analytics/status` remains authorized and read-only. Daily audit
 success does not resolve a rejected sync candidate or advance source freshness.
 
-The commands are schedulable. Future orchestration may trigger sync about every
-five minutes and daily reconciliation/sweep; all formulas, mapping, cursor and
-promotion decisions remain in this repository. No scheduler, cloud staging,
-external CD, push or merge was created. Runtime sync/reconciliation/serving LLM
+The staging systemd units in `infra/staging` invoke sync after five idle minutes
+and daily reconciliation followed by presence sweep at 00:00 UTC (03:00 Baghdad).
+They reuse this CLI and record `trigger: scheduled`; all formulas, mapping, cursor
+and promotion decisions remain in this repository. The units are delivered disabled
+and must not be enabled until hosted loading and one successful sync/replay are
+verified. See [staging schedules](staging-schedules.md). Runtime sync/reconciliation/serving LLM
 dependency = zero. See the operational acceptance handoff for results and limits.
 
 Daily event base reconciliation, monthly rollups and exact hybrid range planning

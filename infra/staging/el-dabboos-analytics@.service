@@ -1,0 +1,12 @@
+[Unit]
+Description=El Dabboos staging analytics %i
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/opt/el-dabboos/secrets/staging-jobs.env
+ExecStart=/bin/bash /opt/el-dabboos/analytics/infra/staging/analytics-job.sh %i
+TimeoutStartSec=15min
+UMask=0077

@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
 import type {Pool} from 'pg';
 import {enabled} from './support.ts';
+import {assertAdoptionHeadParity} from '../../src/operational/adoption-parity.ts';
+import {tenantTransaction} from '../../src/postgres/session.ts';
 import {AnalyticsOperations} from '../../../application/src/analytics-operations.ts';
 import {OdooOperationalSource} from '../../src/operational/source.ts';
 import {PostgresOperationalStore} from '../../src/operational/store.ts';
@@ -31,6 +33,9 @@ test('representative operational pipeline: 280k revisions, source read through a
  const fixture=await operationalPerformanceFixture();
  try {
   assert.equal((await fixture.db.admin.query('SELECT count(*)::int count FROM mart.analytics_fact_heads')).rows[0].count,historyRowsPerObject*8);
+  const parityStarted=performance.now();
+  await tenantTransaction(fixture.db.migrator,'a',client=>assertAdoptionHeadParity(client,'a'),false,15000);
+  process.stdout.write(`historical-parity-performance ${JSON.stringify({heads:historyRowsPerObject*8,ms:performance.now()-parityStarted})}\n`);
   await changeSource(fixture.db);
   const mart=observeQueries(fixture.db.ingestor),sourceQueries=observeQueries(fixture.source);
   const config={credentialPolicy:'least_privilege' as const,connection:{},tenantId:'a',sourceId:'fixture',companyIds:['1'],batchSize:500,statementTimeoutMs:15000,snapshotMaxDurationMs:600000};
