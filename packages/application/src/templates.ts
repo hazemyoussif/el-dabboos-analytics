@@ -1,9 +1,8 @@
 import type { DashboardSeries, DashboardSpec, DashboardWidget, DateRange, RelativeDatePreset, Locale, LocalizedText, MetricId, TenantProfile, AnalysisSpec, DimensionId } from '@el-dabboos/domain';
 import { validateDashboardSpec } from '@el-dabboos/domain';
 
-import type { PublishedAnalyticsCapabilities } from '@el-dabboos/domain';
 import { historicalTemplates } from './historical-templates.ts';
-import { managementTemplates,supportedTemplatePeriod } from './management-templates.ts';
+import { managementTemplates } from './management-templates.ts';
 import { resolveRelativeDatePreset } from './relative-date.ts';
 export type DatePreset = RelativeDatePreset;
 export interface DashboardTemplate {
@@ -160,7 +159,7 @@ export const dashboardTemplates: readonly DashboardTemplate[] = [
     widget('equipment-detail', 'table', [series('failure-count', 'failure_count'), series('mtbf', 'mtbf'), series('mttr', 'mttr'), series('maintenance-cost', 'maintenance_cost')], 'equipment'),
     widget('category-reliability', 'table', [series('failure-count', 'failure_count'), series('mtbf', 'mtbf'), series('mttr', 'mttr'), series('maintenance-cost', 'maintenance_cost')], 'equipment_category')
   ] },
-  { id: 'sales-invoicing', name: text('Sales & Invoicing', 'المبيعات والفواتير'), description: text('Certified invoice revenue, refunds and orders.', 'إيرادات الفواتير والإشعارات الدائنة والطلبات المعتمدة.'), domain: 'sales', tags: ['sales','invoicing'],datePreset: 'previous_month',periodStrategy: 'certified',layout: { columns: 4 },widgets: [
+  { id: 'sales-invoicing', name: text('Sales & Invoicing', 'المبيعات والفواتير'), description: text('Certified invoice revenue, refunds and orders.', 'إيرادات الفواتير والإشعارات الدائنة والطلبات المعتمدة.'), domain: 'sales', tags: ['sales','invoicing'],datePreset: 'current_year',periodStrategy: 'certified',layout: { columns: 4 },widgets: [
     one('net-invoiced-revenue','kpi','net_invoiced_revenue'),
     { ...one('posted-invoice-value','kpi','invoiced_revenue'),title: text('Posted Invoice Value','قيمة الفواتير المُرحّلة') },
     one('refund-value','kpi','refund_value'),one('orders','kpi','order_count'),
@@ -172,14 +171,12 @@ export function getDashboardTemplate(id: string): DashboardTemplate | undefined 
 export function resolveDatePreset(preset: DatePreset, profile: TenantProfile, now: Date): DateRange {
   return resolveRelativeDatePreset(preset, profile.timeZone, now);
 }
-export function instantiateDashboardTemplate(template: DashboardTemplate, profile: TenantProfile, _now: Date, locale: Locale = profile.defaultLocale, published?: PublishedAnalyticsCapabilities): DashboardSpec {
+export function instantiateDashboardTemplate(template: DashboardTemplate, profile: TenantProfile, _now: Date, locale: Locale = profile.defaultLocale): DashboardSpec {
   const spec: DashboardSpec = { schemaVersion: 2, id: template.id, title: template.name, locale,
     filters: { datePreset: template.datePreset }, layout: template.layout,
     widgets: structuredClone(template.widgets) };
   if (template.periodStrategy==='certified') {
     if(template.id==='sales-invoicing') spec.title = { en: `${profile.labels.en} Sales & Invoicing`,ar: `المبيعات والفواتير — ${profile.labels.ar}` };
-    const period = published ? supportedTemplatePeriod(template,published) : undefined;
-    if (period) spec.filters = { dateRange: { ...period } };
   }
   validateDashboardSpec(spec);
   return spec;

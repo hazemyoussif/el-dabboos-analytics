@@ -11,8 +11,8 @@ const published:PublishedAnalyticsCapabilities={tenantId:'demo-iq',mode:'certifi
 test('management reports require exact pairs, covered periods and no inferred time or ranking analyses',()=>{
  for(const template of managementTemplates) {
   assert.equal(templateCompatibility(template,published).status,['customer-performance','receivables-aging'].includes(template.id)?'unsupported':'supported');
-  const dashboard=instantiateDashboardTemplate(template,tenantProfiles['demo-iq'],new Date('2026-11-01'),'ar',published);
-  if(!['customer-performance','receivables-aging'].includes(template.id))assert.deepEqual(dashboard.filters.dateRange,period);
+  const dashboard=instantiateDashboardTemplate(template,tenantProfiles['demo-iq'],new Date('2026-11-01'),'ar');
+  if(!['customer-performance','receivables-aging'].includes(template.id))assert.deepEqual(dashboard.filters,{datePreset:'current_year'});
   assert.ok(dashboard.widgets.every(widget=>widget.series.every(series=>!series.analysis)));
  }
  const unpaired={...published,releases:published.releases.map(release=>({...release,capabilities:release.capabilities.map(capability=>({...capability,dimensions:[]}))}))};
@@ -52,8 +52,8 @@ test('every locally available dashboard binds staging metric releases to a share
  assert.equal(templates.length,12);
  for(const template of templates)for(const locale of ['en','ar'] as const){
   assert.equal(templateCompatibility(template,staging).status,'supported',template.id);
-  const dashboard=instantiateDashboardTemplate(template,tenantProfiles['demo-iq'],new Date('2026-10-12'),locale,staging);
-  assert.deepEqual(dashboard.filters.dateRange,template.id==='receivables-aging'?{from:'2024-06-30',to:'2026-09-30'}:period,template.id);
+  const dashboard=instantiateDashboardTemplate(template,tenantProfiles['demo-iq'],new Date('2026-10-12'),locale);
+  assert.deepEqual(dashboard.filters,{datePreset:'current_year'},template.id);
   assert.doesNotThrow(()=>assertPublishedDashboard(dashboard,staging,'Asia/Baghdad',new Date('2026-10-12')),template.id);
  }
 });

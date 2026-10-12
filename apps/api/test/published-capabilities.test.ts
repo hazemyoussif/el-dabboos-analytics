@@ -3,7 +3,7 @@ import test from 'node:test';
 import type { PublishedAnalyticsCapabilities } from '@el-dabboos/domain';
 import { MockAnalyticsRepository } from '@el-dabboos/data';
 import { buildApi } from '../src/app.ts';
-const period = { from: '2026-09-01',to: '2026-09-30' };
+const period = { from: '2026-01-01',to: '2026-10-06' };
 const headers = { 'x-demo-user-id': 'demo-iq-admin','x-tenant-id': 'demo-iq','x-locale': 'en' };
 test('server filters catalog, preflights templates and rejects forged requests with fresh published authority',async () => {
   const repository = new MockAnalyticsRepository([{ tenantId: 'demo-iq',measureId: 'order_count',date: '2026-09-15',value: 2895,dimensions: { business_line: 'official' } }]);
@@ -20,7 +20,7 @@ test('server filters catalog, preflights templates and rejects forged requests w
     const result = await app.inject({ url: '/api/dashboard-templates/sales-invoicing/instantiate',headers });
     assert.equal(result.statusCode,200); assert.equal(result.json().execution.metadata.failedSeries,0);
     const dashboard = result.json().dashboard;
-    assert.deepEqual(dashboard.filters.dateRange,period);
+    assert.deepEqual(dashboard.filters,{datePreset:'current_year'});
     for (const payload of [{ metric: 'revenue',dateRange: period },{ metric: 'order_count',groupBy: 'customer',dateRange: period },{ metric: 'order_count',aggregation: 'average',dateRange: period }]) assert.equal((await app.inject({ method: 'POST',url: '/api/analytics/query',headers,payload })).statusCode,403);
     assert.equal((await app.inject({ method: 'POST',url: '/api/analytics/query',headers,payload: { metric: 'order_count',groupBy: 'business_line',dateRange: period } })).statusCode,200);
     assert.deepEqual((await app.inject({ url: '/api/dimensions/customer/values',headers })).json().values,[]);

@@ -28,7 +28,7 @@ export function registerTemplateRoutes(app: FastifyInstance, services: RouteCont
       const published = await workspacePublishedCapabilities(services,context);
       const compatibility = templateCompatibility(template,published);
       if (compatibility.status!=='supported') throw new ApiError(409,'TEMPLATE_INCOMPATIBLE',`This template requires analytics capabilities that are not available for this workspace: ${compatibility.missing.join(', ')}.`);
-      const dashboard = services.ensureDashboard(instantiateDashboardTemplate(template, profile, services.clock(), context.locale,published), context);
+      const dashboard = services.ensureDashboard(instantiateDashboardTemplate(template, profile, services.clock(), context.locale), context);
       assertPublishedDashboard(dashboard,published,profile.timeZone,services.clock());
       return { dashboard, execution: await services.executor.execute(dashboard, analyticsContext(context), { timeZone: profile.timeZone }) };
     }, request.params.id);

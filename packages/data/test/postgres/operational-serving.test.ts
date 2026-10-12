@@ -624,7 +624,7 @@ test('legacy staging metadata over exact tuples executes customer reports and ev
   const {tenantProfiles}=await import('@el-dabboos/domain');
   for(const template of historicalTemplates){
    assert.equal(templateCompatibility(template,actual).status,'supported',template.id);
-   const spec=instantiateDashboardTemplate(template,tenantProfiles['demo-iq'],new Date('2026-10-12'),'ar',actual);
+   const spec=instantiateDashboardTemplate(template,tenantProfiles['demo-iq'],new Date('2026-10-12'),'ar');
    assert.equal((await new DashboardExecutor(fixture.repository).execute(spec,context,{timeZone:'Asia/Baghdad'})).metadata.failedSeries,0,template.id);
   }
   await assert.rejects(fixture.repository.execute({metric:'order_revenue',groupBy:'branch',dateRange:{from:'2026-01-01',to:'2026-02-28'}},context),/Unsupported dimension/);

@@ -12,8 +12,7 @@ test('source-neutral requirements distinguish supported, partial and unsupported
   assert.equal(templateCompatibility(getDashboardTemplate('sales-performance')!,partial).status,'partially_supported');
   const requirements = JSON.stringify(templateRequirements(template));
   for (const physical of ['odoo','sale_order','amount_untaxed_signed','netAmount']) assert.ok(!requirements.includes(physical));
-  const certified = { ...synthetic,mode: 'certified' as const,releases: synthetic.releases.map(release=>({ ...release,period: { from: '2026-09-01',to: '2026-09-30' } })) };
-  const dashboard = instantiateDashboardTemplate(template,tenantProfiles['demo-iq'],new Date('2026-10-06'),'ar',certified);
-  assert.deepEqual(dashboard.filters.dateRange,certified.releases[0]!.period);
+  const dashboard = instantiateDashboardTemplate(template,tenantProfiles['demo-iq'],new Date('2026-10-06'),'ar');
+  assert.deepEqual(dashboard.filters,{datePreset:'current_year'});
   assert.deepEqual(dashboard.widgets.flatMap(widget=>widget.series.map(series=>series.metric)),['net_invoiced_revenue','invoiced_revenue','refund_value','order_count']);
 });
