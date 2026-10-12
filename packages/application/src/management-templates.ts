@@ -29,7 +29,8 @@ export const managementTemplates:readonly DashboardTemplate[]=[
  receivablesReport(),
 ];
 export function supportedTemplatePeriod(template:DashboardTemplate,published:PublishedAnalyticsCapabilities) {
- const periods=published.releases.flatMap(release=>release.period?[release.period]:[]);
+ const metrics=new Set(template.widgets.flatMap(widget=>widget.series.map(series=>series.metric)));
+ const periods=published.releases.filter(release=>release.capabilities.some(capability=>metrics.has(capability.metric))).flatMap(release=>release.period?[release.period]:[]);
  const candidates=[...periods,...periods.flatMap(start=>periods.map(end=>({from:start.from,to:end.to})))];
  const eligible=candidates.filter(period=>period.from<=period.to && (!template.tags.includes('historical') || period.from.slice(0,7)!==period.to.slice(0,7)) && template.widgets.every(widget=>widget.series.every(item=>
   published.releases.some(release=>release.period && release.period.from<=period.from && release.period.to>=period.to && !publishedQueryIssues({metric:item.metric,...(widget.dimension?{groupBy:widget.dimension}:{}),...(item.analysis?{analysis:item.analysis}:{}),dateRange:period},{...published,releases:[release]}).length)

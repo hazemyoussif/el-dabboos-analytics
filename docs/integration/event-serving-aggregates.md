@@ -91,14 +91,14 @@ monthly partitions and latest refresh. Existing failed runs/failures retain
 failure visibility; rolled-back candidate partitions are not reported as trusted.
 Technical range plans stay in operator tools, outside management UI.
 
-The approved source mappings already declare `date` for the event families, but
-the historical capability projection previously certified only `month`. Once all
-current manifest partitions have matching daily proofs, the runtime adds `date`
-only to existing event metrics whose approved mapping explicitly allows it and
-whose historical capability already allows month. It adds no policy dimension,
-metric definition or analysis permission. Missing/incompatible proof removes this
-new daily-output projection; existing summaries/monthly reads retain daily
-fallback. Historical certifications and stored baseline capabilities are untouched.
+Complete joint-tuple aggregates provide the source-defined event dimensions. When
+all trusted facts partitions have compatible proofs, runtime discovery and the
+operational baseline expose calendar dimensions and dimensions mapped by every
+required measure rule. Legacy publication metadata can therefore serve customer
+and time queries without a separate business sign-off for each grouping. The
+projection adds no metric, analysis permission or unmapped dimension, and does not
+change snapshot capabilities. Missing or incompatible proofs preserve the existing
+publication metadata. Stored baseline and historical records remain immutable.
 
 Partition availability dates also bound operator plans. A proved October rollup
 can contain the current partial month, but its available-through date forces
