@@ -34,6 +34,8 @@ The full twelve-month verification rerun validated and skipped all 24 event/agin
 
 ## Separate publication
 
+Hosted single-mart staging uses the explicit `--in-place` publication mode and retains exact monthly receipts without copying release rows. See the [hosted historical parity runbook](hosted-historical-parity.md) for topology, approval preservation, Finance prerequisites and post-merge commands. The default two-mart transfer below remains supported.
+
 `odoo:history:publish` accepts the same `backfill` arguments. It requires `MART_PUBLICATION_TARGET_URL` and a private `business-approval.json` with explicit `reference`, `approverReference` and ISO `approvedAt`. The task owner's authorization covers only exactly reconciled historical data under unchanged definitions. It records independent monthly business certificates, approves each immutable candidate, certifies the existing ratios and promotes each bounded release without a serving binding. It does not attribute historical data approval to Finance or inherit September data certification.
 
 Historical transfer uses ordered server cursors and 250-record pages, a 512 MiB total monthly byte budget, atomic target transactions and the existing canonical fingerprint. Every proof link is retained. The old array transfer path remains unchanged. Target planner statistics are refreshed after each committed bulk copy before the exact ratio guards run. Offline ratio certification uses a bounded 120-second statement deadline; interactive report deadlines remain unchanged. Interrupted publication can rerun independently and reuses its existing approval/promotion; it never re-extracts a period.

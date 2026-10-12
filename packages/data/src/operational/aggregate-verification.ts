@@ -5,7 +5,7 @@ import {tenantTransaction} from '../postgres/session.ts';
 export async function verifyEventRange(pool:Pool,tenantId:string,range:DateRange) {
  return tenantTransaction(pool,tenantId,async client=>{
   const result=(await client.query(`WITH members AS (
-   SELECT member.month,member.partition_id FROM mart.analytics_trusted_serving trusted JOIN mart.analytics_serving_members member USING(tenant_id,revision_id) WHERE trusted.tenant_id=$1
+   SELECT member.month,member.partition_id FROM mart.analytics_trusted_serving trusted JOIN (SELECT * FROM mart.analytics_serving_members WHERE family='facts') member USING(tenant_id,revision_id) WHERE trusted.tenant_id=$1
   ), daily_rows AS (
    SELECT base.measure_id,base.dimensions,base.value,base.fact_count,base.business_date FROM members JOIN mart.analytics_aggregate_bases base USING(partition_id)
    WHERE base.tenant_id=$1 AND base.kind='event' AND base.business_date BETWEEN $2::date AND $3::date

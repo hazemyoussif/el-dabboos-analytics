@@ -1,5 +1,5 @@
 import { publishedQueryIssues } from '@el-dabboos/domain';
-import type { PublishedAnalyticsCapabilities,MetricId,DimensionId,DashboardWidget,LocalizedText } from '@el-dabboos/domain';
+import type { PublishedAnalyticsCapabilities,PublishedAnalyticsRelease,MetricId,DimensionId,DashboardWidget,LocalizedText } from '@el-dabboos/domain';
 import type { DashboardTemplate } from './templates.ts';
 const text=(en:string,ar:string):LocalizedText=>({en,ar});
 const monetary=['net_invoiced_revenue','invoiced_revenue','refund_value','order_revenue'] as const;
@@ -29,7 +29,11 @@ export const managementTemplates:readonly DashboardTemplate[]=[
  receivablesReport(),
 ];
 export function supportedTemplatePeriod(template:DashboardTemplate,published:PublishedAnalyticsCapabilities) {
- return published.releases.find(release=>(!template.tags.includes('historical') || !!release.period && release.period.from.slice(0,7) !== release.period.to.slice(0,7)) && template.widgets.every(widget=>widget.series.every(item=>!publishedQueryIssues({metric:item.metric,...(widget.dimension?{groupBy:widget.dimension}:{}),...(item.analysis?{analysis:item.analysis}:{}),...(release.period?{dateRange:release.period}:{})},{...published,releases:[release]}).length)))?.period;
+ const releases=template.tags.includes('historical')?[...published.releases].sort((left,right)=>coverageDays(right)-coverageDays(left)):published.releases;
+ return releases.find(release=>(!template.tags.includes('historical') || !!release.period && release.period.from.slice(0,7) !== release.period.to.slice(0,7)) && template.widgets.every(widget=>widget.series.every(item=>!publishedQueryIssues({metric:item.metric,...(widget.dimension?{groupBy:widget.dimension}:{}),...(item.analysis?{analysis:item.analysis}:{}),...(release.period?{dateRange:release.period}:{})},{...published,releases:[release]}).length)))?.period;
+}
+function coverageDays(release:PublishedAnalyticsRelease) {
+ return release.period?(Date.parse(release.period.to)-Date.parse(release.period.from))/86400000:0;
 }
 export function selectDefaultTemplate(templates:readonly {id:string;availability:string}[],mode:PublishedAnalyticsCapabilities['mode']) {
  const preferred=mode==='certified'?'executive-sales-invoicing':'sales-performance';

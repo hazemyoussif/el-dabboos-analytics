@@ -6,12 +6,12 @@ export function createMartPool(connectionString: string, max = 8): Pool {
   return new Pool({ connectionString, max, connectionTimeoutMillis: 5000, idleTimeoutMillis: 30000 });
 }
 /** Trusted application scope, scoped to a transaction even on pool reuse and errors. */
-export async function tenantTransaction<T>(pool: Pool, tenantId: string, operation: (client: PoolClient) => Promise<T>, readOnly = false, timeoutMs = 15000): Promise<T> {
+export async function tenantTransaction<T>(pool: Pool, tenantId: string, operation: (client: PoolClient) => Promise<T>, readOnly: boolean | 'repeatable-write' = false, timeoutMs = 15000): Promise<T> {
   if (!tenantId.trim() || tenantId.length > 200 || !Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 120000) throw new Error('Invalid mart transaction scope');
   const client = await pool.connect();
   let broken = false;
   try {
-    await client.query(readOnly ? 'BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY' : 'BEGIN');
+    await client.query(readOnly === 'repeatable-write' ? 'BEGIN ISOLATION LEVEL REPEATABLE READ' : readOnly ? 'BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY' : 'BEGIN');
     await client.query("SELECT set_config('mart.tenant_id', $1, true), set_config('statement_timeout', $2, true)", [tenantId, String(timeoutMs)]);
     const value = await operation(client);
     await client.query('COMMIT'); return value;

@@ -23,7 +23,7 @@ export class TrustedDrillThroughRepository implements DrillThroughRepository {
 }
 async function eventInput(client:PoolClient,request:DrillRequest,context:AnalyticsContext):Promise<DetailInput> {
   const trusted=(await client.query(`SELECT trusted.revision_id,coalesce(cursor.cutoff,revision.cutoff) cutoff,baseline.period_from::text coverage_from,
-    CASE WHEN EXISTS(SELECT 1 FROM mart.analytics_serving_members member WHERE member.tenant_id=trusted.tenant_id AND member.revision_id=trusted.revision_id AND member.month>baseline.period_to)
+    CASE WHEN EXISTS(SELECT 1 FROM mart.analytics_serving_members member WHERE member.tenant_id=trusted.tenant_id AND member.revision_id=trusted.revision_id AND member.family='facts' AND member.month>baseline.period_to)
     THEN (coalesce(cursor.cutoff,revision.cutoff) AT TIME ZONE (baseline.specification->0->'measures'->0->>'timeZone'))::date::text ELSE baseline.period_to::text END coverage_to
     FROM mart.analytics_trusted_serving trusted JOIN mart.analytics_baselines baseline USING(tenant_id)
     JOIN mart.analytics_serving_revisions revision USING(tenant_id,revision_id) LEFT JOIN mart.analytics_source_cursors cursor USING(tenant_id)
@@ -34,7 +34,7 @@ async function eventInput(client:PoolClient,request:DrillRequest,context:Analyti
   const to=query.dateRange?.to&&query.dateRange.to<trusted.coverage_to?query.dateRange.to:trusted.coverage_to;
   if(from>to)throw new DrillUnavailableError('DRILL_NOT_READY');
   params.push(from,to);
-  const members=(await client.query(`SELECT member.month::text,member.partition_id,EXISTS(SELECT 1 FROM mart.analytics_drill_partitions ready WHERE ready.tenant_id=member.tenant_id AND ready.partition_id=member.partition_id) exact FROM mart.analytics_serving_members member WHERE member.tenant_id=$1 AND member.revision_id=$2 AND member.month BETWEEN date_trunc('month',$3::date)::date AND date_trunc('month',$4::date)::date`,[context.tenantId,request.release,params[3],params[4]])).rows;
+  const members=(await client.query(`SELECT member.month::text,member.partition_id,EXISTS(SELECT 1 FROM mart.analytics_drill_partitions ready WHERE ready.tenant_id=member.tenant_id AND ready.partition_id=member.partition_id) exact FROM mart.analytics_serving_members member WHERE member.tenant_id=$1 AND member.revision_id=$2 AND member.family='facts' AND member.month BETWEEN date_trunc('month',$3::date)::date AND date_trunc('month',$4::date)::date`,[context.tenantId,request.release,params[3],params[4]])).rows;
   if(members.length!==periodKeys({from,to},'month').length||members.some(row=>!row.exact))throw new DrillUnavailableError('DRILL_NOT_READY');
   const filters=drillPredicates(query,context,params,false);
   return {params,grain:'canonical_measure_fact',sql:`SELECT revision.fact_key row_key,payload->'dimensions' identities,revision.business_date date,
@@ -57,7 +57,7 @@ async function financeInput(client:PoolClient,request:DrillRequest,context:Analy
   const query=drillQuery(request);
   // Immutable summary-selected snapshot stays pinned even if later snapshots are published.
   const selected=(await client.query(`SELECT publication.snapshot_date::text,publication.snapshot_id,evidence.reporting_currency
-    FROM mart.finance_snapshot_publications publication JOIN mart.finance_snapshot_evidence evidence USING(tenant_id,snapshot_id)
+    FROM mart.trusted_finance_snapshots publication JOIN mart.finance_snapshot_evidence evidence USING(tenant_id,snapshot_id)
     WHERE publication.tenant_id=$1 AND publication.snapshot_id=$2 AND publication.snapshot_date<=coalesce($3::date,publication.snapshot_date)`,[context.tenantId,request.release,query.dateRange?.to??null])).rows[0];
   if(!selected)throw new DrillUnavailableError('DRILL_NOT_READY');
   const params:unknown[]=[context.tenantId,request.release,requiredMeasures(query.metric),selected.snapshot_date,selected.reporting_currency];

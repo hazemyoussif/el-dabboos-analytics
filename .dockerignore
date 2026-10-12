@@ -10,6 +10,9 @@
 !infra/
 !infra/staging/
 !infra/staging/**
+!scripts/
+!scripts/integration/
+!scripts/integration/**
 apps/**/node_modules
 apps/**/dist
 packages/**/node_modules

@@ -7,7 +7,11 @@ import { operationalFactKey } from './facts.ts';
 import type { OperationalBaseline } from './contracts.ts';
 /** Bounded baseline import copies certified facts into new history without changing originals. */
 export async function copyBaselineFacts(client:PoolClient,baseline:OperationalBaseline,mappings:SourceMapping[]) {
- await client.query('DECLARE operational_baseline NO SCROLL CURSOR FOR SELECT f.*,f.business_date::text business_date,f.rate_date::text rate_date FROM mart.canonical_facts f WHERE tenant_id=$1 AND dataset_id=ANY($2::text[]) ORDER BY f.dataset_id,f.business_date,f.source_object,f.source_record_id,f.measure_id',[baseline.tenantId,baseline.datasets]);
+ await client.query(`DECLARE operational_baseline NO SCROLL CURSOR FOR SELECT f.*,f.business_date::text business_date,f.rate_date::text rate_date FROM mart.canonical_facts f WHERE tenant_id=$1 AND dataset_id=ANY($2::text[])
+ AND NOT EXISTS(SELECT 1 FROM mart.analytics_trusted_serving trusted JOIN mart.analytics_serving_members member USING(tenant_id,revision_id)
+ JOIN mart.analytics_partitions part USING(tenant_id,partition_id),jsonb_array_elements(part.capabilities->'releases') release,jsonb_array_elements(release->'capabilities') capability
+ WHERE trusted.tenant_id=f.tenant_id AND member.family='facts' AND member.month=date_trunc('month',f.business_date)::date AND capability->>'metric'=f.measure_id)
+ ORDER BY f.dataset_id,f.business_date,f.source_object,f.source_record_id,f.measure_id`,[baseline.tenantId,baseline.datasets]);
  let count=0;
  try {
   while(true) {
@@ -24,6 +28,6 @@ function normalizeBaselineFact(fact:ProductionFact,baseline:OperationalBaseline)
 }
 async function insertBaselinePage(client:PoolClient,tenantId:string,facts:ProductionFact[]) {
  const records=facts.map(fact=>({key:operationalFactKey(fact),revision:createHash('sha256').update(JSON.stringify(fact)).digest('hex'),payload:fact}));
- await client.query(`INSERT INTO mart.analytics_fact_revisions SELECT $1,record.key,record.revision,record.payload FROM jsonb_to_recordset($2::jsonb) record(key text,revision text,payload jsonb)`,[tenantId,JSON.stringify(records)]);
- await client.query(`INSERT INTO mart.analytics_fact_heads(tenant_id,fact_key,revision_id) SELECT $1,record.key,record.revision FROM jsonb_to_recordset($2::jsonb) record(key text,revision text)`,[tenantId,JSON.stringify(records)]);
+ await client.query(`INSERT INTO mart.analytics_fact_revisions SELECT $1,record.key,record.revision,record.payload FROM jsonb_to_recordset($2::jsonb) record(key text,revision text,payload jsonb) ON CONFLICT DO NOTHING`,[tenantId,JSON.stringify(records)]);
+ await client.query(`INSERT INTO mart.analytics_fact_heads(tenant_id,fact_key,revision_id) SELECT $1,record.key,record.revision FROM jsonb_to_recordset($2::jsonb) record(key text,revision text) ON CONFLICT DO NOTHING`,[tenantId,JSON.stringify(records)]);
 }

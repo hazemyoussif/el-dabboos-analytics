@@ -15,7 +15,7 @@ const { outputDirectory,periods,tenantId,retryIncomplete } = historicalJobOption
 if (!process.env.MART_MIGRATOR_URL) throw new Error('Existing local mart configuration required');
 await mkdir(outputDirectory,{ recursive: true,mode: 0o700 });
 const operator = createMartPool(process.env.MART_MIGRATOR_URL,2);
-const environment = { ...process.env,ODOO_SOURCE_STAGING_PILOT:'true',ODOO_SOURCE_SNAPSHOT_MAX_DURATION_MS:'600000' };
+const environment = { ...process.env,ODOO_SOURCE_STAGING_PILOT:'true',ODOO_SOURCE_BATCH_SIZE:'1000',ODOO_SOURCE_SNAPSHOT_MAX_DURATION_MS:'600000' };
 
 async function resume(path: string, period: HistoricalMonth, kind: 'events'|'aging') {
   let prior;

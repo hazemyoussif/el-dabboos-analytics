@@ -2,7 +2,7 @@ import { validateTransactionEvidence } from './transaction-evidence.ts';
 import type { TransactionEvidence } from './transaction-evidence.ts';
 /** Offline ingestion contracts. No source DTO, execution query, transport or database dependency. */
 import type { DimensionId, FactMeasureId, MetricId } from './contracts.ts';
-import { categoricalDimensions, isFactMeasureId, isMetricId, requiredMeasures, semanticCatalog } from './catalog.ts';
+import { categoricalDimensions, factMeasureIds, isFactMeasureId, isMetricId, requiredMeasures, semanticCatalog } from './catalog.ts';
 import { validDateRange } from './validation.ts';
 
 export interface SourceScope { tenantId: string; sourceId: string; companyIds: readonly string[] }
@@ -121,7 +121,12 @@ export const isCanonicalDecimal = (v: unknown): v is string => typeof v === 'str
 const decimalUnits = (v: string): bigint => BigInt(v.replace('.', ''));
 const snapshot = (id: FactMeasureId) => Object.values(semanticCatalog).some(m => m.semantics.kind === 'snapshot' && m.semantics.measure === id);
 const monetary = (id: FactMeasureId) => Object.values(semanticCatalog).some(m => m.type === 'currency' && requiredMeasures(m.id).includes(id) && m.semantics.kind !== 'ratio');
-const measureDimensions = (id: FactMeasureId) => categoricalDimensions.filter(d => Object.values(semanticCatalog).filter(m => requiredMeasures(m.id).includes(id)).every(m => m.dimensions.includes(d)));
+// Catalog semantics are static; tenant mappings remain fully validated on every call.
+const dimensionsByMeasure = new Map(factMeasureIds.map(measureId => {
+  const metrics = Object.values(semanticCatalog).filter(metric => requiredMeasures(metric.id).includes(measureId));
+  return [measureId, categoricalDimensions.filter(dimension => metrics.every(metric => metric.dimensions.includes(dimension)))] as const;
+}));
+const measureDimensions = (id: FactMeasureId) => dimensionsByMeasure.get(id) ?? [];
 
 export function validateSourceMapping(value: unknown): asserts value is SourceMapping {
   shape(value, ['tenantId','sourceId','datasetId','mappingId','mappingVersion','businessBasis','reportingCurrency','businessOwner','approval','measures','capabilities']);

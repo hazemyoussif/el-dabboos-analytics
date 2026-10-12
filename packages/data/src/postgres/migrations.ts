@@ -1,6 +1,8 @@
 import { createHash } from 'node:crypto';
+import { createRequire } from 'node:module';
 import { readdir, readFile } from 'node:fs/promises';
 import type { Pool } from 'pg';
+import type { PoolClient } from 'pg';
 
 export const migrationDirectory = new URL('../../migrations/postgres/', import.meta.url);
 /** Lock, ledger discovery and all migrations use one checked-out session. */
@@ -25,6 +27,12 @@ export async function migratePostgres(pool: Pool, directory: URL = migrationDire
       await client.query('BEGIN');
       try {
         await client.query(m.sql);
+        if(m.companion){
+          const companionModule={exports:{} as {adoptLegacyServing:(client:PoolClient)=>Promise<void>}};
+          // Execute the exact bytes fingerprinted by the manifest, not mutable operational imports.
+          new Function('module','exports','require',m.companion)(companionModule,companionModule.exports,createRequire(import.meta.url));
+          await companionModule.exports.adoptLegacyServing(client);
+        }
         await client.query('INSERT INTO mart_admin.mart_schema_migrations(version,name,sha256) VALUES ($1,$2,$3)', [m.version, m.name, m.checksum]);
         await client.query('COMMIT'); applied.push(m.version);
       } catch (error) { await client.query('ROLLBACK'); throw error; }
@@ -43,7 +51,9 @@ export async function loadPostgresMigrations(directory: URL = migrationDirectory
     const match = /^(\d{3})_[a-z0-9_]+\.sql$/.exec(name);
     if (!match) throw new Error('Invalid migration filename');
     const sql = await readFile(new URL(name, directory), 'utf8');
-    return { version: Number(match[1]), name, sql, checksum: createHash('sha256').update(sql).digest('hex') };
+    const companion=name==='040_unified_serving.sql'?await readFile(new URL('040_unified_serving.adoption.cjs',directory),'utf8'):undefined;
+    const fingerprint=companion===undefined?sql:JSON.stringify({sql,companionName:'040_unified_serving.adoption.cjs',companion});
+    return { version: Number(match[1]), name, sql, companion, checksum: createHash('sha256').update(fingerprint).digest('hex') };
   }));
   if (!migrations.length || migrations.some((migration, index) => migration.version !== index + 1)) throw new Error('Migration versions must be contiguous');
   return migrations;

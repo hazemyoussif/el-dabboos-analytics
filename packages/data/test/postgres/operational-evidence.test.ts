@@ -24,7 +24,7 @@ test('operational evidence: append-only exact cases, cursor guards, immutable ce
   await assert.rejects(tenantTransaction(db.migrator,'a',client=>client.query('UPDATE mart.analytics_operation_runs SET actor_id=$1',['changed'])),/Immutable|immutable/);
   await assert.rejects(tenantTransaction(db.runtime,'a',client=>recordOperationalRun(client,run({status:'unchanged',caseCount:0,recordsChanged:0,partitionsAffected:0,evidenceHash:'no-changes',runId:'evil'}),[])),/permission/);
   const status=await new PostgresOperationalStatus(db.runtime,600).status('a');
-  assert.equal(status.latest[0]?.runId,'synthetic-run');assert.equal(status.cursor?.cutoff,'2026-01-01T10:00:00.000Z');assert.equal(status.trustedCertificationRelease,'release');
+  assert.equal(status.latest[0]?.runId,'synthetic-run');assert.equal(status.cursor?.cutoff,'2026-01-01T10:00:00.000Z');assert.equal(status.trustedCertificationRelease,null,'A legacy certificate is not a trusted revision');
   const other=await new PostgresOperationalStatus(db.runtime).status('b');assert.deepEqual(other.latest,[]);assert.equal(other.cursor,null);assert.equal(other.trustedCertificationRelease,null);
   await tenantTransaction(db.migrator,'a',async client=>assert.equal((await client.query('SELECT count(*) FROM mart.release_certifications WHERE tenant_id=$1',['a'])).rows[0].count,'1'));
  }finally{await db.close();}

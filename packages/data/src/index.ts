@@ -41,6 +41,7 @@ export * from './postgres/readiness.ts';
 export * from './auth/control-authentication.ts';
 export * from './postgres/release-certification.ts';
 export * from './postgres/release-promotion.ts';
+export * from './postgres/local-bounded-promotion.ts';
 export * from './receivable-aging.ts';
 
 export * from './odoo/historical-quality.ts';

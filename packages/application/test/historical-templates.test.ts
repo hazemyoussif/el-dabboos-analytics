@@ -22,3 +22,10 @@ test('September alone cannot make a historical trend available; existing single-
     assert.deepEqual(supportedTemplatePeriod(template,published),{from:'2025-10-01',to:'2026-09-30'});
   }
 });
+test('historical reports prefer complete longer coverage when operational Sep/Oct serving is listed first',()=>{
+  const period={from:'2026-09-01',to:'2026-10-11'};
+  const combined={...published,releases:[{...published.releases[0]!,datasetId:'synthetic-operational',period},...published.releases]};
+  for(const template of historicalTemplates)assert.deepEqual(supportedTemplatePeriod(template,combined),published.releases[0]!.period);
+  assert.deepEqual(supportedTemplatePeriod({...historicalTemplates[0]!,tags:['management']},combined),period);
+  assert.equal(combined.releases[0]!.datasetId,'synthetic-operational');
+});

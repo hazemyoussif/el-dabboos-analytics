@@ -23,7 +23,7 @@ export async function trustedRangePartitions(client:PoolClient,tenantId:string):
  greatest(baseline.period_to,(coalesce(cursor.cutoff,revision.cutoff) AT TIME ZONE (baseline.specification->0->'measures'->0->>'timeZone'))::date)::text available_through,
  (proof.partition_id IS NOT NULL AND proof.definition_version=baseline.definition_version AND proof.mapping_version=baseline.mapping_version
  AND proof.business_timezone=baseline.specification->0->'measures'->0->>'timeZone') monthly
- FROM mart.analytics_trusted_serving trusted JOIN mart.analytics_serving_members member USING(tenant_id,revision_id)
+ FROM mart.analytics_trusted_serving trusted JOIN (SELECT * FROM mart.analytics_serving_members WHERE family='facts') member USING(tenant_id,revision_id)
  JOIN mart.analytics_baselines baseline USING(tenant_id) JOIN mart.analytics_serving_revisions revision USING(tenant_id,revision_id)
  LEFT JOIN mart.analytics_source_cursors cursor USING(tenant_id) LEFT JOIN mart.analytics_aggregate_proofs proof USING(tenant_id,partition_id)
  WHERE trusted.tenant_id=$1 ORDER BY member.month`,[tenantId])).rows;

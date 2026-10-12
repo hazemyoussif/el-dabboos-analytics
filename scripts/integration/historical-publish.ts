@@ -2,17 +2,16 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { ReconciliationCase } from '../../packages/domain/src/index.ts';
 import { semanticCatalog,reconcileDerivedRatio } from '../../packages/domain/src/index.ts';
-import { createMartPool,PostgresMappingReleases,PostgresReleaseCertification,PostgresDerivedMetricCertification,PostgresReleasePromotion,tenantTransaction } from '../../packages/data/src/index.ts';
-import { historicalJobOptions } from '../../apps/api/src/historical-job-options.ts';
+import { createMartPool,PostgresMappingReleases,PostgresReleaseCertification,PostgresDerivedMetricCertification,PostgresReleasePromotion,promoteLocalBoundedRelease,tenantTransaction } from '../../packages/data/src/index.ts';
+import { historicalPublicationOptions } from '../../apps/api/src/historical-publication-options.ts';
 import { verifyHistoricalCheckpoint,verifyGroupedSums } from '../../apps/api/src/historical-months.ts';
 import { writeHistoricalCheckpoint } from './historical-checkpoint.ts';
 
-const {periods,tenantId,outputDirectory}=historicalJobOptions(process.argv.slice(2));
+const {periods,tenantId,outputDirectory,inPlace,sourceUrl,targetUrl}=historicalPublicationOptions(process.argv.slice(2),process.env);
 // Explicit authorized approver evidence belongs to publication, never extraction.
 const approval=JSON.parse(await readFile(join(outputDirectory,'business-approval.json'),'utf8')) as {reference:string;approverReference:string;approvedAt:string};
 if (!approval.reference?.trim() || !approval.approverReference?.trim() || new Date(approval.approvedAt).toISOString()!==approval.approvedAt) throw new Error('Explicit historical business approval required');
-if (!process.env.MART_MIGRATOR_URL || !process.env.MART_PUBLICATION_TARGET_URL) throw new Error('Local publication mart configuration required');
-const source=createMartPool(process.env.MART_MIGRATOR_URL,1),target=createMartPool(process.env.MART_PUBLICATION_TARGET_URL,1);
+const source=createMartPool(sourceUrl,1),target=inPlace?source:createMartPool(targetUrl,1);
 try {
   for (const period of periods) for (const kind of ['events','aging'] as const) {
     const evidence=JSON.parse(await readFile(join(outputDirectory,`${period.month}.${kind}.json`),'utf8')) as {datasetId:string;month:string;status:string;cases:ReconciliationCase[];snapshot:{frozenRevision:string}};
@@ -28,11 +27,12 @@ try {
     if (mapping.approval_status==='pending') await new PostgresMappingReleases(source).approve({tenantId,datasetId:evidence.datasetId,caseIds,reference,approvedAt:approval.approvedAt});
     else if (mapping.approval_reference!==reference) throw new Error('Immutable historical approval conflict');
     await recordRatios(source,evidence,kind,reference,period);
-    const promotion=await new PostgresReleasePromotion(source,target).promoteBounded({tenantId,datasetId:evidence.datasetId,reference});
+    const scope={tenantId,datasetId:evidence.datasetId,reference};
+    const promotion=inPlace?await promoteLocalBoundedRelease(source,scope):await new PostgresReleasePromotion(source,target).promoteBounded(scope);
     // Newly committed bulk copies need current statistics before exact live-input guards.
-    await target.query('ANALYZE mart.mapping_releases,mart.reconciliation_evidence,mart.fact_revisions,mart.fact_heads,mart.reconciliation_batches,mart.batch_facts,mart.ingestion_batches,mart.extraction_runs');
+    if (!inPlace) await target.query('ANALYZE mart.mapping_releases,mart.reconciliation_evidence,mart.fact_revisions,mart.fact_heads,mart.reconciliation_batches,mart.batch_facts,mart.ingestion_batches,mart.extraction_runs');
     // Ratio output certification is a separate existing lifecycle, outside base transfer fingerprints.
-    await recordRatios(target,evidence,kind,reference,period);
+    if (!inPlace) await recordRatios(target,evidence,kind,reference,period);
     const receiptPath=join(outputDirectory,`${period.month}.${kind}.publication.json`);
     try { await writeHistoricalCheckpoint(receiptPath,{month:period.month,kind,datasetId:evidence.datasetId,reference,promotion,servingBound:false}); }
     catch (error) {
@@ -42,7 +42,7 @@ try {
     }
     console.log(JSON.stringify({month:period.month,kind,status:'promoted-unbound',alreadyPromoted:promotion.alreadyPromoted}));
   }
-} finally { await Promise.all([source.end(),target.end()]); }
+} finally { await Promise.all([...new Set([source,target])].map(pool=>pool.end())); }
 
 async function recordRatios(pool:Parameters<typeof tenantTransaction>[0],evidence:{datasetId:string;cases:ReconciliationCase[]},kind:'events'|'aging',reference:string,period:{from:string;to:string}) {
   const ratios=kind==='events'?['average_confirmed_order_value','average_invoice_value'] as const:['overdue_receivable_percentage'] as const;
