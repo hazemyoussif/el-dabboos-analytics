@@ -31,14 +31,14 @@ test('migrations: checksum refusal, failed SQL rollback, gaps and newer database
     await writeFile(new URL('001_production_foundation.sql', url), '-- tampered');
     await assert.rejects(migratePostgres(db.migrator, url), /checksum/);
     await cp(migrationDirectory, url, { recursive: true });
-    await writeFile(new URL('039_failure.sql', url), 'CREATE TABLE mart.rolled_back (id integer); SELECT nonexistent_column;');
+    await writeFile(new URL('040_failure.sql', url), 'CREATE TABLE mart.rolled_back (id integer); SELECT nonexistent_column;');
     await assert.rejects(migratePostgres(db.migrator, url));
     assert.equal((await db.migrator.query("SELECT to_regclass('mart.rolled_back') AS name")).rows[0].name, null);
     assert.equal((await db.migrator.query('SELECT count(*) AS n FROM mart_admin.mart_schema_migrations')).rows[0].n, '39');
-    await rm(new URL('039_failure.sql', url));
-    await writeFile(new URL('040_gap.sql', url), 'SELECT 1');
+    await rm(new URL('040_failure.sql', url));
+    await writeFile(new URL('041_gap.sql', url), 'SELECT 1');
     await assert.rejects(migratePostgres(db.migrator, url), /contiguous/);
-    await rm(new URL('040_gap.sql', url)); await rm(new URL('039_remove_stale_historical_september_anchor.sql', url));
+    await rm(new URL('041_gap.sql', url)); await rm(new URL('039_remove_stale_historical_september_anchor.sql', url));
     await assert.rejects(migratePostgres(db.migrator, url), /history/);
   } finally { await db.close(); await rm(tmp, { recursive: true }); }
 });
