@@ -1077,24 +1077,6 @@
     },
     {
       "file": "packages/domain/src/production-data.ts",
-      "symbol": "measureDimensions/categoricalDimensions.filter:callback0/binding:d",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/domain/src/production-data.ts",
-      "symbol": "measureDimensions/categoricalDimensions.filter:callback0/Object.values(semanticCatalog).filter:callback0/binding:m",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/domain/src/production-data.ts",
-      "symbol": "measureDimensions/categoricalDimensions.filter:callback0/Object.values(semanticCatalog).filter(m => requiredMeasures(m.id).includes(id)).every:callback0/binding:m",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/domain/src/production-data.ts",
       "symbol": "validateSourceMapping",
       "metric": "complexity",
       "ceiling": 34
