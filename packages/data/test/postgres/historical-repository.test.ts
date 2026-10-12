@@ -68,6 +68,7 @@ test('hosted historical activation requires exact complete receipts, reruns, and
     const manifest={tenantId:'a',reference:'synthetic-history',anchorDatasetId:'release',from:'2025-12-01',to:'2026-01-31',approvalReference:'SYNTHETIC ONLY',members};
     await assert.rejects(publication.activate(manifest),/Exact immutable monthly promotion/);
     for(const entry of members)entry.fingerprint=(await promoteLocalBoundedRelease(db.migrator,{tenantId:'a',datasetId:entry.datasetId,reference:'SYNTHETIC ONLY'})).fingerprint;
+    await assert.rejects(publication.activate({...manifest,anchorDatasetId:'stale-release'}),/current serving binding/);
     await assert.rejects(publication.activate({...manifest,members:[members[0]!]}),/complete event and snapshot/);
     await assert.rejects(publication.activate({...manifest,members:members.map(entry=>({...entry,fingerprint:'0'.repeat(64)}))}),/Exact immutable monthly promotion/);
     assert.equal((await db.admin.query('SELECT * FROM mart.historical_release_members')).rowCount,0);
