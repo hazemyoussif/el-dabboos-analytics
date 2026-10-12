@@ -9,6 +9,7 @@ import {publishFinanceSnapshot} from '../../src/operational/finance-publication.
 import type {FinanceSnapshotEvidence} from '../../src/operational/finance-publication.ts';
 import {TrustedAnalyticsRepository} from '../../src/operational/repository.ts';
 import {receivableMeasures} from '../../src/receivable-aging.ts';
+import {resolveFinanceAnchor} from '../../src/operational/finance-anchor.ts';
 function evidence(date:string,count=1):FinanceSnapshotEvidence {
  const values=Object.fromEntries(receivableMeasures.map(measure=>[measure,['net_aged_receivable','aged_at_date','gross_open_receivable_components'].includes(measure)?'100.000000':'0.000000']));
  return {tenantId:'a',date,anchorDataset:'release',currency:'IQD',sourceCutoff:'2026-10-08T00:21:08.728Z',sourceRevision:'synthetic-retained-snapshot',totals:Object.fromEntries(receivableMeasures.map(measure=>[measure,['net_aged_receivable','aged_at_date','gross_open_receivable_components'].includes(measure)?`${count*100}.000000`:'0.000000'])),customers:Array.from({length:count},(_,index)=>({id:`fixture:${String(index).padStart(5,'0')}`,label:`Customer ${index}`,actual:values,expected:{...values}}))};
@@ -24,6 +25,13 @@ async function fixture(){
  await bootstrapOperationalServing(db.migrator,'a');
  return {db,repository:new TrustedAnalyticsRepository(db.runtime,{reportingCurrencies:{a:'IQD'}})};
 }
+test('Finance anchor resolves from the current certified tenant capability and fails closed on incompatible currency',{skip:!enabled},async()=>{
+ const {db}=await fixture();try {
+  assert.equal(await resolveFinanceAnchor(db.migrator,'a','IQD'),'release');
+  await assert.rejects(resolveFinanceAnchor(db.migrator,'a','EGP'),/Current certified customer Finance anchor required/);
+ }finally{await db.close();}
+});
+
 test('separate exact customer snapshots resolve historical, middle-date, latest and absent cutoffs without rewriting certificates',{skip:!enabled},async()=>{
  const {db,repository}=await fixture();try {
   const prior=(await db.admin.query('SELECT specification FROM mart.release_certifications')).rows;
