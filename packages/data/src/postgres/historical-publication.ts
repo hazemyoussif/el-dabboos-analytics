@@ -15,6 +15,8 @@ export class PostgresHistoricalPublication {
     return tenantTransaction(this.pool,manifest.tenantId,async client=>{
       await assertPublicationOperator(client);await client.query("SET LOCAL TIME ZONE 'UTC'");
       await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',[manifest.tenantId]);
+      const serving=(await client.query('SELECT dataset_id FROM mart.serving_bindings WHERE tenant_id=$1',[manifest.tenantId])).rows[0];
+      if (!serving || serving.dataset_id!==manifest.anchorDatasetId) throw new Error('Historical anchor must match current serving binding');
       const prior=(await client.query('SELECT reference,anchor_dataset_id,period_from::text,period_to::text,approval_reference FROM mart.historical_serving_bindings WHERE tenant_id=$1',[manifest.tenantId])).rows[0];
       if (prior && (prior.reference!==manifest.reference || prior.anchor_dataset_id!==manifest.anchorDatasetId || prior.period_from!==manifest.from || prior.period_to!==manifest.to || prior.approval_reference!==manifest.approvalReference)) throw new Error('Immutable historical serving conflict');
       for (const member of manifest.members) {
