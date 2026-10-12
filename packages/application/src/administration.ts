@@ -7,10 +7,15 @@ import { AdministrationRuntime } from './administration/runtime.ts';
 import * as tenants from './administration/tenants.ts';
 import * as users from './administration/users.ts';
 import * as workspace from './administration/workspace.ts';
+import * as workspaceUsers from './administration/workspace-users.ts';
+export {normalizeWorkspaceUser} from './administration/workspace-users.ts';
+export type {WorkspaceUserInput} from './administration/workspace-users.ts';
 export type { AdministrationActor, PlatformAdministrationCommand, ScopeValues, TenantAdministrationCommand } from './administration/commands.ts';
 export function createAdministration(...dependencies: ConstructorParameters<typeof AdministrationRuntime>) {
     const runtime = new AdministrationRuntime(...dependencies);
     return { failureAuditEvents: runtime.failureAuditEvents,
+        authorizeWorkspaceUserCreation:workspaceUsers.authorizeWorkspaceUserCreation.bind(null,runtime),
+        createWorkspaceUser:workspaceUsers.createWorkspaceUser.bind(null,runtime),
         listAssignmentCandidates: memberships.listAssignmentCandidates.bind(null, runtime),
         listRoles: roles.listRoles.bind(null, runtime),
         getWorkspace: workspace.getWorkspace.bind(null, runtime),

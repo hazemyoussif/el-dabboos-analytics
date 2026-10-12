@@ -17,6 +17,9 @@ export function membershipFormRequest(form: FormData, record: MembershipSummary 
     const expectedVersion = record?.version;
     return { path: id ? tenantBase + '/memberships/' + encodeURIComponent(id) + '/roles' : tenantBase + '/memberships', method: id ? 'PUT' : 'POST', body: id ? { expectedVersion, roleIds: many(form, 'role') } : { userId: asText(form, 'userId'), roleIds: many(form, 'role'), dataScopes: [] } };
 }
+export function workspaceUserFormRequest(form:FormData,tenantBase:string):AdministrationWriteRequest {
+    return {path:tenantBase+'/users',method:'POST',body:{displayName:asText(form,'displayName'),preferredLocale:asText(form,'defaultLocale'),email:asText(form,'email'),password:asText(form,'password'),roleIds:many(form,'role')}};
+}
 export function scopeFormRequest(form: FormData, record: MembershipSummary | null, tenantBase: string): AdministrationWriteRequest {
     const id = record?.id ?? '';
     const expectedVersion = record?.version;

@@ -47,12 +47,17 @@ export class PostgresAdministrationStore implements AdministrationUnitOfWork {
         setPreference: value => this.transaction(true, connection => new PostgresDashboardLibraryRepository(connection).setPreference(value)),
     };
     private repositories(connection: MetadataConnection): AdministrationTransaction {
-        return administrationRepositories(connection, {
+        const repositories=administrationRepositories(connection, {
             bootstrapCompleted: async () => Boolean(await connection.one("SELECT 1 FROM bootstrap_state WHERE id='completed'")),
             initializeProtectedRoles: timestamp => initializeProtectedRoles(connection,timestamp),
             completeBootstrap: async (reference,timestamp) => { await connection.run('INSERT INTO bootstrap_state VALUES (?,?,?)','completed',reference,timestamp); },
             createAssignmentCandidate: async (tenantId,userId) => { await connection.run('INSERT INTO tenant_assignment_candidates VALUES (?,?) ON CONFLICT DO NOTHING',tenantId,userId); },
         });
+        return {...repositories,localCredentials:{create:async input=>{
+            await connection.run('INSERT INTO auth."user"(id,name,email) VALUES (?,?,?)',input.subject,input.displayName,input.email);
+            await connection.run('INSERT INTO auth.account(id,"accountId","providerId","userId",password) VALUES (?,?,\'credential\',?,?)',crypto.randomUUID(),input.subject,input.subject,input.passwordHash);
+            await connection.run("INSERT INTO authentication_security_events(id,event,user_id,operator_reference) VALUES (?,'local_identity_provisioned',?,'workspace-user-create')",crypto.randomUUID(),input.userId);
+        }}};
     }
 }
 export async function initializeProtectedRoles(connection: MetadataConnection, timestamp: string): Promise<void> {

@@ -21,6 +21,7 @@ test('page-specific payloads preserve versions and omit unrelated membership sco
   assert.deepEqual(serializers.roleFormRequest(form, role, base), { path: base + '/roles/record%2Fid', method: 'PUT', body: { name: 'Reviewed', description: 'Description', permissions: ['dashboard:view'], metricDomains: ['sales'], expectedVersion: 7 } });
   assert.deepEqual(serializers.membershipFormRequest(form, record as Parameters<typeof serializers.membershipFormRequest>[1], base).body, { expectedVersion: 7, roleIds: ['viewer'] });
   assert.deepEqual(serializers.membershipFormRequest(form, null, base).body, { userId: 'candidate', roleIds: ['viewer'], dataScopes: [] });
+  assert.deepEqual(serializers.workspaceUserFormRequest(form,base),{path:base+'/users',method:'POST',body:{displayName:'Reviewed user',preferredLocale:'ar',email:'person@example.test',password:'initial-passphrase',roleIds:['viewer']}});
   assert.deepEqual(serializers.scopeFormRequest(form, record as Parameters<typeof serializers.scopeFormRequest>[1], base).body, { expectedVersion: 7, dataScopes: [{ dimension: 'branch', values: ['retained'] }] });
   assert.deepEqual(serializers.dashboardAccessFormRequest(form, record as Parameters<typeof serializers.dashboardAccessFormRequest>[1], base).body, { expectedVersion: 7, scope: 'restricted', grants: [{ subjectType: 'role', subjectId: 'viewer', access: 'view' }, { subjectType: 'membership', subjectId: 'dormant', access: 'view' }] });
   form.set('scope', 'private');

@@ -27,7 +27,7 @@ async function fixture() {
     });
     const runtime = await openLocalAuthentication(database.appUrl,config), analytics = new MockAnalyticsRepository([]);
     const app = await buildApi({ analyticsRepository: analytics,dimensionValues: analytics,planner: null,
-        administration: { provisionEmployee:runtime.provisionEmployee,unitOfWork: store,directory: store.directory,profiles: store.profiles,dataReady: async () => true,authenticate: async headers => (await runtime.principal(headers)).binding.id },readiness: { persistence: runtime.ready } },{ localAuth: runtime,identityMode: 'local',corsOrigins: config.origins });
+        administration: { provisionEmployee:runtime.provisionEmployee,provisionWorkspaceEmployee:runtime.provisionWorkspaceEmployee,unitOfWork: store,directory: store.directory,profiles: store.profiles,dataReady: async () => true,authenticate: async headers => (await runtime.principal(headers)).binding.id },readiness: { persistence: runtime.ready } },{ localAuth: runtime,identityMode: 'local',corsOrigins: config.origins });
     const hash = (await runtime.auth.$context).password.hash;
     const provision = (userId = 'login-user',email = 'synthetic@example.test') => provisionLocalIdentity(new PostgresLocalIdentityProvisioner(database.migrator),{ userId,email,operatorReference: 'isolated-test',expectedUserVersion: 1,activateUser: true,enableIdentity: true },password,hash);
     return { database,store,runtime,app,provision,async close() { await app.close(); await runtime.close(); await database.close(); } };
@@ -186,4 +186,89 @@ test('candidate provisioning is idempotent; membership grants access, viewer can
   assert.equal((await system.app.inject({url:'/api/auth/me',headers})).statusCode,401);
   assert.equal((await login(system.app,'employee@example.test')).statusCode,401);
  }finally{await system.close();}
+});
+
+async function workspaceAdministrator(system:Awaited<ReturnType<typeof fixture>>,provision=true) {
+ if(provision)await system.provision();
+ await system.store.write(async transaction=>{
+  const membership=(await transaction.tenants.getMembership('tenant-a','membership-a'))!;
+  await transaction.tenants.updateMembership({...membership,roleIds:['admin'],dataScopes:[]},membership.version);
+ });
+ return {cookie:cookies(await login(system.app)),origin:config.baseUrl,'x-tenant-id':'tenant-a'};
+}
+test('workspace Create User saves credentials and roles together; a tenant admin without platform authority creates an immediately usable login',{skip:!enabled},async()=>{
+ const system=await fixture();try {
+  const headers=await workspaceAdministrator(system);
+  const payload={displayName:'Workspace Employee',preferredLocale:'ar',email:'workspace@example.test',password,roleIds:['viewer']};
+  const created=await system.app.inject({method:'POST',url:'/api/tenants/tenant-a/admin/users',headers,payload});
+  assert.equal(created.statusCode,200,created.body);
+  const {user,membership}=created.json();assert.equal(user.status,'active');assert.deepEqual(membership.roleIds,['viewer']);assert.equal(membership.tenantId,'tenant-a');
+  assert.ok(!created.body.includes(password));assert.ok(!created.body.includes('passwordHash'));
+  const signedIn=await login(system.app,'workspace@example.test');assert.equal(signedIn.statusCode,200);
+  const employeeHeaders={cookie:cookies(signedIn),'x-tenant-id':'tenant-a'};
+  assert.equal((await system.app.inject({url:'/api/tenant-profile',headers:employeeHeaders})).statusCode,200);
+  assert.equal((await system.app.inject({url:'/api/tenant-profile',headers:{...employeeHeaders,'x-tenant-id':'tenant-b'}})).statusCode,403);
+  assert.equal((await system.database.app.query('SELECT count(*)::int count FROM control.tenant_assignment_candidates WHERE user_id=$1',[user.id])).rows[0].count,0);
+  assert.equal((await system.database.app.query('SELECT count(*)::int count FROM control.platform_assignments WHERE user_id=$1',[user.id])).rows[0].count,0);
+  const duplicate=await system.app.inject({method:'POST',url:'/api/tenants/tenant-a/admin/users',headers,payload});assert.equal(duplicate.statusCode,409);
+  assert.equal((await system.database.admin.query('SELECT count(*)::int count FROM auth."user" WHERE email=$1',[payload.email])).rows[0].count,1);
+ }finally{await system.close();}
+});
+test('workspace creation rejects viewer, cross-tenant and platform roles before hashing and rechecks concurrent role revocation',{skip:!enabled},async()=>{
+ const system=await fixture(),context=await system.runtime.auth.$context,original=context.password.hash;let hashes=0;
+ try {
+  await system.provision();const binding=(await system.database.app.query("SELECT id FROM control.identities WHERE user_id='login-user' AND provider='local'")).rows[0].id;
+  const actor={identityId:binding,tenantId:'tenant-a',locale:'en' as const},input={displayName:'Denied',preferredLocale:'en' as const,email:'denied-workspace@example.test',password,roleIds:['viewer']};
+  context.password.hash=async value=>{hashes++;return original(value);};
+  await assert.rejects(system.runtime.provisionWorkspaceEmployee(actor,input),/ADMIN_FORBIDDEN/);
+  await assert.rejects(system.runtime.provisionWorkspaceEmployee({...actor,tenantId:'tenant-b'},input));assert.equal(hashes,0);
+  await workspaceAdministrator(system,false);
+  await assert.rejects(system.runtime.provisionWorkspaceEmployee(actor,{...input,roleIds:['platform-admin']}));assert.equal(hashes,0);
+  context.password.hash=async value=>{
+   hashes++;
+   await system.store.write(async transaction=>{
+    const membership=(await transaction.tenants.getMembership('tenant-a','membership-a'))!;
+    await transaction.tenants.updateMembership({...membership,roleIds:['viewer']},membership.version);
+   });
+   return original(value);
+  };
+  await assert.rejects(system.runtime.provisionWorkspaceEmployee(actor,input));assert.equal(hashes,1);
+  assert.equal((await system.database.admin.query('SELECT count(*)::int count FROM auth."user" WHERE email=$1',[input.email])).rows[0].count,0);
+ }finally{context.password.hash=original;await system.close();}
+});
+test('workspace user creation rolls back product user, credential, identity and membership when final audit fails',{skip:!enabled},async()=>{
+ const system=await fixture();try {
+  await workspaceAdministrator(system);
+  const binding=(await system.database.app.query("SELECT id FROM control.identities WHERE user_id='login-user' AND provider='local'")).rows[0].id;
+  const count=async()=>Object.fromEntries(await Promise.all(['control.users','auth."user"','auth.account','control.identities','control.memberships','control.authentication_security_events'].map(async table=>[table,(await system.database.admin.query(`SELECT count(*)::int count FROM ${table}`)).rows[0].count])));
+  const before=await count();
+  const failing=createAdministration({write:operation=>system.store.write(transaction=>operation({...transaction,appendAudit:async()=>{throw new Error('Synthetic audit failure');}}))});
+  await assert.rejects(failing.createWorkspaceUser({identityId:binding,tenantId:'tenant-a',locale:'en'},{displayName:'Rollback',preferredLocale:'en',email:'rollback-workspace@example.test',roleIds:['viewer']},{subject:crypto.randomUUID(),passwordHash:'synthetic-hash'}),/Synthetic audit failure/);
+  assert.deepEqual(await count(),before);
+ }finally{await system.close();}
+});
+test('workspace creation retains role delegation and data-scope ceilings',{skip:!enabled},async()=>{
+ const system=await fixture(),context=await system.runtime.auth.$context,original=context.password.hash;let hashes=0;
+ try {
+  const headers=await workspaceAdministrator(system);
+  const binding=(await system.database.app.query("SELECT id FROM control.identities WHERE user_id='login-user' AND provider='local'")).rows[0].id;
+  const actor={identityId:binding,tenantId:'tenant-a',locale:'en' as const};
+  const input={displayName:'Denied',preferredLocale:'en' as const,email:'scope-denied@example.test',password,roleIds:['admin']};
+  context.password.hash=async value=>{hashes++;return original(value);};
+  await system.store.write(async transaction=>{
+   await transaction.tenants.createCustomRole({id:'limited-manager',name:'Manager',description:'Synthetic limited manager',scope:'tenant',tenantId:'tenant-a',protected:false,permissions:['users:view','users:manage','roles:view','roles:manage'],metricDomains:['sales'],version:1,createdAt:'2026-10-12',updatedAt:'2026-10-12'});
+   const membership=(await transaction.tenants.getMembership('tenant-a','membership-a'))!;
+   await transaction.tenants.updateMembership({...membership,roleIds:['limited-manager']},membership.version);
+  });
+  await assert.rejects(system.runtime.provisionWorkspaceEmployee(actor,input),/ROLE_ESCALATION/);
+  await system.store.write(async transaction=>{
+   const membership=(await transaction.tenants.getMembership('tenant-a','membership-a'))!;
+   await transaction.tenants.updateMembership({...membership,roleIds:['admin'],dataScopes:[{dimension:'branch',values:['baghdad']}]},membership.version);
+  });
+  await assert.rejects(system.runtime.provisionWorkspaceEmployee(actor,{...input,roleIds:['viewer']}),/SCOPE/);
+  const emptyRoles=await system.app.inject({method:'POST',url:'/api/tenants/tenant-a/admin/users',headers,payload:{...input,roleIds:[]}});assert.equal(emptyRoles.statusCode,400);
+  const wrongTenant=await system.app.inject({method:'POST',url:'/api/tenants/tenant-b/admin/users',headers,payload:input});assert.equal(wrongTenant.statusCode,403);
+  assert.equal(hashes,0);
+  assert.equal((await system.database.admin.query('SELECT count(*)::int count FROM auth."user" WHERE email=$1',[input.email])).rows[0].count,0);
+ }finally{context.password.hash=original;await system.close();}
 });
