@@ -4,7 +4,7 @@ import { randomBytes } from 'node:crypto';
 import { createLocalAuth,BetterAuthLocalProvider } from '../../../../apps/api/src/auth/local-provider.ts';
 import { openLocalAuthentication } from '../../../../apps/api/src/auth/runtime.ts';
 import { buildApi } from '../../../../apps/api/src/app.ts';
-import { provisionLocalIdentity,resolveAuthenticatedPrincipal,resolveTenantAccess } from '../../../application/src/index.ts';
+import { provisionLocalIdentity,resolveAuthenticatedPrincipal,resolveTenantAccess,createAdministration } from '../../../application/src/index.ts';
 import { PostgresAdministrationStore } from '../../src/control/administration.ts';
 import { PostgresAuthenticationDirectory,PostgresLocalIdentityProvisioner,createAuthenticationPool } from '../../src/auth/control-authentication.ts';
 import { MockAnalyticsRepository } from '../../src/index.ts';
@@ -27,7 +27,7 @@ async function fixture() {
     });
     const runtime = await openLocalAuthentication(database.appUrl,config), analytics = new MockAnalyticsRepository([]);
     const app = await buildApi({ analyticsRepository: analytics,dimensionValues: analytics,planner: null,
-        administration: { unitOfWork: store,directory: store.directory,profiles: store.profiles,dataReady: async () => true,authenticate: async headers => (await runtime.principal(headers)).binding.id },readiness: { persistence: runtime.ready } },{ localAuth: runtime,identityMode: 'local',corsOrigins: config.origins });
+        administration: { provisionEmployee:runtime.provisionEmployee,unitOfWork: store,directory: store.directory,profiles: store.profiles,dataReady: async () => true,authenticate: async headers => (await runtime.principal(headers)).binding.id },readiness: { persistence: runtime.ready } },{ localAuth: runtime,identityMode: 'local',corsOrigins: config.origins });
     const hash = (await runtime.auth.$context).password.hash;
     const provision = (userId = 'login-user',email = 'synthetic@example.test') => provisionLocalIdentity(new PostgresLocalIdentityProvisioner(database.migrator),{ userId,email,operatorReference: 'isolated-test',expectedUserVersion: 1,activateUser: true,enableIdentity: true },password,hash);
     return { database,store,runtime,app,provision,async close() { await app.close(); await runtime.close(); await database.close(); } };
@@ -146,4 +146,44 @@ test('authentication boundaries: CSRF, bounded account failures, fixed secure co
             assert.equal(response.status,200); assert.match(response.headers.getSetCookie().join(';'),/Secure/); assert.match(response.headers.getSetCookie().join(';'),/HttpOnly/);
         } finally { await pool.end(); }
     } finally { await system.close(); }
+});
+
+test('employee authority is checked before hashing and checked again after concurrent revocation',{skip:!enabled},async()=>{
+ const system=await fixture();
+ const context=await system.runtime.auth.$context,original=context.password.hash;
+ let hashes=0;
+ try {
+  context.password.hash=async value=>{hashes++;return original(value);};
+  await assert.rejects(system.runtime.provisionEmployee('missing-binding',{displayName:'Denied',preferredLocale:'en',email:'denied@example.test',password}),/PLATFORM_FORBIDDEN/);
+  assert.equal(hashes,0);
+  context.password.hash=async value=>{
+   hashes++;
+   await system.database.app.query("UPDATE control.platform_assignments SET status='suspended' WHERE user_id='platform-admin-user'");
+   return original(value);
+  };
+  const before=(await system.database.admin.query('SELECT count(*)::int count FROM control.users')).rows[0].count;
+  await assert.rejects(system.runtime.provisionEmployee('platform-admin-binding',{displayName:'Revoked',preferredLocale:'en',email:'revoked@example.test',password}),/PLATFORM_FORBIDDEN/);
+  assert.equal(hashes,1);
+  assert.equal((await system.database.admin.query('SELECT count(*)::int count FROM control.users')).rows[0].count,before);
+  assert.equal((await system.database.admin.query("SELECT count(*)::int count FROM auth.\"user\" WHERE email='revoked@example.test'")).rows[0].count,0);
+ }finally{context.password.hash=original;await system.close();}
+});
+test('candidate provisioning is idempotent; membership grants access, viewer cannot create users and suspension takes effect',{skip:!enabled},async()=>{
+ const system=await fixture();
+ try {
+  const created=await system.runtime.provisionEmployee('platform-admin-binding',{displayName:'New Employee',preferredLocale:'ar',email:'employee@example.test',password});
+  const administration=createAdministration(system.store);
+  for(let attempt=0;attempt<2;attempt++)await administration.provisionUserForTenant('platform-admin-binding',{userId:created.id,tenantId:'tenant-a'});
+  assert.equal((await system.database.admin.query('SELECT count(*)::int count FROM control.tenant_assignment_candidates WHERE user_id=$1',[created.id])).rows[0].count,1);
+  const cookie=cookies(await login(system.app,'employee@example.test'));
+  const headers={cookie,'x-tenant-id':'tenant-a','x-locale':'ar'};
+  assert.equal((await system.app.inject({url:'/api/tenant-profile',headers})).statusCode,403);
+  await system.store.write(transaction=>transaction.tenants.createMembership({id:'employee-membership',userId:created.id,tenantId:'tenant-a',status:'active',roleIds:['viewer'],dataScopes:[{dimension:'branch',values:['baghdad']}],version:1,createdAt:'2026-10-12',updatedAt:'2026-10-12'}));
+  assert.equal((await system.app.inject({url:'/api/tenant-profile',headers})).statusCode,200);
+  const denied=await system.app.inject({method:'POST',url:'/api/platform/users',headers:{...headers,origin:config.baseUrl},payload:{displayName:'Denied',preferredLocale:'en',email:'denied@example.test',password}});
+  assert.equal(denied.statusCode,403);
+  await system.database.app.query("UPDATE control.users SET status='suspended' WHERE id=$1",[created.id]);
+  assert.equal((await system.app.inject({url:'/api/auth/me',headers})).statusCode,401);
+  assert.equal((await login(system.app,'employee@example.test')).statusCode,401);
+ }finally{await system.close();}
 });

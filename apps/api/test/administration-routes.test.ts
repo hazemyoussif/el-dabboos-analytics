@@ -1,3 +1,5 @@
+import {ApiError} from '../src/errors.ts';
+import {AccessControlError} from '@el-dabboos/domain';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import Fastify from 'fastify';
@@ -45,6 +47,11 @@ test('strict mutation schemas invoke exactly the corresponding named operation w
     assert.deepEqual(employeeCalls.pop(),{ actor:'synthetic:demo-iq-admin',input:employee });
     const invalidEmployee = await app.inject({ method:'POST',url:'/api/platform/users',payload:{...employee,unexpected:true},headers:{ 'x-tenant-id':'demo-iq' } });
     assert.equal(invalidEmployee.statusCode,400); assert.equal(employeeCalls.length,0);
+    for(const failure of [{error:new AccessControlError('PLATFORM_FORBIDDEN'),status:403},{error:new ApiError(429,'USER_PROVISIONING_LIMITED','Try again later.'),status:429},{error:Object.assign(new Error('private duplicate detail'),{code:'23505'}),status:409},{error:new Error('private SQL detail'),status:503}]){
+      Object.assign(context.deps.administration!,{provisionEmployee:async()=>{throw failure.error;}});
+      const response=await app.inject({method:'POST',url:'/api/platform/users',payload:employee,headers:{'x-tenant-id':'demo-iq'}});
+      assert.equal(response.statusCode,failure.status);assert.ok(!response.body.includes('private'));
+    }
     for (const fixture of cases) {
       const response = await app.inject({ method: fixture.method, url: fixture.url, payload: fixture.body, headers: { 'x-tenant-id': 'demo-iq' } });
       assert.equal(response.statusCode, 200, response.body);

@@ -19,7 +19,8 @@ export function registerUsersRoutes(app: FastifyInstance, context: RouteContext)
         const identityId=await context.identityId(request.headers);
         try { return await provision(identityId,request.body); }
         catch (error) {
-            if (error instanceof AccessControlError) throw error;
+            if (error instanceof AccessControlError || error instanceof ApiError) throw error;
+            if(!error||typeof error!=='object'||!('code' in error)||error.code!=='23505')throw error;
             throw new ApiError(409,'USER_PROVISIONING_FAILED','Unable to create this user. Review the email and account state.');
         }
     });

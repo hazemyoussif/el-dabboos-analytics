@@ -1,5 +1,7 @@
-import { createControlPool,createAuthenticationPool,PostgresAuthenticationDirectory,PostgresEmployeeProvisioner,assertControlReady,verifyControlAppRole } from '@el-dabboos/data';
-import { resolveAuthenticatedPrincipal } from '@el-dabboos/application';
+import {AccessControlError} from '@el-dabboos/domain';
+import {LoginAbuseGuard} from './abuse-guard.ts';
+import { createControlPool,createAuthenticationPool,PostgresAdministrationStore,PostgresAuthenticationDirectory,PostgresEmployeeProvisioner,assertControlReady,verifyControlAppRole } from '@el-dabboos/data';
+import { resolveAuthenticatedPrincipal,resolvePlatformAccess,authorizePlatform } from '@el-dabboos/application';
 import { ApiError } from '../errors.ts';
 import { createLocalAuth,BetterAuthLocalProvider } from './local-provider.ts';
 import type { LocalAuthConfig } from './config.ts';
@@ -16,10 +18,18 @@ export async function openLocalAuthentication(url: string, config: LocalAuthConf
     };
     try { await ready(); await auth.$context; }
     catch { await Promise.all([pool.end(),frameworkPool.end()]); throw new Error('Authentication database identity/schema check failed'); }
+    const provisioningAbuse = new LoginAbuseGuard(),platformDirectory=new PostgresAdministrationStore(pool).directory;
     const provisionEmployee = async (actorIdentityId:string,input:{displayName:string;preferredLocale:'en'|'ar';email:string;password:string}) => {
-        if (typeof input.password!=='string' || input.password.length<8 || input.password.length>1024) throw new Error('Invalid employee password');
-        const hash=(await auth.$context).password.hash;
-        return employeeProvisioner.create(actorIdentityId,{displayName:input.displayName,preferredLocale:input.preferredLocale,email:input.email},{subject:crypto.randomUUID(),passwordHash:await hash(input.password)});
+        const access=await platformDirectory.platformAccess(actorIdentityId);
+        if(!access) throw new AccessControlError('PLATFORM_FORBIDDEN');
+        authorizePlatform(resolvePlatformAccess(access,actorIdentityId),'platform:users:manage');
+        if (typeof input.password!=='string' || input.password.length<8 || input.password.length>1024) throw new AccessControlError('INVALID_ADMIN_INPUT');
+        const release=provisioningAbuse.enter(actorIdentityId,actorIdentityId);
+        if(!release) throw new ApiError(429,'USER_PROVISIONING_LIMITED','Try again later.');
+        try {
+            const hash=(await auth.$context).password.hash;
+            return await employeeProvisioner.create(actorIdentityId,{displayName:input.displayName,preferredLocale:input.preferredLocale,email:input.email},{subject:crypto.randomUUID(),passwordHash:await hash(input.password)});
+        } finally {release();}
     };
     return { auth,directory,principal,provisionEmployee,config,ready,close: async () => { await Promise.all([pool.end(),frameworkPool.end()]); } };
 }

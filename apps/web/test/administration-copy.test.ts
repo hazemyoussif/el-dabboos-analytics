@@ -11,6 +11,7 @@ test('administration errors explain conflict recovery in both languages without 
         const unavailable = administrationError(new Error('internal SQL detail'), locale);
         assert.ok(!unavailable.includes('SQL'));
         assert.ok(administrationError(new ApiClientError(503, 'DATA_NOT_READY', 'raw error'), locale) !== 'raw error');
+        for(const code of ['USER_PROVISIONING_FAILED','USER_PROVISIONING_LIMITED'])assert.ok(administrationError(new ApiClientError(409,code,'private credential detail'),locale)!=='private credential detail');
     }
 });
 
