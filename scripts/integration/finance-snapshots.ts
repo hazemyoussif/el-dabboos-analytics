@@ -11,8 +11,8 @@ const config=await resolveOdooSourceConfig(process.env,{tenantId,sourceId:'el-da
 const owner=createOdooSourcePool(config),source=createOdooSourcePool(config);
 try {
  await migratePostgres(mart);
- const anchorDataset=await resolveFinanceAnchor(mart,tenantId,'IQD');
  for(const period of historicalMonths()){
+  const anchorDataset=await resolveFinanceAnchor(mart,tenantId,'IQD',period.to);
   const existing=await tenantTransaction(mart,tenantId,async client=>(await client.query('SELECT snapshot_id FROM mart.finance_snapshot_publications WHERE tenant_id=$1 AND snapshot_date=$2',[tenantId,period.to])).rows[0],true);
   if(existing){console.log(JSON.stringify({date:period.to,status:'already-published',snapshotId:existing.snapshot_id}));continue;}
   const lease=await OdooSnapshotLease.open(owner,config,config.snapshotMaxDurationMs,config.credentialPolicy);
