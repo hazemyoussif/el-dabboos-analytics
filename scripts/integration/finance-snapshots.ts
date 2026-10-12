@@ -1,16 +1,17 @@
-import {createMartPool,createOdooSourcePool,OdooSnapshotLease,migratePostgres,tenantTransaction} from '../../packages/data/src/index.ts';
+import {createMartPool,createOdooSourcePool,OdooSnapshotLease,migratePostgres,resolveFinanceAnchor,tenantTransaction} from '../../packages/data/src/index.ts';
 import {resolveOdooSourceConfig} from '../../apps/api/src/source-connections.ts';
 import {historicalMonths} from '../../apps/api/src/historical-months.ts';
 import {readFinanceCustomers} from '../../packages/data/src/operational/finance-source.ts';
 import {publishFinanceSnapshot} from '../../packages/data/src/operational/finance-publication.ts';
 import {readPublishedFinanceSummary} from '../../packages/data/src/operational/finance-summary.ts';
-const tenantId='el-dabboos-iq',anchorDataset='el-dabboos-finance-202609-v6';
+const tenantId='el-dabboos-iq';
 if(!process.env.MART_MIGRATOR_URL)throw new Error('Protected publication operator configuration required');
 const mart=createMartPool(process.env.MART_MIGRATOR_URL,1);
 const config=await resolveOdooSourceConfig(process.env,{tenantId,sourceId:'el-dabboos-odoo18-pg'});
 const owner=createOdooSourcePool(config),source=createOdooSourcePool(config);
 try {
  await migratePostgres(mart);
+ const anchorDataset=await resolveFinanceAnchor(mart,tenantId,'IQD');
  for(const period of historicalMonths()){
   const existing=await tenantTransaction(mart,tenantId,async client=>(await client.query('SELECT snapshot_id FROM mart.finance_snapshot_publications WHERE tenant_id=$1 AND snapshot_date=$2',[tenantId,period.to])).rows[0],true);
   if(existing){console.log(JSON.stringify({date:period.to,status:'already-published',snapshotId:existing.snapshot_id}));continue;}

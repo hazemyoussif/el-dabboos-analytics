@@ -57,3 +57,5 @@ export { readBaseline,bootstrapOperationalServing } from './operational/baseline
 export { verifyOdooSourceIdentity } from './odoo/identity.ts';
 
 export { TrustedDrillThroughRepository } from './operational/drill-through.ts';
+
+export { resolveFinanceAnchor } from './operational/finance-anchor.ts';
