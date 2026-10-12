@@ -25,7 +25,7 @@ export async function publishFinanceSnapshot(pool:Pool,evidence:FinanceSnapshotE
  });
 }
 export function validateFinanceEvidence(evidence:FinanceSnapshotEvidence) {
- if(!/^\d{4}-\d{2}-\d{2}$/.test(evidence.date)||!evidence.customers.length||evidence.customers.length>50000||new Set(evidence.customers.map(customer=>customer.id)).size!==evidence.customers.length)throw new Error('Complete unique Finance population required');
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(evidence.date)||evidence.customers.length>50000||new Set(evidence.customers.map(customer=>customer.id)).size!==evidence.customers.length)throw new Error('Complete unique Finance population required');
  for(const measure of receivableMeasures){
   let total=0n;
   for(const customer of evidence.customers){

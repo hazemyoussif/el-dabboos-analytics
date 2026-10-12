@@ -2,6 +2,9 @@ import { TrustedDrillThroughRepository } from '../../src/operational/drill-throu
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {database,enabled} from './support.ts';
+import {mkdtemp,cp,rm} from 'node:fs/promises';
+import {pathToFileURL} from 'node:url';
+import {migrationDirectory,migratePostgres} from '../../src/postgres/migrations.ts';
 import {deploy,mapping} from './fixtures.ts';
 import {tenantTransaction} from '../../src/postgres/session.ts';
 import {bootstrapOperationalServing} from '../../src/operational/baseline.ts';
@@ -166,4 +169,64 @@ test('concurrent Finance promotions retain both months in a serialized trusted a
   const second=revisions.find(row=>row.parent_revision===first.revision_id)!;
   assert.equal((await db.admin.query('SELECT revision_id FROM mart.analytics_trusted_serving')).rows[0].revision_id,second.revision_id);
  }finally{await db.close();}
+});
+
+test('verified empty Finance cutoffs publish zero balances and empty customer detail while missing cutoffs remain unavailable',{skip:!enabled},async()=>{
+ const {db,repository}=await fixture(),context={tenantId:'a',locale:'en' as const};
+ try {
+  const before=(await db.admin.query('SELECT * FROM mart.analytics_source_cursors')).rows;
+  const empty=evidence('2026-06-30',0);
+  const published=await publishFinanceSnapshot(db.ingestor,empty);
+  assert.equal(published.alreadyPublished,false);
+  assert.equal((await publishFinanceSnapshot(db.ingestor,empty)).alreadyPublished,true);
+  assert.deepEqual((await db.admin.query('SELECT * FROM mart.analytics_source_cursors')).rows,before);
+  const query={metric:'net_aged_receivable' as const,dateRange:{from:'2026-06-01',to:'2026-06-30'}};
+  for(const metric of receivableMeasures){const summary=await repository.execute({...query,metric},context);assert.equal(summary.rows[0]?.value,0);assert.equal(summary.metadata.snapshotAsOf,empty.date);assert.equal(summary.metadata.availability,undefined);}
+  const summary=await repository.execute(query,context);
+  const customers=await repository.execute({...query,groupBy:'customer'},context);assert.deepEqual(customers.rows,[]);assert.equal(customers.metadata.snapshotAsOf,empty.date);
+  const month=await repository.execute({...query,groupBy:'month'},context);assert.deepEqual(month.rows,[{key:'2026-06',value:0}]);
+  const page=await repository.searchDimensionOptions('customer',context,{metric:'net_aged_receivable',asOf:empty.date,limit:50});assert.deepEqual(page.values,[]);
+  const drill=new TrustedDrillThroughRepository(db.runtime,scope=>repository.getPublishedCapabilities(scope));
+  const detail=await drill.drill({query,sourceAsOf:summary.metadata.sourceAsOf!,release:published.snapshotId},context);assert.deepEqual(detail.rows,[]);assert.equal(detail.value,'0');assert.equal(detail.hasMore,false);assert.equal(detail.snapshotAsOf,empty.date);
+  const absent=await repository.execute({...query,dateRange:{from:'2025-12-01',to:'2025-12-31'}},context);assert.equal(absent.rows[0]?.value,null);assert.equal(absent.metadata.availability?.state,'DATA_NOT_READY');
+  const hidden=await tenantTransaction(db.runtime,'b',client=>client.query('SELECT * FROM mart.finance_snapshot_evidence'),true);assert.equal(hidden.rowCount,0);
+  await assert.rejects(publishFinanceSnapshot(db.ingestor,evidence('2026-07-31',0),async()=>{throw new Error('empty source lease lost');}),/empty source lease lost/);
+  assert.equal((await db.admin.query("SELECT count(*)::int count FROM mart.finance_snapshot_evidence WHERE snapshot_date='2026-07-31'")).rows[0].count,0);
+  const valid=evidence('2026-07-31');await assert.rejects(tenantTransaction(db.ingestor,'a',client=>client.query('INSERT INTO mart.finance_snapshot_customers VALUES($1,$2,$3,NULL,$4,$4)',['a',published.snapshotId,'fabricated',JSON.stringify(valid.customers[0]!.actual)])),/membership is immutable/);
+ }finally{await db.close();}
+});
+
+test('database guards refuse empty nonzero totals and nonempty null operands',{skip:!enabled},async()=>{
+ const {db}=await fixture();
+ try {
+  const original=(await db.admin.query('SELECT * FROM mart.analytics_trusted_serving')).rows;
+  for(const malformed of ['empty-nonzero','nonempty-null']){
+   await assert.rejects(tenantTransaction(db.ingestor,'a',async client=>{
+    const totals=evidence('2026-07-31',0).totals;
+    if(malformed==='empty-nonzero')totals.net_aged_receivable='1.000000';
+    await client.query(`INSERT INTO mart.finance_snapshot_evidence VALUES($1,$2,'2026-07-31',NULL,(SELECT definition_version FROM mart.analytics_baselines WHERE tenant_id=$1),'IQD','2026-10-08','synthetic-only',$3,$4)`,['a',malformed,malformed==='empty-nonzero'?0:1,JSON.stringify(totals)]);
+    if(malformed==='nonempty-null')await client.query('INSERT INTO mart.finance_snapshot_customers VALUES($1,$2,$3,NULL,$4,$4)',['a',malformed,'fixture',JSON.stringify({...totals,aged_1_30:null})]);
+    await client.query("INSERT INTO mart.analytics_partitions(tenant_id,partition_id,month,family,snapshot_id) VALUES($1,$2,'2026-07-01','receivables',$2)",['a',malformed]);
+   }),/Exact approved snapshot partition required|finance_complete_values/);
+  }
+  assert.deepEqual((await db.admin.query('SELECT * FROM mart.analytics_trusted_serving')).rows,original);
+ }finally{await db.close();}
+});
+
+test('forward empty-snapshot migration preserves an existing nonempty publication and migration replay',{skip:!enabled},async()=>{
+ const db=await database(false),directory=await mkdtemp('/tmp/finance-before-empty-'),url=pathToFileURL(directory+'/');
+ try {
+  await cp(migrationDirectory,url,{recursive:true});await rm(new URL('042_empty_finance_snapshots.sql',url));await migratePostgres(db.migrator,url);
+  const specification=mapping(),rule=specification.measures[2]!;
+  specification.measures=receivableMeasures.map(measureId=>({...rule,measureId,dimensionMappings:{customer:'Synthetic governed identity'}}));
+  specification.capabilities=receivableMeasures.map(metric=>({metric,dimensions:['customer','month']}));
+  await deploy(db.migrator,specification);await bootstrapOperationalServing(db.migrator,'a');
+  await publishFinanceSnapshot(db.ingestor,evidence('2026-09-30'));
+  const before=(await db.admin.query('SELECT * FROM mart.finance_snapshot_evidence')).rows;
+  assert.deepEqual(await migratePostgres(db.migrator),[42]);assert.deepEqual(await migratePostgres(db.migrator),[]);
+  assert.deepEqual((await db.admin.query('SELECT * FROM mart.finance_snapshot_evidence')).rows,before);
+  await publishFinanceSnapshot(db.ingestor,evidence('2026-06-30',0));
+  const repository=new TrustedAnalyticsRepository(db.runtime,{reportingCurrencies:{a:'IQD'}});
+  assert.equal((await repository.execute({metric:'net_aged_receivable',dateRange:{from:'2026-09-01',to:'2026-09-30'}},{tenantId:'a',locale:'en'})).rows[0]?.value,100);
+ }finally{await db.close();await rm(directory,{recursive:true});}
 });
