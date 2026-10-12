@@ -1,3 +1,4 @@
+import {financeSnapshotCandidates,financeSelectedBalances} from './finance-selection.ts';
 import type {Pool} from 'pg';
 import {publishedQueryIssues,semanticCatalog,validateQuery,AnalyticsResultLimitError} from '@el-dabboos/domain';
 import type {AnalyticsContext,AnalyticsQuery,AnalyticsResult,PublishedAnalyticsCapabilities} from '@el-dabboos/domain';
@@ -13,12 +14,26 @@ export class FinanceSnapshotRepository {
  constructor(private readonly pool:Pool,private readonly timeout=15000,private readonly maxGroups=3000){}
  async capabilities(context:AnalyticsContext):Promise<PublishedAnalyticsCapabilities|null>{
   return tenantTransaction(this.pool,context.tenantId,async client=>{
-   const row=(await client.query(`SELECT min(publication.snapshot_date)::text first,max(publication.snapshot_date)::text last,anchor.capabilities
-    FROM mart.finance_snapshot_publications publication JOIN mart.analytics_anchor_capabilities anchor USING(tenant_id)
-    WHERE publication.tenant_id=$1 GROUP BY anchor.capabilities`,[context.tenantId])).rows[0];
+   const row=(await client.query(`SELECT min(publication.snapshot_date)::text first,max(publication.snapshot_date)::text last,
+    baseline.source_id,baseline.mapping_version,baseline.definition_version,baseline.specification,baseline.capabilities,trusted.revision_id
+    FROM mart.trusted_finance_snapshots publication JOIN mart.analytics_baselines baseline USING(tenant_id)
+    JOIN mart.analytics_trusted_serving trusted USING(tenant_id)
+    WHERE publication.tenant_id=$1 GROUP BY baseline.tenant_id,trusted.revision_id`,[context.tenantId])).rows[0];
    if(!row)return null;
-   const original=row.capabilities as PublishedAnalyticsCapabilities;
-   return {...original,releases:original.releases.map(release=>({...release,datasetId:'trusted-finance-snapshots',period:{from:row.first,to:row.last},selectionSemantics:'latest_snapshot' as const,capabilities:release.capabilities.filter(capability=>financeMetric(capability.metric)).map(capability=>({...capability,dimensions:[...new Set([...capability.dimensions,'month' as const])]}))}))};
+   const mappings=row.specification as import('@el-dabboos/domain').SourceMapping[];
+   const approved=(row.capabilities as PublishedAnalyticsCapabilities).releases.flatMap(release=>release.capabilities);
+   const capabilities=mappings.flatMap(mapping=>mapping.capabilities).filter(capability=>financeMetric(capability.metric)).flatMap(capability=>{
+    const peers=approved.filter(peer=>peer.metric===capability.metric);
+    return (peers.length?peers:[{metric:capability.metric,summary:true,dimensions:[],analyses:[]}]).map(peer=>({
+     ...peer,
+     dimensions:[...new Set([...capability.dimensions.filter(dimension=>dimension==='customer'||dimension==='month'),...peer.dimensions.filter(dimension=>dimension==='month')])],
+     analyses:peer.analyses.filter(analysis=>analysis==='ranking'||analysis==='topN'),
+    }));
+   });
+   return {tenantId:context.tenantId,mode:'certified',releases:[{datasetId:row.revision_id,sourceId:row.source_id,
+    mappingId:'trusted-receivables',mappingVersion:row.mapping_version,certificationReference:row.definition_version,
+    period:{from:row.first,to:row.last},selectionSemantics:'latest_snapshot',
+    capabilities}]};
   },true,this.timeout);
  }
  async execute(query:AnalyticsQuery,context:AnalyticsContext,capabilities:PublishedAnalyticsCapabilities):Promise<AnalyticsResult>{
@@ -29,23 +44,22 @@ export class FinanceSnapshotRepository {
    const cutoffs=query.groupBy==='month'?periodKeys(query.dateRange!,'month').map(month=>({key:month,end:monthEnd(month)})).filter(slot=>slot.end<=query.dateRange!.to):[{key:null,end:query.dateRange?.to??capabilities.releases[0]!.period!.to}];
    params.push(JSON.stringify(cutoffs));const conditions=financeFilters(query,context,params);
    const expression=financeExpression(query,params),group=query.groupBy==='customer'?'customer.customer_id':'slot.key';
-   const result=await client.query(`WITH selected AS MATERIALIZED (
+   const result=await client.query(`WITH candidates AS MATERIALIZED (${financeSnapshotCandidates(query,context)}),selected AS MATERIALIZED (
     SELECT slot.key,publication.* FROM jsonb_to_recordset($2::jsonb) slot(key text,"end" date)
-    JOIN LATERAL (SELECT * FROM mart.finance_snapshot_publications WHERE tenant_id=$1 AND snapshot_date${query.groupBy==='month'?'=':'<='}slot."end" ORDER BY snapshot_date DESC LIMIT 1) publication ON true)
+    JOIN LATERAL (SELECT * FROM candidates WHERE snapshot_date${query.groupBy==='month'?'=':'<='}slot."end" ORDER BY snapshot_date DESC,priority DESC LIMIT 1) publication ON true)
     SELECT ${group} key,${expression},max(slot.snapshot_date)::text snapshot_date,
-     max(evidence.source_cutoff) source_cutoff,min(evidence.anchor_dataset) anchor_dataset,
-     min(evidence.source_revision) source_revision,min(slot.snapshot_id) snapshot_id,
+     max(slot.source_cutoff) source_cutoff,min(slot.definition_version) definition_version,
+     min(slot.source_revision) source_revision,min(slot.snapshot_id) snapshot_id,
      ${query.groupBy==='customer'?'min(customer.label)':'NULL::text'} label
     FROM selected slot
-    JOIN mart.finance_snapshot_evidence evidence ON evidence.tenant_id=slot.tenant_id AND evidence.snapshot_id=slot.snapshot_id
-    LEFT JOIN mart.finance_snapshot_customers customer ON customer.tenant_id=slot.tenant_id AND customer.snapshot_id=slot.snapshot_id AND ${conditions}
+    LEFT JOIN LATERAL (${financeSelectedBalances}) customer ON ${conditions}
     GROUP BY ${group} ORDER BY ${group} LIMIT ${this.maxGroups+1}`,params);
    if(result.rows.length>this.maxGroups)throw new AnalyticsResultLimitError(query.groupBy!);
    const rows=result.rows.filter(row=>query.groupBy!=='customer'||row.key!==null).map(row=>({key:row.key as string|null,value:financeValue(query,row)}));
    const latest=result.rows.map(row=>row.snapshot_date as string).sort().at(-1),evidence=result.rows.find(row=>row.snapshot_date===latest),metric=semanticCatalog[query.metric];
    const metadata:AnalyticsResult['metadata']={sourceId:'postgres',executedAt:new Date().toISOString(),metricType:query.analysis?.percentageContribution?'percentage':metric.type,semantics:metric.semantics.kind,...(query.analysis?{analysis:query.analysis}:{}),...(query.analysis?.percentageContribution?{unit:'%'}:metric.presentation.unit?{unit:metric.presentation.unit}:{})};
    if(!latest)return {metric:query.metric,groupBy:query.groupBy??null,rows:[{key:null,value:null}],metadata:{...metadata,availability:{state:'DATA_NOT_READY',reason:'no_snapshot'}}};
-   return {metric:query.metric,groupBy:query.groupBy??null,rows:analyzeRows(rows,query,false),metadata:{...metadata,drillReleases:Object.fromEntries(result.rows.filter(row=>row.key!==null).map(row=>[row.key,row.snapshot_id])),snapshotAsOf:latest,reconciliation:{status:'exact',reference:evidence!.snapshot_id,definitionReference:capabilities.releases[0]!.certificationReference},dataThrough:latest,sourceAsOf:evidence!.source_cutoff.toISOString(),dimensionLabels:Object.fromEntries(result.rows.filter(row=>row.label).map(row=>[row.key,sourceDisplayLabel(row.label,context.locale)])),release:{datasetId:evidence!.snapshot_id,sourceId:capabilities.releases[0]!.sourceId,mappingId:'trusted-finance-customer-snapshot',mappingVersion:'1',certificationReference:`Standing Finance definition: ${evidence!.anchor_dataset}`,outputCertificationReference:`Exact historical snapshot: ${evidence!.snapshot_id}`}}};
+   return {metric:query.metric,groupBy:query.groupBy??null,rows:analyzeRows(rows,query,false),metadata:{...metadata,drillReleases:Object.fromEntries(result.rows.filter(row=>row.key!==null).map(row=>[row.key,row.snapshot_id])),snapshotAsOf:latest,reconciliation:{status:'exact',reference:evidence!.snapshot_id,definitionReference:capabilities.releases[0]!.certificationReference},dataThrough:latest,sourceAsOf:evidence!.source_cutoff.toISOString(),dimensionLabels:Object.fromEntries(result.rows.filter(row=>row.label).map(row=>[row.key,sourceDisplayLabel(row.label,context.locale)])),release:{datasetId:evidence!.snapshot_id,sourceId:capabilities.releases[0]!.sourceId,mappingId:'trusted-finance-customer-snapshot',mappingVersion:'1',certificationReference:evidence!.definition_version,outputCertificationReference:`Exact historical snapshot: ${evidence!.snapshot_id}`}}};
   },true,this.timeout);
  }
 }

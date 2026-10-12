@@ -19,13 +19,13 @@ export async function reconcileEventRollup(client:PoolClient,tenantId:string,par
 export async function backfillEventRollups(pool:Pool,tenantId:string) {
  const months=await tenantTransaction(pool,tenantId,async client=>{
   await readBaseline(client,tenantId);
-  return (await client.query(`SELECT member.month::text AS month FROM mart.analytics_trusted_serving trusted JOIN mart.analytics_serving_members member USING(tenant_id,revision_id) WHERE trusted.tenant_id=$1 ORDER BY month`,[tenantId])).rows.map(row=>String(row.month));
+  return (await client.query(`SELECT member.month::text AS month FROM mart.analytics_trusted_serving trusted JOIN (SELECT * FROM mart.analytics_serving_members WHERE family='facts') member USING(tenant_id,revision_id) WHERE trusted.tenant_id=$1 ORDER BY month`,[tenantId])).rows.map(row=>String(row.month));
  },true);
  const results=[];
  for(const month of months)results.push(await tenantTransaction(pool,tenantId,async client=>{
   await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',[`analytics:${tenantId}`]);
   await readBaseline(client,tenantId);
-  const member=(await client.query(`SELECT member.partition_id FROM mart.analytics_trusted_serving trusted JOIN mart.analytics_serving_members member USING(tenant_id,revision_id) WHERE trusted.tenant_id=$1 AND member.month=$2`,[tenantId,month])).rows[0];
+  const member=(await client.query(`SELECT member.partition_id FROM mart.analytics_trusted_serving trusted JOIN (SELECT * FROM mart.analytics_serving_members WHERE family='facts') member USING(tenant_id,revision_id) WHERE trusted.tenant_id=$1 AND member.month=$2`,[tenantId,month])).rows[0];
   if(!member)throw new Error('Trusted backfill partition disappeared');
   return {month,status:await reconcileEventRollup(client,tenantId,member.partition_id)};
  }));

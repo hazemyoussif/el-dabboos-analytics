@@ -1,9 +1,9 @@
-import {createMartPool,createOdooSourcePool,OdooSnapshotLease,migratePostgres,resolveFinanceAnchor,tenantTransaction} from '../../packages/data/src/index.ts';
+import {createMartPool,createOdooSourcePool,OdooSnapshotLease,migratePostgres,tenantTransaction} from '../../packages/data/src/index.ts';
 import {resolveOdooSourceConfig} from '../../apps/api/src/source-connections.ts';
 import {historicalMonths} from '../../apps/api/src/historical-months.ts';
 import {readFinanceCustomers} from '../../packages/data/src/operational/finance-source.ts';
 import {publishFinanceSnapshot} from '../../packages/data/src/operational/finance-publication.ts';
-import {readPublishedFinanceSummary} from '../../packages/data/src/operational/finance-summary.ts';
+import {readFinanceCompanySummary} from '../../packages/data/src/operational/finance-source.ts';
 const tenantId='el-dabboos-iq';
 if(!process.env.MART_MIGRATOR_URL)throw new Error('Protected publication operator configuration required');
 const mart=createMartPool(process.env.MART_MIGRATOR_URL,1);
@@ -11,17 +11,16 @@ const config=await resolveOdooSourceConfig(process.env,{tenantId,sourceId:'el-da
 const owner=createOdooSourcePool(config),source=createOdooSourcePool(config);
 try {
  await migratePostgres(mart);
- const anchorDataset=await resolveFinanceAnchor(mart,tenantId,'IQD');
  for(const period of historicalMonths()){
-  const existing=await tenantTransaction(mart,tenantId,async client=>(await client.query('SELECT snapshot_id FROM mart.finance_snapshot_publications WHERE tenant_id=$1 AND snapshot_date=$2',[tenantId,period.to])).rows[0],true);
+  const existing=await tenantTransaction(mart,tenantId,async client=>(await client.query('SELECT snapshot_id FROM mart.trusted_finance_snapshots WHERE tenant_id=$1 AND snapshot_date=$2',[tenantId,period.to])).rows[0],true);
   if(existing){console.log(JSON.stringify({date:period.to,status:'already-published',snapshotId:existing.snapshot_id}));continue;}
   const lease=await OdooSnapshotLease.open(owner,config,config.snapshotMaxDurationMs,config.credentialPolicy);
   const started=performance.now();
   try {
    const customers=await readFinanceCustomers(source,lease,config,period.to);
-   const totals=await readPublishedFinanceSummary(mart,tenantId,period.to);
+   const totals=await readFinanceCompanySummary(source,lease,config,period.to);
    await lease.assertAlive();
-   const result=await publishFinanceSnapshot(mart,{tenantId,date:period.to,anchorDataset,currency:'IQD',sourceCutoff:lease.evidence.sourceAsOf,sourceRevision:lease.evidence.frozenRevision,totals,customers},()=>lease.assertAlive());
+   const result=await publishFinanceSnapshot(mart,{tenantId,date:period.to,currency:'IQD',sourceCutoff:lease.evidence.sourceAsOf,sourceRevision:lease.evidence.frozenRevision,totals,customers},()=>lease.assertAlive());
    console.log(JSON.stringify({date:period.to,status:'published',customers:customers.length,snapshotId:result.snapshotId,sourceCutoff:lease.evidence.sourceAsOf,elapsedMs:Math.round(performance.now()-started)}));
   }finally{await lease.close();}
  }

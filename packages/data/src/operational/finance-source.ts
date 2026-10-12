@@ -33,3 +33,18 @@ export async function readFinanceCustomers(pool:Pool,lease:OdooSnapshotLease,con
   await lease.assertAlive();await client.query('COMMIT');return customers;
  }catch(error){await client.query('ROLLBACK');throw error;}finally{client.release();}
 }
+
+/** Independent company reconstruction imports the SAME retained source snapshot as customer controls. */
+export async function readFinanceCompanySummary(pool:Pool,lease:OdooSnapshotLease,config:OdooSourceConfig,cutoff:string):Promise<Record<string,string>> {
+ if(config.companyIds.join(',')!=='1')throw new Error('Approved Finance company scope required');
+ const client=await pool.connect();
+ try{
+  await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');await lease.importInto(client);
+  await client.query("SELECT set_config('statement_timeout',$1,true)",[String(config.statementTimeoutMs)]);
+  const sql=odooAgedReportBaseSql.replace(receivablesControlBaseSql,receivableReportBaseSql)+` SELECT
+   ${receivableMeasures.map((measure,index)=>`coalesce(sum(residual) FILTER(WHERE ${buckets[index]}),0)::numeric(30,6)::text ${measure}`).join(',')}
+   FROM report_components`;
+  const totals=(await client.query(sql,[1,cutoff])).rows[0];
+  await lease.assertAlive();await client.query('COMMIT');return totals;
+ }catch(error){await client.query('ROLLBACK');throw error;}finally{client.release();}
+}
