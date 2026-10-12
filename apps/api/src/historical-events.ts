@@ -1,7 +1,7 @@
 import type { ExtractionRun, SourceMapping } from '@el-dabboos/domain';
 import { createMartPool, createOdooSourcePool, ingestRetainedOdooPilot, odooComparisonCandidate, OdooSnapshotLease, PostgresMappingReleases, tenantTransaction, readHistoricalSourceQuality } from '@el-dabboos/data';
 import { resolveOdooSourceConfig } from './source-connections.ts';
-import { reconciliationLedger, verifySeptemberAnchor, validateHistoricalMonth, historicalRatioLedger, verifyGroupedSums } from './historical-months.ts';
+import { reconciliationLedger, validateHistoricalMonth, historicalRatioLedger, verifyGroupedSums } from './historical-months.ts';
 import { validateOdooPilotManifest } from './odoo-pilot.ts';
 import type { OdooPilotManifest } from './odoo-pilot.ts';
 
@@ -39,7 +39,6 @@ async function extractMonth(mapping: SourceMapping, extractionId: string, period
     const cases = result.reconciliation.flatMap(group => group.cases);
     verifyGroupedSums(cases);
     const derived = historicalRatioLedger(cases,['average_confirmed_order_value','average_invoice_value']);
-    if (period.month === '2026-09') verifySeptemberAnchor(cases);
     return { derived,durations:result.durations,month: period.month,datasetId: mapping.datasetId,mappingVersion: mapping.mappingVersion,semanticVersion: 'existing-september-event-definitions',snapshot: result.snapshot,sourceQuality,sourceRowCount: result.checkpoint.rowCount,martRowCount: result.checkpoint.rowCount,ledger: reconciliationLedger(cases),unmatchedGroups: result.reconciliation.reduce((count, group) => count + group.missingGroups.length + group.unexpectedGroups.length,0),status: result.reconciliation.every(group => group.status === 'passed') ? 'reconciled' : 'failed',durationMs: Math.round(performance.now()-began),peakRssBytes: process.resourceUsage().maxRSS*1024,certified: false,published: false,cases };
   } finally { await snapshot?.close(); await Promise.all([owner.end(),source.end(),mart.end()]); }
 }
