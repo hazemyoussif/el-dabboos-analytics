@@ -251,7 +251,7 @@ test('stored trusted outputs refuse a changed trusted reporting currency',{skip:
 });
 test('stored published capabilities exclude metrics lacking the enforced policy dimension proof',{skip:!enabled},async()=>{
  const f=await setup();try {
-  const caps=await f.repository.getPublishedCapabilities({tenantId:'a',locale:'en',enforcedFilters:[{dimension:'branch',values:['cairo']}]});assert.ok(caps.releases.every(release=>release.capabilities.length===0));
+  const caps=await f.repository.getPublishedCapabilities({tenantId:'a',locale:'en',enforcedFilters:[{dimension:'customer',values:['unmapped-customer']}]});assert.ok(caps.releases.every(release=>release.capabilities.length===0));
  }finally{await f.db.close();}
 });
 test('jobs refuse a prior executable metric-definition baseline without rewriting it',{skip:!enabled},async()=>{
@@ -293,7 +293,8 @@ test('exact monthly, daily and hybrid event bases equal canonical over twelve mo
    const monthly=await servingRows(client,{metric:'revenue',groupBy:'month',dateRange:range,analysis:{runningTotal:true}},context,coverage,4000);
    assert.equal(monthly.rows.length,12);assert.equal(monthly.rows.at(-1)?.value,1200);
   });
-  await assert.rejects(fixture.repository.execute({metric:'revenue',dateRange:range}, {...context,enforcedFilters:[{dimension:'branch',values:['baghdad']}]}),/Uncertified/);
+  assert.equal((await fixture.repository.execute({metric:'revenue',dateRange:range}, {...context,enforcedFilters:[{dimension:'branch',values:['baghdad']}]})).rows[0]?.value,0);
+  await assert.rejects(fixture.repository.execute({metric:'revenue',dateRange:range}, {...context,enforcedFilters:[{dimension:'customer',values:['unmapped-customer']}]}),/Uncertified/);
   assert.equal((await tenantTransaction(fixture.db.runtime,'b',client=>client.query('SELECT * FROM mart.analytics_monthly_bases'),true)).rowCount,0);
   assert.equal((await tenantTransaction(fixture.db.runtime,'b',client=>client.query('SELECT * FROM mart.analytics_aggregate_proofs'),true)).rowCount,0);
  }finally{await fixture.db.close();}
@@ -590,4 +591,42 @@ test('date moves out of coverage retire the prior dated footprint; replay and mo
   system.source.rows=[januaryFact({sourceRevision:'4',sourceVersion:'moved-back'})];
   assert.equal((await system.run()).status,'passed');assert.equal(await januaryValue(system.repository),100);
  }finally{await system.db.close();}
+});
+
+test('legacy staging metadata over exact tuples executes customer reports and every trend template without per-group business sign-off',{skip:!enabled},async()=>{
+ const fixture=await setup('fixture',false,false,undefined,true);
+ try {
+  const measures=['order_revenue','order_count','invoiced_revenue','refund_value','net_invoiced_revenue','invoice_count','refund_count'] as const;
+  fixture.source.rows=['2026-01-15','2026-02-15'].flatMap((businessDate,index)=>measures.map(measureId=>{
+   const row=januaryFact({measureId,businessDate,sourceRecordId:index?`second-${measureId}`:`calibration-${measureId}`,value:measureId.endsWith('count')?'1.000000':'100.000000',dimensions:{customer:'customer:1',salesperson:'rep:1',business_line:'line:1'}});
+   if(measureId.endsWith('count'))delete row.currency;
+   return row;
+  }));
+  assert.equal((await fixture.run()).status,'passed');
+  const context={tenantId:'a',locale:'ar' as const};
+  const capabilities=await fixture.repository.getPublishedCapabilities(context);
+  const legacy={...capabilities,releases:capabilities.releases.map(release=>({...release,capabilities:release.capabilities.map(capability=>({...capability,dimensions:capability.dimensions.filter(dimension=>dimension==='salesperson'||dimension==='business_line')}))}))};
+  const {refreshOperationalMonths}=await import('../../src/operational/aggregates.ts');
+  await tenantTransaction(fixture.db.migrator,'a',async client=>{
+   const parent=(await client.query("SELECT revision_id FROM mart.analytics_trusted_serving WHERE tenant_id='a' FOR UPDATE")).rows[0].revision_id;
+   const revisionId=randomUUID();
+   const months=(await client.query("SELECT to_char(month,'YYYY-MM') AS period FROM mart.analytics_serving_members WHERE tenant_id='a' AND revision_id=$1 AND family='facts'",[parent])).rows.map(row=>String(row.period));
+   await refreshOperationalMonths(client,{tenantId:'a',revisionId,parent,runId:null,cutoff:fixture.source.cutoff,purpose:'adoption',partitionCapabilities:Object.fromEntries(months.map(month=>[month,legacy]))},months);
+   await client.query("UPDATE mart.analytics_trusted_serving SET revision_id=$1 WHERE tenant_id='a' AND revision_id=$2",[revisionId,parent]);
+  });
+  const actual=await fixture.repository.getPublishedCapabilities(context);
+  const customer=await fixture.repository.execute({metric:'net_invoiced_revenue',groupBy:'customer',dateRange:{from:'2026-01-01',to:'2026-02-28'}},context);
+  assert.deepEqual(customer.rows,[{key:'customer:1',value:200}]);
+  const {historicalTemplates}=await import('../../../application/src/historical-templates.ts');
+  const {instantiateDashboardTemplate}=await import('../../../application/src/templates.ts');
+  const {templateCompatibility}=await import('../../../application/src/published-analytics.ts');
+  const {DashboardExecutor}=await import('../../../application/src/executor.ts');
+  const {tenantProfiles}=await import('@el-dabboos/domain');
+  for(const template of historicalTemplates){
+   assert.equal(templateCompatibility(template,actual).status,'supported',template.id);
+   const spec=instantiateDashboardTemplate(template,tenantProfiles['demo-iq'],new Date('2026-10-12'),'ar',actual);
+   assert.equal((await new DashboardExecutor(fixture.repository).execute(spec,context,{timeZone:'Asia/Baghdad'})).metadata.failedSeries,0,template.id);
+  }
+  await assert.rejects(fixture.repository.execute({metric:'order_revenue',groupBy:'branch',dateRange:{from:'2026-01-01',to:'2026-02-28'}},context),/Unsupported dimension/);
+ }finally{await fixture.db.close();}
 });

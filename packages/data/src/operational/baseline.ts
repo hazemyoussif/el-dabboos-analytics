@@ -1,3 +1,4 @@
+import { dailyEventCapabilities } from './daily-capabilities.ts';
 import { adoptCertifiedServing } from './adoption.ts';
 import { randomUUID } from 'node:crypto';
 import type { Pool,PoolClient } from 'pg';
@@ -11,7 +12,7 @@ export async function readBaseline(client:PoolClient,tenantId:string):Promise<Op
  if(row.definition_version!==operationalDefinitionVersion())throw new Error('Explicit metric-definition migration required');
  const months=(await client.query("SELECT to_char(member.month,'YYYY-MM') period FROM mart.analytics_trusted_serving trusted JOIN mart.analytics_serving_members member USING(tenant_id,revision_id) WHERE trusted.tenant_id=$1 AND member.family='facts' ORDER BY member.month",[tenantId])).rows.map(member=>String(member.period));
  const from=months[0]&&`${months[0]}-01`<date(row.period_from)?`${months[0]}-01`:date(row.period_from);
- return {coveredMonths:months,tenantId,sourceId:row.source_id,reportingCurrency:row.reporting_currency,datasets:row.datasets,mappingVersion:row.mapping_version,definitionVersion:row.definition_version,mappings:row.specification,capabilities:row.capabilities,from,to:date(row.period_to)};
+ return {coveredMonths:months,tenantId,sourceId:row.source_id,reportingCurrency:row.reporting_currency,datasets:row.datasets,mappingVersion:row.mapping_version,definitionVersion:row.definition_version,mappings:row.specification,capabilities:await dailyEventCapabilities(client,tenantId,row.capabilities),from,to:date(row.period_to)};
 }
 const date=(value:Date|string)=>value instanceof Date?value.toISOString().slice(0,10):value;
 /** Initialize directly from certified mart evidence, with no historical activation or anchor. */

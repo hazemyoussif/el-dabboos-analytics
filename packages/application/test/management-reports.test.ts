@@ -72,3 +72,10 @@ test('split report metrics use intersecting coverage and cannot invent a shared 
  assert.equal(supportedTemplatePeriod(template,disjoint),undefined);
  assert.equal(templateCompatibility(template,disjoint).status,'unsupported');
 });
+
+
+test('sales templates ignore unrelated balance windows when resolving their complete shared dates',()=>{
+ const template=managementTemplates[0]!;
+ const combined={...published,releases:[{...published.releases[0]!,period:{from:'2025-10-31',to:'2026-09-30'},capabilities:[{metric:'net_aged_receivable' as const,summary:true,dimensions:['month' as const],analyses:[]}]},...metrics.map(metric=>({...published.releases[0]!,period:{from:'2025-10-01',to:metric==='average_confirmed_order_value'?'2026-09-30':'2026-10-12'},capabilities:published.releases[0]!.capabilities.filter(capability=>capability.metric===metric)}))]};
+ assert.deepEqual(supportedTemplatePeriod(template,combined),{from:'2025-10-01',to:'2026-09-30'});
+});
