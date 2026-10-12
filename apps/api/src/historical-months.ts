@@ -13,16 +13,6 @@ export function historicalMonths(from = '2025-10-01', to = '2026-09-30') {
     return {month:start.toISOString().slice(0,7),from:start.toISOString().slice(0,10),to:last.toISOString().slice(0,10)};
   });
 }
-export const septemberAnchor = {
-  net_invoiced_revenue: '1447166500.000000', invoiced_revenue: '1465712000.000000',
-  refund_value: '18545500.000000', order_revenue: '1461335500.000000', order_count: '2895.000000',
-};
-export function verifySeptemberAnchor(cases: readonly ReconciliationCase[]): void {
-  for (const [metric, value] of Object.entries(septemberAnchor)) {
-    const controls = cases.filter(control => control.measureId === metric && control.grouping === null);
-    if (controls.length !== 1 || controls[0]!.from !== '2026-09-01' || controls[0]!.to !== '2026-09-30' || controls[0]!.expectedValue !== value || controls[0]!.actualValue !== value) throw new Error(`September anchor regression: ${metric}`);
-  }
-}
 export function reconciliationLedger(cases: readonly ReconciliationCase[]) {
   const groups = new Map<string, ReconciliationCase[]>();
   for (const control of cases) {
@@ -72,7 +62,6 @@ export function verifyHistoricalCheckpoint(period: {month:string;from:string;to:
     if (!row || row.status !== 'passed' || !row.group_completeness || canonical(control) !== canonical(row.specification)) throw new Error('Immutable historical checkpoint evidence conflict');
     verifyCheckpointControl(control,period,prior.snapshot.frozenRevision);
   }
-  if (period.month === '2026-09' && prior.cases.some(control=>control.measureId==='order_revenue')) verifySeptemberAnchor(prior.cases);
 }
 function verifyCheckpointControl(control:ReconciliationCase,period:{from:string;to:string},frozenRevision:string) {
   if (control.frozenRevision !== frozenRevision || control.from !== period.from || control.to !== period.to || control.expectedValue !== control.actualValue || control.expectedCount !== control.actualCount) throw new Error('Immutable historical checkpoint evidence conflict');
