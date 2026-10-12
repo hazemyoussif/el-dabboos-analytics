@@ -14,7 +14,7 @@ import {TrustedAnalyticsRepository} from '../../src/operational/repository.ts';
 
 async function legacyDatabase(){
  const db=await database(false),directory=await mkdtemp('/tmp/unified-pre-refactor-'),url=pathToFileURL(directory+'/');
- try{await cp(migrationDirectory,url,{recursive:true});await rm(new URL('040_unified_serving.sql',url));await rm(new URL('041_historical_month_imports.sql',url));await migratePostgres(db.migrator,url);}
+ try{await cp(migrationDirectory,url,{recursive:true});await rm(new URL('040_unified_serving.sql',url));await rm(new URL('041_historical_month_imports.sql',url));await rm(new URL('042_empty_finance_snapshots.sql',url));await migratePostgres(db.migrator,url);}
  finally{await rm(directory,{recursive:true});}
  return db;
 }
@@ -38,7 +38,7 @@ test('forward migration adopts certified historical events and aging beside oper
   for(const month of Array.from({length:12},(_,index)=>`2025-${String(index+1).padStart(2,'0')}`)){await historicalMember(db,month,'events','150.000000');await historicalMember(db,month,'aging','900.000000');}
   await tenantTransaction(db.migrator,'a',client=>client.query("INSERT INTO mart.historical_serving_bindings(tenant_id,reference,anchor_dataset_id,period_from,period_to,approval_reference) VALUES('a','synthetic-history','release','2025-01-01','2025-12-31','SYNTHETIC ONLY')"));
   const original=(await db.admin.query('SELECT * FROM mart.historical_release_members ORDER BY period_from,kind')).rows;
-  assert.deepEqual(await migratePostgres(db.migrator),[40,41]);
+  assert.deepEqual(await migratePostgres(db.migrator),[40,41,42]);
   assert.deepEqual(await migratePostgres(db.migrator),[]);
   const repository=new TrustedAnalyticsRepository(db.runtime,{reportingCurrencies:{a:'IQD'}}),context={tenantId:'a',locale:'en' as const};
   const members=(await db.admin.query('SELECT member.month::text,member.family FROM mart.analytics_trusted_serving trusted JOIN mart.analytics_serving_members member USING(tenant_id,revision_id) ORDER BY month')).rows;
@@ -80,7 +80,7 @@ test('migration adopts an existing frozen customer Finance publication without r
    await client.query("INSERT INTO mart.finance_snapshot_customers VALUES('a','legacy-finance','customer','Synthetic customer',$1,$1)",[JSON.stringify(values)]);
    await client.query("INSERT INTO mart.finance_snapshot_publications VALUES('a','2025-09-30','legacy-finance')");
   });
-  assert.deepEqual(await migratePostgres(db.migrator),[40,41]);
+  assert.deepEqual(await migratePostgres(db.migrator),[40,41,42]);
   const repository=new TrustedAnalyticsRepository(db.runtime,{reportingCurrencies:{a:'IQD'}});
   const result=await repository.execute({metric:'net_aged_receivable',groupBy:'customer',dateRange:{from:'2025-01-01',to:'2026-10-01'}},{tenantId:'a',locale:'en'});
   assert.deepEqual(result.rows,[{key:'customer',value:100}]);assert.equal(result.metadata.release?.datasetId,'legacy-finance');
@@ -107,7 +107,7 @@ module.exports={adoptLegacyServing:async client=>{await originalAdoption(client)
   assert.deepEqual((await db.admin.query('SELECT * FROM mart.analytics_fact_revisions')).rows,facts);
   assert.equal((await db.admin.query("SELECT count(*)::int count FROM information_schema.columns WHERE table_schema='mart' AND table_name='analytics_partitions' AND column_name='family'")).rows[0].count,0);
   assert.equal((await db.admin.query('SELECT max(version) version FROM mart_admin.mart_schema_migrations')).rows[0].version,39);
-  assert.deepEqual(await migratePostgres(db.migrator),[40,41]);
+  assert.deepEqual(await migratePostgres(db.migrator),[40,41,42]);
   assert.deepEqual(await migratePostgres(db.migrator),[]);
  }finally{await db.close();await rm(directory,{recursive:true});}
 });
