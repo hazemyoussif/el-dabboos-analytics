@@ -8,7 +8,7 @@ import { fact,mapping } from './postgres/fixtures.ts';
 function clientWith(rows:unknown[]=[]){
  const calls:{text:string;values?:unknown[]}[]=[];
  const client={query:async(text:string,values?:unknown[])=>{
-  calls.push({text,values});
+  calls.push(values?{text,values}:{text});
   return {rows:calls.length===1?rows:[],rowCount:0};
  }} as unknown as PoolClient;
  return {client,calls};
