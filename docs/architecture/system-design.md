@@ -2,7 +2,7 @@
 
 ## Status and responsibilities
 
-**Unified serving core:** the runtime now uses one trusted revision per tenant for monthly fact partitions and exact receivables snapshots. Migration 040 adopts certified mart history without Odoo access. Historical bindings and Finance publications remain migration/rollback evidence. See [core lifecycle and migration](../integration/unified-serving-core.md).
+**Unified serving core:** the runtime now uses one trusted revision per tenant for monthly fact partitions and exact receivables snapshots. Migration 040 adopts certified mart history without Odoo access. Historical bindings and Finance publications remain migration/rollback evidence. See [core lifecycle and migration](../integration/unified-serving-core.md). Explicit certified monthly history imports extend the trusted manifest without moving the operational cursor; incremental discovery no longer implicitly backfills absent older months.
 
 The approved production comparison pilot extends the offline mart through [ADR 029](adr/029-ingestion-certification-lifecycle.md): immutable candidate → bounded paged extraction → completed reconciliation → metadata approval → separately authorized serving binding. [ADR 031](adr/031-certified-release-promotion.md) adds append-only authorized business approval as an alternative to external-report evidence and exact transactional promotion into a separate staging mart. Odoo source transport stays inside data; the operator command stays in API configuration/composition. [Pilot status](../integration/odoo-postgres-pilot.md) explicitly separates synthetic evidence from unavailable live evidence.
 

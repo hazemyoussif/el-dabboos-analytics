@@ -2,6 +2,7 @@ import type { PoolClient } from 'pg';
 import type { AnalyticsCursor,FactRevisionChange,ProductionFact } from '@el-dabboos/domain';
 import type { OperationDetails,OperationalBaseline,OperationalSnapshot } from './contracts.ts';
 import { persistOperationalFacts,retiredOperationalFacts } from './facts.ts';
+import { coveredOperationalFacts } from './ingestion-scope.ts';
 /** New calendar partitions need a complete initial base; existing months use changed identities only. */
 export async function ingestOperationalCandidate(client:PoolClient,scope:{baseline:OperationalBaseline;source:OperationalSnapshot;cursor:AnalyticsCursor|null;details:OperationDetails;parent:string|null}) {
  const {baseline,source,cursor,details,parent}=scope;
@@ -26,7 +27,12 @@ class CandidateFacts {
  readonly changes:FactRevisionChange[]=[];readonly newMonths=new Set<string>();readonly identities=new Set<string>();
  constructor(private readonly client:PoolClient,private readonly baseline:OperationalBaseline,private readonly details:OperationDetails,private readonly knownMonths:ReadonlySet<string>){}
  async accept(facts:readonly ProductionFact[]) {
-  const changes=await persistOperationalFacts(this.client,this.baseline,facts);
+  const months=new Set([...this.knownMonths,...this.newMonths]);
+  const scoped=await coveredOperationalFacts(this.client,this.baseline.tenantId,facts,months);
+  this.details.outsideCoverageFacts=(this.details.outsideCoverageFacts??0)+facts.length-scoped.length;
+  const start=performance.now();
+  const changes=await persistOperationalFacts(this.client,this.baseline,scoped);
+  this.details.durations.persistenceMs=(this.details.durations.persistenceMs??0)+performance.now()-start;
   for(const change of changes) {
    const fact=change.next;
    if(fact.status==='active'&&!this.knownMonths.has(fact.businessDate.slice(0,7)))this.newMonths.add(fact.businessDate.slice(0,7));

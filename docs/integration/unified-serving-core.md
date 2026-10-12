@@ -14,10 +14,10 @@ Failed reconciliation or a lost source lease rolls back the entire candidate.
 
 Capabilities come from approved definitions and exact evidence attached to trusted
 partitions. Late certificates do not expand an already trusted revision. Summary
-aging does not certify customer grouping. Exact customer vectors grant only dimensions
-approved in the stored mapping: summary-only metrics remain summary-only for
-customer queries and discovery. Snapshot month trends retain the approved calendar
-projection. Analyses are restricted to the approved capability and executor support.
+aging does not certify customer grouping. Exact customer vectors supply the customer/month dimensions declared by the semantic
+catalog, independently of company-summary baseline dimensions. Customer queries and
+discovery read only those trusted customer vectors; company summaries cannot supply
+customer rows. Snapshot month trends retain the governed calendar projection. Analyses are restricted to the approved capability and executor support.
 Customer snapshots require independent
 customer controls, exact customer-to-company totals, closed signed buckets and
 month-end dates. Summary queries choose the latest eligible trusted snapshot;
@@ -53,7 +53,13 @@ mart datasets. Historical publication/activation and filesystem receipts are not
 prerequisites. Existing `analytics sync --tenant ID` continues the incremental
 candidate lifecycle. `scripts/integration/finance-snapshots.ts` now reads customer
 and company controls from one retained source snapshot and promotes through the
-same trusted pointer. Bounded initial source-loading CLI polish remains separate.
+same trusted pointer. `scripts/integration/historical-import.ts` extends an established manifest from
+explicitly approved, exact certified whole-month datasets. Migration 041 adds
+immutable import checkpoints and preserves narrower prior partition capabilities
+on operational replacements. Complete daily tuple/count parity, aggregate/drill
+proof and parent CAS precede atomic publication; no cursor or baseline mutation
+is performed. Extraction remains the existing bounded monthly source lifecycle.
+See [hosted parity](hosted-historical-parity.md) and [controlled rollout](staging-loading-rollout.md).
 
 ## Rollback and deferred removal
 

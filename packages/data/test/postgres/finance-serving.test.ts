@@ -16,8 +16,8 @@ function evidence(date:string,count=1):FinanceSnapshotEvidence {
 async function fixture(summaryOnly=false){
  const db=await database(),specification=mapping();
  const rule=specification.measures[2]!;
- specification.measures=receivableMeasures.map(measureId=>({...rule,measureId,dimensionMappings:{customer:'Synthetic governed identity'}}));
- specification.capabilities=receivableMeasures.map(metric=>({metric,dimensions:summaryOnly&&['gross_open_receivable_components','credit_balances'].includes(metric)?['month']:['customer','month']}));
+ specification.measures=receivableMeasures.map(measureId=>({...rule,measureId,dimensionMappings:summaryOnly?{}:{customer:'Synthetic governed identity'}}));
+ specification.capabilities=receivableMeasures.map(metric=>({metric,dimensions:summaryOnly?[]:['customer','month']}));
  await deploy(db.migrator,specification);
  await bootstrapOperationalServing(db.migrator,'a');
  return {db,repository:new TrustedAnalyticsRepository(db.runtime,{reportingCurrencies:{a:'IQD'}})};
@@ -131,16 +131,17 @@ test('snapshot candidate preserves facts, replaces only its month, and rejects b
  }finally{await db.close();}
 });
 
-test('Finance preserves approved summary/customer dimensions and refuses unapproved analyses and discovery',{skip:!enabled},async()=>{
+test('exact customer snapshot vectors supply their customer grain independently of summary-only baseline dimensions',{skip:!enabled},async()=>{
  const {db,repository}=await fixture(true),context={tenantId:'a',locale:'en' as const},dateRange={from:'2026-09-01',to:'2026-09-30'};
  try{
+  await assert.rejects(repository.execute({metric:'net_aged_receivable',groupBy:'customer',dateRange},context),/Uncertified/);
   await publishFinanceSnapshot(db.ingestor,evidence('2026-09-30'));
   const capabilities=await repository.getPublishedCapabilities(context);
   for(const metric of ['gross_open_receivable_components','credit_balances'] as const){
-   assert.ok(capabilities.releases.flatMap(release=>release.capabilities).filter(capability=>capability.metric===metric).every(capability=>capability.summary&&!capability.dimensions.includes('customer')&&capability.dimensions.includes('month')));
+   assert.ok(capabilities.releases.filter(release=>release.mappingId==='trusted-receivables').flatMap(release=>release.capabilities).filter(capability=>capability.metric===metric).every(capability=>capability.summary&&capability.dimensions.includes('customer')&&capability.dimensions.includes('month')));
    assert.equal((await repository.execute({metric,dateRange},context)).rows[0]?.value,metric==='credit_balances'?0:100);
-   await assert.rejects(repository.execute({metric,groupBy:'customer',dateRange},context),/Uncertified/);
-   await assert.rejects(repository.searchDimensionOptions('customer',context,{metric,asOf:dateRange.to}),/Uncertified customer discovery/);
+   assert.equal((await repository.execute({metric,groupBy:'customer',dateRange},context)).rows[0]?.value,metric==='credit_balances'?0:100);
+   assert.deepEqual((await repository.searchDimensionOptions('customer',context,{metric,asOf:dateRange.to})).values.map(option=>option.id),['fixture:00000']);
    assert.deepEqual((await repository.execute({metric,groupBy:'month',dateRange},context)).rows.map(row=>row.value),[metric==='credit_balances'?0:100]);
   }
   assert.equal((await repository.execute({metric:'net_aged_receivable',groupBy:'customer',dateRange},context)).rows[0]?.value,100);

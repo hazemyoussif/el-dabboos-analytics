@@ -10,8 +10,8 @@ import { tenantTransaction } from '../../src/postgres/session.ts';
 import { database } from './support.ts';
 import { mapping,batch,fact,evidence,clock } from './fixtures.ts';
 type Database=Awaited<ReturnType<typeof database>>;
-export async function historicalMember(db:Database,month:string,kind:'events'|'aging',value:string,options?:string|{publicationOnly:true;finance?:boolean;customer?:boolean}) {
-  const orders=typeof options==='string'?options:undefined;
+export async function historicalMember(db:Database,month:string,kind:'events'|'aging',value:string,options?:string|{publicationOnly:true;finance?:boolean;customer?:boolean;orders?:string;approvalReference?:string}) {
+  const orders=typeof options==='string'?options:options?.orders;
   const from=`${month}-01`,to=new Date(Date.UTC(Number(month.slice(0,4)),Number(month.slice(5)),0)).toISOString().slice(0,10);
   const datasetId=`synthetic-${month}-${kind}`,measureId=kind==='events'?(orders?'order_revenue':'revenue'):'net_aged_receivable';
   const baseline=mapping('a');
@@ -36,7 +36,7 @@ export async function historicalMember(db:Database,month:string,kind:'events'|'a
   if(orders)cases.push(...cases.map(control=>({...control,caseId:`${control.caseId}-count`,measureId:'order_count' as const,expectedValue:orders,actualValue:orders})));
   if(finance)cases.push(...facts.filter(row=>row.measureId!==measureId).map(row=>({...cases[0]!,caseId:`${datasetId}-${row.measureId}`,measureId:row.measureId,expectedValue:row.value,actualValue:row.value})));
   for (const control of cases) await new PostgresReconciliation(db.migrator).record([control],'IQD');
-  const reference=`synthetic-cert-${datasetId}`,caseIds=cases.map(control=>control.caseId);
+  const reference=typeof options==='object'&&options.approvalReference?options.approvalReference:`synthetic-cert-${datasetId}`,caseIds=cases.map(control=>control.caseId);
   await new PostgresReleaseCertification(db.migrator).record({tenantId:'a',datasetId,mappingVersion:'1',reference,approverReference:'SYNTHETIC ONLY',approvedAt:clock().toISOString(),companyIds:['1'],from,to,caseIds,technicalReference:'SYNTHETIC exact controls',evidenceKind:'authorized_business_approval',approvedValues:[{measureId,value}],businessSemantics:['SYNTHETIC ONLY']});
   await releases.approve({tenantId:'a',datasetId,caseIds,reference,approvedAt:clock().toISOString()});
   if(orders)for(const grouping of [null,'salesperson' as const])await new PostgresDerivedMetricCertification(db.migrator).record({tenantId:'a',datasetId,mappingVersion:'1',metric:'average_confirmed_order_value',grouping,from,to,caseIds:cases.filter(control=>control.grouping===grouping).map(control=>control.caseId),reference:`${datasetId}-ratio-${grouping??'summary'}`,approvalReference:'SYNTHETIC ONLY',approvedAt:clock().toISOString(),businessSemantics:'SYNTHETIC governed ratio',technicalReference:'SYNTHETIC exact bases'});

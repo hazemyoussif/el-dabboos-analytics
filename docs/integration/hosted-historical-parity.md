@@ -1,104 +1,35 @@
 # Hosted single-mart historical parity
 
-## Scope and approval
+## Current scope and evidence
 
-All twelve reports are existing product functionality: Executive Sales & Invoicing, Business Line Performance, Salesperson Performance, Customer Performance, Invoice & Refund Operations, Receivables & Aging, Historical Executive Trend, Sales vs Invoicing Trend, Business Line Trend, Salesperson Historical Analysis, Customer Historical Analysis, and Data & Certification Status. The accepted historical range is October 2025–September 2026. Staging demo parity was explicitly approved by the task owner on 2026-10-11; it is not production authorization or a replacement for exact reconciliation.
+The twelve dashboard templates are Sales & Invoicing plus these eleven dashboard reports: Executive Sales & Invoicing, Business Line Performance, Salesperson Performance, Customer Performance, Invoice & Refund Operations, Receivables & Aging, Historical Executive Trend, Sales vs Invoicing Trend, Business Line Trend, Salesperson Historical Analysis, Customer Historical Analysis. Data & Certification Status is a separate information page.
 
-The hosted extraction/evidence/serving database is one mart. The default historical publisher is still a two-mart transfer. `--in-place` instead calls `promoteLocalBoundedRelease`: validate dedicated publication authority and current monthly certification, hash every release table using the existing bounded canonical fingerprint, then insert only the immutable promotion receipt. Reruns require the same reference and fingerprint. One repeatable-read write transaction covers proof, fingerprint and receipt; concurrent serialization failures can safely rerun. No fact, mapping, certificate, serving binding or operational cursor is changed by this operation.
+A read-only company-1 source probe on 2026-10-12 observed orders from 2024-08-03 through 2026-10-12 (69,195 headers), and posted customer invoices/refunds from 2024-06-26 through 2026-10-12 (70,943 headers). This establishes June 2024 as the first required historical month; it does not certify any source totals. Target closed-month coverage is June 2024–September 2026 (28 months), plus existing current October reporting. The previously accepted October 2025–September 2026 range and its 2026-10-11 approval remain immutable evidence.
 
-Certification and derived ratio output certification remain the existing separate lifecycles. Activation still checks every exact monthly receipt and fingerprint and the database still requires complete paired event/aging months. The September anchor binding remains in place. There are no new metric definitions or capability registries.
+Staging currently trusts October 2025–October 2026 facts. Load the sixteen absent months June 2024–September 2025 explicitly, including July 2024 even if its event population is empty. Publish independent customer Finance evidence for all 28 closed month ends; company summary evidence never grants customer grouping. Hosted execution and report acceptance remain separate from synthetic tests.
 
-The trusted repository includes the existing historical capability projection and delegates requests starting before operational coverage, or pairs certified only by history after the ordinary anchor check, to the existing historical adapter. Sep/Oct requests continue through normal trusted serving. Historical templates prefer the longest compatible certified release, so the accepted year is selected even when operational Sep/Oct coverage is listed first; ordinary report defaults retain their ordering. Existing event identity discovery includes both trusted operational bases and activated historical events, with the same metric/policy filters, bounds, customer pagination and selected-ID hydration; history-only customers and salespeople remain selectable. Finance publication reads the activated certified aging member at each exact month end, falling back to existing operational summaries only when there is no historical member. Its independent customer controls, exact ten totals, standing customer Finance lineage and immutable publication guards remain mandatory. Historical/operational windows that cross outside the accepted historical end are not stitched into a new release.
+## Current publication contract
 
-## Post-merge staging commands
+Migration 040 replaced separate historical activation with one trusted revision. Do not run `historical-activate.ts`, restore legacy serving bindings, or re-bootstrap an established baseline to extend coverage. The legacy activation code remains compatibility/recovery evidence.
 
-Run from the merged checkout **on the approved staging host**, using the existing protected environment files and database network. Rebuild/redeploy the API with the merged source using the established staging deployment workflow first; the API image now includes `scripts/integration`. The commands below use Docker's env-file mechanism and never load developer `.env` files. Hosted deployments may keep mart/control credentials and the approved read-only Odoo source configuration in separate protected files. The operator container must receive both sets plus `ENVIRONMENT=staging`; no protected file needs to be rewritten or printed. In-place publication uses only `MART_MIGRATOR_URL`. Activation uses `MART_PUBLICATION_TARGET_URL`, supplied inside the container from that same URL.
+1. `history-inventory.ts` discovers company-scoped source month metadata in a retained read-only snapshot. It prints only dates/counts, never customer records or credentials.
+2. `historical-backfill.ts backfill --tenant el-dabboos-iq --from ... --to ... --checkpoint-dir ...` extracts complete monthly event and aging candidates and performs independent exact source/mart reconciliation. It does not certify or serve them. Event extraction prints bounded page progress with cumulative source-read, mapping, mart-write and reconciliation timings. Source statement and lease limits remain unchanged.
+3. `historical-publish.ts` validates checkpoints, records explicit authorized business approval, approves mappings, certifies derived ratios, and writes in-place immutable promotion receipts. Existing approvals/receipts must agree on replay. Approval files are operator evidence of actual human authorization, never fabricated Finance approval.
+4. `historical-import.ts` imports each certified month directly into the current trusted manifest. It requires dedicated migrator authority, exact whole-month certification and matching business approval. It copies normalized canonical facts using the existing operational recipes, compares complete daily dimension tuples and counts, rebuilds exact aggregates/drill lineage, checks the trusted parent and commits an immutable database checkpoint in the same transaction. Unchanged partitions and the operational cursor are preserved. Trusted revision changes are intentional. An interruption or mismatch rolls everything back; retry resumes from the database checkpoint. Conflicting checkpoint datasets/approval are refused.
+5. `finance-snapshots.ts` requires the same explicit range flags as the backfill command. Each month end reads customer vectors and independent company controls from one retained source snapshot, then uses the current unified snapshot promotion contract. An already trusted snapshot is skipped; replacing existing customer evidence is a separate deliberate operation. Empty/invalid populations and any signed-bucket mismatch remain blockers, not invented zeros.
 
-Set these **path/image/network values**, not connection strings:
+Each invocation is bounded to 1–24 complete months. Use one month for the initial measured canary. Finance's 28 cutoffs require two bounded invocations. Never copy local checkpoints into staging or overwrite an existing job approval.
 
-```sh
-export STAGING_OPERATOR_ENV_FILE=/protected/path/to/existing-staging-operator.env
-export STAGING_DATABASE_NETWORK=existing-staging-database-network
-export STAGING_API_IMAGE=merged-staging-api-image
-export ODOO_SOURCE_ENV_FILE=/protected/path/to/existing-odoo-source.env
-export HISTORY_CHECKPOINT_DIR=/protected/persistent/history-202510-202609
-```
+## Incremental coverage behavior
 
-The checkpoint directory must belong to this hosted mart and be readable/writable by the image's `node` user. Retain all immutable extraction checkpoints, publication receipts and approvals; back them up with the database. Local-mart checkpoints are not proof of hosted extraction. If exact hosted September historical checkpoints already exist, retain them and let the backfill validate/skip them. If no hosted September historical member/checkpoint exists, do not copy local evidence or author substitute files: run the normal hosted September extraction. The event path enforces the certified September anchor regression and both event/aging paths still require exact source-to-mart reconciliation before publication.
+Incremental source discovery still bypasses business-date limits to discover corrections and retirements. Ingestion applies those changes only to trusted fact months and deliberate forward catch-up months. Unseen identities in absent older months are deferred to complete monthly loading instead of causing accidental backfill. A record moving outside coverage retires its previous footprint at the original business date; a move back into coverage can reactivate it. Covered older months remain eligible for exact reconciliation and updates.
 
-Use the existing `business-approval.json` when any member is already certified; do not replace its reference, approver or approvedAt. For a wholly new hosted job only, create that file exclusively with the authorized task-owner staging reference. `approvedAt` records when this approval evidence is written, while the reference identifies the 2026-10-11 authorization. It does not claim Finance approved these outputs or invent an earlier timestamp.
+The immutable baseline recipes and approved end date remain unchanged. The oldest trusted fact month supplies the incremental historical dependency start, and summary aging reconstruction iterates only covered months through the approved snapshot end. Operational replacement partitions inherit their prior trusted capabilities, including narrower historical restrictions. Historical event queries and drill-through honor imported month coverage rather than clipping to the initial baseline start. Holes retain missing/partial semantics.
 
-```sh
-node --input-type=module - "$HISTORY_CHECKPOINT_DIR" <<'JS'
-import {writeFile} from 'node:fs/promises';
-import {join} from 'node:path';
-const approval={
-  reference:'staging-demo-parity-authorized-2026-10-11',
-  approverReference:'task-owner:staging-demo-parity-approved-2026-10-11',
-  approvedAt:new Date().toISOString()
-};
-await writeFile(join(process.argv[2],'business-approval.json'),JSON.stringify(approval),{flag:'wx',mode:0o600});
-JS
-```
+A historical import refuses an already covered month or current heads that conflict with the certified full month. Resolve those through reviewed operational reconciliation; do not overwrite heads, reset the cursor, disable guards or weaken tolerances. A source lease loss never authorizes continuing an incomplete extraction with a different snapshot.
 
-Skip this creation command if the job already has its approval. Existing approvals are immutable; conflicting approval files must be recovered rather than overwritten.
+## Staging execution and acceptance
 
-Define a reusable operator wrapper with durable checkpoints:
+Use [the controlled rollout](staging-loading-rollout.md) for current pinned-image preparation, backup requirements, protected paths and per-month operator commands. Keep the stopped sync evidence until loading is verified. No scheduler is introduced.
 
-```sh
-history_operator() {
-  docker run --rm --network "$STAGING_DATABASE_NETWORK" \
-    --env-file "$STAGING_OPERATOR_ENV_FILE" \
-    --env-file "$ODOO_SOURCE_ENV_FILE" \
-    -e ENVIRONMENT=staging -e CONTROL_PROVIDER=postgres \
-    --mount "type=bind,src=$HISTORY_CHECKPOINT_DIR,dst=/history" \
-    --read-only --tmpfs /tmp \
-    --entrypoint node "$STAGING_API_IMAGE" \
-    --experimental-transform-types --disable-warning=ExperimentalWarning "$@"
-}
-```
-
-1. Backfill/reconcile monthly candidates. This does not publish or bind. The hosted job uses the maximum bounded 1,000-row Odoo page and consolidated exact control scans so the retained snapshot is spent on evidence rather than repeated source scans. Failed/incomplete attempts remain immutable; after their lease guard expires, rerun the affected range with `--retry-incomplete`.
-
-```sh
-history_operator scripts/integration/historical-backfill.ts backfill \
-  --tenant el-dabboos-iq --from 2025-10-01 --to 2026-09-30 \
-  --checkpoint-dir /history
-```
-
-2. Certify, approve, certify derived ratios and record in-place receipts:
-
-```sh
-history_operator scripts/integration/historical-publish.ts backfill \
-  --tenant el-dabboos-iq --from 2025-10-01 --to 2026-09-30 \
-  --checkpoint-dir /history --in-place
-```
-
-3. Activate the separate immutable collection after all 24 receipts exist:
-
-```sh
-history_operator --input-type=module -e '
-process.env.MART_PUBLICATION_TARGET_URL=process.env.MART_MIGRATOR_URL;
-process.argv=[process.argv[0],"scripts/integration/historical-activate.ts","backfill","--tenant","el-dabboos-iq","--from","2025-10-01","--to","2026-09-30","--checkpoint-dir","/history"];
-await import("./scripts/integration/historical-activate.ts");'
-```
-
-4. Publish all twelve customer Finance month-end snapshots. Already published snapshots are skipped; each new cutoff requires the exact activated summary and independent read-only source controls:
-
-```sh
-history_operator scripts/integration/finance-snapshots.ts
-```
-
-5. Read status using the dedicated runtime role:
-
-```sh
-history_operator apps/api/src/analytics-status-cli.ts status --tenant el-dabboos-iq
-```
-
-Require non-null `historicalCoverage` with `from=2025-10-01`, `to=2026-09-30`; require twelve `financeSnapshots` from `2025-10-31` through `2026-09-30`. Compare operational `cursor` and `trustedServingRevision` with the saved pre-operation status: historical operations must not move them. The prior handoff revision is `7440590f-cf8a-465f-b240-a9e6aff7a457`; use the fresh pre-operation value if another authorized operational sync occurred.
-
-Finally verify `/health/ready` through the established staging HTTPS URL and sign in with the existing authorized staging identity. Check all twelve reports in both supported locales, historical monthly and customer analysis, Finance cutoff selection, and current Sep/Oct reporting. Check an unauthenticated request and a principal without tenant membership remain denied. Record these as **manual hosted evidence**, separate from synthetic tests. Employee provisioning is a separate task.
-
-## Deployment blockers and evidence limits
-
-No hosted extraction, approval, activation or customer publication is performed by the PR itself. Final hosted acceptance requires the merged API image, protected source connectivity, the retained hosted checkpoints/approval, all exact monthly certifications and receipts, existing customer Finance anchor capability, and successful operator commands above. Source control mismatches block publication; they never justify new metric semantics, fabricated controls, cursor rewinds or deletion of volumes. Runtime-role grants/RLS must remain those from the established staging migration workflow. Do not re-bootstrap operational serving to widen coverage: that operation is intentionally idempotent and does not import history into an existing baseline.
+Require all 28 closed fact months plus existing October coverage, zero pending aggregate partitions, unchanged operational cursor during historical imports, and independent exact customer snapshots for the intended cutoffs. Each trusted revision change must correspond to passing monthly or customer evidence. Verify all twelve reports in English and Arabic, company 1 / IQD, date and dimension filters, drill-through, saved dashboard lifecycle and role-scoped denial. Record real source equality, month timings and browser acceptance as hosted evidence; synthetic fixtures alone do not prove staging parity.
