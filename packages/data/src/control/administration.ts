@@ -51,7 +51,7 @@ export class PostgresAdministrationStore implements AdministrationUnitOfWork {
             bootstrapCompleted: async () => Boolean(await connection.one("SELECT 1 FROM bootstrap_state WHERE id='completed'")),
             initializeProtectedRoles: timestamp => initializeProtectedRoles(connection,timestamp),
             completeBootstrap: async (reference,timestamp) => { await connection.run('INSERT INTO bootstrap_state VALUES (?,?,?)','completed',reference,timestamp); },
-            createAssignmentCandidate: async (tenantId,userId) => { await connection.run('INSERT INTO tenant_assignment_candidates VALUES (?,?)',tenantId,userId); },
+            createAssignmentCandidate: async (tenantId,userId) => { await connection.run('INSERT INTO tenant_assignment_candidates VALUES (?,?) ON CONFLICT DO NOTHING',tenantId,userId); },
         });
     }
 }

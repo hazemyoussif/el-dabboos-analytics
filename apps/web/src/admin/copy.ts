@@ -17,6 +17,8 @@ export function administrationLabel(value: string, locale: Locale): string {
 }
 
 const errors: Record<string, readonly [string, string]> = {
+    USER_PROVISIONING_FAILED: ['Unable to create this user. Review the email and account state.', 'تعذر إنشاء المستخدم. راجع البريد الإلكتروني وحالة الحساب.'],
+    USER_PROVISIONING_LIMITED: ['Too many user creation attempts. Try again shortly.', 'محاولات إنشاء المستخدمين كثيرة. حاول بعد قليل.'],
     VERSION_CONFLICT: ['This record changed. Reload and review before saving again.', 'تغير هذا السجل. أعد التحميل وراجع التغييرات قبل الحفظ مجدداً.'],
     ACCESS_DENIED: ['You do not have access to this action.', 'ليس لديك صلاحية لهذا الإجراء.'],
     NOT_FOUND: ['This resource is unavailable.', 'هذا المورد غير متاح.'],
