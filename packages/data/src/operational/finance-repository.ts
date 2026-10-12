@@ -13,12 +13,38 @@ export class FinanceSnapshotRepository {
  constructor(private readonly pool:Pool,private readonly timeout=15000,private readonly maxGroups=3000){}
  async capabilities(context:AnalyticsContext):Promise<PublishedAnalyticsCapabilities|null>{
   return tenantTransaction(this.pool,context.tenantId,async client=>{
-   const row=(await client.query(`SELECT min(publication.snapshot_date)::text first,max(publication.snapshot_date)::text last,anchor.capabilities
-    FROM mart.finance_snapshot_publications publication JOIN mart.analytics_anchor_capabilities anchor USING(tenant_id)
-    WHERE publication.tenant_id=$1 GROUP BY anchor.capabilities`,[context.tenantId])).rows[0];
-   if(!row)return null;
-   const original=row.capabilities as PublishedAnalyticsCapabilities;
-   return {...original,releases:original.releases.map(release=>({...release,datasetId:'trusted-finance-snapshots',period:{from:row.first,to:row.last},selectionSemantics:'latest_snapshot' as const,capabilities:release.capabilities.filter(capability=>financeMetric(capability.metric)).map(capability=>({...capability,dimensions:[...new Set([...capability.dimensions,'month' as const])]}))}))};
+   const row=(await client.query(`
+    SELECT min(publication.snapshot_date)::text first,max(publication.snapshot_date)::text last,
+      min(mapping.source_id) source_id,
+      min(COALESCE(binding.reference,mapping.approval_reference)) certification_reference
+    FROM mart.finance_snapshot_publications publication
+    JOIN mart.finance_snapshot_evidence evidence
+      ON evidence.tenant_id=publication.tenant_id AND evidence.snapshot_id=publication.snapshot_id
+    JOIN mart.mapping_releases mapping
+      ON mapping.tenant_id=evidence.tenant_id AND mapping.dataset_id=evidence.anchor_dataset
+    LEFT JOIN mart.historical_release_members member
+      ON member.tenant_id=evidence.tenant_id AND member.dataset_id=evidence.anchor_dataset AND member.kind='aging'
+    LEFT JOIN mart.historical_serving_bindings binding
+      ON binding.tenant_id=member.tenant_id AND binding.reference=member.reference
+    WHERE publication.tenant_id=$1
+   `,[context.tenantId])).rows[0];
+   if(!row?.first||!row?.last)return null;
+   const customerMetrics=new Set(receivableMeasures.filter(metric=>!['gross_open_receivable_components','credit_balances'].includes(metric)));
+   const capabilities=[...receivableMeasures,'overdue_receivable_percentage' as const].map(metric=>({
+    metric,summary:true,
+    dimensions:[...(customerMetrics.has(metric as typeof receivableMeasures[number])||metric==='overdue_receivable_percentage'?['customer' as const]:[]),'month' as const],
+    analyses:['ranking','topN','percentageContribution'] as const
+   }));
+   return {tenantId:context.tenantId,mode:'certified',releases:[{
+    datasetId:'trusted-finance-snapshots',
+    sourceId:row.source_id,
+    mappingId:'trusted-finance-customer-snapshot',
+    mappingVersion:'1',
+    certificationReference:row.certification_reference,
+    period:{from:row.first,to:row.last},
+    selectionSemantics:'latest_snapshot',
+    capabilities
+   }]};
   },true,this.timeout);
  }
  async execute(query:AnalyticsQuery,context:AnalyticsContext,capabilities:PublishedAnalyticsCapabilities):Promise<AnalyticsResult>{
