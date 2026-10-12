@@ -1,6 +1,6 @@
 import type { PoolClient } from 'pg';
 import type { FactRevisionChange,ProductionFact } from '@el-dabboos/domain';
-import { persistOperationalFact } from './facts.ts';
+import { persistOperationalFacts } from './facts.ts';
 import type { OperationalBaseline,OperationalSnapshot } from './contracts.ts';
 /** Bounded checks of distinct governed identities. Load payloads only for missing IDs. */
 export async function sweepOperationalFacts(client:PoolClient,baseline:OperationalBaseline,source:OperationalSnapshot) {
@@ -9,11 +9,11 @@ export async function sweepOperationalFacts(client:PoolClient,baseline:Operation
   const present=new Set(page.present),missing=page.ids.filter(id=>!present.has(id));if(!missing.length)continue;
   const rows=(await client.query(`SELECT revision.payload FROM mart.analytics_fact_heads head JOIN mart.analytics_fact_revisions revision USING(tenant_id,fact_key,revision_id)
    WHERE head.tenant_id=$1 AND head.source_object=$2 AND head.status='active' AND head.source_record_id=ANY($3::text[])`,[baseline.tenantId,object,missing])).rows;
-  for(const row of rows) {
+  const retired=rows.map(row=>{
    const previous=row.payload as ProductionFact;
-   const next={...previous,status:'tombstone' as const,sourceRevision:String(BigInt(Date.parse(source.cutoff))*1000n),sourceVersion:`presence:${source.cutoff}`,sourceUpdatedAt:source.cutoff,sourceAsOf:source.cutoff,frozenRevision:source.revision,batchId:`sweep:${source.cutoff}`};
-   const change=await persistOperationalFact(client,baseline,next);if(change)changes.push(change);
-  }
+   return {...previous,status:'tombstone' as const,sourceRevision:String(BigInt(Date.parse(source.cutoff))*1000n),sourceVersion:`presence:${source.cutoff}`,sourceUpdatedAt:source.cutoff,sourceAsOf:source.cutoff,frozenRevision:source.revision,batchId:`sweep:${source.cutoff}`};
+  });
+  changes.push(...await persistOperationalFacts(client,baseline,retired));
  }
  return changes;
 }
