@@ -17,7 +17,7 @@ export async function discoverCustomers(pool:Pool,context:AnalyticsContext,reque
   let input:string,identity:string,label:string;
   if(finance){
    params.push(request.asOf??'9999-12-31');
-   input=`mart.finance_snapshot_customers customer JOIN (SELECT * FROM mart.finance_snapshot_publications WHERE tenant_id=$1 AND snapshot_date<=$2::date ORDER BY snapshot_date DESC LIMIT 1) publication USING(tenant_id,snapshot_id)`;
+   input=`mart.finance_snapshot_customers customer JOIN (SELECT * FROM mart.trusted_finance_snapshots WHERE tenant_id=$1 AND snapshot_date<=$2::date ORDER BY snapshot_date DESC LIMIT 1) publication USING(tenant_id,snapshot_id)`;
    const filters=financeFilters({metric},context,params);input+=` WHERE customer.tenant_id=$1 AND ${filters}`;identity='customer.customer_id';label='customer.label';
   }else{
    params.push(requiredMeasures(metric));const measures=`$${params.length}`;

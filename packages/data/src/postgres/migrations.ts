@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readdir, readFile } from 'node:fs/promises';
 import type { Pool } from 'pg';
+import { adoptLegacyServing } from '../operational/adoption.ts';
 
 export const migrationDirectory = new URL('../../migrations/postgres/', import.meta.url);
 /** Lock, ledger discovery and all migrations use one checked-out session. */
@@ -25,6 +26,7 @@ export async function migratePostgres(pool: Pool, directory: URL = migrationDire
       await client.query('BEGIN');
       try {
         await client.query(m.sql);
+        if(m.name==='040_unified_serving.sql')await adoptLegacyServing(client);
         await client.query('INSERT INTO mart_admin.mart_schema_migrations(version,name,sha256) VALUES ($1,$2,$3)', [m.version, m.name, m.checksum]);
         await client.query('COMMIT'); applied.push(m.version);
       } catch (error) { await client.query('ROLLBACK'); throw error; }

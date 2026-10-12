@@ -9,10 +9,9 @@ import {publishFinanceSnapshot} from '../../src/operational/finance-publication.
 import type {FinanceSnapshotEvidence} from '../../src/operational/finance-publication.ts';
 import {TrustedAnalyticsRepository} from '../../src/operational/repository.ts';
 import {receivableMeasures} from '../../src/receivable-aging.ts';
-import {resolveFinanceAnchor} from '../../src/operational/finance-anchor.ts';
 function evidence(date:string,count=1):FinanceSnapshotEvidence {
  const values=Object.fromEntries(receivableMeasures.map(measure=>[measure,['net_aged_receivable','aged_at_date','gross_open_receivable_components'].includes(measure)?'100.000000':'0.000000']));
- return {tenantId:'a',date,anchorDataset:'release',currency:'IQD',sourceCutoff:'2026-10-08T00:21:08.728Z',sourceRevision:'synthetic-retained-snapshot',totals:Object.fromEntries(receivableMeasures.map(measure=>[measure,['net_aged_receivable','aged_at_date','gross_open_receivable_components'].includes(measure)?`${count*100}.000000`:'0.000000'])),customers:Array.from({length:count},(_,index)=>({id:`fixture:${String(index).padStart(5,'0')}`,label:`Customer ${index}`,actual:values,expected:{...values}}))};
+ return {tenantId:'a',date,currency:'IQD',sourceCutoff:'2026-10-08T00:21:08.728Z',sourceRevision:'synthetic-retained-snapshot',totals:Object.fromEntries(receivableMeasures.map(measure=>[measure,['net_aged_receivable','aged_at_date','gross_open_receivable_components'].includes(measure)?`${count*100}.000000`:'0.000000'])),customers:Array.from({length:count},(_,index)=>({id:`fixture:${String(index).padStart(5,'0')}`,label:`Customer ${index}`,actual:values,expected:{...values}}))};
 }
 async function fixture(){
  const db=await database(),specification=mapping();
@@ -20,19 +19,10 @@ async function fixture(){
  specification.measures=receivableMeasures.map(measureId=>({...rule,measureId,dimensionMappings:{customer:'Synthetic governed identity'}}));
  specification.capabilities=receivableMeasures.map(metric=>({metric,dimensions:['customer','month']}));
  await deploy(db.migrator,specification);
- const capabilities={tenantId:'a',mode:'certified',releases:[{datasetId:'release',sourceId:'fixture',mappingId:'synthetic',mappingVersion:'1',certificationReference:'SYNTHETIC TEST ONLY',period:{from:'2026-01-01',to:'2026-01-31'},capabilities:receivableMeasures.map(metric=>({metric,summary:true,dimensions:['customer','month'],analyses:['ranking','topN','percentageContribution']}))}]};
- await tenantTransaction(db.migrator,'a',client=>client.query('INSERT INTO mart.analytics_anchor_capabilities VALUES($1,$2,$3)',['a','release',JSON.stringify(capabilities)]));
  await bootstrapOperationalServing(db.migrator,'a');
  return {db,repository:new TrustedAnalyticsRepository(db.runtime,{reportingCurrencies:{a:'IQD'}})};
 }
-test('Finance anchor resolves from the current certified tenant capability and fails closed on incompatible currency',{skip:!enabled},async()=>{
- const {db}=await fixture();try {
-  assert.equal(await resolveFinanceAnchor(db.migrator,'a','IQD'),'release');
-  await assert.rejects(resolveFinanceAnchor(db.migrator,'a','EGP'),/Current certified customer Finance anchor required/);
- }finally{await db.close();}
-});
-
-test('separate exact customer snapshots resolve historical, middle-date, latest and absent cutoffs without rewriting certificates',{skip:!enabled},async()=>{
+test('unified exact customer snapshots resolve historical, middle-date, latest and absent cutoffs without rewriting certificates',{skip:!enabled},async()=>{
  const {db,repository}=await fixture();try {
   const prior=(await db.admin.query('SELECT specification FROM mart.release_certifications')).rows;
   for(const date of ['2025-10-31','2026-01-31','2026-05-31','2026-06-30','2026-09-30'])await publishFinanceSnapshot(db.migrator,evidence(date));
@@ -118,5 +108,25 @@ test('AI Analyst direct Finance execution pins latest trusted snapshot <= Oct 8 
   assert.ok('analyses' in scoped);const ranked=scoped.analyses[0]!.series[0]!;assert.notEqual(ranked.status,'EXECUTION_FAILED');if(ranked.status!=='EXECUTION_FAILED')assert.deepEqual(ranked.result.rows.map(row=>row.key),['fixture:00001']);
   const missing=await executor.execute({...intent,context:{dateRange:{from:'2025-01-01',to:'2025-01-01'}}},identity);assert.equal(missing.status,'DATA_NOT_READY');
   process.stdout.write(`analytics-intent-benchmark ${JSON.stringify(output.timing)}\n`);
+ }finally{await db.close();}
+});
+
+test('snapshot candidate preserves facts, replaces only its month, and rejects bad controls and non-month-end evidence',{skip:!enabled},async()=>{
+ const {db,repository}=await fixture();
+ try{
+  assert.equal((await db.admin.query('SELECT * FROM mart.analytics_anchor_capabilities')).rowCount,0);
+  const membership=async()=> (await db.admin.query('SELECT member.month::text,member.family,member.partition_id,trusted.revision_id FROM mart.analytics_trusted_serving trusted JOIN mart.analytics_serving_members member USING(tenant_id,revision_id) ORDER BY month,family')).rows;
+  await publishFinanceSnapshot(db.ingestor,evidence('2026-08-31'));await publishFinanceSnapshot(db.ingestor,evidence('2026-09-30'));
+  const before=await membership();
+  const bad=evidence('2026-07-31');bad.totals.net_aged_receivable='99.000000';
+  await assert.rejects(publishFinanceSnapshot(db.ingestor,bad),/Exact governed Finance summary/);assert.deepEqual(await membership(),before);
+  await assert.rejects(publishFinanceSnapshot(db.ingestor,evidence('2026-07-30')),/finance_month_end/);assert.deepEqual(await membership(),before);
+  await assert.rejects(publishFinanceSnapshot(db.ingestor,evidence('2026-07-31'),async()=>{throw new Error('retained source lost');}),/retained source lost/);assert.deepEqual(await membership(),before);
+  await publishFinanceSnapshot(db.ingestor,evidence('2026-08-31',2));
+  const after=await membership();
+  for(const prior of before){const next=after.find(row=>row.month===prior.month&&row.family===prior.family)!;assert.notEqual(next.revision_id,prior.revision_id);if(prior.month==='2026-08-01')assert.notEqual(next.partition_id,prior.partition_id);else assert.equal(next.partition_id,prior.partition_id);}
+  assert.equal((await repository.execute({metric:'net_aged_receivable',dateRange:{from:'2026-08-01',to:'2026-08-31'}},{tenantId:'a',locale:'en'})).rows[0]?.value,200);
+  assert.equal((await db.admin.query('SELECT * FROM mart.finance_snapshot_publications')).rowCount,0);
+  await assert.rejects(tenantTransaction(db.ingestor,'a',client=>client.query("INSERT INTO mart.analytics_serving_members SELECT tenant_id,revision_id,'2026-07-01',partition_id,family FROM mart.analytics_serving_members WHERE family='receivables' LIMIT 1")),/Partition identity mismatch|immutable/);
  }finally{await db.close();}
 });

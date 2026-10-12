@@ -1,4 +1,4 @@
-import { migratePostgres } from '../../src/postgres/migrations.ts';
+import { loadPostgresMigrations } from '../../src/postgres/migrations.ts';
 import { persistOperationalFact } from '../../src/operational/facts.ts';
 import { TrustedDrillThroughRepository } from '../../src/operational/drill-through.ts';
 import test from 'node:test';
@@ -147,14 +147,14 @@ test('covered zero events differ from unavailable future partitions and valid la
  }finally{await f.db.close();}
 });
 
-test('derived certification added after operational bootstrap becomes visible without rewriting the immutable anchor snapshot',{skip:!enabled},async()=>{
+test('unattached derived certification cannot change trusted revision capabilities',{skip:!enabled},async()=>{
  const f=await setup('fixture',true,false,undefined,false,false);try {
   const context={tenantId:'a',locale:'en' as const};
   assert.equal((await f.repository.getPublishedCapabilities(context)).releases.flatMap(release=>release.capabilities).some(capability=>capability.metric==='average_confirmed_order_value'),false);
   const {PostgresDerivedMetricCertification}=await import('../../src/postgres/derived-certification.ts');
   await new PostgresDerivedMetricCertification(f.db.migrator).record({tenantId:'a',datasetId:'release',mappingVersion:'1',reference:'SYNTHETIC-OPERATIONAL-RATIO-LATE',metric:'average_confirmed_order_value',grouping:null,from:'2026-01-01',to:'2026-01-31',caseIds:['fixture-certification-order_revenue','fixture-certification-order_count'],approvalReference:'SYNTHETIC-APPROVER',approvedAt:clock().toISOString(),businessSemantics:'Synthetic exact full-period ratio',technicalReference:'synthetic-controls'});
   await tenantTransaction(f.db.migrator,'a',client=>client.query("SELECT mart.refresh_proof_results('a','release')"));
-  assert.equal((await f.repository.getPublishedCapabilities(context)).releases.flatMap(release=>release.capabilities).some(capability=>capability.metric==='average_confirmed_order_value'),true);
+  assert.equal((await f.repository.getPublishedCapabilities(context)).releases.flatMap(release=>release.capabilities).some(capability=>capability.metric==='average_confirmed_order_value'),false);
  }finally{await f.db.close();}
 });
 
@@ -511,8 +511,8 @@ test('drill lineage migration backfills exact populated partitions and refuses i
    DROP INDEX mart.analytics_serving_members_partition_lookup;
    DROP POLICY IF EXISTS trusted_only ON mart.analytics_fact_revisions;
    REVOKE SELECT ON mart.analytics_fact_revisions FROM dabboos_runtime;
-   DELETE FROM mart_admin.mart_schema_migrations WHERE version>=35`);
-  assert.deepEqual(await migratePostgres(fixture.db.migrator),[35,36,37,38,39]);
+   DELETE FROM mart_admin.mart_schema_migrations WHERE version>=35 AND version<40`);
+  for(const migration of (await loadPostgresMigrations()).filter(migration=>migration.version>=35&&migration.version<40))await fixture.db.migrator.query(migration.sql);
   const drill=new TrustedDrillThroughRepository(fixture.db.runtime,scope=>fixture.repository.getPublishedCapabilities(scope));
   await assert.rejects(drill.drill({query:january,release,sourceAsOf:summary.metadata.sourceAsOf!},context),/DRILL_NOT_READY/);
   const exact=await drill.drill({query:february,release,sourceAsOf:summary.metadata.sourceAsOf!},context);assert.equal(exact.value,'50.000000');
@@ -538,4 +538,23 @@ test('AI Analyst direct event grouping uses trusted serving and forced scoped RL
   assert.ok('analyses' in output,JSON.stringify(output));const entry=output.analyses[0]!.series[0]!;assert.notEqual(entry.status,'EXECUTION_FAILED');if(entry.status!=='EXECUTION_FAILED'){assert.deepEqual(entry.result.rows.map(row=>[row.key,row.value]),[['rep:a',100]]);assert.ok(entry.result.metadata.release);}
   const hidden=await tenantTransaction(f.db.runtime,'b',client=>client.query('SELECT * FROM mart.analytics_aggregate_bases'),true);assert.equal(hidden.rowCount,0);
  }finally{await f.db.close();}
+});
+
+test('one retroactive month replaces its partition while every other trusted month is reused',{skip:!enabled},async()=>{
+ const fixture=await setup();
+ try{
+  fixture.source.rows=[januaryFact(),januaryFact({sourceRecordId:'february',businessDate:'2026-02-10',value:'50.000000'})];
+  const first=await fixture.run();assert.equal(first.status,'passed');
+  const membership=async()=> (await fixture.db.admin.query("SELECT trusted.revision_id,member.month::text,member.partition_id FROM mart.analytics_trusted_serving trusted JOIN mart.analytics_serving_members member USING(tenant_id,revision_id) WHERE member.family='facts' ORDER BY member.month")).rows;
+  const before=await membership();assert.equal(before.length,2);
+  fixture.source.rows=[januaryFact({value:'200.000000',sourceVersion:'retroactive',sourceRevision:'3'})];
+  const second=await fixture.run();assert.equal(second.status,'passed');
+  const after=await membership();assert.notEqual(after[0].revision_id,before[0].revision_id);
+  assert.notEqual(after[0].partition_id,before[0].partition_id);assert.equal(after[1].partition_id,before[1].partition_id);
+  assert.equal(await januaryValue(fixture.repository),200);
+  const detail=(await fixture.db.admin.query('SELECT details FROM mart.analytics_run_details WHERE run_id=$1',[second.runId])).rows[0].details;
+  assert.deepEqual(detail.refreshedMonths,['2026-01']);
+  fixture.source.rows=[januaryFact({value:'300.000000',sourceVersion:'failed-retroactive',sourceRevision:'4'})];fixture.source.failControls=true;
+  assert.equal((await fixture.run()).status,'failed');assert.deepEqual(await membership(),after);assert.equal(await januaryValue(fixture.repository),200);
+ }finally{await fixture.db.close();}
 });

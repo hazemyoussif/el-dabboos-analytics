@@ -6,7 +6,7 @@ import { persistOperationalFact,retiredOperationalFacts } from './facts.ts';
 export async function ingestOperationalCandidate(client:PoolClient,scope:{baseline:OperationalBaseline;source:OperationalSnapshot;cursor:AnalyticsCursor|null;details:OperationDetails;parent:string|null}) {
  const {baseline,source,cursor,details,parent}=scope;
  const start=performance.now(),objects={...cursor?.objects};details.previousCursor=cursor;
- const months=(await client.query("SELECT to_char(month,'YYYY-MM') AS period FROM mart.analytics_serving_members WHERE tenant_id=$1 AND revision_id=$2",[baseline.tenantId,parent])).rows.map(row=>String(row.period));
+ const months=(await client.query("SELECT to_char(month,'YYYY-MM') AS period FROM mart.analytics_serving_members WHERE tenant_id=$1 AND revision_id=$2 AND family='facts'",[baseline.tenantId,parent])).rows.map(row=>String(row.period));
  const knownMonths=new Set(months);
  const candidate=new CandidateFacts(client,baseline,details,knownMonths);
  for(const month of missingOperationalMonths(baseline,source.cutoff,knownMonths))candidate.newMonths.add(month);
