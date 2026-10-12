@@ -10,14 +10,14 @@ closed. No accepted SQL or checksum is changed by milestone finalization.
 
 | Store | Current head | Registration / readiness | Explicit execution |
 | --- | --- | --- | --- |
-| PostgreSQL analytics mart | 042 `empty_finance_snapshots` | [Manifest/runner](../../packages/data/src/postgres/migrations.ts), [runtime readiness](../../packages/data/src/postgres/readiness.ts) | `pnpm mart:migrate`; staging uses `pnpm staging migrate` |
+| PostgreSQL analytics mart | 043 `scoped_derived_inputs` | [Manifest/runner](../../packages/data/src/postgres/migrations.ts), [runtime readiness](../../packages/data/src/postgres/readiness.ts) | `pnpm mart:migrate`; staging uses `pnpm staging migrate` |
 | PostgreSQL control | 008 `analyst_conversations` | [Manifest/runner/readiness](../../packages/data/src/control/migrations.ts) | `pnpm control migrate`; staging uses `pnpm staging migrate` |
 | SQLite governed metadata | 005 `analyst` | [Explicit registry/readiness](../../packages/data/src/metadata/migrations.ts) | `pnpm metadata:migrate <metadata-db-path>` against approved metadata storage |
 
 The mart history includes production roles/forced RLS (001–008), certification,
 published capabilities and exact receivable proofs (009–024), historical and
 operational trusted serving (025–030), Finance snapshot invariants/freeze
-(031–033), event rollups (034), drill lineage/access paths (035–038), historical anchor correction (039), unified serving (040), bounded historical imports (041), and independently proven empty Finance snapshots (042).
+(031–033), event rollups (034), drill lineage/access paths (035–038), historical anchor correction (039), unified serving (040), bounded historical imports (041), independently proven empty Finance snapshots (042), and dataset-scoped exact ratio reconstruction (043).
 Control 007 owns local authentication; 008 owns private analyst conversations and
 atomic question audit. SQLite metadata 005 provides the compatibility analyst
 history path. Demo analytics initialization is separate from governed metadata;

@@ -10,7 +10,7 @@ const published: PublishedAnalyticsCapabilities = {tenantId:'demo-iq',mode:'cert
 test('historical templates use canonical monthly queries, existing filters and bilingual help metrics; no YoY or many-person line plot',()=>{
   for (const template of historicalTemplates) {
     assert.ok(template.name.en && template.name.ar);
-    for (const locale of ['en','ar'] as const) validateDashboardSpec(instantiateDashboardTemplate(template,tenantProfiles['demo-iq']!,new Date('2026-10-07T00:00:00Z'),locale,published));
+    for (const locale of ['en','ar'] as const) validateDashboardSpec(instantiateDashboardTemplate(template,tenantProfiles['demo-iq']!,new Date('2026-10-07T00:00:00Z'),locale));
     assert.ok(template.widgets.filter(widget=>widget.type==='line').every(widget=>widget.dimension==='month' && widget.series.length<=2));
     assert.ok(template.widgets.every(widget=>widget.series.every(series=>!series.analysis?.comparison)));
   }

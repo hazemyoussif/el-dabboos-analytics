@@ -5,7 +5,7 @@ function monthly(id: string, metrics: readonly MetricId[], title: LocalizedText)
   return {id,type:'line',dimension:'month',title,series:metrics.map(metric=>({id:metric,metric}))};
 }
 function historical(id: string, name: LocalizedText, description: LocalizedText, widgets: DashboardWidget[]): DashboardTemplate {
-  return {id,name,description,domain:'sales',tags:['management','historical'],datePreset:'last_12_months',periodStrategy:'certified',layout:{columns:2},widgets};
+  return {id,name,description,domain:'sales',tags:['management','historical'],datePreset:'current_year',periodStrategy:'certified',layout:{columns:2},widgets};
 }
 function selectedIdentity(id: string, name: LocalizedText, dimension: 'business_line'|'salesperson'|'customer', description: LocalizedText): DashboardTemplate {
   return historical(id,name,description,[

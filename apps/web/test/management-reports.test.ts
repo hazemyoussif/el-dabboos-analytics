@@ -54,3 +54,18 @@ test('management navigation disables incompatible templates instead of retaining
   assert.match(html,/disabled/);
  } finally {await server.close();}
 });
+
+
+test('report default date control displays Relative and This year in English and Arabic',async()=>{
+ const server=await createServer({root:fileURLToPath(new URL('../',import.meta.url)),server:{middlewareMode:true},optimizeDeps:{noDiscovery:true},appType:'custom'});
+ try {
+  const {DatePeriodControl}=await server.ssrLoadModule('/src/DatePeriodControl.tsx');
+  for(const locale of ['en','ar']){
+   const html=renderToStaticMarkup(createElement(DatePeriodControl,{filters:{datePreset:'current_year'},timeZone:'Asia/Baghdad',locale,onChange(){throw new Error('render only');}}));
+   assert.match(html,/<option value="relative" selected="">/);
+   assert.match(html,/<option value="current_year" selected="">/);
+   assert.ok(html.includes(locale==='en'?'This year':'هذه السنة'));
+   assert.ok(!html.includes('type="date"'));
+  }
+ }finally{await server.close();}
+});
