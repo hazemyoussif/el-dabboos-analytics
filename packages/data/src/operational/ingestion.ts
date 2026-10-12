@@ -1,7 +1,7 @@
 import type { PoolClient } from 'pg';
 import type { AnalyticsCursor,FactRevisionChange,ProductionFact } from '@el-dabboos/domain';
 import type { OperationDetails,OperationalBaseline,OperationalSnapshot } from './contracts.ts';
-import { persistOperationalFact,retiredOperationalFacts } from './facts.ts';
+import { persistOperationalFacts,retiredOperationalFacts } from './facts.ts';
 /** New calendar partitions need a complete initial base; existing months use changed identities only. */
 export async function ingestOperationalCandidate(client:PoolClient,scope:{baseline:OperationalBaseline;source:OperationalSnapshot;cursor:AnalyticsCursor|null;details:OperationDetails;parent:string|null}) {
  const {baseline,source,cursor,details,parent}=scope;
@@ -26,15 +26,15 @@ class CandidateFacts {
  readonly changes:FactRevisionChange[]=[];readonly newMonths=new Set<string>();readonly identities=new Set<string>();
  constructor(private readonly client:PoolClient,private readonly baseline:OperationalBaseline,private readonly details:OperationDetails,private readonly knownMonths:ReadonlySet<string>){}
  async accept(facts:readonly ProductionFact[]) {
-  for(const fact of facts) {
-   const change=await persistOperationalFact(this.client,this.baseline,fact);if(!change)continue;
+  const changes=await persistOperationalFacts(this.client,this.baseline,facts);
+  for(const change of changes) {
+   const fact=change.next;
    if(fact.status==='active'&&!this.knownMonths.has(fact.businessDate.slice(0,7)))this.newMonths.add(fact.businessDate.slice(0,7));
    this.changes.push(change);const key=JSON.stringify([fact.sourceObject,fact.sourceRecordId]);
    if(!this.identities.has(key)){this.identities.add(key);if(change.previous)this.details.updatedRows++;else this.details.newRows++;}
   }
  }
 }
-
 
 export function missingOperationalMonths(
  baseline:Pick<OperationalBaseline,'to'|'mappings'>,
