@@ -14,7 +14,11 @@ Failed reconciliation or a lost source lease rolls back the entire candidate.
 
 Capabilities come from approved definitions and exact evidence attached to trusted
 partitions. Late certificates do not expand an already trusted revision. Summary
-aging does not certify customer grouping. Customer snapshots require independent
+aging does not certify customer grouping. Exact customer vectors grant only dimensions
+approved in the stored mapping: summary-only metrics remain summary-only for
+customer queries and discovery. Snapshot month trends retain the approved calendar
+projection. Analyses are restricted to the approved capability and executor support.
+Customer snapshots require independent
 customer controls, exact customer-to-company totals, closed signed buckets and
 month-end dates. Summary queries choose the latest eligible trusted snapshot;
 customer queries select only customer evidence. At the same date, customer evidence
@@ -22,8 +26,16 @@ supersedes the summary grain rather than being summed with it.
 
 ## Migration 040
 
-The SQL extension and `adoptLegacyServing` data step execute on the migration
-runner's same connection and transaction, before ledger version 040 is recorded.
+The SQL extension and adoption data step execute on the migration runner's same
+connection and transaction, before ledger version 040 is recorded. The version-specific
+`040_unified_serving.adoption.cjs` companion is a self-contained bundle of adoption
+and its application dependencies, frozen before deployment. Version 040's SHA-256
+fingerprints the SQL, companion filename and full companion bytes as a JSON object;
+the runner executes those same loaded bytes. Other SQL migration fingerprints remain
+unchanged. Runtime bootstrap code changes cannot alter applied adoption behavior.
+Do not regenerate the companion after deployment; changes require a new migration.
+The pre-deployment companion was generated from `operational/adoption.ts` using
+esbuild 0.28.2 with `bundle: true`, `platform: node`, `format: cjs` and tree shaking.
 Use the migration runner, not an isolated execution of the SQL file. No source
 connection is opened. Adoption validates stored business and zero-tolerance
 reconciliation certificates, imports existing canonical facts, verifies current

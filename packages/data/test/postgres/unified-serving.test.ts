@@ -2,7 +2,7 @@ import {publishFinanceSnapshot} from '../../src/operational/finance-publication.
 import {receivableMeasures} from '../../src/receivable-aging.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,cp,rm} from 'node:fs/promises';
+import {mkdtemp,cp,rm,readFile,writeFile} from 'node:fs/promises';
 import {pathToFileURL} from 'node:url';
 import {database,enabled} from './support.ts';
 import {mapping,deploy} from './fixtures.ts';
@@ -53,7 +53,7 @@ test('forward migration adopts certified historical events and aging beside oper
   // A customer snapshot supersedes the same-date summary, without hiding later or earlier summaries.
   assert.equal((await repository.execute({metric:'net_aged_receivable',dateRange:range},context)).rows[0]?.value,900);
   assert.deepEqual((await repository.execute({metric:'net_aged_receivable',groupBy:'month',dateRange:{from:'2025-10-01',to:'2025-12-31'}},context)).rows.map(row=>row.value),[900,100,900]);
-  assert.equal((await repository.execute({metric:'net_aged_receivable',groupBy:'customer',dateRange:range},context)).rows[0]?.value,100);
+  await assert.rejects(repository.execute({metric:'net_aged_receivable',groupBy:'customer',dateRange:range},context),/Uncertified/); // Exact rows do not expand the approved summary-only mapping.
 
   assert.deepEqual((await db.admin.query('SELECT * FROM mart.historical_release_members ORDER BY period_from,kind')).rows,original);
   assert.equal((await db.admin.query('SELECT count(*)::int count FROM mart.analytics_trusted_serving')).rows[0].count,1);
@@ -86,4 +86,26 @@ test('migration adopts an existing frozen customer Finance publication without r
   assert.deepEqual(members.map(row=>row.family),['facts','receivables']);
   assert.equal((await db.admin.query('SELECT * FROM mart.finance_snapshot_publications')).rowCount,1);
  }finally{await db.close();}
+});
+
+test('migration 040 adoption failure rolls back schema, adopted data and ledger together',{skip:!enabled},async()=>{
+ const db=await legacyDatabase(),directory=await mkdtemp('/tmp/unified-rollback-'),url=pathToFileURL(directory+'/');
+ try{
+  await legacyOperational(db);
+  const prior=(await db.admin.query('SELECT * FROM mart.analytics_trusted_serving')).rows;
+  const facts=(await db.admin.query('SELECT * FROM mart.analytics_fact_revisions')).rows;
+  await cp(migrationDirectory,url,{recursive:true});
+  const companion=new URL('040_unified_serving.adoption.cjs',url);
+  await writeFile(companion,await readFile(companion,'utf8')+`
+const originalAdoption=module.exports.adoptLegacyServing;
+module.exports={adoptLegacyServing:async client=>{await originalAdoption(client);throw new Error('synthetic failure after adoption');}};
+`);
+  await assert.rejects(migratePostgres(db.migrator,url),/synthetic failure after adoption/);
+  assert.deepEqual((await db.admin.query('SELECT * FROM mart.analytics_trusted_serving')).rows,prior);
+  assert.deepEqual((await db.admin.query('SELECT * FROM mart.analytics_fact_revisions')).rows,facts);
+  assert.equal((await db.admin.query("SELECT count(*)::int count FROM information_schema.columns WHERE table_schema='mart' AND table_name='analytics_partitions' AND column_name='family'")).rows[0].count,0);
+  assert.equal((await db.admin.query('SELECT max(version) version FROM mart_admin.mart_schema_migrations')).rows[0].version,39);
+  assert.deepEqual(await migratePostgres(db.migrator),[40]);
+  assert.deepEqual(await migratePostgres(db.migrator),[]);
+ }finally{await db.close();await rm(directory,{recursive:true});}
 });

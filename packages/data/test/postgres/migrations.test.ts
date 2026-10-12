@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { mkdtemp, cp, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, cp, writeFile, readFile, rm } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { migratePostgres, migrationDirectory } from '../../src/postgres/migrations.ts';
 import { database, enabled } from './support.ts';
@@ -31,6 +31,13 @@ test('migrations: checksum refusal, failed SQL rollback, gaps and newer database
     await writeFile(new URL('001_production_foundation.sql', url), '-- tampered');
     await assert.rejects(migratePostgres(db.migrator, url), /checksum/);
     await cp(migrationDirectory, url, { recursive: true });
+    for(const name of ['040_unified_serving.sql','040_unified_serving.adoption.cjs']){
+      const artifact=new URL(name,url);
+      const original=await readFile(artifact,'utf8');
+      await writeFile(artifact,original+(name.endsWith('.sql')?'\n-- mutation':'\n// mutation'));
+      await assert.rejects(migratePostgres(db.migrator,url),/checksum/);
+      await writeFile(artifact,original);
+    }
     await writeFile(new URL('041_failure.sql', url), 'CREATE TABLE mart.rolled_back (id integer); SELECT nonexistent_column;');
     await assert.rejects(migratePostgres(db.migrator, url));
     assert.equal((await db.migrator.query("SELECT to_regclass('mart.rolled_back') AS name")).rows[0].name, null);
