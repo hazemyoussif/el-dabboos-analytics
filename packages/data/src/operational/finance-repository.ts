@@ -15,17 +15,25 @@ export class FinanceSnapshotRepository {
  async capabilities(context:AnalyticsContext):Promise<PublishedAnalyticsCapabilities|null>{
   return tenantTransaction(this.pool,context.tenantId,async client=>{
    const row=(await client.query(`SELECT min(publication.snapshot_date)::text first,max(publication.snapshot_date)::text last,
-    baseline.source_id,baseline.mapping_version,baseline.definition_version,baseline.specification,trusted.revision_id
+    baseline.source_id,baseline.mapping_version,baseline.definition_version,baseline.specification,baseline.capabilities,trusted.revision_id
     FROM mart.trusted_finance_snapshots publication JOIN mart.analytics_baselines baseline USING(tenant_id)
     JOIN mart.analytics_trusted_serving trusted USING(tenant_id)
     WHERE publication.tenant_id=$1 GROUP BY baseline.tenant_id,trusted.revision_id`,[context.tenantId])).rows[0];
    if(!row)return null;
-   const approved=new Set((row.specification as import('@el-dabboos/domain').SourceMapping[]).flatMap(mapping=>mapping.capabilities.map(capability=>capability.metric)));
-   const metrics=[...receivableMeasures,'overdue_receivable_percentage' as const].filter(metric=>approved.has(metric));
+   const mappings=row.specification as import('@el-dabboos/domain').SourceMapping[];
+   const approved=(row.capabilities as PublishedAnalyticsCapabilities).releases.flatMap(release=>release.capabilities);
+   const capabilities=mappings.flatMap(mapping=>mapping.capabilities).filter(capability=>financeMetric(capability.metric)).flatMap(capability=>{
+    const peers=approved.filter(peer=>peer.metric===capability.metric);
+    return (peers.length?peers:[{metric:capability.metric,summary:true,dimensions:[],analyses:[]}]).map(peer=>({
+     ...peer,
+     dimensions:[...new Set([...capability.dimensions.filter(dimension=>dimension==='customer'||dimension==='month'),...peer.dimensions.filter(dimension=>dimension==='month')])],
+     analyses:peer.analyses.filter(analysis=>analysis==='ranking'||analysis==='topN'),
+    }));
+   });
    return {tenantId:context.tenantId,mode:'certified',releases:[{datasetId:row.revision_id,sourceId:row.source_id,
     mappingId:'trusted-receivables',mappingVersion:row.mapping_version,certificationReference:row.definition_version,
     period:{from:row.first,to:row.last},selectionSemantics:'latest_snapshot',
-    capabilities:metrics.map(metric=>({metric,summary:true,dimensions:['customer','month'],analyses:['ranking','topN','percentageContribution']}))}]};
+    capabilities}]};
   },true,this.timeout);
  }
  async execute(query:AnalyticsQuery,context:AnalyticsContext,capabilities:PublishedAnalyticsCapabilities):Promise<AnalyticsResult>{

@@ -13,11 +13,11 @@ function evidence(date:string,count=1):FinanceSnapshotEvidence {
  const values=Object.fromEntries(receivableMeasures.map(measure=>[measure,['net_aged_receivable','aged_at_date','gross_open_receivable_components'].includes(measure)?'100.000000':'0.000000']));
  return {tenantId:'a',date,currency:'IQD',sourceCutoff:'2026-10-08T00:21:08.728Z',sourceRevision:'synthetic-retained-snapshot',totals:Object.fromEntries(receivableMeasures.map(measure=>[measure,['net_aged_receivable','aged_at_date','gross_open_receivable_components'].includes(measure)?`${count*100}.000000`:'0.000000'])),customers:Array.from({length:count},(_,index)=>({id:`fixture:${String(index).padStart(5,'0')}`,label:`Customer ${index}`,actual:values,expected:{...values}}))};
 }
-async function fixture(){
+async function fixture(summaryOnly=false){
  const db=await database(),specification=mapping();
  const rule=specification.measures[2]!;
  specification.measures=receivableMeasures.map(measureId=>({...rule,measureId,dimensionMappings:{customer:'Synthetic governed identity'}}));
- specification.capabilities=receivableMeasures.map(metric=>({metric,dimensions:['customer','month']}));
+ specification.capabilities=receivableMeasures.map(metric=>({metric,dimensions:summaryOnly&&['gross_open_receivable_components','credit_balances'].includes(metric)?['month']:['customer','month']}));
  await deploy(db.migrator,specification);
  await bootstrapOperationalServing(db.migrator,'a');
  return {db,repository:new TrustedAnalyticsRepository(db.runtime,{reportingCurrencies:{a:'IQD'}})};
@@ -89,7 +89,7 @@ test('Finance drill pins a single published customer snapshot, signed bucket amo
  }finally{await db.close();}
 });
 
-test('AI Analyst direct Finance execution pins latest trusted snapshot <= Oct 8 with scoped customer ranking and reusable drill lineage',{skip:!enabled},async()=>{
+test('AI Analyst direct Finance execution pins latest trusted snapshot <= Oct 8 with scoped customers, approved analyses and reusable drill lineage',{skip:!enabled},async()=>{
  const {AnalyticsIntentExecutor,analyticsResultDrillRequest}=await import('../../../application/src/analytics-execution.ts');
  const {DefaultAuthorizationPolicy}=await import('../../../application/src/security.ts');
  const {db,repository}=await fixture();try {
@@ -104,8 +104,8 @@ test('AI Analyst direct Finance execution pins latest trusted snapshot <= Oct 8 
   const request=analyticsResultDrillRequest(entry,null);assert.ok(request);
   const drill=new TrustedDrillThroughRepository(db.runtime,scope=>repository.getPublishedCapabilities(scope));
   const page=await drill.drill(request,{tenantId:'a',locale:'en'});assert.equal(page.value,'200.000000');assert.equal(page.snapshotAsOf,'2026-09-30');
-  const scoped=await executor.execute({...intent,analyses:[{dimension:'customer',series:[{metric:'net_aged_receivable',topNDirection:'top',topNLimit:1}]}]}, {...identity,authorization:{...identity.authorization,enforcedFilters:[{dimension:'customer',values:['fixture:00001']}]}});
-  assert.ok('analyses' in scoped);const ranked=scoped.analyses[0]!.series[0]!;assert.notEqual(ranked.status,'EXECUTION_FAILED');if(ranked.status!=='EXECUTION_FAILED')assert.deepEqual(ranked.result.rows.map(row=>row.key),['fixture:00001']);
+  const scoped=await executor.execute({...intent,analyses:[{dimension:'customer',series:[{metric:'net_aged_receivable'}]}]}, {...identity,authorization:{...identity.authorization,enforcedFilters:[{dimension:'customer',values:['fixture:00001']}]}});
+  assert.ok('analyses' in scoped);const scopedResult=scoped.analyses[0]!.series[0]!;assert.notEqual(scopedResult.status,'EXECUTION_FAILED');if(scopedResult.status!=='EXECUTION_FAILED')assert.deepEqual(scopedResult.result.rows.map(row=>row.key),['fixture:00001']);
   const missing=await executor.execute({...intent,context:{dateRange:{from:'2025-01-01',to:'2025-01-01'}}},identity);assert.equal(missing.status,'DATA_NOT_READY');
   process.stdout.write(`analytics-intent-benchmark ${JSON.stringify(output.timing)}\n`);
  }finally{await db.close();}
@@ -128,5 +128,41 @@ test('snapshot candidate preserves facts, replaces only its month, and rejects b
   assert.equal((await repository.execute({metric:'net_aged_receivable',dateRange:{from:'2026-08-01',to:'2026-08-31'}},{tenantId:'a',locale:'en'})).rows[0]?.value,200);
   assert.equal((await db.admin.query('SELECT * FROM mart.finance_snapshot_publications')).rowCount,0);
   await assert.rejects(tenantTransaction(db.ingestor,'a',client=>client.query("INSERT INTO mart.analytics_serving_members SELECT tenant_id,revision_id,'2026-07-01',partition_id,family FROM mart.analytics_serving_members WHERE family='receivables' LIMIT 1")),/Partition identity mismatch|immutable/);
+ }finally{await db.close();}
+});
+
+test('Finance preserves approved summary/customer dimensions and refuses unapproved analyses and discovery',{skip:!enabled},async()=>{
+ const {db,repository}=await fixture(true),context={tenantId:'a',locale:'en' as const},dateRange={from:'2026-09-01',to:'2026-09-30'};
+ try{
+  await publishFinanceSnapshot(db.ingestor,evidence('2026-09-30'));
+  const capabilities=await repository.getPublishedCapabilities(context);
+  for(const metric of ['gross_open_receivable_components','credit_balances'] as const){
+   assert.ok(capabilities.releases.flatMap(release=>release.capabilities).filter(capability=>capability.metric===metric).every(capability=>capability.summary&&!capability.dimensions.includes('customer')&&capability.dimensions.includes('month')));
+   assert.equal((await repository.execute({metric,dateRange},context)).rows[0]?.value,metric==='credit_balances'?0:100);
+   await assert.rejects(repository.execute({metric,groupBy:'customer',dateRange},context),/Uncertified/);
+   await assert.rejects(repository.searchDimensionOptions('customer',context,{metric,asOf:dateRange.to}),/Uncertified customer discovery/);
+   assert.deepEqual((await repository.execute({metric,groupBy:'month',dateRange},context)).rows.map(row=>row.value),[metric==='credit_balances'?0:100]);
+  }
+  assert.equal((await repository.execute({metric:'net_aged_receivable',groupBy:'customer',dateRange},context)).rows[0]?.value,100);
+  assert.deepEqual((await repository.searchDimensionOptions('customer',context,{metric:'net_aged_receivable',asOf:dateRange.to})).values.map(option=>option.id),['fixture:00000']);
+  assert.ok(capabilities.releases.flatMap(release=>release.capabilities).every(capability=>!capability.analyses.includes('percentageContribution')));
+  for(const analysis of [{ranking:true as const},{topN:{limit:1,direction:'top' as const}}]){
+   await assert.rejects(repository.execute({metric:'net_aged_receivable',groupBy:'customer',dateRange,analysis},context),/Uncertified/);
+  }
+ }finally{await db.close();}
+});
+
+test('concurrent Finance promotions retain both months in a serialized trusted ancestry',{skip:!enabled},async()=>{
+ const {db}=await fixture();
+ try{
+  const parent=(await db.admin.query('SELECT revision_id FROM mart.analytics_trusted_serving')).rows[0].revision_id;
+  await Promise.all(['2026-08-31','2026-09-30'].map(date=>publishFinanceSnapshot(db.ingestor,evidence(date))));
+  const members=(await db.admin.query("SELECT snapshot_date::text FROM mart.trusted_finance_snapshots ORDER BY snapshot_date")).rows;
+  assert.deepEqual(members.map(row=>row.snapshot_date),['2026-08-31','2026-09-30']);
+  const revisions=(await db.admin.query("SELECT revision_id,parent_revision FROM mart.analytics_serving_revisions WHERE purpose='snapshot'")).rows;
+  assert.equal(revisions.length,2);
+  const first=revisions.find(row=>row.parent_revision===parent)!;
+  const second=revisions.find(row=>row.parent_revision===first.revision_id)!;
+  assert.equal((await db.admin.query('SELECT revision_id FROM mart.analytics_trusted_serving')).rows[0].revision_id,second.revision_id);
  }finally{await db.close();}
 });
