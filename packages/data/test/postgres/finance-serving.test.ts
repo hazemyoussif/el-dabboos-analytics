@@ -27,8 +27,8 @@ async function fixture(){
 }
 test('Finance anchor resolves from the current certified tenant capability and fails closed on incompatible currency',{skip:!enabled},async()=>{
  const {db}=await fixture();try {
-  assert.equal(await resolveFinanceAnchor(db.migrator,'a','IQD'),'release');
-  await assert.rejects(resolveFinanceAnchor(db.migrator,'a','EGP'),/Current certified customer Finance anchor required/);
+  assert.equal(await resolveFinanceAnchor(db.migrator,'a','IQD','2026-01-31'),'release');
+  await assert.rejects(resolveFinanceAnchor(db.migrator,'a','EGP','2026-01-31'),/Current certified customer Finance anchor required/);
  }finally{await db.close();}
 });
 
