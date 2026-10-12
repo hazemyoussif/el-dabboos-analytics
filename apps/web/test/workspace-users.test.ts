@@ -48,3 +48,30 @@ for(const locale of ['en','ar'] as const)test(`workspace ${locale} creates a pas
   assert.ok(!Array.from(ui.container.querySelectorAll('button')).some(button=>button.textContent===(locale==='en'?'Create user':'إنشاء مستخدم')));
  }finally{globalThis.fetch=original;await ui.close();}
 });
+
+for(const locale of ['en','ar'] as const)test(`workspace ${locale} resets roles and password fields when switching creation modes`,async()=>{
+ const ui=await fixture(),original=globalThis.fetch;let writes=0;
+ globalThis.fetch=async(input,init)=>{
+  if(init?.method==='POST')writes++;
+  const path=String(input),items=path.endsWith('/roles')?[{id:'viewer',name:'Viewer'}]:path.endsWith('/candidates')?[{id:'existing',displayName:'Existing synthetic user'}]:[];
+  return new Response(JSON.stringify({items}));
+ };
+ try {
+  const {MembershipsPage}=await ui.server.ssrLoadModule('/src/admin/MembershipsPage.tsx');
+  await act(async()=>ui.root.render(createElement(MembershipsPage,{session:{userId:'tenant-admin',tenantId:'tenant-a',locale},permissions:['users:view','users:manage','roles:view','roles:manage'],platformPermissions:[]})));
+  const button=(name:string)=>Array.from(ui.container.querySelectorAll('button')).find(button=>button.textContent===name)!;
+  await act(async()=>button(locale==='en'?'Create user':'إنشاء مستخدم').click());
+  const first=ui.container.querySelector('form')!;
+  first.querySelector('input[name="password"]')!.value='synthetic-password-only';
+  await act(async()=>first.querySelector('input[name="role"]')!.click());
+  await act(async()=>button(locale==='en'?'Assign existing user':'تعيين مستخدم موجود').click());
+  const existing=ui.container.querySelector('form')!;
+  assert.notEqual(existing,first);assert.ok(existing.querySelector('select[name="userId"]'));
+  assert.equal(existing.querySelector('input[name="role"]')!.checked,false);assert.equal(existing.querySelector('input[name="password"]'),null);
+  await act(async()=>existing.querySelector('input[name="role"]')!.click());
+  await act(async()=>button(locale==='en'?'Create user':'إنشاء مستخدم').click());
+  const next=ui.container.querySelector('form')!;
+  assert.notEqual(next,existing);assert.equal(next.querySelector('input[name="role"]')!.checked,false);assert.equal(next.querySelector('input[name="password"]')!.value,'');
+  assert.equal(writes,0);
+ }finally{globalThis.fetch=original;await ui.close();}
+});
