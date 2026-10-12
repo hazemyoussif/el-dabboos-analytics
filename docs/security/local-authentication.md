@@ -70,3 +70,15 @@ MFA/passkeys belong behind the provider adapter and in auth-owned storage: TOTP 
 Recovery requires verified one-use expiring proof, digest storage, audited password change/reset and invalidation of existing sessions. MFA recovery and administrator-assisted recovery need separate proof/approval and safe audit. No email reset endpoint is exposed until approved real delivery exists.
 
 Before employee staging: reviewed HTTPS ingress/origins, secrets and session rotation, approved initial credential setup/handoff, explicit user/binding and separately reviewed membership activation, privacy/audit retention/monitoring, backup/restore protection for credential state, distributed limit/trusted proxy review if needed, and security review of framework dependencies and required admin MFA/recovery policy. Odoo identity architecture remains unconfirmed and independent. No employee identity was provisioned by this implementation.
+
+## Workspace creation with an initial password
+
+The workspace Users form creates an active local login and its selected workspace
+roles in one save, using the framework password hash and the existing control
+transaction. Tenant administrators do not need platform-wide authority to create
+users in their own workspace. The role/scope delegation ceiling, active actor checks,
+creation abuse guard and transaction-time authorization remain mandatory. A new
+user can sign in and enter that workspace immediately after a successful save.
+Initial passwords are set by the administrator; invitations, OTP and password
+recovery remain separate future work. Implementation tests use synthetic accounts;
+this change does not itself deploy or create employees on staging.

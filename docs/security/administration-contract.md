@@ -63,3 +63,23 @@ List/get/library/deep-link/execute use the same current-spec resource predicate.
 ## Completion acceptance for Sol
 
 Application use cases must be callable without Fastify or React using trusted actor identity, target and validated mutation. Add strict endpoint schemas, safe error mapping, transaction orchestration, audit and concurrency tests before page wiring. Verify cross-tenant URL/body substitution, wrong-plane calls, action-specific escalation, concurrent last-admin removals, stale versions, source-scope staleness, protected role deletion and grant-vs-current-metrics. Use the project UI skill for actual implementation and AFTER review; this architecture-only phase performs no UI quality or browser audit.
+
+## Workspace password-user creation
+
+Workspace **Users → Create user** collects display name, email, initial password,
+preferred locale and workspace roles in one form. `POST /api/tenants/:tenantId/admin/users`
+requires the selected workspace to match the path and current `users:manage` and
+`roles:manage` authority. Role delegation and data-scope ceilings apply unchanged.
+The runtime authorizes before password hashing and the administration transaction
+revalidates the actor and selected roles after hashing, under the existing writer lock.
+
+Product user, local credential, identity binding, active workspace membership and
+audits commit together. Failure rolls back all of them. No assignment candidate,
+platform role, invitation, OTP or email delivery is created. Duplicate email fails
+without linking an existing identity. The response contains no password or hash.
+
+The workspace Users page also retains **Assign existing user** for previously
+provisioned candidates and versioned role editing for existing members. The global
+Users / Access page manages account lifecycle and directs new creation to workspace
+Users; its legacy selection action only makes an existing account available for
+workspace assignment. Roles continues to define reusable workspace roles separately.

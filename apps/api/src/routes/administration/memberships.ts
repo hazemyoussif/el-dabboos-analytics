@@ -1,6 +1,6 @@
 import type { TenantAdministrationCommand } from '@el-dabboos/application';
 import type { ScopeDimension } from '@el-dabboos/domain';
-import { scopeDimensions } from '@el-dabboos/domain';
+import { AccessControlError,scopeDimensions } from '@el-dabboos/domain';
 import type { FastifyInstance } from 'fastify';
 import type { RouteContext } from '../../context.ts';
 import { analyticsContext } from '../../context.ts';
@@ -9,6 +9,20 @@ import { body, ids, scopes, status, text, version } from './schemas.ts';
 import type { TenantParams } from './support.ts';
 import { administration, availableScopes, cursor, tenantActor } from './support.ts';
 export function registerMembershipsRoutes(app: FastifyInstance, context: RouteContext) {
+    app.post<{Params:TenantParams;Body:import('@el-dabboos/application').WorkspaceUserInput&{password:string}}>(
+        '/api/tenants/:tenantId/admin/users',
+        {schema:body({displayName:text,preferredLocale:status(['en','ar']),email:{type:'string',minLength:3,maxLength:254},password:{type:'string',minLength:8,maxLength:1024},roleIds:ids})},
+        async request=>{
+            const actor=await tenantActor(context,request.headers,request.params.tenantId);
+            const provision=context.deps.administration?.provisionWorkspaceEmployee;
+            if(!provision)throw new ApiError(503,'AUTH_UNAVAILABLE','Local user creation is unavailable.');
+            try{return await provision(actor,request.body);}
+            catch(error){
+                if(error instanceof AccessControlError||error instanceof ApiError)throw error;
+                if(!error||typeof error!=='object'||!('code' in error)||error.code!=='23505')throw error;
+                throw new ApiError(409,'USER_PROVISIONING_FAILED','Unable to create this user. Review the email and account state.');
+            }
+        });
     app.get<{
         Params: TenantParams;
     }>('/api/tenants/:tenantId/admin/memberships', async (request) => administration(context).listMemberships(await tenantActor(context, request.headers, request.params.tenantId), cursor(request.query)));

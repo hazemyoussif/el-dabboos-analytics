@@ -105,6 +105,8 @@ export interface AdministrationTransaction {
         completeBootstrap(reference: string, timestamp: string): Promise<void>;
         createAssignmentCandidate(tenantId: string, userId: string): Promise<void>;
     };
+    /** Present when the control adapter supports local password credentials; participates in this transaction. */
+    localCredentials?: { create(input: { userId:string; subject:string; displayName:string; email:string; passwordHash:string }): Promise<void> };
     directory: AccessDirectory;
     customers: CustomerTenantRepository;
     users: UserIdentityRepository;
