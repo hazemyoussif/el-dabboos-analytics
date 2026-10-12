@@ -21,7 +21,7 @@ class FixtureSnapshot implements OperationalSnapshot {
  rows:ProductionFact[]=[];failControls=false;interrupt=false;
  close(){return Promise.resolve();}
  async *records(_baseline:OperationalBaseline,_cursor:AnalyticsCursor|null){void _baseline;void _cursor;yield {object:'fixture',facts:this.rows,rows:this.rows.length,retired:this.retired};if(this.interrupt)throw new Error('Synthetic process interruption');}
- async *recordsMonth(){yield* [];}
+ async *recordsMonth(_baseline:OperationalBaseline,_month:string){void _baseline;void _month;yield* [];}
  async *snapshots(){yield* [];}
  async *presence(object:string,pages:AsyncIterable<readonly string[]>){for await(const ids of pages)yield {ids,present:await this.present(object,ids)};}
  present(_object:string,ids:readonly string[]){void _object;return Promise.resolve(ids.filter(id=>!this.missing.has(id)));}
@@ -557,4 +557,37 @@ test('one retroactive month replaces its partition while every other trusted mon
   fixture.source.rows=[januaryFact({value:'300.000000',sourceVersion:'failed-retroactive',sourceRevision:'4'})];fixture.source.failControls=true;
   assert.equal((await fixture.run()).status,'failed');assert.deepEqual(await membership(),after);assert.equal(await januaryValue(fixture.repository),200);
  }finally{await fixture.db.close();}
+});
+
+const unseededHistoricalMonths=['2024-06','2024-08','2024-09','2024-10','2024-11','2024-12','2025-01','2025-02','2025-03','2025-04','2025-05','2025-06','2025-07','2025-08','2025-09'];
+test('old modified identities across all fifteen absent months do not trigger accidental backfill; forward catch-up still seeds',{skip:!enabled},async()=>{
+ const system=await setup();
+ try {
+  const seeded:string[]=[];
+  system.source.recordsMonth=async function*(_baseline:OperationalBaseline,month:string){seeded.push(month);yield* [];};
+  system.source.rows=unseededHistoricalMonths.map(month=>januaryFact({sourceRecordId:`old-${month}`,businessDate:`${month}-15`}));
+  const before=(await system.db.admin.query('SELECT revision_id FROM mart.analytics_trusted_serving')).rows[0].revision_id;
+  assert.equal((await system.run()).status,'unchanged');
+  assert.ok(seeded.every(month=>!unseededHistoricalMonths.includes(month)));
+  assert.equal((await system.db.admin.query('SELECT count(*)::int count FROM mart.analytics_fact_heads')).rows[0].count,0);
+  assert.equal((await system.db.admin.query('SELECT revision_id FROM mart.analytics_trusted_serving')).rows[0].revision_id,before);
+  system.source.rows=[januaryFact({sourceRecordId:'forward',businessDate:'2026-10-02'})];
+  assert.equal((await system.run()).status,'passed');
+  assert.ok(seeded.includes('2026-10'));
+  const result=await system.repository.execute({metric:'revenue',dateRange:{from:'2026-10-01',to:'2026-10-06'}},{tenantId:'a',locale:'en'});
+  assert.equal(result.rows[0]?.value,100);
+ }finally{await system.db.close();}
+});
+test('date moves out of coverage retire the prior dated footprint; replay and move back preserve exact controls',{skip:!enabled},async()=>{
+ const system=await setup();
+ try {
+  system.source.rows=[januaryFact()];assert.equal((await system.run()).status,'passed');
+  system.source.rows=[januaryFact({businessDate:'2024-06-15',sourceRevision:'3',sourceVersion:'moved-out'})];
+  assert.equal((await system.run()).status,'passed');assert.equal(await januaryValue(system.repository),0);
+  const heads=(await system.db.admin.query('SELECT payload FROM mart.analytics_fact_heads JOIN mart.analytics_fact_revisions USING(tenant_id,fact_key,revision_id)')).rows;
+  assert.equal(heads[0].payload.status,'tombstone');assert.equal(heads[0].payload.businessDate,'2026-01-15');
+  assert.equal((await system.run()).status,'unchanged');
+  system.source.rows=[januaryFact({sourceRevision:'4',sourceVersion:'moved-back'})];
+  assert.equal((await system.run()).status,'passed');assert.equal(await januaryValue(system.repository),100);
+ }finally{await system.db.close();}
 });

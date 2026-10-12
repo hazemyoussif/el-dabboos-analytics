@@ -1,7 +1,7 @@
 import type { AnalyticsCursor, AnalyticsPartition, AnalyticsSourceSnapshot, FactMeasureId, ProductionFact, SourceMapping, PublishedAnalyticsCapabilities } from '@el-dabboos/domain';
 export interface OperationalBaseline {
  tenantId:string;sourceId:string;reportingCurrency:string;datasets:string[];mappingVersion:string;definitionVersion:string;
- mappings:SourceMapping[];capabilities:PublishedAnalyticsCapabilities;from:string;to:string;
+ coveredMonths?:readonly string[];mappings:SourceMapping[];capabilities:PublishedAnalyticsCapabilities;from:string;to:string;
 }
 export interface ExactControl {partition:AnalyticsPartition;measure:FactMeasureId;value:string;count:string}
 export interface OperationalSnapshot extends AnalyticsSourceSnapshot {
@@ -13,7 +13,7 @@ export interface OperationalSnapshot extends AnalyticsSourceSnapshot {
  present(object:string,ids:readonly string[]):Promise<readonly string[]>;
 }
 export interface OperationDetails {
- partitionRowsSeeded?:number;rowsDiscovered:number;newRows:number;updatedRows:number;canonicalRevisions:number;partitions:readonly AnalyticsPartition[];
+ outsideCoverageFacts?:number;partitionRowsSeeded?:number;rowsDiscovered:number;newRows:number;updatedRows:number;canonicalRevisions:number;partitions:readonly AnalyticsPartition[];
  previousCursor:AnalyticsCursor|null;newCursor:AnalyticsCursor|null;refreshedMonths:string[];
  durations:Record<string,number>;
 }

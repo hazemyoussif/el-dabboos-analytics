@@ -60,7 +60,7 @@ async function extractPeriod(period: HistoricalMonth, kind: 'events'|'aging',pat
     const result = kind === 'events' ? await extractHistoricalEvents({mapping:{tenantId:'el-dabboos-iq',sourceId:'el-dabboos-odoo18-pg',datasetId,mappingId:'odoo18-history-events',mappingVersion:'1',businessOwner:'Finance standing metric-design approval 2026-10-07',reportingCurrency:'IQD',timeZone:'Asia/Baghdad'},extractionId:`${datasetId}-extract`},period,environment) : await extractHistoricalAging(period,datasetId,environment);
     if (!['reconciled','passed'].includes(result.status)) throw new Error('Monthly technical reconciliation failed');
     await writeHistoricalCheckpoint(path,result);
-    console.log(JSON.stringify({month:period.month,kind,status:result.status,durationMs:result.durationMs}));
+    console.log(JSON.stringify({month:period.month,kind,status:result.status,durationMs:result.durationMs,...('durations' in result?{durations:result.durations}:{})}));
     return result.status;
   } catch (error) {
     const failure = {month:period.month,kind,datasetId,status:'failed',code:(error as NodeJS.ErrnoException).code ?? 'historical_reconciliation',reason:(error as Error).message,observedAt:new Date().toISOString(),certified:false,published:false};

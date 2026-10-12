@@ -19,7 +19,7 @@ export function planTrustedRange(slots:readonly QuerySlot[],partitions:readonly 
 function monthEnd(first:string){const date=new Date(`${first}T00:00:00Z`);return new Date(Date.UTC(date.getUTCFullYear(),date.getUTCMonth()+1,0)).toISOString().slice(0,10);}
 /** Same baseline semantics plus exact partition reference permit immutable hybrid lineage. */
 export async function trustedRangePartitions(client:PoolClient,tenantId:string):Promise<TrustedRangePartition[]> {
- const rows=(await client.query(`SELECT to_char(member.month,'YYYY-MM') AS month,member.partition_id,baseline.period_from::text available_from,
+ const rows=(await client.query(`SELECT to_char(member.month,'YYYY-MM') AS month,member.partition_id,least(baseline.period_from,member.month)::text available_from,
  greatest(baseline.period_to,(coalesce(cursor.cutoff,revision.cutoff) AT TIME ZONE (baseline.specification->0->'measures'->0->>'timeZone'))::date)::text available_through,
  (proof.partition_id IS NOT NULL AND proof.definition_version=baseline.definition_version AND proof.mapping_version=baseline.mapping_version
  AND proof.business_timezone=baseline.specification->0->'measures'->0->>'timeZone') monthly

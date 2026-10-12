@@ -16,6 +16,7 @@ export interface RetainedOdooPilotOptions {
   sourcePool: Pool; martPool: Pool; sourceConfig: OdooSourceConfig;
   mapping: SourceMapping; run: ExtractionRun; snapshot: OdooSnapshotLease;
   groupings?: readonly ('business_line'|'salesperson'|'customer'|null)[];
+  progress?:(progress:{object:string;pages:number;rows:number;durations:Readonly<Record<string,number>>})=>void;
 }
 type PilotObject = 'sale_order'|'account_move';
 function pilotPosition(cursor: string|undefined): { object: PilotObject; cursor?: string } {
@@ -70,6 +71,7 @@ export async function ingestRetainedOdooPilot(options: RetainedOdooPilotOptions)
     await writer.commit(batch,records,{ sourceObjects: [...run.sourceObjects],requestLimit: sourceConfig.batchSize,completeness: run.completeness,deletionEvidence: 'unavailable',paginationComplete: terminal,...(checkpoint.cursor ? { cursorStart: checkpoint.cursor } : {}),...(terminal ? { watermarkEnd: cursorEnd } : {}),page: { extractionId: run.extractionId,pageNumber: checkpoint.pageCount+1,cursorEnd } },terminal ? async client => { const began = performance.now();reconciliation = await certifyPilot(client,options,controls);durations.reconciliationMs += performance.now()-began; } : undefined);
     durations.martWriteMs += performance.now()-phaseStarted;
     checkpoint = (await runs.resume(run.tenantId,run.extractionId)).checkpoint;
+    options.progress?.({object:position.object,pages:checkpoint.pageCount,rows:checkpoint.rowCount,durations:{...durations,martWriteMs:durations.martWriteMs-durations.reconciliationMs}});
   }
   durations.martWriteMs -= durations.reconciliationMs;
   return { checkpoint,reconciliation,snapshot: snapshot.evidence,observedCityWhitespaceRecords,durations };

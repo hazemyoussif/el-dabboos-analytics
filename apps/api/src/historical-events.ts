@@ -35,7 +35,7 @@ async function extractMonth(mapping: SourceMapping, extractionId: string, period
     snapshot = await OdooSnapshotLease.open(owner, config, config.snapshotMaxDurationMs, config.credentialPolicy);
     const run: ExtractionRun = { tenantId: mapping.tenantId,sourceId: mapping.sourceId,companyIds: ['1'],datasetId: mapping.datasetId,mappingId: mapping.mappingId,mappingVersion: mapping.mappingVersion,extractionId,sourceObjects: ['sale_order','account_move'],from: period.from,to: period.to,sourceAsOf: snapshot.evidence.sourceAsOf,frozenRevision: snapshot.evidence.frozenRevision,freezeReference: snapshot.evidence.freezeReference,completeness: 'complete_scope' };
     const sourceQuality = await readHistoricalSourceQuality(source,period,snapshot);
-    const result = await ingestRetainedOdooPilot({ sourcePool: source,martPool: mart,sourceConfig: config,mapping,run,snapshot,groupings: [null,'business_line','salesperson','customer'] });
+    const result = await ingestRetainedOdooPilot({ sourcePool: source,martPool: mart,sourceConfig: config,mapping,run,snapshot,groupings: [null,'business_line','salesperson','customer'],progress:progress=>console.log(JSON.stringify({month:period.month,kind:'events',stage:'extraction-page',...progress})) });
     const cases = result.reconciliation.flatMap(group => group.cases);
     verifyGroupedSums(cases);
     const derived = historicalRatioLedger(cases,['average_confirmed_order_value','average_invoice_value']);

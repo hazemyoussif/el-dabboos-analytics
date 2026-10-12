@@ -67,7 +67,7 @@ export class OdooOperationalSnapshot implements OperationalSnapshot {
   // cutoff is the smallest provably complete dependency set for a possible date move.
   const dependencyFrom=baseline.from;
   for(let month=baseline.from.slice(0,7);month<=baseline.to.slice(0,7);month=followingMonth(month)) {
-   const cutoff=monthEnd(month);if(cutoff<dependencyFrom)continue;
+   const cutoff=monthEnd(month);if(cutoff<dependencyFrom||(baseline.coveredMonths&&!baseline.coveredMonths.includes(month)))continue;
    const result=await readReceivableSnapshot(this.pool,this.lease,this.config,baseline,cutoff);
    this.snapshotControls.set(month,result.expected);
    yield {object:'receivable_cutoff',facts:result.facts,rows:1};

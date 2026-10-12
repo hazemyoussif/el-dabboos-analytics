@@ -22,7 +22,7 @@ export class TrustedDrillThroughRepository implements DrillThroughRepository {
   }
 }
 async function eventInput(client:PoolClient,request:DrillRequest,context:AnalyticsContext):Promise<DetailInput> {
-  const trusted=(await client.query(`SELECT trusted.revision_id,coalesce(cursor.cutoff,revision.cutoff) cutoff,baseline.period_from::text coverage_from,
+  const trusted=(await client.query(`SELECT trusted.revision_id,coalesce(cursor.cutoff,revision.cutoff) cutoff,least(baseline.period_from,(SELECT min(month) FROM mart.analytics_serving_members member WHERE member.tenant_id=trusted.tenant_id AND member.revision_id=trusted.revision_id AND member.family='facts'))::text coverage_from,
     CASE WHEN EXISTS(SELECT 1 FROM mart.analytics_serving_members member WHERE member.tenant_id=trusted.tenant_id AND member.revision_id=trusted.revision_id AND member.family='facts' AND member.month>baseline.period_to)
     THEN (coalesce(cursor.cutoff,revision.cutoff) AT TIME ZONE (baseline.specification->0->'measures'->0->>'timeZone'))::date::text ELSE baseline.period_to::text END coverage_to
     FROM mart.analytics_trusted_serving trusted JOIN mart.analytics_baselines baseline USING(tenant_id)

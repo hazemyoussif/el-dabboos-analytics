@@ -53,7 +53,13 @@ mart datasets. Historical publication/activation and filesystem receipts are not
 prerequisites. Existing `analytics sync --tenant ID` continues the incremental
 candidate lifecycle. `scripts/integration/finance-snapshots.ts` now reads customer
 and company controls from one retained source snapshot and promotes through the
-same trusted pointer. Bounded initial source-loading CLI polish remains separate.
+same trusted pointer. `scripts/integration/historical-import.ts` extends an established manifest from
+explicitly approved, exact certified whole-month datasets. Migration 041 adds
+immutable import checkpoints and preserves narrower prior partition capabilities
+on operational replacements. Complete daily tuple/count parity, aggregate/drill
+proof and parent CAS precede atomic publication; no cursor or baseline mutation
+is performed. Extraction remains the existing bounded monthly source lifecycle.
+See [hosted parity](hosted-historical-parity.md) and [controlled rollout](staging-loading-rollout.md).
 
 ## Rollback and deferred removal
 

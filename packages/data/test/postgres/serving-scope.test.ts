@@ -40,6 +40,7 @@ test('statement scope preserves runtime visibility, unbound/pending exclusion, t
   await rm(new URL('038_trusted_partition_membership_index.sql',baseline));
   await rm(new URL('039_remove_stale_historical_september_anchor.sql',baseline));
   await rm(new URL('040_unified_serving.sql',baseline));
+  await rm(new URL('041_historical_month_imports.sql',baseline));
   await migratePostgres(db.migrator,baseline);
   for(const tenant of ['a','b','unbound']) {
    await deploy(db.migrator,mapping(tenant));

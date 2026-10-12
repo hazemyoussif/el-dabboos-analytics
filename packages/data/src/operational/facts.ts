@@ -59,6 +59,6 @@ function stableContent(value:unknown):string {return JSON.stringify(value,(_key,
 /** Date-less ineligible headers retire their previous footprint; unseen drafts create no fact. */
 export async function retiredOperationalFacts(client:PoolClient,tenantId:string,record:{object:string;id:string;version:string;revision:string;updatedAt:string},source:{cutoff:string;revision:string}):Promise<ProductionFact[]> {
  const rows=(await client.query(`SELECT revision.payload FROM mart.analytics_fact_heads head JOIN mart.analytics_fact_revisions revision USING(tenant_id,fact_key,revision_id)
- WHERE head.tenant_id=$1 AND head.source_object=$2 AND head.status='active' AND payload->>'sourceRecordId'=$3`,[tenantId,record.object,record.id])).rows;
+ WHERE head.tenant_id=$1 AND head.source_object=$2 AND head.status='active' AND head.source_record_id=$3`,[tenantId,record.object,record.id])).rows;
  return rows.map(row=>({...row.payload,status:'tombstone',sourceVersion:record.version,sourceRevision:record.revision,sourceUpdatedAt:record.updatedAt,sourceAsOf:source.cutoff,frozenRevision:source.revision,batchId:`retired:${source.cutoff}`}));
 }

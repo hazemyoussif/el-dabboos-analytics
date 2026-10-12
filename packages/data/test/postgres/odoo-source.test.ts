@@ -1,3 +1,4 @@
+import {readHistoricalSourceInventory} from '../../src/odoo/history-inventory.ts';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { Pool } from 'pg';
@@ -324,5 +325,18 @@ test('incremental composite revision discovers lookup-only changes outside busin
   assert.deepEqual(first.rows.map(row=>row.recordId),['1','2']);assert.ok(first.rows.every(row=>row.version==='2026-10-04 00:00:00.000000'&&row.payload.business_line_name==='Renamed General'&&row.payload.state_name==='Synthetic Region'&&row.payload.business_date==='2026-09-15'));
   assert.equal(first.rows[0]!.payload.area,'Synthetic Area');assert.equal(first.rows[0]!.payload.latitude,'33.125');assert.equal(first.rows[0]!.payload.longitude,null);assert.equal(first.rows[0]!.payload.shop_gps,'Synthetic GPS');
   const next=await reader.readBatch({...baseRequest,frozenRevision:snapshot.evidence.frozenRevision,limit:2,cursor:first.nextCursor!});assert.deepEqual(next.rows.map(row=>row.recordId),['3','4']);
+ }finally{await fixture.close();}
+});
+
+test('history inventory discovers earliest company-1 history in business timezone without excluding drafts or including other companies',{skip:!enabled},async()=>{
+ const fixture=await sourceFixture();
+ try {
+  await fixture.db.admin.query("INSERT INTO public.sale_order(id,company_id,date_order,state) VALUES (5001,1,'2024-05-31 22:00:00','sale'),(5002,1,'2024-04-01','draft'),(5003,2,'2020-01-01','sale')");
+  const snapshot=await fixture.openSnapshot();
+  const config=odooSourceConfig({ODOO_SOURCE_HOST:'localhost',ODOO_SOURCE_DATABASE:'synthetic',ODOO_SOURCE_USER:'synthetic',ODOO_SOURCE_PASSWORD:'SYNTHETIC_ONLY',ODOO_SOURCE_COMPANY_IDS:'1'},{tenantId:'el-dabboos-iq',sourceId:'el-dabboos-odoo18-pg'});
+  const result=await readHistoricalSourceInventory(fixture.source,snapshot,config,'Asia/Baghdad');
+  const april=result.months.find(row=>row.month==='2024-04');assert.equal(april?.eligible_headers,'0');
+  const june=result.months.find(row=>row.month==='2024-06');assert.equal(june?.first_date,'2024-06-01');assert.equal(june?.eligible_headers,'1');
+  assert.ok(!result.months.some(row=>row.month==='2020-01'));
  }finally{await fixture.close();}
 });
