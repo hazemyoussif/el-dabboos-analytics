@@ -46,7 +46,6 @@ export function tenantFormRequest(form: FormData, record: ManagedTenant | null, 
     return { path: id ? '/api/platform/tenants/' + encodeURIComponent(id) : '/api/platform/customers/' + encodeURIComponent(selectedCustomerId) + '/tenants', method: id ? 'PUT' : 'POST', body: { name: asText(form, 'name'), configuration, ...(id ? { expectedVersion, status: asText(form, 'status') } : {}) } };
 }
 export function userFormRequest(form: FormData, record: PlatformUserSummary | null): AdministrationWriteRequest {
-    const id = record?.id ?? '';
-    const expectedVersion = record?.version;
-    return { path: '/api/platform/users/' + encodeURIComponent(id), method: 'PUT', body: { expectedVersion, displayName: asText(form, 'displayName'), preferredLocale: asText(form, 'defaultLocale'), status: asText(form, 'status') } };
+    if (!record) return { path: '/api/platform/users', method: 'POST', body: { displayName: asText(form, 'displayName'), preferredLocale: asText(form, 'defaultLocale'), email: asText(form, 'email'), password: asText(form, 'password') } };
+    return { path: '/api/platform/users/' + encodeURIComponent(record.id), method: 'PUT', body: { expectedVersion: record.version, displayName: asText(form, 'displayName'), preferredLocale: asText(form, 'defaultLocale'), status: asText(form, 'status') } };
 }

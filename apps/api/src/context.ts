@@ -17,7 +17,8 @@ export interface ApiDependencies {
     /** Explicit synthetic adapter or configured trusted IdP boundary; headers never directly become binding IDs. */
     authenticate: (headers: Record<string, unknown>) => Promise<string>;
     principals?: () => Promise<readonly { id: string; displayName: string }[]>;
-    dataReady: (tenantId: string) => Promise<boolean> };
+    dataReady: (tenantId: string) => Promise<boolean>;
+    provisionEmployee?: (actorIdentityId:string,input:{displayName:string;preferredLocale:'en'|'ar';email:string;password:string}) => Promise<unknown> };
   analyticsRepository: AnalyticsRepository;
   publishedCapabilities?: import('@el-dabboos/domain').PublishedCapabilityProvider;
   dimensionValues: DimensionValueRepository;
