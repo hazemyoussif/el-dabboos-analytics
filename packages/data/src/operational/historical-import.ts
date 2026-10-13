@@ -1,3 +1,4 @@
+import {scopedCanonicalFactCtes} from '../postgres/scoped-canonical-facts.ts';
 import {categoricalDimensions} from '@el-dabboos/domain';
 import {assertPublicationOperator} from '../postgres/release-certification.ts';
 import {randomUUID} from 'node:crypto';
@@ -61,9 +62,9 @@ async function assertHistoricalApproval(client:PoolClient,scope:HistoricalImport
 }
 /** Exact full tuples detect extra/missing identities and conflicting current heads, not just totals. */
 async function assertHistoricalFactParity(client:PoolClient,scope:HistoricalImportScope) {
- const mismatch=await client.query(`WITH expected AS (
+ const mismatch=await client.query(`WITH ${scopedCanonicalFactCtes}, expected AS (
  SELECT measure_id,kind,business_date,jsonb_strip_nulls(jsonb_build_object(${categoricalDimensions.map(dimension=>`'${dimension}',${dimension}`).join(',')})) dimensions,sum(value) value,count(*) fact_count
- FROM mart.canonical_facts WHERE tenant_id=$1 AND dataset_id=ANY($2::text[]) AND status='active'
+ FROM scoped_canonical WHERE tenant_id=$1 AND dataset_id=ANY($2::text[]) AND status='active'
  AND business_date>=$3::date AND business_date<=$4::date GROUP BY 1,2,3,4), actual AS (
  SELECT head.measure_id,payload->>'kind' kind,(payload->>'businessDate')::date business_date,payload->'dimensions' dimensions,sum((payload->>'value')::numeric) value,count(*) fact_count
  FROM mart.analytics_fact_heads head JOIN mart.analytics_fact_revisions revision USING(tenant_id,fact_key,revision_id)
@@ -73,6 +74,6 @@ async function assertHistoricalFactParity(client:PoolClient,scope:HistoricalImpo
 }
 
 async function assertBoundedHistoricalFacts(client:PoolClient,scope:HistoricalImportScope){
- const outside=await client.query('SELECT 1 FROM mart.canonical_facts WHERE tenant_id=$1 AND dataset_id=ANY($2::text[]) AND (business_date<$3::date OR business_date>$4::date) LIMIT 1',[scope.tenantId,scope.datasets,`${scope.month}-01`,monthEnd(scope.month)]);
+ const outside=await client.query(`WITH ${scopedCanonicalFactCtes} SELECT 1 FROM scoped_canonical WHERE tenant_id=$1 AND dataset_id=ANY($2::text[]) AND (business_date<$3::date OR business_date>$4::date) LIMIT 1`,[scope.tenantId,scope.datasets,`${scope.month}-01`,monthEnd(scope.month)]);
  if(outside.rowCount)throw new Error('Historical dataset contains facts outside the certified month');
 }

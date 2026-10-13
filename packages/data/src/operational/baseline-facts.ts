@@ -1,3 +1,4 @@
+import {scopedCanonicalFactCtes} from '../postgres/scoped-canonical-facts.ts';
 import { createHash } from 'node:crypto';
 import type { PoolClient } from 'pg';
 import { validateProductionFact } from '@el-dabboos/domain';
@@ -7,7 +8,7 @@ import { operationalFactKey } from './facts.ts';
 import type { OperationalBaseline } from './contracts.ts';
 /** Bounded baseline import copies certified facts into new history without changing originals. */
 export async function copyBaselineFacts(client:PoolClient,baseline:OperationalBaseline,mappings:SourceMapping[],options:{requireExactHeads?:boolean}={}) {
- await client.query(`DECLARE operational_baseline NO SCROLL CURSOR FOR SELECT f.*,f.business_date::text business_date,f.rate_date::text rate_date FROM mart.canonical_facts f WHERE tenant_id=$1 AND dataset_id=ANY($2::text[])
+ await client.query(`DECLARE operational_baseline NO SCROLL CURSOR FOR WITH ${scopedCanonicalFactCtes} SELECT f.*,f.business_date::text business_date,f.rate_date::text rate_date FROM scoped_canonical f WHERE tenant_id=$1 AND dataset_id=ANY($2::text[])
  AND NOT EXISTS(SELECT 1 FROM mart.analytics_trusted_serving trusted JOIN mart.analytics_serving_members member USING(tenant_id,revision_id)
  JOIN mart.analytics_partitions part USING(tenant_id,partition_id),jsonb_array_elements(part.capabilities->'releases') release,jsonb_array_elements(release->'capabilities') capability
  WHERE trusted.tenant_id=f.tenant_id AND member.family='facts' AND member.month=date_trunc('month',f.business_date)::date AND capability->>'metric'=f.measure_id)

@@ -1,4 +1,6 @@
 import test from 'node:test';
+import {randomUUID} from 'node:crypto';
+import {refreshOperationalMonths} from '../../src/operational/aggregates.ts';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {database,enabled} from './support.ts';
@@ -37,31 +39,48 @@ async function seed(db:Database,datasetId:string,records:number) {
  const fixtureClient=await db.admin.connect();
  try {
   await fixtureClient.query('SET session_replication_role=replica');
-  await fixtureClient.query(`INSERT INTO mart.fact_revisions SELECT expanded.* FROM mart.fact_revisions seed CROSS JOIN generate_series(2,$2::int) identity CROSS JOIN LATERAL jsonb_populate_record(NULL::mart.fact_revisions,to_jsonb(seed)||jsonb_build_object('fact_key',seed.fact_key||':'||identity,'source_record_id',identity::text,'customer','customer-'||identity,'salesperson','owner-'||(identity%12))) expanded WHERE seed.tenant_id='a' AND seed.dataset_id=$1`,[datasetId,records]);
+  await fixtureClient.query(`INSERT INTO mart.fact_revisions SELECT expanded.* FROM mart.fact_revisions seed CROSS JOIN generate_series(2,$2::int) identity CROSS JOIN LATERAL jsonb_populate_record(NULL::mart.fact_revisions,to_jsonb(seed)||jsonb_build_object('fact_key',seed.fact_key||':'||identity,'source_record_id',identity::text,'customer','customer-'||((identity-1)%4000+1),'salesperson','owner-'||(identity%12))) expanded WHERE seed.tenant_id='a' AND seed.dataset_id=$1`,[datasetId,records]);
   await fixtureClient.query('INSERT INTO mart.batch_facts SELECT tenant_id,dataset_id,batch_id,fact_key,source_revision FROM mart.fact_revisions WHERE tenant_id=$1 AND dataset_id=$2 ON CONFLICT DO NOTHING',['a',datasetId]);
  }finally{await fixtureClient.query('RESET session_replication_role');fixtureClient.release();}
  assert.equal((await db.admin.query('SELECT count(*)::int count FROM mart.batch_facts WHERE tenant_id=$1 AND dataset_id=$2',['a',datasetId])).rows[0].count,records*2);
 }
+
+async function seedTrustedHeads(db:Database) {
+ const fixtureClient=await db.admin.connect();
+ try {
+  await fixtureClient.query('SET session_replication_role=replica');
+  await fixtureClient.query(`INSERT INTO mart.analytics_fact_revisions SELECT tenant_id,fact_key||':history:'||identity,'synthetic-history',payload||jsonb_build_object('sourceRecordId','history-'||identity,'dimensions',jsonb_build_object('customer','background','salesperson','owner-1')) FROM mart.analytics_fact_revisions CROSS JOIN generate_series(1,140000) identity WHERE payload->>'datasetId'='anchor'`);
+  await fixtureClient.query(`INSERT INTO mart.analytics_fact_heads(tenant_id,fact_key,revision_id,business_month,measure_id,status,source_object,source_record_id) SELECT tenant_id,fact_key,revision_id,left(payload->>'businessDate',7),payload->>'measureId',payload->>'status',payload->>'sourceObject',payload->>'sourceRecordId' FROM mart.analytics_fact_revisions WHERE revision_id='synthetic-history'`);
+ }finally{await fixtureClient.query('RESET session_replication_role');fixtureClient.release();}
+ await db.admin.query('ANALYZE mart.analytics_fact_revisions,mart.analytics_fact_heads');
+ await tenantTransaction(db.migrator,'a',async client=>{
+  const parent=(await client.query("SELECT revision_id FROM mart.analytics_trusted_serving WHERE tenant_id='a'")).rows[0].revision_id,revisionId=randomUUID();
+  await refreshOperationalMonths(client,{tenantId:'a',revisionId,parent,runId:null,cutoff:'2026-01-01T10:00:00.000Z',purpose:'adoption'},['2026-01']);
+  await client.query("UPDATE mart.analytics_trusted_serving SET revision_id=$1 WHERE tenant_id='a'",[revisionId]);
+ },false,120000);
+ assert.equal((await db.admin.query('SELECT count(*)::int count FROM mart.analytics_fact_heads')).rows[0].count,280002);
+}
 function controls(records:number):ReconciliationCase[] {
  return (['order_revenue','order_count'] as const).flatMap(measureId=>([null,'customer','salesperson'] as const).flatMap(grouping=>{
   const populations=new Map<string|null,number>();
-  for(let identity=1;identity<=records;identity++){const key=grouping==='customer'?`customer-${identity}`:grouping==='salesperson'?`owner-${identity%12}`:null;populations.set(key,(populations.get(key)??0)+1);}
+  for(let identity=1;identity<=records;identity++){const key=grouping==='customer'?`customer-${(identity-1)%4000+1}`:grouping==='salesperson'?`owner-${identity%12}`:null;populations.set(key,(populations.get(key)??0)+1);}
   return [...populations].map(([groupKey,population])=>({tenantId:'a',datasetId:'release',mappingVersion:'1',caseId:`${measureId}-${grouping}-${groupKey}`,measureId,sourceReportReference:'SYNTHETIC independent population',frozenRevision:'freeze-1',batchIds:['release'],from:'2025-12-01',to:'2025-12-31',grouping,groupKey,expectedValue:`${population*(measureId==='order_count'?1:10)}.000000`,actualValue:'0.000000',expectedCount:String(population),actualCount:'0',tolerance:{status:'approved',absoluteValue:'0.000000',absoluteCount:'0',approvalReference:'SYNTHETIC'}}));
  }));
 }
-test('monthly ratio publication and replay stay scoped with 4000 customers and 280k unrelated revisions',{skip:!enabled,timeout:600000},async()=>{
+test('monthly ratio publication and replay stay scoped with 7000 records / 4000 customers, 280k unrelated revisions and 280k trusted heads',{skip:!enabled,timeout:600000},async()=>{
  const db=await database();
  try {
   await bootstrap(db);
-  await seed(db,'release',4000);await seed(db,'unrelated-history',140000);
+  await seedTrustedHeads(db);
+  await seed(db,'release',7000);await seed(db,'unrelated-history',140000);
   await db.admin.query('ANALYZE mart.fact_revisions,mart.batch_facts,mart.ingestion_batches');
   const cases:ReconciliationCase[]=[];
   for(const measure of ['order_revenue','order_count'])for(const grouping of [null,'customer','salesperson']){
-   const checked=await new PostgresReconciliation(db.migrator).record(controls(4000).filter(control=>control.measureId===measure&&control.grouping===grouping),'IQD');
+   const checked=await new PostgresReconciliation(db.migrator).record(controls(7000).filter(control=>control.measureId===measure&&control.grouping===grouping),'IQD');
    assert.equal(checked.status,'passed');cases.push(...checked.cases);
   }
   const caseIds=cases.map(control=>control.caseId),reference='SYNTHETIC TEST ONLY';
-  await certify(db.migrator,{tenantId:'a',datasetId:'release',caseIds,from:'2025-12-01',to:'2025-12-31',measureId:'order_revenue',value:'40000.000000'});
+  await certify(db.migrator,{tenantId:'a',datasetId:'release',caseIds,from:'2025-12-01',to:'2025-12-31',measureId:'order_revenue',value:'70000.000000'});
   await new PostgresMappingReleases(db.migrator).approve({tenantId:'a',datasetId:'release',reference,caseIds,approvedAt:clock().toISOString()});
   const original=await readFile(new URL('../../migrations/postgres/021_certified_proof_results.sql',import.meta.url),'utf8');
   const start=original.indexOf('CREATE FUNCTION mart.derived_inputs_exact_uncached'),end=original.indexOf('\n$$;',start)+4;
@@ -69,7 +88,7 @@ test('monthly ratio publication and replay stay scoped with 4000 customers and 2
   for(const grouping of [null,'customer','salesperson'] as const){
    const selected=cases.filter(control=>control.grouping===grouping).map(control=>control.caseId);
    const started=performance.now();
-   await new PostgresDerivedMetricCertification(db.migrator).record({tenantId:'a',datasetId:'release',mappingVersion:'1',reference:`ratio-${grouping}`,metric:'average_confirmed_order_value',grouping,from:'2025-12-01',to:'2025-12-31',caseIds:selected,approvalReference:reference,approvedAt:clock().toISOString(),businessSemantics:'SYNTHETIC exact ratio',technicalReference:'SYNTHETIC exact controls'});
+   await new PostgresDerivedMetricCertification(db.migrator,120000).record({tenantId:'a',datasetId:'release',mappingVersion:'1',reference:`ratio-${grouping}`,metric:'average_confirmed_order_value',grouping,from:'2025-12-01',to:'2025-12-31',caseIds:selected,approvalReference:reference,approvedAt:clock().toISOString(),businessSemantics:'SYNTHETIC exact ratio',technicalReference:'SYNTHETIC exact controls'});
    process.stdout.write(`scoped-ratio-publication ${JSON.stringify({grouping,cases:selected.length,ms:performance.now()-started})}\n`);
    await tenantTransaction(db.migrator,'a',async client=>{
     for(const ids of [selected,selected.slice(1),[...selected,selected[0]!]]){
@@ -81,7 +100,10 @@ test('monthly ratio publication and replay stay scoped with 4000 customers and 2
   const scope={tenantId:'a',datasetId:'release',reference};
   const promoted=await promoteLocalBoundedRelease(db.migrator,scope);assert.equal(promoted.alreadyPromoted,false);
   assert.deepEqual(await promoteLocalBoundedRelease(db.migrator,scope),{...promoted,alreadyPromoted:true});
-  const imported=await importCertifiedHistoricalMonth(db.migrator,{tenantId:'a',month:'2025-12',datasets:['release'],approvalReference:reference});assert.equal(imported.alreadyImported,false);
+  const importStarted=performance.now();
+  const imported=await importCertifiedHistoricalMonth(db.migrator,{tenantId:'a',month:'2025-12',datasets:['release'],approvalReference:reference});assert.equal(imported.alreadyImported,false);assert.equal(imported.details.canonicalFacts,14000);
+  assert.ok(performance.now()-importStarted<120000,'complete bounded import must finish within the unchanged staging statement budget');
+  process.stdout.write(`scoped-historical-import ${JSON.stringify({facts:imported.details?.canonicalFacts,ms:performance.now()-importStarted})}\n`);
   const replay=await importCertifiedHistoricalMonth(db.migrator,{tenantId:'a',month:'2025-12',datasets:['release'],approvalReference:reference});assert.equal(replay.revisionId,imported.revisionId);assert.equal(replay.alreadyImported,true);
   const repository=new TrustedAnalyticsRepository(db.runtime,{reportingCurrencies:{a:'IQD'}});
   const result=await repository.execute({metric:'average_confirmed_order_value',dateRange:{from:'2025-12-01',to:'2025-12-31'}},{tenantId:'a',locale:'en'});assert.equal(result.rows[0]?.value,10,JSON.stringify(result));
