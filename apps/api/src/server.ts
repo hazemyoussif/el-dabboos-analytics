@@ -1,3 +1,6 @@
+import { createWorkspaceAiResolver } from './workspace-ai/provider.ts';
+import { createWorkspaceAiAdministration } from './workspace-ai/models.ts';
+import { WorkspaceAiKeyCipher } from './workspace-ai/key-cipher.ts';
 import { TrustedDrillThroughRepository } from '@el-dabboos/data';
 import {localAnalyticsSourceRelay} from './analytics-local-relay.ts';
 import { manualAnalyticsCommands } from './analytics-operations-runtime.ts';
@@ -91,9 +94,13 @@ else if (plannerMode === 'disabled')
     planner = null;
 else if (plannerMode !== 'mock')
     throw new Error('DASHBOARD_PLANNER must be mock, structured, or disabled.');
+const workspaceAiCipher = new WorkspaceAiKeyCipher(authConfig?.secret ?? process.env.WORKSPACE_AI_SECRET);
+const workspaceAiConfig = { localBaseUrl: config.llm.baseUrl, localApiKey: config.llm.apiKey, openrouterApiKey: process.env.OPENROUTER_API_KEY, timeoutMs: config.llm.timeoutMs, repairAttempts: config.llm.repairAttempts, synthesis: config.llm.analystSynthesis };
+const workspaceAiAdministration = createWorkspaceAiAdministration(workspaceAiConfig, workspaceAiCipher);
+const workspaceAi = createWorkspaceAiResolver({ read: administration.read.bind(administration), config: workspaceAiConfig, cipher: workspaceAiCipher, dimensionValues: repository });
 const sourceRelay=await localAnalyticsSourceRelay(process.env);
 const operationalCommands=manualAnalyticsCommands(provider,process.env);
-const app = await buildApi({ analystRepository:administration.analyst,...(analystPlanner?{analystPlanner}:{}),...(analystSynthesis?{analystSynthesis}:{}), ...(drillThroughRepository?{drillThroughRepository}:{}), ...(operationalCommands?{operationalCommands}:{}), ...(operationalStatus?{operationalStatus}:{}), ...(provider==='postgres' ? { publishedCapabilities: repository as TrustedAnalyticsRepository } : {}),analyticsRepository: repository, dimensionValues: repository, executionConcurrency: config.executionConcurrency,
+const app = await buildApi({ workspaceAi, workspaceAiAdministration, analystRepository:administration.analyst,...(analystPlanner?{analystPlanner}:{}),...(analystSynthesis?{analystSynthesis}:{}), ...(drillThroughRepository?{drillThroughRepository}:{}), ...(operationalCommands?{operationalCommands}:{}), ...(operationalStatus?{operationalStatus}:{}), ...(provider==='postgres' ? { publishedCapabilities: repository as TrustedAnalyticsRepository } : {}),analyticsRepository: repository, dimensionValues: repository, executionConcurrency: config.executionConcurrency,
     readiness: { persistence: async () => { await localAuth?.ready(); return controlStorage.ready(); }, analytics: analyticsReady },
     administration: { unitOfWork: administration, directory: administration.directory, profiles: administration.profiles, dataReady,
         ...(localAuth ? { provisionEmployee: localAuth.provisionEmployee,provisionWorkspaceEmployee:localAuth.provisionWorkspaceEmployee } : {}),

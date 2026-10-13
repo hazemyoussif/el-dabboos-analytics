@@ -2,7 +2,7 @@ import { providerHttpDiagnostic } from './transport-diagnostics.ts';
 import type { ProviderHttpDiagnostic } from './transport-diagnostics.ts';
 import type { LLMProvider, StructuredOutputRequest, StructuredOutputResponse } from '@el-dabboos/domain';
 
-export interface OpenAICompatibleConfig { baseUrl: string; modelId: string; apiKey?: string; timeoutMs: number; temperature?: number; maxTokens?: number; reasoningBudgetTokens?: number; seed?: number; diagnostics?: (event: ProviderHttpDiagnostic) => void }
+export interface OpenAICompatibleConfig { baseUrl: string; modelId: string; apiKey?: string; timeoutMs: number; temperature?: number; maxTokens?: number; reasoningBudgetTokens?: number; seed?: number; reasoningEffort?: import('@el-dabboos/domain').WorkspaceAiSettings['reasoningEffort']; requireParameters?: boolean; diagnostics?: (event: ProviderHttpDiagnostic) => void }
 export class ProviderTransportError extends Error {
   constructor(readonly code: 'LLM_RATE_LIMITED' | 'LLM_TIMEOUT' | 'LLM_HTTP_ERROR' | 'LLM_PROTOCOL_ERROR' | 'LLM_UNAVAILABLE', message: string) { super(message); }
 }
@@ -25,14 +25,9 @@ export class OpenAICompatibleLLMProvider implements LLMProvider {
     const started = performance.now();
     try {
       const response = await fetch(this.endpoint, {
-        method: 'POST', signal: controller.signal,
+        method: 'POST', redirect: 'error', signal: controller.signal,
         headers: { 'content-type': 'application/json', ...(this.config.apiKey ? { authorization: `Bearer ${this.config.apiKey}` } : {}) },
-        body: JSON.stringify({ model: this.config.modelId, messages: request.messages, stream: false,
-          temperature: this.config.temperature ?? 0, max_tokens: this.config.maxTokens ?? 2048,
-          ...(this.config.reasoningBudgetTokens !== undefined ? { thinking_budget_tokens: this.config.reasoningBudgetTokens } : {}),
-          ...(this.config.seed !== undefined ? { seed: this.config.seed } : {}),
-          response_format: { type: 'json_schema', json_schema: { name: request.responseFormat.name, strict: request.responseFormat.strict,
-            schema: request.responseFormat.jsonSchema } } }),
+        body: JSON.stringify(structuredRequestBody(request, this.config)),
       });
       if (!response.ok) {
         if (this.config.diagnostics) {
@@ -58,4 +53,15 @@ export class OpenAICompatibleLLMProvider implements LLMProvider {
       throw new ProviderTransportError('LLM_UNAVAILABLE', 'Structured provider is unavailable.');
     } finally { clearTimeout(timeout); }
   }
+}
+
+function structuredRequestBody(request: StructuredOutputRequest, config: OpenAICompatibleConfig) {
+  return { model: config.modelId, messages: request.messages, stream: false,
+          temperature: config.temperature ?? 0, max_tokens: config.maxTokens ?? 2048,
+          ...(config.reasoningBudgetTokens !== undefined ? { thinking_budget_tokens: config.reasoningBudgetTokens } : {}),
+          ...(config.reasoningEffort !== undefined ? { reasoning: { effort: config.reasoningEffort } } : {}),
+          ...(config.requireParameters ? { provider: { require_parameters: true } } : {}),
+          ...(config.seed !== undefined ? { seed: config.seed } : {}),
+          response_format: { type: 'json_schema', json_schema: { name: request.responseFormat.name, strict: request.responseFormat.strict,
+            schema: request.responseFormat.jsonSchema } } };
 }

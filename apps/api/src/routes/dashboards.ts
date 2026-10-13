@@ -33,8 +33,9 @@ export function registerDashboardRoutes(app: FastifyInstance, services: RouteCon
       services.authorize(context, 'ai:generate', 'analytics:query', 'dashboard:create');
       await services.requireData(context.tenant.tenantId);
       if (!object(request.body) || typeof request.body.prompt !== 'string' || !request.body.prompt.trim()) throw new ApiError(400, 'INVALID_BODY', 'prompt is required.');
-      if (!services.planner) throw new ApiError(503, 'PLANNER_UNAVAILABLE', 'Dashboard planning is disabled.');
-      const dashboard = services.ensureDashboard(await services.planner.generate({ prompt: request.body.prompt, locale: context.locale, context: analyticsContext(context), tenantProfile: profile,
+      const planner = (await services.deps.workspaceAi?.(context.tenant.tenantId))?.planner ?? services.planner;
+      if (!planner) throw new ApiError(503, 'PLANNER_UNAVAILABLE', 'Dashboard planning is disabled.');
+      const dashboard = services.ensureDashboard(await planner.generate({ prompt: request.body.prompt, locale: context.locale, context: analyticsContext(context), tenantProfile: profile,
         capabilities: await capabilities(context) }), context);
       assertPublishedDashboard(dashboard,await workspacePublishedCapabilities(services,context),profile.timeZone,services.clock());
       return { dashboard, execution: await services.executor.execute(dashboard, analyticsContext(context), { timeZone: profile.timeZone }) };
@@ -47,8 +48,9 @@ export function registerDashboardRoutes(app: FastifyInstance, services: RouteCon
       await services.requireData(context.tenant.tenantId);
       if (!object(request.body) || !object(request.body.dashboard) || typeof request.body.instruction !== 'string' || !request.body.instruction.trim()) throw new ApiError(400, 'INVALID_BODY', 'dashboard and instruction are required.');
       const current = services.ensureDashboard(request.body.dashboard, context);
-      if (!services.planner) throw new ApiError(503, 'PLANNER_UNAVAILABLE', 'Dashboard planning is disabled.');
-      const patch = await services.planner.edit(current, request.body.instruction, profile, await capabilities(context));
+      const planner = (await services.deps.workspaceAi?.(context.tenant.tenantId))?.planner ?? services.planner;
+      if (!planner) throw new ApiError(503, 'PLANNER_UNAVAILABLE', 'Dashboard planning is disabled.');
+      const patch = await planner.edit(current, request.body.instruction, profile, await capabilities(context));
       const dashboard = services.ensureDashboard(applyDashboardPatch(current, patch), context);
       assertPublishedDashboard(dashboard,await workspacePublishedCapabilities(services,context),profile.timeZone,services.clock());
       return { patch, dashboard, execution: await services.executor.execute(dashboard, analyticsContext(context), { timeZone: profile.timeZone }) };

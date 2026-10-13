@@ -1,0 +1,40 @@
+import { DatabaseSync } from 'node:sqlite';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { migrateMetadata, seedDemoAdministration, importSqliteControl } from '@el-dabboos/data';
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { createAdministration } from '../../../application/src/index.ts';
+import { PostgresAdministrationStore } from '../../src/control/administration.ts';
+import { WorkspaceAiKeyCipher } from '../../../../apps/api/src/workspace-ai/key-cipher.ts';
+import { controlDatabase } from './control-support.ts';
+import { enabled } from './support.ts';
+const actor = { identityId: 'synthetic:demo-iq-admin', tenantId: 'demo-iq', locale: 'en' as const };
+const settings = { provider: 'openrouter' as const, baseUrl: 'https://openrouter.ai/api/v1', modelId: 'synthetic/model', temperature: 0, maxTokens: 2048 };
+test('PostgreSQL workspace AI settings preserve encrypted keys, CAS, tenant isolation, audit rollback and app privileges', { skip: !enabled }, async () => {
+ const database = await controlDatabase();
+ const directory = await mkdtemp(join(tmpdir(), 'ai-control-test-'));
+ const source = new DatabaseSync(join(directory, 'control.db'));
+ migrateMetadata(source, { reconcile: seedDemoAdministration }); source.close();
+ try {
+  const store = new PostgresAdministrationStore(database.app);
+  await importSqliteControl(join(directory, 'control.db'), database.migrator);
+  const admin = createAdministration(store), cipher = new WorkspaceAiKeyCipher('synthetic_secret_for_workspace_ai'.repeat(2));
+  const encryptedApiKey = cipher.encrypt('demo-iq', 'synthetic-provider-key');
+  const record = await admin.saveWorkspaceAiSettings(actor, { settings, expectedVersion: null, encryptedApiKey });
+  assert.equal(record.version, 1); assert.equal(record.settings.temperature, 0);
+  const reopened = new PostgresAdministrationStore(database.app);
+  assert.equal((await reopened.read(transaction => transaction.aiSettings!.get('demo-iq')))?.encryptedApiKey, encryptedApiKey);
+  assert.equal(await reopened.read(transaction => transaction.aiSettings!.get('demo-eg')), null);
+  await assert.rejects(admin.getWorkspaceAiSettings({ ...actor, identityId: 'synthetic:demo-iq-analyst' }));
+  const results = await Promise.allSettled([admin.saveWorkspaceAiSettings(actor, { settings: { ...settings, maxTokens: 3000 }, expectedVersion: 1 }), admin.saveWorkspaceAiSettings(actor, { settings: { ...settings, maxTokens: 4000 }, expectedVersion: 1 })]);
+  assert.equal(results.filter(result => result.status === 'fulfilled').length, 1);
+  await database.migrator.query("CREATE FUNCTION control.reject_ai_test_audit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.action='ai.settings_changed' THEN RAISE EXCEPTION 'synthetic audit failure'; END IF; RETURN NEW; END $$; CREATE TRIGGER reject_ai_test_audit BEFORE INSERT ON control.admin_audit_events FOR EACH ROW EXECUTE FUNCTION control.reject_ai_test_audit()");
+  await assert.rejects(admin.saveWorkspaceAiSettings(actor, { settings: { ...settings, maxTokens: 5000 }, expectedVersion: 2, encryptedApiKey: cipher.encrypt('demo-iq', 'replacement') }));
+  assert.equal((await store.read(transaction => transaction.aiSettings!.get('demo-iq')))?.version, 2);
+  assert.equal((await store.read(transaction => transaction.aiSettings!.get('demo-iq')))?.encryptedApiKey, encryptedApiKey);
+  await assert.rejects(database.app.query('ALTER TABLE control.workspace_ai_settings ADD COLUMN unsafe TEXT'));
+  await assert.rejects(database.app.query('DELETE FROM control.workspace_ai_settings'));
+ } finally { await database.close(); await rm(directory, { recursive: true, force: true }); }
+});

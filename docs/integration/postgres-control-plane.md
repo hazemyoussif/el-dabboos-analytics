@@ -55,8 +55,9 @@ Numbered control migrations under `packages/data/migrations/control`:
 6. `006_staging_bootstrap.sql`: governed staging bootstrap receipts.
 7. `007_local_authentication.sql`: framework-owned local credential/session storage.
 8. `008_analyst_conversations.sql`: private semantic conversation history and atomic question audit.
+9. `009_workspace_ai_settings.sql`: versioned per-workspace provider preferences, encrypted keys and atomic AI-settings audit.
 
-Current control head is 008; the independent mart head is 037 and SQLite metadata head is 005. See the [migration inventory](../architecture/database-migrations.md).
+Current control head is 009; the independent mart head is 037 and SQLite metadata head is 006. See the [migration inventory](../architecture/database-migrations.md).
 
 Each migration and its ledger insertion run in one transaction under an advisory migration lock; failure rolls back that migration. The loader requires contiguous numbered files. History names/checksums must match; gaps, tampering and newer schemas fail closed. API startup/readiness requires the exact current manifest. Constructors never migrate or seed. Migrations already applied must never be edited: add a new migration. The ledger bootstrap is infrastructure outside an individual migration transaction, matching mart discipline; a failed first migration can leave an empty ledger but no product schema.
 
