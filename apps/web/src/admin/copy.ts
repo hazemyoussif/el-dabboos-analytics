@@ -17,6 +17,16 @@ export function administrationLabel(value: string, locale: Locale): string {
 }
 
 const errors: Record<string, readonly [string, string]> = {
+    INVALID_AI_SETTINGS: ['Review the AI settings and numeric limits.', 'راجع إعدادات AI والحدود الرقمية.'],
+    AI_ENDPOINT_NOT_ALLOWED: ['Use the OpenRouter URL or the server-configured local endpoint.', 'استخدم رابط OpenRouter أو الرابط المحلي المعدّ في الخادم.'],
+    AI_MODEL_UNSUPPORTED: ['Select a compatible model from the model list.', 'اختر نموذجًا متوافقًا من قائمة النماذج.'],
+    AI_TOKEN_LIMIT: ['Reduce the output-token limit to the model maximum.', 'قلّل حد رموز الإخراج ليتوافق مع الحد الأقصى للنموذج.'],
+    AI_REASONING_UNSUPPORTED: ['Select a reasoning level supported by this model.', 'اختر مستوى تفكير يدعمه هذا النموذج.'],
+    AI_SEED_UNSUPPORTED: ['This model does not support a seed. Leave it blank.', 'لا يدعم هذا النموذج البذرة. اتركها فارغة.'],
+    AI_MODELS_UNAVAILABLE: ['Could not load models. Check the provider and API key.', 'تعذر تحميل النماذج. راجع المزود ومفتاح API.'],
+    INVALID_AI_KEY: ['Enter a valid API key, or explicitly clear the saved key.', 'أدخل مفتاح API صالحًا أو احذف المفتاح المحفوظ صراحةً.'],
+    AI_KEY_STORAGE_UNAVAILABLE: ['A protected server secret is required to save API keys.', 'يلزم سر خادم محمي لحفظ مفاتيح API.'],
+
     USER_PROVISIONING_FAILED: ['Unable to create this user. Review the email and account state.', 'تعذر إنشاء المستخدم. راجع البريد الإلكتروني وحالة الحساب.'],
     USER_PROVISIONING_LIMITED: ['Too many user creation attempts. Try again shortly.', 'محاولات إنشاء المستخدمين كثيرة. حاول بعد قليل.'],
     VERSION_CONFLICT: ['This record changed. Reload and review before saving again.', 'تغير هذا السجل. أعد التحميل وراجع التغييرات قبل الحفظ مجدداً.'],

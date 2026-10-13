@@ -7,6 +7,8 @@ import type { AnalyticsRepository, AuditAction, AuditSink, AuthorizationPolicy, 
 import { ApiError } from './errors.ts';
 
 export interface ApiDependencies {
+  workspaceAi?: (tenantId: string) => Promise<{ planner: DashboardPlanner; analystPlanner: import('@el-dabboos/application').StructuredAnalyticsPlanner; analystSynthesis?: import('@el-dabboos/domain').LLMProvider } | null>;
+  workspaceAiAdministration?: import('./workspace-ai/models.ts').WorkspaceAiAdministration;
   analystRepository?: import('@el-dabboos/domain').AnalystConversationRepository;
   analystPlanner?: import('@el-dabboos/application').StructuredAnalyticsPlanner;
   analystSynthesis?: import('@el-dabboos/domain').LLMProvider;

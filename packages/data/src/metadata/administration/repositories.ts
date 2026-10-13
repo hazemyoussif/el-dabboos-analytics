@@ -1,3 +1,4 @@
+import { workspaceAiSettingsRepository } from './ai-settings.ts';
 import { randomUUID } from 'node:crypto';
 import type { AdministrationTransaction } from '@el-dabboos/domain';
 import type { MetadataConnection } from './connection.ts';
@@ -11,6 +12,7 @@ export function administrationRepositories(connection: MetadataConnection, provi
     const rows = metadataRows(connection);
     return {
         provisioning,
+        aiSettings: workspaceAiSettingsRepository(connection),
         directory: directoryRepository(connection, rows),
         customers: customersRepository(connection, rows),
         users: usersRepository(connection, rows),

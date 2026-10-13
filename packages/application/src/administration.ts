@@ -1,3 +1,4 @@
+import * as aiSettings from './administration/ai-settings.ts';
 import * as actors from './administration/actors.ts';
 import * as audiences from './administration/audiences.ts';
 import * as customers from './administration/customers.ts';
@@ -13,7 +14,7 @@ export type {WorkspaceUserInput} from './administration/workspace-users.ts';
 export type { AdministrationActor, PlatformAdministrationCommand, ScopeValues, TenantAdministrationCommand } from './administration/commands.ts';
 export function createAdministration(...dependencies: ConstructorParameters<typeof AdministrationRuntime>) {
     const runtime = new AdministrationRuntime(...dependencies);
-    return { failureAuditEvents: runtime.failureAuditEvents,
+    return { getWorkspaceAiSettings: aiSettings.getWorkspaceAiSettings.bind(null, runtime), saveWorkspaceAiSettings: aiSettings.saveWorkspaceAiSettings.bind(null, runtime), failureAuditEvents: runtime.failureAuditEvents,
         authorizeWorkspaceUserCreation:workspaceUsers.authorizeWorkspaceUserCreation.bind(null,runtime),
         createWorkspaceUser:workspaceUsers.createWorkspaceUser.bind(null,runtime),
         listAssignmentCandidates: memberships.listAssignmentCandidates.bind(null, runtime),

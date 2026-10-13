@@ -11,8 +11,8 @@ closed. No accepted SQL or checksum is changed by milestone finalization.
 | Store | Current head | Registration / readiness | Explicit execution |
 | --- | --- | --- | --- |
 | PostgreSQL analytics mart | 043 `scoped_derived_inputs` | [Manifest/runner](../../packages/data/src/postgres/migrations.ts), [runtime readiness](../../packages/data/src/postgres/readiness.ts) | `pnpm mart:migrate`; staging uses `pnpm staging migrate` |
-| PostgreSQL control | 008 `analyst_conversations` | [Manifest/runner/readiness](../../packages/data/src/control/migrations.ts) | `pnpm control migrate`; staging uses `pnpm staging migrate` |
-| SQLite governed metadata | 005 `analyst` | [Explicit registry/readiness](../../packages/data/src/metadata/migrations.ts) | `pnpm metadata:migrate <metadata-db-path>` against approved metadata storage |
+| PostgreSQL control | 009 `workspace_ai_settings` | [Manifest/runner/readiness](../../packages/data/src/control/migrations.ts) | `pnpm control migrate`; staging uses `pnpm staging migrate` |
+| SQLite governed metadata | 006 `workspace-ai-settings` | [Explicit registry/readiness](../../packages/data/src/metadata/migrations.ts) | `pnpm metadata:migrate <metadata-db-path>` against approved metadata storage |
 
 The mart history includes production roles/forced RLS (001–008), certification,
 published capabilities and exact receivable proofs (009–024), historical and
@@ -48,3 +48,5 @@ rollback requires compatibility with the current immutable history; otherwise an
 approved coordinated restore is needed. Never edit released migrations, delete
 history or promise automatic destructive down migrations. Source/company mapping
 and serving promotion remain separately governed operations.
+
+Control 009 and SQLite metadata 006 add versioned workspace AI settings with encrypted API-key storage and the immutable `ai.settings_changed` audit action.

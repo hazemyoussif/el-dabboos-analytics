@@ -15,7 +15,9 @@ export function registerAnalystRoutes(app:FastifyInstance,services:RouteContext)
       if(JSON.stringify(fresh)!==JSON.stringify(context))throw new ApiError(403,'SCOPE_CHANGED','Start a new conversation after an access change.');
       return workspacePublishedCapabilities(services,fresh);
     }},services.deps.authorizationPolicy??new DefaultAuthorizationPolicy(),{timeZone:profile.timeZone,clock:services.clock,...(services.deps.executionConcurrency?{maxConcurrency:services.deps.executionConcurrency}:{})});
-    return {context,profile,instance:new AnalystConversations({repository:services.deps.analystRepository!,executor,clock:services.clock,...(services.deps.analystPlanner?{planner:services.deps.analystPlanner}:{}),...(services.deps.analystSynthesis?{synthesis:services.deps.analystSynthesis}:{})})};
+    const workspaceAi=await services.deps.workspaceAi?.(context.tenant.tenantId);
+    const analystPlanner=workspaceAi?.analystPlanner??services.deps.analystPlanner, analystSynthesis=workspaceAi?.analystSynthesis??services.deps.analystSynthesis;
+    return {context,profile,instance:new AnalystConversations({repository:services.deps.analystRepository!,executor,clock:services.clock,...(analystPlanner?{planner:analystPlanner}:{}),...(analystSynthesis?{synthesis:analystSynthesis}:{})})};
   }
   app.post('/api/ai-analyst/conversations',async request=>{const {context,instance}=await service(request.headers);return instance.create(context);});
   app.get('/api/ai-analyst/conversations',async request=>{const {context,instance}=await service(request.headers);return {conversations:await instance.list(context)};});

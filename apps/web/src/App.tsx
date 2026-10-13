@@ -1,3 +1,4 @@
+import { BuildVersion } from './shell/BuildVersion.tsx';
 import { AnalystArea, AnalystBreadcrumb, AnalystNavigation } from './analyst/AnalystWorkspace.tsx';
 import { navigateWorkspace } from './workspace-route.ts';
 import { useAnalyticsOperations } from './reports/useAnalyticsOperations.ts';
@@ -120,7 +121,7 @@ export default function App({ authenticatedUser,onLogout,authenticationError }: 
         {flow.nameDialog && <DashboardNameDialog key={`${flow.nameDialog.operation}-${locale}`} spec={flow.nameDialog.spec} locale={locale} busy={loading} onConfirm={spec => void flow.confirmName(spec)} onClose={() => flow.setNameDialog(null)} />}
         </ManagementArea></AnalystArea>
         </></WorkspaceContent>
-        <footer className="footer">© {new Date().getFullYear()} El Dabboos · {locale === 'ar' ? 'منصة تحليلات تجريبية' : 'Analytics prototype'}</footer>
+        <footer className="footer">© {new Date().getFullYear()} El Dabboos · {locale === 'ar' ? 'منصة تحليلات تجريبية' : 'Analytics prototype'}<BuildVersion locale={locale} /></footer>
       </div>
     </main>
   </div><div id="app-overlays" /></MetricCurrencyContext></MetricPublicationContext></DimensionDiscoveryContext>;

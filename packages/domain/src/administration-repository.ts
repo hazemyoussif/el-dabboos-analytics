@@ -98,6 +98,7 @@ export interface GovernedDashboardRepository {
     replaceAccess(state: DashboardAccessState, expectedVersion: number, updatedBy: string): Promise<MetadataWriteResult<DashboardAccessState>>;
 }
 export interface AdministrationTransaction {
+    aiSettings?: import('./workspace-ai-settings.ts').WorkspaceAiSettingsRepository;
     /** Operational persistence only; authorization and orchestration belong to application operations. */
     provisioning: {
         bootstrapCompleted(): Promise<boolean>;

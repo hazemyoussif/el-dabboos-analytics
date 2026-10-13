@@ -178,3 +178,20 @@ The subsequent [planner differential](../qa/ask-business-planner-differential-20
 identified prompt/schema orchestration defects with unchanged Bonsai inference
 settings. Controlled reference-provider diagnostics do not authorize normal
 runtime fallback. The subsequent [final navigation/business acceptance](../qa/ask-business-navigation-acceptance-2026-10-09.md) closes the remaining browser item: local business testing is ENABLED. The original planner-disabled runtime was restored after temporary smoke; enablement here is an acceptance classification, not a configuration change.
+
+## Workspace AI preferences and build number
+
+The workspace **AI settings** page stores per-workspace provider preferences and
+encrypted API keys. Apply control migration 009 through the existing staging
+operator migration command before restarting this release. Existing protected
+`AUTH_SECRET` supplies the purpose-separated encryption secret; preserve it with
+the control backup. Enter provider keys only in the masked workspace form. No
+provider key or model is embedded in images. See [configuration](../developer/configuration.md#workspace-ai-settings).
+
+Every web build displays its build number beside the footer copyright. Before
+building the pinned staging checkout, set `STAGING_BUILD_NUMBER=$(git rev-list --count HEAD)` in the same deployment shell; compose passes it as public
+`VITE_BUILD_NUMBER`. CI or another release pipeline can supply its own numeric
+build number. Local Git builds derive the revision count automatically. Builds
+without Git or an explicit number identify themselves as `development`, rather
+than inventing a release number. The value is baked into the web artifact and
+does not change when viewing reports or switching locale.

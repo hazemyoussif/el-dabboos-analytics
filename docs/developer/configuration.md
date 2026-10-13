@@ -38,3 +38,56 @@ Verify with the allowlisted startup summary and safe field names; do not dump pr
 For the user's evaluated Bonsai deployment: temperature 0, max_tokens 2048, thinking_budget_tokens 512, seed 42, strict json_schema. The hard three-widget case (revenue KPI; monthly revenue with 3-month moving average Line; Top-5 branches by gross profit as horizontal blue Bars) succeeded first pass around 23 seconds in three repeated runs. Prior budget 1024 output omitted month/branch grouping and canonical validation correctly rejected it; repair repeated the omission. This evidence motivated structural summary/grouped tightening.
 
 These are user-supplied local observations, not new runs by this implementation, a benchmark or a production guarantee. Larger reasoning budgets are not presumed better for this constrained task; there is no universal inverse relationship between budget and quality. Generic defaults remain temperature 0/max_tokens 2048, with reasoning budget and seed optional and omitted when unset. Endpoint support and revised schema acceptance still require deployment verification. For this evaluation only, configure `LLM_REASONING_BUDGET_TOKENS=512` and `LLM_SEED=42`; neither becomes an application default.
+
+## Workspace AI settings
+
+Workspace administrators without row restrictions can open **AI settings** and
+explicitly Save provider URL, model, maximum output tokens, temperature (default
+**0**), provider-supported reasoning and an optional seed. Local compatible
+providers expose an optional numeric thinking budget; no model-name presets or
+Bonsai-specific branches are introduced. OpenRouter model discovery returns only
+models advertising structured outputs, temperature and output-token controls;
+reasoning/seed controls follow available model capabilities and output limits.
+The same saved settings apply to subsequent dashboard generation, editing and
+Ask Business requests without restarting the API. Unsaved workspaces retain the
+existing server planner configuration. A saved provider failure never falls back
+to synthetic planning.
+
+The masked API-key field accepts a replacement, an empty field retains the key,
+and Clear removes the workspace override. Changing the provider endpoint clears
+an existing workspace key unless explicitly replaced. Keys are encrypted with
+AES-256-GCM and tenant-bound authenticated data. The encryption key is derived
+with a separate purpose from protected `AUTH_SECRET`; local/synthetic deployments
+can supply `WORKSPACE_AI_SECRET` (at least 32 characters). No reusable key or
+ciphertext is returned to the browser or included in audit events. Keep this
+server secret stable and backed up; after rotating it, re-enter saved provider
+keys. Optional `OPENROUTER_API_KEY` is a server-side fallback for OpenRouter;
+`LLM_API_KEY` remains bound to the server-configured local endpoint.
+
+OpenRouter's accepted base URL is `https://openrouter.ai/api/v1`; the local option
+uses the deployment's existing `LLM_BASE_URL`. Workspace settings cannot redirect
+server credentials to arbitrary endpoints. Outbound model/provider requests
+refuse redirects. API-key entry and model discovery go through the authenticated
+API, never directly from the browser to a provider.
+
+Workspace settings are versioned control metadata, with fresh actor authorization
+and atomic audit/CAS writes. Apply SQLite metadata migration 006 or PostgreSQL
+control migration 009 explicitly before deploying the updated runtime. Existing
+mart migrations and analytics semantics are unchanged.
+
+The catalog loads when the settings form opens and can be refreshed with **Load models**. The **Free compatible models** selector is built from the current OpenRouter
+catalog's zero prompt and completion prices after strict capability filtering.
+It has no embedded model list and removes models that become paid or incompatible
+when the catalog is reloaded. The searchable/manual model-ID field remains
+available for other compatible models. Catalog compatibility is not a live
+accuracy benchmark; validate chosen models with synthetic prompts first. Free
+endpoint limits and provider data-use terms still apply.
+
+On 2026-10-13 the live catalog advertised compatible free routes including
+[Nemotron 3 Super](https://openrouter.ai/nvidia/nemotron-3-super-120b-a12b:free),
+[Apodex 1.1 Mini](https://openrouter.ai/apodex/apodex-1.1-mini:free) and
+[LFM2.5-2.6B](https://openrouter.ai/liquid/lfm-2.5-2.6b:free).
+These are trial candidates, not hardcoded defaults or an accuracy certification.
+NVIDIA's free endpoint terms prohibit confidential/personal inputs; its option
+should be evaluated with synthetic data. Runtime model/provider settings continue
+to be explicit workspace-admin choices, with no automatic model switching.

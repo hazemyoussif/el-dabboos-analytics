@@ -1,3 +1,4 @@
+import { registerAiSettingsRoutes } from './administration/ai-settings.ts';
 import type { FastifyInstance } from 'fastify';
 import type { RouteContext } from '../context.ts';
 import { registerAudiencesRoutes } from './administration/audiences.ts';
@@ -9,6 +10,7 @@ import { registerTenantsRoutes } from './administration/tenants.ts';
 import { registerUsersRoutes } from './administration/users.ts';
 import { registerWorkspaceRoutes } from './administration/workspace.ts';
 export function registerAdministrationRoutes(app: FastifyInstance, context: RouteContext) {
+    registerAiSettingsRoutes(app, context);
     registerRolesRoutes(app, context);
     registerMembershipsRoutes(app, context);
     registerWorkspaceRoutes(app, context);
