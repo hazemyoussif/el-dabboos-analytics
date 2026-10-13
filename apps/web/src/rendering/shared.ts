@@ -1,3 +1,4 @@
+import type { DashboardExecutionResult } from '@el-dabboos/application';
 import type { DashboardWidget, Locale, SemanticMetric, TenantProfile } from '@el-dabboos/domain';
 import type { ChartTheme } from './chart-theme.ts';
 import { formatValue, localeTag } from '../i18n.ts';
@@ -6,6 +7,7 @@ export const valueKey = (id: string) => `v_${id}`;
 export const comparisonKey = (id: string) => `c_${id}`;
 export type ChartRow = Record<string, string | number | null>;
 export interface RenderSeriesProps {
+  exportMetadata?: DashboardExecutionResult['metadata'];
   theme: ChartTheme;
   canDrill?: ((seriesId:string,key:string|null)=>boolean)|undefined;
   onDrill?: (seriesId:string,key:string|null,opener?:Element)=>void;
