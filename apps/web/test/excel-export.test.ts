@@ -35,14 +35,15 @@ test('Excel export preserves precise numbers, blanks, comparison data, labels, a
   assert.equal(Buffer.from(await blob.arrayBuffer()).subarray(0, 2).toString(), 'PK');
 });
 
-test('dashboard workbook retains empty and failed cards, unique safe sheet names and Arabic direction', () => {
+test('dashboard workbook retains empty and failed cards, one safe dashboard sheet and Arabic direction', () => {
   const spec = { ...dashboard, widgets: [widget, { ...widget, id: 'empty' }, { ...widget, id: 'failed' }] };
   const result = dashboardWorkbook({ ...execution, widgetResults: { table: entry, empty: { status: 'success', seriesResults: {}, alignedRows: [] } } }, spec, { ...context, locale: 'ar' });
-  assert.equal(result.data.length, 3); assert.equal(new Set(result.sheets).size, 3);
+  assert.equal(result.data.length, 1); assert.equal(result.sheets.length, 1);
   assert.ok(result.sheets.every(name => name.length <= 31 && !/[\\/:?*[\]]/.test(name)));
   assert.equal(result.rightToLeft, true);
-  assert.ok(result.data[1]!.some(row => row.includes('لا توجد صفوف')));
-  assert.ok(result.data[2]!.some(row => row.includes('غير متاح')));
+  assert.equal(result.data[0]!.filter(row => row.length === 1 && row[0] === 'العملاء').length, 3);
+  assert.ok(result.data[0]!.some(row => row.includes('لا توجد صفوف')));
+  assert.ok(result.data[0]!.some(row => row.includes('غير متاح')));
   assert.equal(result.fileName, 'لوحة.xlsx');
 });
 

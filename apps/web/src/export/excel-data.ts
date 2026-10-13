@@ -76,5 +76,12 @@ export function tableWorkbook(widget: DashboardWidget, entry: WidgetExecution, c
   return workbook([widget], { [widget.id]: entry }, context, widgetExportTitle(widget, context));
 }
 export function dashboardWorkbook(execution: DashboardExecutionResult, dashboard: DashboardSpec, context: ExportContext): ExcelWorkbook {
-  return workbook(dashboard.widgets, execution.widgetResults, { ...context, exportMetadata: execution.metadata }, dashboard.title[context.locale]);
+  const exportContext = { ...context, exportMetadata: execution.metadata };
+  const title = dashboard.title[context.locale];
+  const result = workbook(dashboard.widgets, execution.widgetResults, exportContext, title);
+  return {
+    ...result,
+    sheets: [title.replace(/[\\/:?*[\]']/g, ' ').replace(/\p{Cc}/gu, ' ').slice(0, 31).trim() || 'Dashboard'],
+    data: [[[title], ...result.data.flatMap(section => [...section, [], []])]],
+  };
 }

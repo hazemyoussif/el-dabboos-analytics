@@ -76,7 +76,7 @@ Read [shared AI Analyst](../architecture/shared-ai-analyst.md) before changing c
 ## Excel exports
 
 The dashboard viewer provides **Export dashboard to Excel** (one worksheet per
-widget). Tables, including the expandable chart-value tables, provide **Export
+dashboard, with a labeled section for each widget). Tables, including the expandable chart-value tables, provide **Export
 table to Excel**. Both use the existing authorized execution in the browser;
 export never fetches additional rows, executes analytics or saves the dashboard.
 Top N and current viewer filters therefore remain in effect. Exported sheets carry
