@@ -72,3 +72,22 @@ for migration 034, resumable backfill, planner diagnostics and staging grants.
 ## Ask Business runtime
 
 Read [shared AI Analyst](../architecture/shared-ai-analyst.md) before changing conversational behavior. Apply SQLite metadata 005 or PostgreSQL control 008 explicitly before starting the page. The structured dashboard provider also plans questions; optional `ANALYST_SYNTHESIS` defaults false. Questions and history require fresh AI-generation and analytics permissions. History is private to the user and tenant, expires after 30 days, and uses optimistic versions. Keep live-provider smoke outside tests and do not load developer env in automated coverage. See [delivery evidence](../qa/ask-business-2026-10-08.md).
+
+## Excel exports
+
+The dashboard viewer provides **Export dashboard to Excel** (one worksheet per
+dashboard, with a labeled section for each widget). Tables, including the expandable chart-value tables, provide **Export
+table to Excel**. Both use the existing authorized execution in the browser;
+export never fetches additional rows, executes analytics or saves the dashboard.
+Top N and current viewer filters therefore remain in effect. Exported sheets carry
+the resolved date range, selected dimension identities, workspace, currency,
+execution time, data status and snapshot cutoff where supplied. Missing values
+remain blank, failed cards remain identified, and comparisons retain their exact
+numeric values. Numbers use numeric Excel cells without UI rounding; percentages
+retain the application's percentage-point scale. Untrusted labels remain text,
+including labels beginning with formula characters. English and Arabic labels and
+RTL worksheets follow the current locale. The XLSX writer loads only on export.
+Dashboard Excel export contains the cards' data, rather than chart images or the
+screen layout. PDF export is not included.
+
+Excel export is available on dashboard tables, drill-through details, Ask Business answer tables, data-status capability tables and administration tables. Drill-through exports the currently loaded rows after search/sort; use **Load more** before exporting to include additional pages. Administration exports the displayed page and excludes the Actions column. Ask Business exports its returned rows and records the omitted-row count. Drill contributions retain their exact decimal strings as Excel text to avoid precision loss. These exports do not fetch hidden records or change access scope.

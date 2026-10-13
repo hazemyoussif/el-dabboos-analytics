@@ -10,7 +10,8 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-grid-layout": "^2.2.4",
-    "recharts": "^3.0.0"
+    "recharts": "^3.0.0",
+    "write-excel-file": "3.0.8"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",

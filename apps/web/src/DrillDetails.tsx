@@ -1,3 +1,5 @@
+import { ExcelExportButton } from './export/ExcelExportButton.tsx';
+import { rowWorkbook } from './export/row-workbook.ts';
 import { DimensionDiscoveryContext } from './DimensionDiscoveryContext.ts';
 import { useContext,useEffect,useRef,useState } from 'react';
 import type { KeyboardEvent } from 'react';
@@ -49,7 +51,8 @@ export function DetailTable({page,locale,profile}:{page:DrillPage;locale:Locale;
   const text=words[locale];
   if(!page.rows.length)return <p>{text.empty}</p>;
   const columns=page.grain==='customer_snapshot'?['date','customer','measure','amount','currency'] as const:['date','customer','salesperson','businessLine','documentType','status','measure','amount','currency'] as const;
-  return <div className="table-wrap"><table><thead><tr>{columns.map(column=><th key={column}>{column==='date'&&page.grain==='customer_snapshot'?text.snapshotDate:text[column]}</th>)}</tr></thead><tbody>{page.rows.map((row,index)=><tr key={index}>{columns.map(column=><td key={column}>{column==='date'?formatDate(row.date,locale,profile):column==='amount'?<bdi>{new Intl.NumberFormat(localeTag(locale,profile),{maximumFractionDigits:6}).format(Number(row.amount))}</bdi>:column==='measure'?semanticCatalog[row.measure as keyof typeof semanticCatalog]?.labels[locale]??text.measure:recordLabel(row[column],column,locale)}</td>)}</tr>)}</tbody></table></div>;
+  const workbook=()=>rowWorkbook(text.details, [[text.loaded,page.rows.length],['Release',page.release],...(page.snapshotAsOf?[[text.asof,page.snapshotAsOf]]:[]),columns.map(column=>column==='date'&&page.grain==='customer_snapshot'?text.snapshotDate:text[column]),...page.rows.map(row=>columns.map(column=>column==='measure'?semanticCatalog[row.measure as keyof typeof semanticCatalog]?.labels[locale]??row.measure:row[column]))],locale);
+  return <div className="table-wrap"><ExcelExportButton locale={locale} kind="table" createWorkbook={workbook}/><p className="muted">{locale==='ar'?'يُصدّر الصفوف المحملة. استخدم تحميل المزيد لإضافة صفوف.':'Exports loaded rows. Use Load more to include additional rows.'}</p><table><thead><tr>{columns.map(column=><th key={column}>{column==='date'&&page.grain==='customer_snapshot'?text.snapshotDate:text[column]}</th>)}</tr></thead><tbody>{page.rows.map((row,index)=><tr key={index}>{columns.map(column=><td key={column}>{column==='date'?formatDate(row.date,locale,profile):column==='amount'?<bdi>{new Intl.NumberFormat(localeTag(locale,profile),{maximumFractionDigits:6}).format(Number(row.amount))}</bdi>:column==='measure'?semanticCatalog[row.measure as keyof typeof semanticCatalog]?.labels[locale]??text.measure:recordLabel(row[column],column,locale)}</td>)}</tr>)}</tbody></table></div>;
 }
 
 function DetailSummary({page,selection,locale,profile}:{page:DrillPage;selection:DrillRequest;locale:Locale;profile:TenantProfile}) {
