@@ -48,6 +48,8 @@ For one administration flow, read the named operation in `packages/application/s
 
 For persistent local PostgreSQL mart setup on port 55437, use [local Analytics mart operations](../integration/local-analytics-mart.md). The disposable PostgreSQL suite remains on port 55436; local bootstrap and migration commands explicitly load root environment files.
 
+The PostgreSQL test runner executes test files serially against the shared disposable server so large source and serving benchmarks do not exhaust its temporary storage. Transaction-race tests still run concurrent operations inside each test.
+
 ## PostgreSQL control persistence
 
 Use [control-plane operations](../integration/postgres-control-plane.md) for provisioning, explicit control migrations, source references and approved SQLite cutover. `CONTROL_PROVIDER=sqlite` remains local compatibility; `postgres` uses only `CONTROL_DATABASE_URL` for runtime storage and requires disabled or local session identity. Keep `demo.db` synthetic/local, `dashboards.db` as compatibility/migration source, and control credentials separate from all mart identities. No runtime auto-migration, dual writes or source-discovery serving dependency is introduced.
