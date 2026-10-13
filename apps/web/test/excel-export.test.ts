@@ -73,3 +73,25 @@ test('percentage contribution exports use percent units rather than the underlyi
   assert.ok(result.data[0]!.some(row => row.includes('Revenue (%)')));
   assert.ok(!result.data[0]!.some(row => row.includes('Revenue (IQD)')));
 });
+
+test('every additional table exposes Excel export in both languages, including loaded drill details', async () => {
+  const server = await createServer({ root: fileURLToPath(new URL('../', import.meta.url)), server: { middlewareMode: true, hmr: false }, appType: 'custom' });
+  try {
+    const { DetailTable } = await server.ssrLoadModule('/src/DrillDetails.tsx');
+    const { AdministrationTable } = await server.ssrLoadModule('/src/admin/controls.tsx');
+    const { AnswerVisual } = await server.ssrLoadModule('/src/analyst/AnswerVisual.tsx');
+    const { ManagementInfo } = await server.ssrLoadModule('/src/reports/ManagementReports.tsx');
+    const page = { rows: [{ date: '2026-09-30', customer: '=customer', salesperson: null, businessLine: null, documentType: null, status: null, measure: 'revenue', amount: '123456789012345678.123456789', currency: 'IQD' }], hasMore: true, nextCursor: 'next', release: 'release', grain: 'customer_snapshot', bases: {}, value: null };
+    for (const locale of ['en', 'ar'] as const) {
+      const profile = tenantProfiles['demo-iq'];
+      const controls = [
+        createElement(DetailTable, { page, locale, profile }),
+        createElement(AdministrationTable, { locale }, createElement('tr', {}, createElement('td', {}, 'Synthetic user'))),
+        createElement(AnswerVisual, { locale, profile, panel: { query: { metric: 'revenue', groupBy: 'customer' }, form: 'ranking', result: { rows: [{ key: 'one', value: 1 }, { key: 'two', value: null }], metadata: { metricType: 'currency' } }, omittedRows: 3 } }),
+        createElement(ManagementInfo, { page: 'data-status', locale, profile, published: { mode: 'certified', releases: [{ datasetId: 'synthetic', certificationReference: 'test', capabilities: [{ metric: 'revenue', dimensions: [] }] }] }, metadata: null, review: null, reviewLoading: false, reviewError: false, onRetry() {} }),
+      ];
+      for (const control of controls) assert.ok(renderToStaticMarkup(control).includes(locale === 'ar' ? 'تصدير الجدول إلى Excel' : 'Export table to Excel'));
+      assert.ok(renderToStaticMarkup(controls[0]!).includes(locale === 'ar' ? 'الصفوف المحملة' : 'Exports loaded rows'));
+    }
+  } finally { await server.close(); }
+});

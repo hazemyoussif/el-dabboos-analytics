@@ -1,3 +1,5 @@
+import { ExcelExportButton } from '../export/ExcelExportButton.tsx';
+import { rowWorkbook } from '../export/row-workbook.ts';
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { governedDimensionLabel, semanticCatalog, timeDimensions } from '@el-dabboos/domain';
 import type { AnalystPanel, AnalyticsRow, Locale, TenantProfile } from '@el-dabboos/domain';
@@ -18,6 +20,7 @@ export function AnswerVisual({panel,locale,profile,onDetails}:{panel:AnalystPane
  if(rows.length<=1 && !panel.query.analysis?.comparison)return onDetails&&rows[0]?<button onClick={()=>onDetails(rows[0]!.key)}>{text.details}</button>:null;
  return <>
  {timeSeries&&rows.length>1&&<AnswerChart panel={panel} locale={locale} profile={profile}/>}
+ <ExcelExportButton locale={locale} kind="table" createWorkbook={()=>rowWorkbook(semanticCatalog[panel.query.metric].labels[locale],[[locale==='ar'?'الصفوف المحذوفة':'Omitted rows',panel.omittedRows],[panel.query.groupBy?text.group:text.value,text.value,...(panel.query.analysis?.ranking?[text.rank]:[]),...(panel.query.analysis?.comparison?[text.previous,text.change]:[])],...rows.map(row=>[answerRowLabel(panel,row,locale,profile),row.value,...(panel.query.analysis?.ranking?[row.rank??null]:[]),...(panel.query.analysis?.comparison?[row.comparisonValue??null,row.absoluteChange??null]:[])])],locale)} disabled={!rows.length}/>
  <div className="table-wrap analyst-table" tabIndex={0} role="region" aria-label={semanticCatalog[panel.query.metric].labels[locale]}><table><thead><tr><th>{panel.query.groupBy?text.group:text.value}</th><th>{text.value}</th>{panel.query.analysis?.ranking&&<th>{text.rank}</th>}{panel.query.analysis?.comparison&&<><th>{text.previous}</th><th>{text.change}</th></>}{onDetails&&<th>{text.details}</th>}</tr></thead><tbody>{rows.map((row,index)=><tr key={row.key??index}><th scope="row">{answerRowLabel(panel,row,locale,profile)}</th><td><bdi>{answerValue(panel,row.value,locale,profile)}</bdi></td>{panel.query.analysis?.ranking&&<td>{row.rank?new Intl.NumberFormat(localeTag(locale,profile)).format(row.rank):'—'}</td>}{panel.query.analysis?.comparison&&<><td><bdi>{answerValue(panel,row.comparisonValue??null,locale,profile)}</bdi></td><td><bdi>{answerValue(panel,row.absoluteChange??null,locale,profile)}</bdi></td></>}{onDetails&&<td><button disabled={row.value===null} onClick={()=>onDetails(row.key)} aria-label={`${text.details}: ${answerRowLabel(panel,row,locale,profile)}`}>{text.details}</button></td>}</tr>)}</tbody></table></div>
  {panel.omittedRows>0&&<p className="muted">{text.omitted}</p>}
  </>;

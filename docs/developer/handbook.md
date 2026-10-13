@@ -89,3 +89,5 @@ including labels beginning with formula characters. English and Arabic labels an
 RTL worksheets follow the current locale. The XLSX writer loads only on export.
 Dashboard Excel export contains the cards' data, rather than chart images or the
 screen layout. PDF export is not included.
+
+Excel export is available on dashboard tables, drill-through details, Ask Business answer tables, data-status capability tables and administration tables. Drill-through exports the currently loaded rows after search/sort; use **Load more** before exporting to include additional pages. Administration exports the displayed page and excludes the Actions column. Ask Business exports its returned rows and records the omitted-row count. Drill contributions retain their exact decimal strings as Excel text to avoid precision loss. These exports do not fetch hidden records or change access scope.
