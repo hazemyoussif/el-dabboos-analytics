@@ -55,7 +55,7 @@ export function formatValue(value: number | null, type: MetricType, locale: Loca
   if (type === 'currency') return new Intl.NumberFormat(language, { style: 'currency', currency: profile.reportingCurrency, maximumFractionDigits: 0 }).format(value);
   if (type === 'percentage') return `${new Intl.NumberFormat(language, { maximumFractionDigits: 1 }).format(value)}%`;
   const number = new Intl.NumberFormat(language, { maximumFractionDigits: type === 'duration' ? 1 : 0 }).format(value);
-  return type === 'duration' ? `${number} ${locale === 'ar' ? 'ساعة' : unit ?? 'hours'}` : number;
+  return type === 'duration' ? `${number} ${locale === 'ar' ? (unit==='days'?'يوم':'ساعة') : unit ?? 'hours'}` : number;
 }
 export function formatDate(value: string, locale: Locale, profile: TenantProfile): string {
   return new Intl.DateTimeFormat(localeTag(locale, profile), { dateStyle: 'medium', timeZone: profile.timeZone }).format(new Date(`${value}T12:00:00Z`));

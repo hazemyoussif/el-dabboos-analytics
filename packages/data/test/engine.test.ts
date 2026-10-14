@@ -53,6 +53,33 @@ test('snapshots select the latest value per entity as of each period', () => {
   assert.deepEqual(run(facts, { metric: 'stock_on_hand', dateRange: { from: '2026-02-01', to: '2026-02-28' }, groupBy: 'branch' }).rows,
     [{ key: 'a', value: 20 }, { key: 'b', value: 30 }]);
 });
+test('categorical snapshot grouping preserves latest assignment, zero, policy and prior-cutoff comparisons',()=>{
+ const facts=[fact('stock_on_hand','2026-01-05',10,'a','moved'),fact('stock_on_hand','2026-02-05',0,'b','moved'),fact('stock_on_hand','2026-03-05',999,'a','moved')];
+ const query={metric:'stock_on_hand' as const,groupBy:'branch' as const,dateRange:{from:'2026-02-01',to:'2026-02-28'},analysis:{comparison:'month_over_month' as const}};
+ const result=run(facts,query);
+ assert.deepEqual(result.rows,[{key:'b',value:0,comparisonValue:null,absoluteChange:null,percentageChange:null}]);
+ assert.deepEqual(executeFacts(facts,query,{...context,enforcedFilters:[{dimension:'branch',values:['a']}]},execution).rows,[]);
+ assert.throws(()=>run([...facts,facts[1]!],query),/Duplicate snapshot/);
+});
+test('categorical snapshot ratios independently select latest operands and preserve zero denominators',()=>{
+ const customerFact=(measure:AnalyticsFact['measureId'],date:string,value:number,customer:string,entity:string)=>({...fact(measure,date,value,'a',entity),dimensions:{customer}});
+ const facts=[customerFact('net_aged_receivable','2026-01-05',100,'a','balance'),customerFact('net_aged_receivable','2026-02-05',50,'b','balance'),customerFact('net_aged_receivable','2026-02-05',0,'c','zero'),customerFact('total_overdue_receivable','2026-01-05',30,'a','overdue'),customerFact('total_overdue_receivable','2026-02-05',0,'b','overdue')];
+ const query={metric:'overdue_receivable_percentage' as const,groupBy:'customer' as const,dateRange:{from:'2026-02-01',to:'2026-02-28'}};
+ assert.deepEqual(run(facts,query).rows,[{key:'b',value:0},{key:'c',value:null}]);
+ assert.deepEqual(executeFacts(facts,query,{...context,enforcedFilters:[{dimension:'customer',values:['a']}]},execution).rows,[]);
+});
+test('high-cardinality snapshots rank 144,000 historical facts without rescanning all entities for every customer',()=>{
+ const facts:AnalyticsFact[]=[];
+ for(let customer=0;customer<12000;customer++)for(let component=0;component<6;component++){
+  const entity=`component-${customer}-${component}`,dimensions={customer:`customer-${customer}`};
+  facts.push({...fact('receivables_due_for_collection','2026-01-31',0,'a',entity),dimensions});
+  facts.push({...fact('receivables_due_for_collection','2026-09-30',customer+1,'a',entity),dimensions});
+ }
+ const began=performance.now();
+ const result=run(facts,{metric:'receivables_due_for_collection',groupBy:'customer',dateRange:{from:'2026-09-01',to:'2026-09-30'},analysis:{topN:{limit:100,direction:'top'}}});
+ assert.equal(result.rows.length,100);assert.equal(result.rows[0]?.value,72000);
+ assert.ok(performance.now()-began<10000,'the bounded real-sized snapshot workload must finish in ten seconds');
+});
 test('monthly YoY aligns each month with the same month one year earlier', () => {
   const facts = [fact('revenue', '2025-01-15', 100), fact('revenue', '2025-02-15', 200), fact('revenue', '2025-03-15', 999),
     fact('revenue', '2026-01-15', 150), fact('revenue', '2026-02-15', 300)];

@@ -69,3 +69,17 @@ test('report default date control displays Relative and This year in English and
   }
  }finally{await server.close();}
 });
+
+test('mixed catalog distinguishes post-exposure review from certified series and respects product scope',async()=>{
+ const server=await createServer({root:fileURLToPath(new URL('../',import.meta.url)),server:{middlewareMode:true},optimizeDeps:{noDiscovery:true},appType:'custom'});
+ try{
+  const {dashboardReportStatus,ReportStatus}=await server.ssrLoadModule('/src/reports/ManagementReports.tsx');
+  const review:PublishedAnalyticsCapabilities={...published,releases:[...published.releases,{...published.releases[0]!,datasetId:'review',financeReview:'pending',capabilities:[{metric:'customer_cash_collected',summary:true,dimensions:['customer'],analyses:[]}]}]};
+  for(const locale of ['en','ar'] as const){
+   const dashboard={schemaVersion:2,id:'collections',title:{en:'Collections',ar:'التحصيلات'},locale,layout:{columns:1},filters:{dateRange:published.releases[0]!.period},widgets:[{id:'cash',type:'kpi',series:[{id:'cash',metric:'customer_cash_collected'}]}]};
+   assert.equal(dashboardReportStatus(review,dashboard),'review');
+   const status=renderToStaticMarkup(createElement(ReportStatus,{published:review,dashboard,locale}));
+   assert.ok(status.includes(locale==='en'?'Finance review pending':'بانتظار مراجعة المالية'));
+  }
+ }finally{await server.close();}
+});

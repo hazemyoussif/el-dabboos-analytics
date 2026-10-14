@@ -28,3 +28,16 @@ test('opening uses native focus containment and cleanup closes/restores trigger 
  const cleanup=openDefinitionDialog(dialog as unknown as HTMLDialogElement,{focus:()=>events.push('trigger-focus')} as HTMLElement);
  cleanup();assert.deepEqual(events,['showModal','close-focus','close','trigger-focus']);
 });
+
+test('exposed collection metrics show pending Finance review and days in EN/AR without claiming business certification',async()=>{
+ const server=await createServer({root:fileURLToPath(new URL('../',import.meta.url)),server:{middlewareMode:true},appType:'custom'});
+ try{
+  const {MetricDefinitionDialog}=await server.ssrLoadModule('/src/metrics/MetricDefinition.tsx');
+  for(const locale of ['en','ar'] as const){
+   const dialog=renderToStaticMarkup(createElement(MetricDefinitionDialog,{metric:semanticCatalog.weighted_collection_days,locale,metadata:{release:{datasetId:'review',sourceId:'source',mappingId:'wave',mappingVersion:'1',certificationReference:'technical-exact:review',financeReview:'pending'}},trigger:null,onClose:()=>{}}));
+   assert.ok(dialog.includes(locale==='en'?'Finance review pending':'بانتظار مراجعة المالية'));
+   assert.ok(!dialog.includes('report-status">Certified'));
+   assert.ok(dialog.includes(semanticCatalog.weighted_collection_days.help.formula[locale]));
+  }
+ }finally{await server.close();}
+});

@@ -11,8 +11,8 @@ const context = { tenantId: 'demo-iq', locale: 'en' } as const;
 const result = (query: AnalyticsQuery, rows: AnalyticsResult['rows']): AnalyticsResult => ({ metric: query.metric, groupBy: query.groupBy ?? null, rows,
   metadata: { sourceId: 'spy', executedAt: fixed().toISOString(), metricType: 'currency', semantics: 'additive' } });
 test('reusable templates instantiate identically for both markets with symbolic dates', () => {
-  assert.equal(dashboardTemplates.length, 31);
-  assert.equal(new Set(dashboardTemplates.map(t => t.id)).size, 31);
+  assert.equal(dashboardTemplates.length, 34);
+  assert.equal(new Set(dashboardTemplates.map(t => t.id)).size, 34);
   for (const template of dashboardTemplates) {
     const a = instantiateDashboardTemplate(template, iq, fixed(), 'en');
     const b = instantiateDashboardTemplate(template, eg, fixed(), 'ar');
@@ -26,6 +26,14 @@ test('reusable templates instantiate identically for both markets with symbolic 
   }
   assert.ok(getDashboardTemplate('sales-performance'));
   assert.equal(getDashboardTemplate('iraq-sales'), undefined);
+});
+test('collections template labels its bounded due-customer ranking in English and Arabic',()=>{
+ const template=getDashboardTemplate('customer-cash-collections')!;
+ const spec=instantiateDashboardTemplate(template,iq,fixed(),'en');
+ const due=spec.widgets.find(widget=>widget.id==='customer-due')!;
+ assert.equal(due.title?.en,'Top 100 Customers Due for Collection');assert.ok(due.title?.ar.includes('100'));
+ assert.deepEqual(due.series[0]?.analysis,{topN:{limit:100,direction:'top'}});
+ assert.equal(spec.widgets.find(widget=>widget.id==='customer-timing')?.series.some(series=>series.metric==='receivables_due_for_collection'),false);
 });
 test('date presets use governed tenant timezone at a day boundary', () => {
   const now = new Date('2026-12-31T22:30:00.000Z');

@@ -3,6 +3,7 @@ import { createRequire } from 'node:module';
 import { readdir, readFile } from 'node:fs/promises';
 import type { Pool } from 'pg';
 import type { PoolClient } from 'pg';
+import {stageLegacyFinanceAnchors,restoreLegacyFinanceAnchors} from './legacy-finance-adoption.ts';
 
 export const migrationDirectory = new URL('../../migrations/postgres/', import.meta.url);
 /** Lock, ledger discovery and all migrations use one checked-out session. */
@@ -28,10 +29,12 @@ export async function migratePostgres(pool: Pool, directory: URL = migrationDire
       try {
         await client.query(m.sql);
         if(m.companion){
+          const financeAnchors=await stageLegacyFinanceAnchors(client);
           const companionModule={exports:{} as {adoptLegacyServing:(client:PoolClient)=>Promise<void>}};
           // Execute the exact bytes fingerprinted by the manifest, not mutable operational imports.
           new Function('module','exports','require',m.companion)(companionModule,companionModule.exports,createRequire(import.meta.url));
           await companionModule.exports.adoptLegacyServing(client);
+          await restoreLegacyFinanceAnchors(client,financeAnchors);
         }
         await client.query('INSERT INTO mart_admin.mart_schema_migrations(version,name,sha256) VALUES ($1,$2,$3)', [m.version, m.name, m.checksum]);
         await client.query('COMMIT'); applied.push(m.version);

@@ -57,3 +57,8 @@ export { readBaseline,bootstrapOperationalServing } from './operational/baseline
 export { verifyOdooSourceIdentity } from './odoo/identity.ts';
 
 export { TrustedDrillThroughRepository } from './operational/drill-through.ts';
+
+export {exposeReviewMonth} from './review/exposure.ts';
+export {reviewMapping} from './review/definitions.ts';
+export {OdooReviewReader} from './review/source.ts';
+export {OdooSnapshotLease} from './odoo/snapshot.ts';

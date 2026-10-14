@@ -19,7 +19,7 @@ export function MetricDefinitionBody({ metric, locale, currency, metadata }: Pro
  const status = metricTrustStatus(metric,metadata,published,locale);
  const fields = [
   [text.formula, help.formula[locale]], [text.includes, help.inclusionSummary[locale]], [text.excludes, help.exclusionSummary[locale]],
-  [text.date, help.dateBasis[locale]], [text.unit, metric.type === 'currency' ? currency ?? '—' : metric.presentation.unit ?? (locale === 'ar' ? 'عدد' : 'Count')],
+  [text.date, help.dateBasis[locale]], [text.unit, definitionUnit(metric,locale,currency)],
   [text.type, text[help.metricType]], [text.credits, help.refundCreditBehavior[locale]], [text.aggregation, help.aggregationBehavior[locale]],
   [text.dimensions, (publication?.capabilities.find(capability => capability.metric === metric.id)?.dimensions ?? metric.dimensions).map(dimension => copy[locale].dimensions[dimension]).join(locale === 'ar' ? '، ' : ', ') || '—'],
   [text.version, String(help.definitionVersion)], [text.period, metadata?.dataThrough ?? publication?.period?.to ?? '—'], [text.asOf, metadata?.sourceAsOf ?? '—'],
@@ -65,11 +65,19 @@ export function MetricInfo(props: Props) {
  </span>;
 }
 
-function DefinitionTechnicalDetails({metric,locale,provenance}: {metric: SemanticMetric; locale: Locale; provenance: AnalyticsReleaseProvenance | undefined}) { const text = definitionCopy[locale]; return <details><summary>{text.technical}</summary><MetricIdentifier metric={metric} locale={locale}/><dl>{provenance && <><dt>{locale === 'ar' ? 'إصدار الربط' : 'Mapping version'}</dt><dd><bdi>{provenance.mappingVersion}</bdi></dd><dt>{locale === 'ar' ? 'مرجع الاعتماد' : 'Certification reference'}</dt><dd><bdi>{provenance.outputCertificationReference ?? provenance.certificationReference}</bdi></dd><dt>{locale === 'ar' ? 'المصدر' : 'Source'}</dt><dd><bdi>{provenance.sourceId}</bdi></dd></>}</dl></details>; }
+function DefinitionTechnicalDetails({metric,locale,provenance}: {metric: SemanticMetric; locale: Locale; provenance: AnalyticsReleaseProvenance | undefined}) { const text = definitionCopy[locale]; return <details><summary>{text.technical}</summary><MetricIdentifier metric={metric} locale={locale}/><dl>{provenance && <><dt>{locale === 'ar' ? 'إصدار الربط' : 'Mapping version'}</dt><dd><bdi>{provenance.mappingVersion}</bdi></dd><dt>{provenance.financeReview==='pending'?(locale==='ar'?'مرجع المطابقة الفنية':'Technical check reference'):(locale === 'ar' ? 'مرجع الاعتماد' : 'Certification reference')}</dt><dd><bdi>{provenance.outputCertificationReference ?? provenance.certificationReference}</bdi></dd><dt>{locale === 'ar' ? 'المصدر' : 'Source'}</dt><dd><bdi>{provenance.sourceId}</bdi></dd></>}</dl></details>; }
 
 function metricTrustStatus(metric:SemanticMetric,metadata:AnalyticsResult['metadata']|undefined,published:PublishedAnalyticsCapabilities|undefined,locale:Locale){
  if(published?.mode==='synthetic')return definitionCopy[locale].demo;
  if(metadata?.reconciliation)return definitionStatus(metadata,locale);
+ const release=metadata?.release??published?.releases.find(release=>release.capabilities.some(capability=>capability.metric===metric.id));
+ if(release?.financeReview==='pending')return definitionCopy[locale].review;
  const approved=metadata?.release||published?.releases.some(release=>release.capabilities.some(capability=>capability.metric===metric.id));
  return approved?definitionCopy[locale].certified:definitionStatus(metadata,locale);
+}
+
+function definitionUnit(metric:SemanticMetric,locale:Locale,currency:string|undefined){
+ if(metric.type==='currency')return currency??'—';
+ if(metric.presentation.unit==='days'&&locale==='ar')return 'يوم';
+ return metric.presentation.unit??(locale==='ar'?'عدد':'Count');
 }

@@ -4,7 +4,7 @@ import type { AnalyticsResult, DashboardWidget, DateRange, DrillRequest } from '
 export function drillRequestFor(execution:DashboardExecutionResult,widget:DashboardWidget,entry:WidgetExecution,seriesId:string,key:string|null):DrillRequest|null {
   const series=widget.series.find(item=>item.id===seriesId),result=entry.seriesResults[seriesId];
   if(!traceableSeries(widget,series)||result?.status!=='success'||!result.result.metadata.release)return null;
-  if(!result.result.metadata.sourceAsOf)return null;
+  if(!result.result.metadata.sourceAsOf||result.result.metadata.release.financeReview==='pending')return null;
   if(result.result.rows.find(row=>row.key===key)?.value==null)return null;
   const filters=execution.metadata.effectiveFilters;
   const range=clickedPeriod(widget,key,filters?.dateRange);

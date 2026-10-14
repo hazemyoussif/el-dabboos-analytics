@@ -37,6 +37,6 @@ export function compactSeriesValue(props: RenderSeriesProps, seriesId: string, v
     ...(metric?.type === 'currency' ? { style: 'currency' as const, currency: props.profile.reportingCurrency, currencyDisplay: 'narrowSymbol' as const } : {}),
   }).format(value);
   if (metric?.type === 'percentage') return `${number}%`;
-  if (metric?.type === 'duration') return `${number} ${props.locale === 'ar' ? 'ساعة' : metric.presentation.unit ?? 'hours'}`;
+  if (metric?.type === 'duration') return `${number} ${props.locale === 'ar' ? (metric.presentation.unit==='days'?'يوم':'ساعة') : metric.presentation.unit ?? 'hours'}`;
   return number;
 }

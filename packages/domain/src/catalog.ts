@@ -18,6 +18,14 @@ const maintenance: DimensionId[] = [...time, 'equipment', 'equipment_category', 
 
 /** These recipes use canonical measures only; source adapters map physical data to them. */
 const semantics: Record<MetricId, MetricSemantics> = {
+  customer_cash_collected: {kind:'additive',measure:'customer_cash_collected'},
+  cash_applied_to_invoices: {kind:'additive',measure:'cash_applied_to_invoices'},
+  unallocated_customer_receipts: {kind:'additive',measure:'unallocated_customer_receipts'},
+  customer_collection_ratio: {kind:'ratio',numerator:'customer_cash_collected',denominator:'net_invoiced_revenue',scale:100},
+  weighted_collection_days: {kind:'duration_derived',numerator:'collection_amount_days',denominator:'collection_applied_amount',scale:1},
+  receivables_due_for_collection: {kind:'snapshot',measure:'receivables_due_for_collection'},
+  order_margin: {kind:'additive',measure:'order_margin'},
+  order_margin_percentage: {kind:'ratio',numerator:'order_margin',denominator:'order_untaxed_value',scale:100},
   net_aged_receivable: { kind: 'snapshot', measure: 'net_aged_receivable' },
   aged_at_date: { kind: 'snapshot', measure: 'aged_at_date' },
   aged_1_30: { kind: 'snapshot', measure: 'aged_1_30' },
@@ -66,6 +74,14 @@ const semantics: Record<MetricId, MetricSemantics> = {
 };
 type Definition = [MetricId, string, string, SemanticMetric['type'], DimensionId[], string[], string[]];
 const definitions: Definition[] = [
+  ['customer_cash_collected','Customer Cash Collected','المبالغ النقدية المحصلة من العملاء','currency',[...time,'customer'],['cash collections'],['التحصيلات النقدية']],
+  ['cash_applied_to_invoices','Cash Applied to Invoices','النقد المخصص للفواتير','currency',[...time,'customer'],[],[]],
+  ['unallocated_customer_receipts','Unallocated Customer Receipts','مقبوضات العملاء غير المخصصة','currency',[...time,'customer'],[],[]],
+  ['customer_collection_ratio','Collections / Sales %','نسبة التحصيلات إلى المبيعات','percentage',[...transactions,'product','product_category'],[],[]],
+  ['weighted_collection_days','Weighted Collection Days','أيام التحصيل المرجحة','duration',[...time,'customer'],[],[]],
+  ['receivables_due_for_collection','Receivables Due for Collection','الذمم المستحقة للتحصيل','currency',['customer','month'],[],[]],
+  ['order_margin','Order Margin','هامش ربح الطلبات','currency',transactions,[],[]],
+  ['order_margin_percentage','Order Margin %','نسبة هامش ربح الطلبات','percentage',transactions,[],[]],
   ['net_aged_receivable', 'Net Aged Receivable', 'صافي الذمم المدينة حسب العمر', 'currency', ['customer','month'], [], []],
   ['aged_at_date', 'At-Date Receivable', 'الذمم غير المتأخرة عند القطع', 'currency', ['customer','month'], [], []],
   ['aged_1_30', '1–30 Overdue', 'متأخر من ١ إلى ٣٠ يوماً', 'currency', ['customer','month'], [], []],
@@ -79,13 +95,13 @@ const definitions: Definition[] = [
   ['overdue_receivable_percentage', 'Overdue %', 'نسبة الذمم المتأخرة', 'percentage', ['customer','month'], [], []],
   ['customers_served','Customers / outlets served','العملاء / المنافذ المخدومة','number',sales,[],[]],
   ['order_revenue','Order revenue','إيرادات الطلبات','currency',transactions,[],['قيمة الطلبات']],
-  ['net_invoiced_revenue','Net invoiced revenue','صافي إيرادات الفواتير','currency',transactions,[],['صافي الفواتير']],
-  ['invoiced_revenue','Invoiced revenue','إيرادات الفواتير','currency',transactions,[],[]],
-  ['refund_value','Refund value','قيمة الإشعارات الدائنة','currency',transactions,[],[]],
+  ['net_invoiced_revenue','Net invoiced revenue','صافي إيرادات الفواتير','currency',[...transactions,'product','product_category'],[],['صافي الفواتير']],
+  ['invoiced_revenue','Invoiced revenue','إيرادات الفواتير','currency',[...transactions,'product','product_category'],[],[]],
+  ['refund_value','Refund value','قيمة الإشعارات الدائنة','currency',[...transactions,'product','product_category'],[],[]],
   ['invoice_count','Invoice count','عدد الفواتير','number',transactions,[],[]],
   ['refund_count','Refund count','عدد الإشعارات الدائنة','number',transactions,[],[]],
   ['cancelled_orders','Cancelled orders','الطلبات الملغاة','number',transactions,[],[]],
-  ['average_invoice_value','Average invoice value','متوسط قيمة الفاتورة','currency',transactions,[],[]],
+  ['average_invoice_value','Average invoice value','متوسط قيمة الفاتورة','currency',[...transactions,'product','product_category'],[],[]],
   ['average_confirmed_order_value','Average confirmed order value','متوسط قيمة الطلب المؤكد','currency',sales,[],[]],
   ['revenue', 'Revenue', 'الإيرادات', 'currency', sales, ['sales', 'turnover'], ['المبيعات', 'قيمة المبيعات']],
   ['net_revenue', 'Net revenue', 'صافي الإيرادات', 'currency', sales, ['net sales'], ['صافي المبيعات']],
@@ -125,13 +141,14 @@ export const semanticCatalog: Readonly<Record<MetricId, SemanticMetric>> = Objec
     ...(dialectSynonyms[id] ? { dialectSynonyms: dialectSynonyms[id] } : {}),
     type, semantics: semantics[id], help: metricHelp(id, {en, ar}, semantics[id]),
     dimensions: supportedDimensions,
-    presentation: { decimals: type === 'number' ? 0 : 2, ...(type === 'duration' ? { unit: 'hours' } : type === 'percentage' ? { unit: '%' } : {}) },
+    presentation: { decimals: type === 'number' ? 0 : 2, ...(type === 'duration' ? { unit: id==='weighted_collection_days'?'days':'hours' } : type === 'percentage' ? { unit: '%' } : {}) },
   }]),
 ) as unknown as Record<MetricId, SemanticMetric>;
 
 const factIds = new Set<FactMeasureId>([
   ...Object.values(semantics).flatMap(s => s.kind === 'additive' || s.kind === 'snapshot' || s.kind === 'distinct_count' ? [s.measure] : []),
   'won_opportunity_count', 'closed_opportunity_count', 'operating_hours', 'repair_hours', 'completed_repair_count',
+  'collection_amount_days','collection_applied_amount','order_untaxed_value',
 ]);
 export const factMeasureIds: readonly FactMeasureId[] = [...factIds];
 export function isMetricId(id: string): id is MetricId { return Object.hasOwn(semanticCatalog, id); }

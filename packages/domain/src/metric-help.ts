@@ -1,5 +1,7 @@
 import type { LocalizedText, MetricHelp, MetricId, MetricSemantics } from './contracts.ts';
+import { collectionsHelp } from './collections-help.ts';
 import { metricHelpContent } from './metric-help-content.ts';
+const helpContent={...metricHelpContent,...collectionsHelp};
 const text = (en: string, ar: string): LocalizedText => ({ en, ar });
 const meanings: Partial<Record<MetricId, LocalizedText>> = {
  revenue: text('Eligible sales revenue before separately recorded adjustments.', 'إيرادات المبيعات المؤهلة قبل التسويات المسجلة بصورة منفصلة.'),
@@ -34,7 +36,7 @@ function aggregation(semantics: MetricSemantics): LocalizedText {
  return text('Aggregate eligible contributions within the selected period and filters.', 'تجميع المساهمات المؤهلة خلال الفترة والفلاتر المختارة.');
 }
 export function metricHelp(id: MetricId, labels: LocalizedText, semantics: MetricSemantics): MetricHelp {
- const content = metricHelpContent[id];
+ const content = helpContent[id];
  const definition = content?.definition ?? meanings[id];
  if (!definition) throw new Error(`Metric help missing: ${id}`);
  const metricType = semantics.kind === 'snapshot' ? 'snapshot' : ['additive','distinct_count'].includes(semantics.kind) ? 'event' : 'derived';
