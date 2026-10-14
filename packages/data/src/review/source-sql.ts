@@ -36,7 +36,10 @@ const paymentBase=`WITH receipts AS (
  receipt.partner_id::text customer,NULL::text salesperson,NULL::text business_line,NULL::text product,NULL::text product_category,
  value.measure_id,value.amount::numeric(30,6)::text value,
  (receipt.invalid+coalesce(allocation.invalid,0)>0 OR receipt.company_rounding IS NULL OR receipt.company_rounding<=0 OR receipt.cash<0 OR coalesce(allocation.applied,0)>receipt.cash
- OR receipt.currency_id<>receipt.company_currency_id OR receipt.amount<>receipt.cash) invalid
+ -- A zero company-ledger contribution with no invoice allocations needs no FX conversion.
+ OR receipt.currency_id IS NULL
+ OR (receipt.currency_id<>receipt.company_currency_id AND NOT(receipt.amount=0 AND receipt.cash=0 AND allocation.id IS NULL))
+ OR receipt.amount<>receipt.cash) invalid
  FROM receipts receipt LEFT JOIN allocation ON allocation.id=receipt.id
  CROSS JOIN LATERAL (VALUES
  ('customer_cash_collected',receipt.cash),('cash_applied_to_invoices',coalesce(allocation.applied,0)),
