@@ -7,8 +7,8 @@
 .sidebar .brand-mark { filter: brightness(0) invert(1); }
 .brand strong { display: block; font-size: var(--text-sm); letter-spacing: .08em; font-weight: 750; }
 .brand span { display: block; font-size: var(--text-xs); color: var(--text-sidebar-muted); margin-top: var(--space-1); }
-.sidebar button { color: var(--text-sidebar); background: transparent; border-color: transparent; }
-.sidebar button:hover:not(:disabled),.sidebar summary:hover { background: var(--surface-sidebar-hover); color: var(--text-sidebar); }
+.sidebar :is(button,.workspace-link) { color: var(--text-sidebar); background: transparent; border-color: transparent; }
+.sidebar :is(button,.workspace-link):hover:not(:disabled),.sidebar summary:hover { background: var(--surface-sidebar-hover); color: var(--text-sidebar); }
 .sidebar .sidebar-toggle { width: 28px; min-height: 28px; padding: var(--space-1); color: var(--text-sidebar-muted); }
 .sidebar .sidebar-new { justify-content: start; background: var(--brand-sidebar); color: var(--surface-sidebar); margin-bottom: var(--space-6); flex: none; }
 .sidebar .sidebar-new:hover { background: var(--brand-primary-hover); color: var(--text-inverse); }
@@ -61,7 +61,7 @@ html[dir=rtl] .navigation-drawer { margin-inline-start: auto; }
   .page-content { padding: var(--space-4); }
 }
 .administration { max-width: 1100px; margin-inline: auto; }
-.admin-table-scroll { overflow-x: auto; margin-block: 1rem; }
+.admin-table-scroll { overflow: auto; max-block-size: min(24rem,65dvh); scrollbar-gutter: stable; margin-block: 1rem; }
 .administration table { width: 100%; border-collapse: collapse; }
 .administration th, .administration td { text-align: start; vertical-align: top; padding: .75rem; border-bottom: 1px solid var(--border-default); }
 .administration td p, .administration th p { margin-block: .25rem; font-weight: normal; }
@@ -71,9 +71,9 @@ html[dir=rtl] .navigation-drawer { margin-inline-start: auto; }
 .admin-form input:not([type=checkbox]), .admin-form textarea { max-width: 100%; min-width: 0; }
 .administration button { margin-inline-end: .5rem; margin-block: .25rem; }
 
-.management-navigation button { width:100%; justify-content:start; text-align:start; min-height:44px; }
-.management-navigation button[aria-current=page] { background:var(--surface-sidebar-hover); font-weight:700; border-inline-start:3px solid var(--brand-sidebar); }
-.sidebar-collapsed .management-navigation button { justify-content:center; padding-inline:var(--space-2); }
+.management-navigation :is(button,.workspace-link) { width:100%; justify-content:start; text-align:start; min-height:44px; }
+.management-navigation :is(button,.workspace-link)[aria-current=page] { background:var(--surface-sidebar-hover); font-weight:700; border-inline-start:3px solid var(--brand-sidebar); }
+.sidebar-collapsed .management-navigation :is(button,.workspace-link) { justify-content:center; padding-inline:var(--space-2); }
 .report-status { display:inline-block; font-size:var(--text-xs); font-weight:650; color:var(--text-secondary); margin-inline-end:var(--space-3); }
 .management-info { max-width:1100px; padding:var(--space-6); background:var(--surface-primary); border:1px solid var(--border-subtle); border-radius:var(--radius-md); }
 .management-info dl { display:grid; grid-template-columns:minmax(160px,1fr) minmax(0,2fr); gap:var(--space-3); margin-block:var(--space-6); }
@@ -87,3 +87,5 @@ html[dir=rtl] .navigation-drawer { margin-inline-start: auto; }
 .account-name { overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
 .account-actions { display: flex; align-items: center; gap: var(--space-1); }
 .account-actions button { min-height: 36px; font-size: var(--text-xs); }
+
+.admin-table-scroll th { position: sticky; inset-block-start: 0; z-index: 1; background: var(--surface-secondary); }

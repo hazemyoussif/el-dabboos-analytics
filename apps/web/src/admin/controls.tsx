@@ -20,7 +20,7 @@ export function MembershipDetails({ membership, locale }: {
 export function AdministrationTable({ locale, children }: {
     locale: Locale;
     children: ReactNode;
-}) { const label = pageLabel(locale); const table = useRef<HTMLTableElement>(null); return <div className="admin-table-scroll"><ExcelExportButton locale={locale} kind="table" createWorkbook={() => renderedTableWorkbook(table.current!, locale, 3)}/><table ref={table}><thead><tr><th>{label('Name', 'الاسم')}</th><th>{label('Status / Access', 'الحالة / الوصول')}</th><th>{label('Version', 'الإصدار')}</th><th>{label('Actions', 'الإجراءات')}</th></tr></thead><tbody>{children}</tbody></table></div>; }
+}) { const label = pageLabel(locale); const table = useRef<HTMLTableElement>(null); return <div className="admin-table-scroll" tabIndex={0} role="region" aria-label={label('Administration table','جدول الإدارة')}><ExcelExportButton locale={locale} kind="table" createWorkbook={() => renderedTableWorkbook(table.current!, locale, 3)}/><table ref={table}><thead><tr><th>{label('Name', 'الاسم')}</th><th>{label('Status / Access', 'الحالة / الوصول')}</th><th>{label('Version', 'الإصدار')}</th><th>{label('Actions', 'الإجراءات')}</th></tr></thead><tbody>{children}</tbody></table></div>; }
 export function AdministrationFrame({ locale, title, allowed, busy, error, notice, load, nextCursor, empty, children }: {
     locale: Locale;
     title: string;

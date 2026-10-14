@@ -44,7 +44,7 @@ async function settle(){await act(async()=>{await new Promise<void>(resolve=>set
   function Probe(){workspace=useWorkspace({id:'test-user',displayName:'Test',defaultTenantId:'demo-iq'});return createElement(ManagementNavigation,{templates:workspace.templates,locale:'en',activeId:workspace.activeTemplateId,published:workspace.published,onSelect:(id:string)=>void workspace.openTemplate(id,workspace.profile,'en')});}
   await act(async()=>fixture.root.render(createElement(Probe)));await settle();
   assert.equal(workspace!.loading,true);assert.equal(workspace!.activeTemplateId,reportIds[0]);
-  await act(async()=>fixture.container.querySelectorAll('button')[1]!.click());
+  await act(async()=>fixture.container.querySelector<HTMLAnchorElement>('a[href="/reports/invoice-refund-operations"]')!.click());
   assert.equal(workspace!.activeTemplateId,reportIds[1]);assert.equal(workspace!.loading,true);
   assert.equal(fixture.container.querySelector('[aria-current="page"]')?.textContent,reportIds[1]);
   await act(async()=>first.resolve(new Response(JSON.stringify(report(reportIds[0]!)))));await settle();
@@ -134,5 +134,56 @@ test('shared discovery hydrates restored IDs outside initial options in EN/AR wi
    assert.ok(fixture.container.textContent?.includes(dimension==='business_line'?(locale==='ar'?'بدون سكر':'No Sugar'):'Saved actual name'));assert.ok(!fixture.container.textContent?.includes('source:'));
    if(dimension!=='customer')assert.equal(fixture.container.querySelector('select')!.value,JSON.stringify(['source:saved']));
   }
+ }finally{await fixture.close();}
+});
+
+test('report links retain native modified-click actions and run guarded navigation only for an ordinary click',async()=>{
+ const fixture=await domFixture();
+ try{
+  const {WorkspaceLink}=await fixture.server.ssrLoadModule('/src/WorkspaceLink.tsx');let opened=0;
+  await act(async()=>fixture.root.render(createElement(WorkspaceLink,{route:{kind:'report',id:'customer-debt-aging'},onNavigate:()=>{opened++;},children:'Debt report'})));
+  const link=fixture.container.querySelector('a')!;assert.equal(link.getAttribute('href'),'/reports/customer-debt-aging');
+  for(const options of [{ctrlKey:true},{metaKey:true},{shiftKey:true},{altKey:true},{button:1},{button:2}]){
+   const event=new fixture.browser.MouseEvent('click',{bubbles:true,cancelable:true,...options});await act(async()=>{link.dispatchEvent(event);});assert.equal(event.defaultPrevented,false);assert.equal(opened,0);
+  }
+  const ordinary=new fixture.browser.MouseEvent('click',{bubbles:true,cancelable:true,button:0});await act(async()=>{link.dispatchEvent(ordinary);});assert.equal(ordinary.defaultPrevented,true);assert.equal(opened,1);
+  await act(async()=>fixture.root.render(createElement(WorkspaceLink,{route:{kind:'report',id:'restricted'},disabled:true,onNavigate:()=>{opened++;},children:'Restricted'})));
+  assert.equal(fixture.container.querySelector('a'),null);assert.equal(fixture.container.querySelector('button')?.disabled,true);
+ }finally{await fixture.close();}
+});
+
+test('large table pages bound mounted rows, preserve loaded results and keep all rows in Excel export',async()=>{
+ const fixture=await domFixture();
+ try{
+  const {WidgetCard}=await fixture.server.ssrLoadModule('/src/Renderer.tsx');
+  const {tableWorkbook}=await fixture.server.ssrLoadModule('/src/export/excel-data.ts');
+  const widget={id:'synthetic-large',type:'table',dimension:'customer',series:[{id:'value',metric:'period_net_sales'}]};
+  const rows=Array.from({length:10000},(_,index)=>({key:'synthetic-'+index,series:{value:{value:index}}}));
+  const entry={status:'success',alignedRows:rows,seriesResults:{value:{status:'success',result:{metric:'period_net_sales',groupBy:'customer',rows:rows.map(row=>({key:row.key,value:row.series.value.value})),metadata:{sourceId:'synthetic',executedAt:'2026-10-15',metricType:'currency',semantics:'additive'}}}}};
+  await act(async()=>fixture.root.render(createElement(WidgetCard,{widget,entry,catalog:semanticCatalog,locale:'en',profile:tenantProfiles['demo-iq']})));
+  assert.equal(fixture.container.querySelectorAll('tbody tr').length,100);assert.equal(fixture.container.querySelector('table')?.getAttribute('aria-rowcount'),'10001');
+  const next=[...fixture.container.querySelectorAll('button')].find(button=>button.textContent==='Next')!;
+  await act(async()=>next.click());assert.equal(fixture.container.querySelector('tbody tr')?.getAttribute('aria-rowindex'),'102');
+  const search=fixture.container.querySelector<HTMLInputElement>('input[aria-label="Search row labels"]')!;
+  await act(async()=>{Object.getOwnPropertyDescriptor(fixture.browser.HTMLInputElement.prototype,'value')!.set!.call(search,'synthetic-9999');search.dispatchEvent(new fixture.browser.Event('input',{bubbles:true}));});
+  assert.equal(fixture.container.querySelectorAll('tbody tr').length,1);assert.ok(fixture.container.querySelector('tbody')?.textContent.includes('synthetic-9999'));
+  assert.equal(entry.alignedRows.length,10000);
+  const workbook=tableWorkbook(widget,entry,{catalog:semanticCatalog,locale:'en',profile:tenantProfiles['demo-iq']});
+  assert.equal(workbook.data[0].filter((row:unknown[])=>String(row[0]).startsWith('synthetic-')).length,10000);
+ }finally{await fixture.close();}
+});
+
+test('bar presentation preserves explicit bottom/Pareto order and temporal order while ranking ordinary categories',async()=>{
+ const fixture=await domFixture();
+ try{
+  const {orderedBarRows}=await fixture.server.ssrLoadModule('/src/rendering/BarContent.tsx');
+  const rows=[{label:'low',value__amount:1,_row:0},{label:'high',value__amount:9,_row:1}];
+  const widget={id:'synthetic',type:'bar',dimension:'customer',series:[{id:'amount',metric:'period_net_sales'}]};
+  const field=(await fixture.server.ssrLoadModule('/src/rendering/shared.ts')).valueKey('amount');
+  const data=rows.map(row=>({...row,[field]:row.value__amount}));
+  assert.equal(orderedBarRows(widget,data)[0]._row,1);assert.equal(data[0]._row,0);
+  assert.equal(orderedBarRows({...widget,series:[{...widget.series[0],analysis:{topN:{direction:'bottom',limit:2}}}]},data),data);
+  assert.equal(orderedBarRows({...widget,series:[{...widget.series[0],analysis:{pareto:true}}]},data),data);
+  assert.equal(orderedBarRows({...widget,dimension:'month'},data),data);
  }finally{await fixture.close();}
 });

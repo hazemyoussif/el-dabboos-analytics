@@ -28,7 +28,7 @@ import { KpiContent } from './rendering/KpiContent.tsx';
 import { LineContent } from './rendering/LineContent.tsx';
 import { TableContent } from './rendering/TableContent.tsx';
 import { comparisonKey, formatSeriesValue, valueKey } from './rendering/shared.ts';
-import type { ChartRow } from './rendering/shared.ts';
+import type { ChartRow,RenderSeriesProps } from './rendering/shared.ts';
 
 const icons = { kpi: TrendingUp, line: ChartLine, area: ChartArea, bar: ChartBar, pie: ChartPie, treemap: PanelsTopLeft, combo: ChartNoAxesCombined, table: Table2 };
 const renderers = { kpi: KpiContent, line: LineContent, area: AreaContent, bar: BarContent, pie: PieContent, treemap: TreemapContent, combo: ComboContent, table: TableContent };
@@ -45,20 +45,13 @@ export function WidgetCard({ widget, dashboardPalette, entry, catalog, locale, p
   if (!entry || entry.status === 'error') return <article className="widget widget-error"><WidgetHeading title={title} subtitle={subtitle} widget={widget} catalog={catalog} locale={locale} profile={profile} entry={entry} error /><Notice tone="danger">{failures.join(' · ') || t.failed}</Notice></article>;
   const dimensionLabels=Object.assign({},...Object.values(entry.seriesResults).map(series=>series.status==='success'?series.result.metadata.dimensionLabels??{}:{})) as Record<string,string>;
   const keyLabel=(key:string|null)=>key!==null&&dimensionLabels[key]?formatDimensionLabel(dimensionLabels[key]!,widget.dimension,locale):formatKey(key,widget.dimension,locale,profile);
-  const data: ChartRow[] = entry.alignedRows.map((row,index) => {
-    const item: ChartRow = { label: keyLabel(row.key), _row: index };
-    for (const series of widget.series) {
-      item[valueKey(series.id)] = row.series[series.id]?.value ?? null;
-      if (row.series[series.id]?.comparisonValue !== undefined) item[comparisonKey(series.id)] = row.series[series.id]?.comparisonValue ?? null;
-    }
-    return item;
-  });
+  const data = chartRows(widget,entry,keyLabel);
   const formatSeries = (seriesId: string, value: number | null) => formatSeriesValue(widget, catalog, locale, profile, seriesId, value);
   const hasData = entry.alignedRows.some(row => Object.values(row.series).some(value => value !== null && value.value !== null));
   const props = { exportMetadata, theme, widget, entry, catalog, locale, profile, labels, formatSeries, data, keyLabel, ...(onDrill?{onDrill,canDrill}:{}) };
   const Content = renderers[widget.type];
   const content = !hasData && widget.type!=='kpi' ? <EmptyState>{t.empty}</EmptyState> : <Content {...props} />;
-  const summary = widget.type !== 'kpi' && widget.type !== 'table' && <details className="chart-summary"><summary>{locale === 'ar' ? 'عرض قيم الرسم' : 'View chart values'}</summary><TableContent {...props} /></details>;
+  const summary = widget.type !== 'kpi' && widget.type !== 'table' && <ChartValueDetails props={props}/>;
   const reading = <><WidgetHeading title={title} subtitle={subtitle} widget={widget} catalog={catalog} locale={locale} profile={profile} entry={entry} Icon={Icon} showDefinitions={widget.type !== 'table'} />{showPartial && <Notice>{t.partial}: {failures.join(' · ')}</Notice>}{content}<DataAvailability entry={entry} locale={locale} profile={profile} /></>;
   return <article className={`widget widget-${widget.type}`}><WidgetReadingLayout widget={widget} locale={locale} onDrill={onDrill} canDrill={canDrill}>{reading}</WidgetReadingLayout>{summary}</article>;
 }
@@ -120,4 +113,21 @@ function WidgetReadingLayout({widget,locale,onDrill,canDrill,children}:{widget:D
   if(widget.type!=='kpi')return children;
   const series=widget.series[0]!;
   return <><div className="kpi-reading">{children}</div>{onDrill&&canDrill?.(series.id,null)&&<footer className="kpi-actions"><button type="button" className="drill-action" onClick={()=>onDrill(series.id,null)}>{drillActionLabel(locale)}</button></footer>}</>;
+}
+
+function chartRows(widget:DashboardWidget,entry:WidgetExecution,keyLabel:(key:string|null)=>string):ChartRow[]{
+  if(widget.type==='table'||widget.type==='kpi')return [];
+  return entry.alignedRows.map((row,index) => {
+    const item: ChartRow = { label: keyLabel(row.key), _row: index };
+    for (const series of widget.series) {
+      item[valueKey(series.id)] = row.series[series.id]?.value ?? null;
+      if (row.series[series.id]?.comparisonValue !== undefined) item[comparisonKey(series.id)] = row.series[series.id]?.comparisonValue ?? null;
+    }
+    return item;
+  });
+}
+
+function ChartValueDetails({props}:{props:RenderSeriesProps&{entry:WidgetExecution}}){
+ const [open,setOpen]=useState(false);
+ return <details className="chart-summary" onToggle={event=>setOpen(event.currentTarget.open)}><summary>{props.locale==='ar'?'عرض قيم الرسم':'View chart values'}</summary>{(open||props.entry.alignedRows.length<=200)&&<TableContent {...props}/>}</details>;
 }

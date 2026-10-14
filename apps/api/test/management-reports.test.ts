@@ -13,6 +13,7 @@ test('published management default executes exact metrics while customer and Fin
   const templates=(await app.inject({url:'/api/dashboard-templates',headers})).json();assert.equal(templates.defaultTemplateId,'executive-sales-invoicing');
   for(const id of ['executive-sales-invoicing','business-line-performance','salesperson-performance','invoice-refund-operations']) {
    const result=await app.inject({url:`/api/dashboard-templates/${id}/instantiate`,headers});assert.equal(result.statusCode,200);assert.equal(result.json().execution.metadata.failedSeries,0);
+   if(id==='executive-sales-invoicing')assert.ok(result.json().dashboard.widgets.every((widget:{type:string})=>widget.type==='kpi'),'unpublished monthly charts keep the original executive report available');
    assert.deepEqual(result.json().dashboard.filters,{datePreset:'current_year'});
   }
   assert.equal((await app.inject({url:'/api/dashboard-templates/customer-performance/instantiate',headers})).statusCode,409);

@@ -1,3 +1,4 @@
+import {withPurposeCharts} from './purpose-charts.ts';
 import {businessTemplates} from './business-templates.ts';
 import type { DashboardSeries, DashboardSpec, DashboardWidget, DateRange, RelativeDatePreset, Locale, LocalizedText, MetricId, TenantProfile, AnalysisSpec, DimensionId } from '@el-dabboos/domain';
 import { validateDashboardSpec } from '@el-dabboos/domain';
@@ -28,9 +29,9 @@ const one = (id: string, type: DashboardWidget['type'], metric: MetricId, dimens
 import {reviewTemplates} from './review-templates.ts';
 
 export const dashboardTemplates: readonly DashboardTemplate[] = [
-  ...managementTemplates,
-  ...reviewTemplates,
-  ...leadershipTemplates,...businessTemplates,
+  ...managementTemplates.map(withPurposeCharts),
+  ...reviewTemplates.map(withPurposeCharts),
+  ...leadershipTemplates.map(withPurposeCharts),...businessTemplates.map(withPurposeCharts),
   ...historicalTemplates,
   { id: 'executive-overview', name: text('Executive Overview', 'نظرة تنفيذية'), description: text('A concise view of sales, margin, collections and reliability.', 'ملخص للمبيعات والهامش والتحصيل والاعتمادية.'), domain: 'executive', tags: ['leadership', 'overview'], datePreset: 'current_year', layout: { columns: 3 }, widgets: [
     one('revenue', 'kpi', 'revenue'), one('gross-margin', 'kpi', 'gross_margin'), one('outstanding', 'kpi', 'outstanding_amount'),

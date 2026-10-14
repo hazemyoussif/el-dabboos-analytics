@@ -386,12 +386,6 @@
       "ceiling": 1
     },
     {
-      "file": "apps/web/src/rendering/BarContent.tsx",
-      "symbol": "BarContent/numberTick/binding:n",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
       "file": "apps/web/src/rendering/ChartChrome.tsx",
       "symbol": "EnterpriseTooltip/binding:t",
       "metric": "shortNames",
@@ -400,12 +394,6 @@
     {
       "file": "apps/web/src/rendering/ComboContent.tsx",
       "symbol": "ComboContent/ArrowFunction:anonymous/binding:n",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "apps/web/src/rendering/LineContent.tsx",
-      "symbol": "LineContent/ArrowFunction:anonymous/binding:n",
       "metric": "shortNames",
       "ceiling": 1
     },

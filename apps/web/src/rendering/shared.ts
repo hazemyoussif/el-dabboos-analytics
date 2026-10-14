@@ -1,3 +1,4 @@
+import {numberFormatter} from '../presentation/number-format.ts';
 import type { DashboardExecutionResult } from '@el-dabboos/application';
 import type { DashboardSeries,DashboardWidget, Locale, SemanticMetric, TenantProfile } from '@el-dabboos/domain';
 import type { ChartTheme } from './chart-theme.ts';
@@ -25,7 +26,7 @@ export function seriesLabel(props: RenderSeriesProps, index: number) {
 export function formatSeriesValue(widget: DashboardWidget, catalog: Record<string, SemanticMetric>, locale: Locale, profile: TenantProfile, seriesId: string, value: number | null) {
   const series = widget.series.find(item => item.id === seriesId)!;
   const metric = catalog[series.metric];
-  if(metric?.id==='customer_average_monthly_sales'&&value!==null)return new Intl.NumberFormat(localeTag(locale,profile),{style:'currency',currency:profile.reportingCurrency,maximumFractionDigits:6}).format(value);
+  if(metric?.id==='customer_average_monthly_sales'&&value!==null)return numberFormatter(localeTag(locale,profile),{style:'currency',currency:profile.reportingCurrency,maximumFractionDigits:6}).format(value);
   return formatValue(value, series.analysis?.pareto||series.analysis?.percentageContribution?'percentage':metric?.type ?? 'number', locale, profile, metric?.presentation.unit);
 }
 
@@ -34,7 +35,7 @@ export function compactSeriesValue(props: RenderSeriesProps, seriesId: string, v
   const series = props.widget.series.find(item => item.id === seriesId)!;
   const metric = props.catalog[series.metric];
   const type=series.analysis?.pareto||series.analysis?.percentageContribution?'percentage':metric?.type;
-  const number = new Intl.NumberFormat(localeTag(props.locale, props.profile), {
+  const number = numberFormatter(localeTag(props.locale, props.profile), {
     notation: 'compact', maximumFractionDigits: 1,
     ...(type === 'currency' ? { style: 'currency' as const, currency: props.profile.reportingCurrency, currencyDisplay: 'narrowSymbol' as const } : {}),
   }).format(value);
