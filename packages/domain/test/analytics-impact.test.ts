@@ -8,13 +8,14 @@ function fact(patch: Partial<ProductionFact> = {}): ProductionFact {
 }
 test('October discovery invalidates January old/new groups, dependent periods, and no October base', () => {
   const partitions=resolveAnalyticsImpact([{previous:fact(),next:fact({value:'120.000000',dimensions:{salesperson:'B',customer:'Y',business_line:'one'},sourceRevision:'2'})}],policy);
-  const base=partitions.filter(partition=>partition.dependency==='base');
+  const base=partitions.filter(partition=>partition.metric==='net_invoiced_revenue'&&partition.dependency==='base');
   assert.deepEqual([...new Set(base.map(partition=>partition.month))],['2026-01']);
   assert.deepEqual(base.filter(partition=>partition.dimension==='salesperson').map(partition=>partition.identity).sort(),['A','B']);
   assert.deepEqual(base.filter(partition=>partition.dimension==='customer').map(partition=>partition.identity).sort(),['X','Y']);
-  assert.deepEqual(partitions.filter(partition=>partition.dependency==='moving_average' && partition.dimension===null).map(partition=>partition.month),['2026-01','2026-02','2026-03']);
-  assert.equal(partitions.filter(partition=>partition.dependency==='running_total' && partition.dimension===null).length,9);
+  assert.deepEqual(partitions.filter(partition=>partition.metric==='net_invoiced_revenue'&&partition.dependency==='moving_average' && partition.dimension===null).map(partition=>partition.month),['2026-01','2026-02','2026-03']);
+  assert.equal(partitions.filter(partition=>partition.metric==='net_invoiced_revenue'&&partition.dependency==='running_total' && partition.dimension===null).length,9);
   assert.equal(partitions.find(partition=>partition.dependency==='year_over_year')?.month,'2027-01');
+  assert.ok(partitions.some(partition=>partition.metric==='customer_collection_ratio'&&partition.dependency==='base'));
 });
 test('business date moves invalidate both months; deletes retain old active footprint', () => {
   const moved=resolveAnalyticsImpact([{previous:fact(),next:fact({businessDate:'2026-02-10'})}],policy);

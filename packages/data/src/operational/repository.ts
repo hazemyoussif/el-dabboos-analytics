@@ -1,8 +1,10 @@
+import {productReviewMetrics} from '../review/definitions.ts';
+import {ReviewAnalyticsRepository,reviewQuery} from '../review/repository.ts';
 import { trustedDimensionOptions } from './dimension-options.ts';
 import type { Pool } from 'pg';
 import { validateQuery,publishedQueryIssues,semanticCatalog,categoricalDimensions,requiredMeasures } from '@el-dabboos/domain';
 import type { AnalyticsContext,AnalyticsQuery,AnalyticsRepository,AnalyticsResult,DimensionId,DimensionValueRepository,PublishedAnalyticsCapabilities } from '@el-dabboos/domain';
-import { operationalDefinitionVersion } from './definition-version.ts';
+import { compatibleOperationalDefinition } from './definition-version.ts';
 import { tenantTransaction } from '../postgres/session.ts';
 import type { HistoricalRepositoryOptions } from '../postgres/historical-repository.ts';
 import { servingLabels } from './serving-labels.ts';
@@ -14,17 +16,21 @@ import { servingRows } from './serving-query.ts';
 export class TrustedAnalyticsRepository implements AnalyticsRepository,DimensionValueRepository {
  private readonly maxGroups:number;
  private readonly finance:FinanceSnapshotRepository;
- constructor(private readonly pool:Pool,private readonly options:HistoricalRepositoryOptions){this.maxGroups=options.historicalMaxGroups??options.maxGroups??4000;if(!Number.isInteger(this.maxGroups)||this.maxGroups<1||this.maxGroups>5000)throw new Error('Invalid trusted group bound');this.finance=new FinanceSnapshotRepository(pool,options.statementTimeoutMs,this.maxGroups);}
+ private readonly review:ReviewAnalyticsRepository;
+ constructor(private readonly pool:Pool,private readonly options:HistoricalRepositoryOptions){this.maxGroups=options.historicalMaxGroups??options.maxGroups??4000;if(!Number.isInteger(this.maxGroups)||this.maxGroups<1||this.maxGroups>5000)throw new Error('Invalid trusted group bound');this.finance=new FinanceSnapshotRepository(pool,options.statementTimeoutMs,this.maxGroups);this.review=new ReviewAnalyticsRepository(pool,options.statementTimeoutMs,this.maxGroups);}
  async isDataReady(tenantId:string){return await this.stored(tenantId)!==null;}
  async getPublishedCapabilities(context:AnalyticsContext):Promise<PublishedAnalyticsCapabilities>{
   const stored=await this.stored(context.tenantId);
   if(!stored)return {tenantId:context.tenantId,mode:'certified',releases:[]};
   const finance=await this.finance.capabilities(context);
-  return policyCapabilities({...stored.capabilities,releases:[...stored.capabilities.releases,...(finance?.releases??[])]},context);
+  const review=await this.review.capabilities(context);
+  return policyCapabilities({...stored.capabilities,releases:[...stored.capabilities.releases,...(finance?.releases??[]),...review.releases]},context);
  }
  async execute(query:AnalyticsQuery,context:AnalyticsContext):Promise<AnalyticsResult> {
   validateQuery(query,context);
   const stored=await this.stored(context.tenantId);if(!stored)throw new Error('Trusted serving revision required');
+  const reviewFallback=productReviewMetrics.includes(query.metric)&&publishedQueryIssues({...query,filters:[...(query.filters??[]),...(context.enforcedFilters??[])]},stored.capabilities).length>0;
+  if(reviewQuery(query,context)||reviewFallback)return this.review.execute(query,context);
   if(financeMetric(query.metric)){const capabilities=await this.finance.capabilities(context);if(capabilities)return this.finance.execute(query,context,capabilities);}
   authorizeStored(query,context,stored.capabilities);
   return tenantTransaction(this.pool,context.tenantId,async client=>{
@@ -42,6 +48,7 @@ export class TrustedAnalyticsRepository implements AnalyticsRepository,Dimension
  }
  async listDimensionValues(dimension:DimensionId,context:AnalyticsContext){return (await this.listDimensionOptions(dimension,context)).map(option=>option.id);}
  async searchDimensionOptions(dimension:DimensionId,context:AnalyticsContext,request:import('@el-dabboos/domain').DimensionDiscoveryRequest){
+  if(dimension==='product'||dimension==='product_category'||request.metric&&reviewQuery({metric:request.metric,groupBy:dimension},context))return this.review.searchDimensionOptions(dimension,context,request);
   if(dimension!=='customer')return boundedDimensionPage(await this.listDimensionOptions(dimension,context),request);
   return discoverCustomers(this.pool,context,request,await this.getPublishedCapabilities(context),this.options.statementTimeoutMs??15000);
  }
@@ -51,15 +58,19 @@ export class TrustedAnalyticsRepository implements AnalyticsRepository,Dimension
   const capabilities=await this.getPublishedCapabilities(context);
   const eligible=capabilities.releases.flatMap(release=>release.capabilities).filter(capability=>capability.dimensions.includes(dimension)&&(context.enforcedFilters??[]).every(filter=>capability.dimensions.includes(filter.dimension)));
   if(!eligible.length)throw new Error('Uncertified discovery/policy dimension');
+  const reviewOptions=await this.review.dimensionOptions(dimension,context);
+  if(dimension==='product'||dimension==='product_category')return reviewOptions;
   return tenantTransaction(this.pool,context.tenantId,async client=>{
-   return trustedDimensionOptions(client,{dimension,context,metric:eligible[0]!.metric,measures:[...new Set(eligible.flatMap(capability=>requiredMeasures(capability.metric)))],maxGroups:this.maxGroups});
+   const options=await trustedDimensionOptions(client,{dimension,context,metric:eligible[0]!.metric,measures:[...new Set(eligible.flatMap(capability=>requiredMeasures(capability.metric)))],maxGroups:this.maxGroups});
+   const combined=[...new Map([...options,...reviewOptions].map(option=>[option.id,option])).values()];
+   if(combined.length>this.maxGroups)throw new Error('Combined dimension limit exceeded');return combined;
   },true,this.options.statementTimeoutMs??15000);
  }
  private stored(tenantId:string) {
   return tenantTransaction(this.pool,tenantId,async client=>{
    const row=(await client.query<{capabilities:PublishedAnalyticsCapabilities;current_through:string;reporting_currency:string;definition_version:string;}>(`SELECT baseline.capabilities,baseline.reporting_currency,baseline.definition_version,baseline.specification,CASE WHEN EXISTS(SELECT 1 FROM mart.analytics_serving_members WHERE tenant_id=baseline.tenant_id AND revision_id=trusted.revision_id AND family='facts' AND month>baseline.period_to) THEN (coalesce(cursor.cutoff,revision.cutoff) AT TIME ZONE (baseline.specification->0->'measures'->0->>'timeZone'))::date::text ELSE baseline.period_to::text END current_through FROM mart.analytics_baselines baseline JOIN mart.analytics_trusted_serving trusted USING(tenant_id) JOIN mart.analytics_serving_revisions revision USING(tenant_id,revision_id) LEFT JOIN mart.analytics_source_cursors cursor USING(tenant_id) WHERE tenant_id=$1`,[tenantId])).rows[0];
    if(row){
-    if(row.definition_version!==operationalDefinitionVersion())throw new Error('Explicit metric-definition migration required');
+    if(!compatibleOperationalDefinition(row.definition_version))throw new Error('Explicit metric-definition migration required');
     const currency=this.options.reportingCurrency?await this.options.reportingCurrency(tenantId):this.options.reportingCurrencies[tenantId];
     if(currency!==row.reporting_currency)throw new Error('Uncertified reporting currency mismatch');
    }

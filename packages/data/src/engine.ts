@@ -56,6 +56,38 @@ function evaluate(facts: readonly AnalyticsFact[], metricId: MetricId, query: An
   }
   throw new Error('Comparison-derived metrics require comparison evaluation');
 }
+/** Cache categorical operands once per measure/range; select snapshot assignments before filters.
+ * Time series retain per-period evaluation. Missing snapshots stay null; explicit zero stays zero.
+ */
+function categoricalEvaluation(facts:readonly AnalyticsFact[],query:AnalyticsQuery,context:AnalyticsContext) {
+ const groupBy=query.groupBy;
+ if(!groupBy||isTime(groupBy))return (metricId:MetricId,range:DateRange|undefined,key:string|null)=>evaluate(facts,metricId,query,range,key,context);
+ const cache=new Map<string,Map<string,number>>(),defaultSum=query.aggregation===undefined||query.aggregation==='sum';
+ const totals=(measure:FactMeasureId,range:DateRange|undefined,basis:'snapshot'|'event')=>{
+  const identity=JSON.stringify([basis,measure,basis==='event'?range?.from:undefined,range?.to]),existing=cache.get(identity);
+  if(existing)return existing;
+  const grouped=new Map<string,number>();
+  const selected=basis==='snapshot'?latestSnapshots(facts,measure,range?.to):facts.filter(fact=>fact.measureId===measure&&inRange(fact,range));
+  for(const fact of selected){
+   if(!filtered(fact,query,context))continue;
+   const key=dimension(fact,groupBy);
+   if(key!==undefined)grouped.set(key,(grouped.get(key)??0)+fact.value);
+  }
+  cache.set(identity,grouped);return grouped;
+ };
+ return (metricId:MetricId,range:DateRange|undefined,key:string|null):number|null=>{
+  const semantics=semanticCatalog[metricId].semantics;
+  if(key===null)return evaluate(facts,metricId,query,range,key,context);
+  if(semantics.kind==='snapshot')return totals(semantics.measure,range,'snapshot').get(key)??null;
+  if(semantics.kind==='additive'&&(metricId!==query.metric||defaultSum))return totals(semantics.measure,range,'event').get(key)??0;
+  if(semantics.kind==='ratio'||semantics.kind==='duration_derived'){
+   const basis=semantics.kind==='ratio'&&semantics.basis==='snapshot'?'snapshot':'event';
+   const denominator=totals(semantics.denominator,range,basis).get(key)??0;
+   return denominator===0?null:(totals(semantics.numerator,range,basis).get(key)??0)/denominator*semantics.scale;
+  }
+  return evaluate(facts,metricId,query,range,key,context);
+ };
+}
 function currentKeys(facts: readonly AnalyticsFact[], query: AnalyticsQuery, context: AnalyticsContext): Array<string | null> {
   if (!query.groupBy) return [null];
   const groupBy = query.groupBy;
@@ -110,13 +142,14 @@ export function executeFacts(facts: readonly AnalyticsFact[], query: AnalyticsQu
   const scoped = facts.filter(f => f.tenantId === context.tenantId && measures.has(f.measureId));
   const dataThrough = scoped.filter(f => (context.enforcedFilters ?? []).every(filter => filter.values.includes(dimension(f, filter.dimension) ?? ''))).reduce<string | undefined>((latest, fact) => !latest || fact.date > latest ? fact.date : latest, undefined);
   const comparison = query.analysis?.comparison ?? (metric.semantics.kind === 'comparison_derived' ? metric.semantics.defaultComparison : undefined);
+  const valueAt=categoricalEvaluation(scoped,query,context);
   let rows: AnalyticsRow[] = currentKeys(scoped, query, context).map(key => {
     const currentRange = rangeForKey(query, key);
     const base = metric.semantics.kind === 'comparison_derived' ? metric.semantics.base : query.metric;
-    const value = evaluate(scoped, base, query, currentRange, key, context);
+    const value = valueAt(base,currentRange,key);
     if (!comparison) return { key, value };
     const previous = comparisonRange(query, key, comparison);
-    const prior = evaluate(scoped, base, query, previous.range, previous.key, context);
+    const prior = valueAt(base,previous.range,previous.key);
     const changes = compare(value, prior);
     if (metric.semantics.kind === 'comparison_derived') return { key, value: changes.percentageChange ?? null };
     return { key, value, ...changes };

@@ -12,6 +12,8 @@ export interface PublishedMetricCapability {
 export interface AnalyticsReleaseProvenance {
   datasetId: string; sourceId: string; mappingId: string; mappingVersion: string;
   certificationReference: string; outputCertificationReference?: string;
+  /** Technical exposure is independent from subsequent Finance review. */
+  financeReview?: 'pending';
 }
 export interface PublishedAnalyticsRelease extends AnalyticsReleaseProvenance {
   period?: DateRange;

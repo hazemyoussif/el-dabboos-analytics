@@ -23,8 +23,11 @@ const widget = (id: string, type: DashboardWidget['type'], metrics: DashboardSer
 const one = (id: string, type: DashboardWidget['type'], metric: MetricId, dimension?: DimensionId, analysis?: AnalysisSpec): DashboardWidget =>
   widget(id, type, [series(metric, metric, analysis)], dimension);
 
+import {reviewTemplates} from './review-templates.ts';
+
 export const dashboardTemplates: readonly DashboardTemplate[] = [
   ...managementTemplates,
+  ...reviewTemplates,
   ...historicalTemplates,
   { id: 'executive-overview', name: text('Executive Overview', 'نظرة تنفيذية'), description: text('A concise view of sales, margin, collections and reliability.', 'ملخص للمبيعات والهامش والتحصيل والاعتمادية.'), domain: 'executive', tags: ['leadership', 'overview'], datePreset: 'current_year', layout: { columns: 3 }, widgets: [
     one('revenue', 'kpi', 'revenue'), one('gross-margin', 'kpi', 'gross_margin'), one('outstanding', 'kpi', 'outstanding_amount'),
