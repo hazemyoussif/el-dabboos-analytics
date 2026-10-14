@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { AuthorizationError, selectDefaultTemplate, templateCompatibility,assertPublishedDashboard,dashboardTemplates, getDashboardTemplate, instantiateDashboardTemplate } from '@el-dabboos/application';
+import { supportedTemplatePeriod, AuthorizationError, selectDefaultTemplate, templateCompatibility,assertPublishedDashboard,dashboardTemplates, getDashboardTemplate, instantiateDashboardTemplate } from '@el-dabboos/application';
 import { workspacePublishedCapabilities } from '../published-analytics.ts';
 import { analyticsContext } from '../context.ts';
 import type { RouteContext } from '../context.ts';
@@ -28,7 +28,13 @@ export function registerTemplateRoutes(app: FastifyInstance, services: RouteCont
       const published = await workspacePublishedCapabilities(services,context);
       const compatibility = templateCompatibility(template,published);
       if (compatibility.status!=='supported') throw new ApiError(409,'TEMPLATE_INCOMPATIBLE',`This template requires analytics capabilities that are not available for this workspace: ${compatibility.missing.join(', ')}.`);
-      const dashboard = services.ensureDashboard(instantiateDashboardTemplate(template, profile, services.clock(), context.locale), context);
+      const draft = instantiateDashboardTemplate(template, profile, services.clock(), context.locale);
+      if(published.mode==='certified' && template.periodStrategy==='latest_complete_month'){
+        const period=supportedTemplatePeriod(template,published);
+        if(!period)throw new ApiError(409,'TEMPLATE_INCOMPATIBLE','No shared complete reporting month is available.');
+        draft.filters={dateRange:period};
+      }
+      const dashboard=services.ensureDashboard(draft,context);
       assertPublishedDashboard(dashboard,published,profile.timeZone,services.clock());
       return { dashboard, execution: await services.executor.execute(dashboard, analyticsContext(context), { timeZone: profile.timeZone }) };
     }, request.params.id);
