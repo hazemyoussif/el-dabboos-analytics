@@ -112,3 +112,36 @@ for(const [name,amount,rounding] of [
   await assert.rejects(reader.controls(),/quality/);
  }finally{await lease.close();await db.close();}
 });
+
+async function receiptCurrencyFixture(scenario:'zero'|'nonzero'|'allocated'|'missing') {
+ const db=await database();let lease:OdooSnapshotLease|undefined;
+ try{
+  await db.admin.query(schema);
+  await db.admin.query("INSERT INTO res_currency VALUES(2,'USD',0.01)");
+  await db.admin.query('UPDATE account_payment SET currency_id=$1 WHERE id=$2',[scenario==='missing'?null:2,scenario==='nonzero'?10:15]);
+  if(scenario==='allocated')await db.admin.query("INSERT INTO account_partial_reconcile VALUES(3,1,100,1500,0.000000001,'2026-09-25')");
+  const config={tenantId:'a',sourceId:'fixture',companyIds:['1'],batchSize:2,statementTimeoutMs:15000,snapshotMaxDurationMs:60000,connection:{}};
+  const mapping=reviewMapping({tenantId:'a',sourceId:'fixture',currency:'IQD',timeZone:'Asia/Baghdad',datasetId:'synthetic-receipt-currency'});
+  lease=await OdooSnapshotLease.open(db.admin,config,60000,'staging_read_only');
+  const reader=new OdooReviewReader(db.admin,config,lease,{month:'2026-09',mapping});
+  return {db,lease,reader};
+ }catch(error){await lease?.close();await db.close();throw error;}
+}
+for(const scenario of ['zero','nonzero','allocated','missing'] as const)test(`receipt currency: ${scenario} preserves native IQD scope and exact controls`,{skip:!enabled},async()=>{
+ const {db,lease,reader}=await receiptCurrencyFixture(scenario);
+ try{
+  if(scenario!=='zero'){
+   await assert.rejects(async()=>{for await(const page of reader.facts())void page;},/quality/);
+   await assert.rejects(reader.controls(),/quality/);return;
+  }
+  const facts:ProductionFact[]=[];
+  for await(const page of reader.facts())facts.push(...page);
+  const zeros=facts.filter(fact=>fact.sourceObject==='account_payment'&&fact.sourceRecordId==='15');
+  assert.equal(zeros.length,5);assert.ok(zeros.every(fact=>fact.value==='0.000000'));
+  assert.equal(zeros.find(fact=>fact.measureId==='customer_cash_collected')?.currency?.reportingCurrency,'IQD');
+  const cash=(await reader.controls()).find(control=>control.measure==='customer_cash_collected'&&control.dimensions===null);
+  assert.equal(cash?.value,'150.000000');assert.equal(cash?.count,'2','zero receipt is retained, not silently dropped');
+  const original=(await db.admin.query("SELECT payment.currency_id,payment.amount::text,currency.name FROM account_payment payment JOIN res_currency currency ON currency.id=payment.currency_id WHERE payment.id=15")).rows[0];
+  assert.deepEqual(original,{currency_id:2,amount:'0',name:'USD'},'read-only reader leaves original currency and zero amount unchanged');
+ }finally{await lease.close();await db.close();}
+});
