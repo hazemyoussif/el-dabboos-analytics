@@ -68,3 +68,47 @@ test('real SQL recipes count inbound cash once, separate credit settlements, pag
   await assert.rejects(async()=>{for await(const page of invalid.facts())void page;},/quality/);
  }finally{await lease?.close();await db.close();}
 });
+
+async function allocationFixture(amount:string,rounding:string='0.001') {
+ const db=await database();let lease:OdooSnapshotLease|undefined;
+ try{
+  await db.admin.query(schema);
+  await db.admin.query('UPDATE res_currency SET rounding=$1 WHERE id=1',[rounding]);
+  await db.admin.query('UPDATE account_partial_reconcile SET amount=$1 WHERE id=1',[amount]);
+  await db.admin.query('UPDATE account_payment SET amount=100 WHERE id=10');
+  await db.admin.query('UPDATE account_move_line SET balance=-100,amount_residual=0,amount_currency=-100 WHERE id=1000');
+  const config={tenantId:'a',sourceId:'fixture',companyIds:['1'],batchSize:2,statementTimeoutMs:15000,snapshotMaxDurationMs:60000,connection:{}};
+  const mapping=reviewMapping({tenantId:'a',sourceId:'fixture',currency:'IQD',timeZone:'Asia/Baghdad',datasetId:'synthetic-allocation-precision'});
+  lease=await OdooSnapshotLease.open(db.admin,config,60000,'staging_read_only');
+  const reader=new OdooReviewReader(db.admin,config,lease,{month:'2026-09',mapping});
+  return {db,lease,reader};
+ }catch(error){await lease?.close();await db.close();throw error;}
+}
+for(const amount of ['100.000000000224','100.000000001'])test(`allocation residue ${amount} normalizes before over-allocation and weighted days, with exact source controls`,{skip:!enabled},async()=>{
+ const {db,lease,reader}=await allocationFixture(amount);
+ try{
+  const facts:ProductionFact[]=[];
+  for await(const page of reader.facts())facts.push(...page);
+  const expected={customer_cash_collected:'100.000000',cash_applied_to_invoices:'100.000000',unallocated_customer_receipts:'0.000000',collection_amount_days:'2000.000000',collection_applied_amount:'100.000000'};
+  const controls=await reader.controls();
+  for(const [measure,value] of Object.entries(expected)){
+   assert.equal(facts.find(fact=>fact.sourceObject==='account_payment'&&fact.sourceRecordId==='10'&&fact.measureId===measure)?.value,value);
+   assert.equal(controls.find(control=>control.measure===measure&&control.dimensions===null)?.value,value);
+  }
+  assert.equal((await db.admin.query('SELECT amount::text FROM account_partial_reconcile WHERE id=1')).rows[0].amount,amount,'reader never rewrites the original source amount');
+ }finally{await lease.close();await db.close();}
+});
+for(const [name,amount,rounding] of [
+ ['above residue limit','100.0000000011','0.001'],
+ ['real over-allocation','100.001','0.001'],
+ ['negative allocation','-1','0.001'],
+ ['zero allocation','0','0.001'],
+ ['finer currency quantum','100.000000000224','0.000000001'],
+ ['invalid currency quantum','100','0']
+])test(`allocation precision policy rejects ${name} in facts and independent controls`,{skip:!enabled},async()=>{
+ const {db,lease,reader}=await allocationFixture(amount!,rounding!);
+ try{
+  await assert.rejects(async()=>{for await(const page of reader.facts())void page;},/quality/);
+  await assert.rejects(reader.controls(),/quality/);
+ }finally{await lease.close();await db.close();}
+});

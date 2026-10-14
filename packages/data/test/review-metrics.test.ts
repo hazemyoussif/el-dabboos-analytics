@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {semanticCatalog,requiredMeasures,validateQuery} from '../../domain/src/index.ts';
 import {executeFacts} from '../src/engine.ts';
-import {reviewMapping,reviewCapabilities,reviewMetrics} from '../src/review/definitions.ts';
+import {reviewMapping,reviewCapabilities,reviewMetrics,reviewDefinitionVersion} from '../src/review/definitions.ts';
 import {mapReviewRow} from '../src/review/mapper.ts';
 import type {ReviewSourceRow} from '../src/review/mapper.ts';
 const mapping=reviewMapping({tenantId:'a',sourceId:'fixture',currency:'IQD',timeZone:'Asia/Baghdad',datasetId:'review-test'});
@@ -41,4 +41,13 @@ test('exposure capabilities are executable without Finance approval but do not g
 test('allocation cutoff follows the Baghdad business day across the UTC boundary',()=>{
  assert.equal(reviewBusinessDate('2026-10-13T20:59:59.000Z','Asia/Baghdad'),'2026-10-13');
  assert.equal(reviewBusinessDate('2026-10-13T21:00:00.000Z','Asia/Baghdad'),'2026-10-14');
+});
+
+test('allocation normalization is declared as mapping v2 without hiding existing v1 metric definitions',()=>{
+ assert.equal(mapping.mappingVersion,'2');
+ assert.equal(mapping.mappingId,'collections-product-margin-v2');
+ const rule=mapping.measures.find(rule=>rule.measureId==='cash_applied_to_invoices')!;
+ assert.ok(rule.amountBasis.includes('0.000000001'));
+ assert.ok(rule.amountBasis.includes('rounding/1000000'));
+ assert.equal(reviewDefinitionVersion(),'c6216bfea28db777a628391149e6585307ff558fff0684da32497ee7abe01593');
 });

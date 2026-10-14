@@ -1,8 +1,9 @@
+import {reviewAllocationPrecision} from './allocation-precision.ts';
 import {receivablesControlBaseSql} from '../operational/receivable-control-sql.ts';
 /** Closed, company-scoped source recipes. All amounts stay exact PostgreSQL numerics. */
 const paymentBase=`WITH receipts AS (
  SELECT payment.id,payment.date,payment.partner_id,payment.company_id,payment.amount,payment.currency_id,
- company.currency_id company_currency_id,currency.name company_currency,
+ company.currency_id company_currency_id,currency.name company_currency,currency.rounding company_rounding,
  move.id move_id,coalesce(sum(-line.balance),0) cash,
  -- A zero-value receipt contributes zero; a debit receivable line conflicts with inbound cash.
  count(*) FILTER(WHERE line.balance>0 OR line.partner_id IS DISTINCT FROM payment.partner_id OR line.balance<>round(line.balance,6)
@@ -13,13 +14,15 @@ const paymentBase=`WITH receipts AS (
  JOIN account_account account ON account.id=line.account_id AND account.account_type='asset_receivable'
  WHERE $4::text IS NOT NULL AND payment.company_id=ANY($1::int[]) AND payment.payment_type='inbound' AND payment.partner_type='customer'
  AND payment.state IN ('in_process','paid') AND move.state='posted' AND payment.date BETWEEN $2::date AND $3::date
- GROUP BY payment.id,company.currency_id,currency.name,move.id
+ GROUP BY payment.id,company.currency_id,currency.name,currency.rounding,move.id
 ), allocation AS (
- SELECT receipt.id,sum(partial.amount) applied,
- sum(partial.amount*(receipt.date-invoice.invoice_date)) amount_days,
+ SELECT receipt.id,sum(round(partial.amount,${reviewAllocationPrecision.decimalPlaces})) applied,
+ sum(round(partial.amount,${reviewAllocationPrecision.decimalPlaces})*(receipt.date-invoice.invoice_date)) amount_days,
  count(*) FILTER(WHERE partial.company_id<>receipt.company_id OR debit.company_id<>receipt.company_id
  OR credit.company_id<>receipt.company_id OR debit.partner_id IS DISTINCT FROM receipt.partner_id
- OR invoice.invoice_date IS NULL OR partial.amount<=0 OR partial.amount<>round(partial.amount,6)) invalid
+ OR invoice.invoice_date IS NULL OR partial.amount IS NULL OR partial.amount<=0
+ OR abs(partial.amount-round(partial.amount,${reviewAllocationPrecision.decimalPlaces}))>
+ least(${reviewAllocationPrecision.maxResidue}::numeric,receipt.company_rounding/${reviewAllocationPrecision.currencyQuantumDivisor}::numeric)) invalid
  FROM receipts receipt JOIN account_move_line credit ON credit.move_id=receipt.move_id
  JOIN account_partial_reconcile partial ON partial.credit_move_id=credit.id AND partial.max_date<=$5::date
  JOIN account_move_line debit ON debit.id=partial.debit_move_id JOIN account_move invoice ON invoice.id=debit.move_id
@@ -32,7 +35,7 @@ const paymentBase=`WITH receipts AS (
  receipt.date::text business_date,receipt.company_id::text company_id,receipt.company_currency currency,
  receipt.partner_id::text customer,NULL::text salesperson,NULL::text business_line,NULL::text product,NULL::text product_category,
  value.measure_id,value.amount::numeric(30,6)::text value,
- (receipt.invalid+coalesce(allocation.invalid,0)>0 OR receipt.cash<0 OR coalesce(allocation.applied,0)>receipt.cash
+ (receipt.invalid+coalesce(allocation.invalid,0)>0 OR receipt.company_rounding IS NULL OR receipt.company_rounding<=0 OR receipt.cash<0 OR coalesce(allocation.applied,0)>receipt.cash
  OR receipt.currency_id<>receipt.company_currency_id OR receipt.amount<>receipt.cash) invalid
  FROM receipts receipt LEFT JOIN allocation ON allocation.id=receipt.id
  CROSS JOIN LATERAL (VALUES
