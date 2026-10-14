@@ -1,3 +1,4 @@
+import {seriesDisplayLabel} from './rendering/shared.ts';
 import { ExcelExportButton } from './export/ExcelExportButton.tsx';
 import { dashboardWorkbook } from './export/excel-data.ts';
 import { useRef, useState } from 'react';
@@ -37,7 +38,7 @@ export function WidgetCard({ widget, dashboardPalette, entry, catalog, locale, p
   const t = copy[locale];
   const theme = withGovernedPalette(useChartTheme(), resolveGovernedPalette(widget.presentation?.palette, dashboardPalette));
   const Icon = icons[widget.type];
-  const labels = widget.series.map(series => catalog[series.metric]?.labels[locale] ?? series.metric.replaceAll('_', ' '));
+  const labels = widget.series.map(series => seriesDisplayLabel(series,catalog,locale));
   const title = widget.title?.[locale] ?? (labels.length === 1 ? labels[0]! : labels.join(' · '));
   const subtitle = widget.dimension ? t.dimensions[widget.dimension] : catalog[widget.series[0]!.metric]?.descriptions[locale] ?? '';
   const {messages:failures,showPartial} = widgetFailurePresentation(widget,entry,locale,boundGuidanceShown);

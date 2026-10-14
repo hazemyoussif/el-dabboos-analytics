@@ -243,6 +243,9 @@
               "maximum": 100
             }
           }
+        },
+        "pareto": {
+          "const": true
         }
       }
     },

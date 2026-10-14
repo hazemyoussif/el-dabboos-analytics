@@ -1,3 +1,4 @@
+import {businessTemplates} from './business-templates.ts';
 import type { DashboardSeries, DashboardSpec, DashboardWidget, DateRange, RelativeDatePreset, Locale, LocalizedText, MetricId, TenantProfile, AnalysisSpec, DimensionId } from '@el-dabboos/domain';
 import { validateDashboardSpec } from '@el-dabboos/domain';
 
@@ -13,7 +14,7 @@ export interface DashboardTemplate {
   domain: 'executive' | 'sales' | 'crm' | 'finance' | 'customers' | 'inventory' | 'maintenance';
   tags: readonly string[];
   datePreset: DatePreset;
-  periodStrategy?: 'certified' | 'latest_complete_month';
+  periodStrategy?: 'certified' | 'latest_complete_month' | 'latest_available_month' | 'published_history';
   layout: DashboardSpec['layout'];
   widgets: DashboardWidget[];
 }
@@ -29,7 +30,7 @@ import {reviewTemplates} from './review-templates.ts';
 export const dashboardTemplates: readonly DashboardTemplate[] = [
   ...managementTemplates,
   ...reviewTemplates,
-  ...leadershipTemplates,
+  ...leadershipTemplates,...businessTemplates,
   ...historicalTemplates,
   { id: 'executive-overview', name: text('Executive Overview', 'نظرة تنفيذية'), description: text('A concise view of sales, margin, collections and reliability.', 'ملخص للمبيعات والهامش والتحصيل والاعتمادية.'), domain: 'executive', tags: ['leadership', 'overview'], datePreset: 'current_year', layout: { columns: 3 }, widgets: [
     one('revenue', 'kpi', 'revenue'), one('gross-margin', 'kpi', 'gross_margin'), one('outstanding', 'kpi', 'outstanding_amount'),

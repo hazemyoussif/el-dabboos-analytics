@@ -1,10 +1,11 @@
+import {businessCatalog} from './business-catalog.ts';
 import { metricHelp } from './metric-help.ts';
 import type { DimensionId, FactMeasureId, MetricId, MetricSemantics, SemanticMetric } from './contracts.ts';
 
 export const dimensions: readonly DimensionId[] = [
   'date', 'month', 'quarter', 'year', 'customer', 'branch', 'region',
   'salesperson', 'product', 'product_category', 'warehouse', 'equipment',
-  'equipment_category', 'technician', 'business_line', 'city', 'state',
+  'equipment_category', 'technician', 'business_line', 'city', 'state', 'brand','customer_segment','customer_class','uom','journal','supplier',
 ];
 export const timeDimensions: readonly DimensionId[] = ['date', 'month', 'quarter', 'year'];
 export const categoricalDimensions: readonly DimensionId[] = dimensions.filter(dimension => !timeDimensions.includes(dimension));
@@ -17,7 +18,7 @@ const transactions: DimensionId[] = [...time,'customer','salesperson','business_
 const maintenance: DimensionId[] = [...time, 'equipment', 'equipment_category', 'technician', 'branch'];
 
 /** These recipes use canonical measures only; source adapters map physical data to them. */
-const semantics: Record<MetricId, MetricSemantics> = {
+const semantics: Record<Exclude<MetricId,import('./contracts.ts').BusinessMetricId>, MetricSemantics> = {
   customer_cash_collected: {kind:'additive',measure:'customer_cash_collected'},
   cash_applied_to_invoices: {kind:'additive',measure:'cash_applied_to_invoices'},
   unallocated_customer_receipts: {kind:'additive',measure:'unallocated_customer_receipts'},
@@ -134,21 +135,21 @@ const dialectSynonyms: Partial<Record<MetricId, { iq?: readonly string[]; eg?: r
   order_count: { iq: ['عدد الطلبيات'], eg: ['عدد الأوردرات'] },
   collected_amount: { iq: ['المبالغ المقبوضة'], eg: ['الفلوس المتحصلة'] },
 };
-export const semanticCatalog: Readonly<Record<MetricId, SemanticMetric>> = Object.fromEntries(
+export const semanticCatalog: Readonly<Record<MetricId, SemanticMetric>> = {...businessCatalog,...Object.fromEntries(
   definitions.map(([id, en, ar, type, supportedDimensions, enSynonyms, arSynonyms]) => [id, {
-    id, labels: { en, ar }, descriptions: metricHelp(id, {en, ar}, semantics[id]).shortDefinition,
+    id, labels: { en, ar }, descriptions: metricHelp(id, {en, ar}, semantics[id as keyof typeof semantics]).shortDefinition,
     synonyms: { en: enSynonyms, ar: arSynonyms },
     ...(dialectSynonyms[id] ? { dialectSynonyms: dialectSynonyms[id] } : {}),
-    type, semantics: semantics[id], help: metricHelp(id, {en, ar}, semantics[id]),
+    type, semantics: semantics[id as keyof typeof semantics], help: metricHelp(id, {en, ar}, semantics[id as keyof typeof semantics]),
     dimensions: supportedDimensions,
     presentation: { decimals: type === 'number' ? 0 : 2, ...(type === 'duration' ? { unit: id==='weighted_collection_days'?'days':'hours' } : type === 'percentage' ? { unit: '%' } : {}) },
   }]),
-) as unknown as Record<MetricId, SemanticMetric>;
+)} as unknown as Record<MetricId, SemanticMetric>;
 
 const factIds = new Set<FactMeasureId>([
-  ...Object.values(semantics).flatMap(s => s.kind === 'additive' || s.kind === 'snapshot' || s.kind === 'distinct_count' ? [s.measure] : []),
+  ...Object.values(semanticCatalog).map(metric=>metric.semantics).flatMap(semantics => semantics.kind === 'additive' || semantics.kind === 'snapshot' || semantics.kind === 'distinct_count' ? [semantics.measure] : []),
   'won_opportunity_count', 'closed_opportunity_count', 'operating_hours', 'repair_hours', 'completed_repair_count',
-  'collection_amount_days','collection_applied_amount','order_untaxed_value',
+  'collection_amount_days','collection_applied_amount','order_untaxed_value','period_collection_sales',
 ]);
 export const factMeasureIds: readonly FactMeasureId[] = [...factIds];
 export function isMetricId(id: string): id is MetricId { return Object.hasOwn(semanticCatalog, id); }

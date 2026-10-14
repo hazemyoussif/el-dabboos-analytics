@@ -29,7 +29,7 @@ export function registerTemplateRoutes(app: FastifyInstance, services: RouteCont
       const compatibility = templateCompatibility(template,published);
       if (compatibility.status!=='supported') throw new ApiError(409,'TEMPLATE_INCOMPATIBLE',`This template requires analytics capabilities that are not available for this workspace: ${compatibility.missing.join(', ')}.`);
       const draft = instantiateDashboardTemplate(template, profile, services.clock(), context.locale);
-      if(published.mode==='certified' && template.periodStrategy==='latest_complete_month'){
+      if(published.mode==='certified' && (template.periodStrategy==='latest_complete_month'||template.periodStrategy==='latest_available_month'||template.periodStrategy==='published_history')){
         const period=supportedTemplatePeriod(template,published);
         if(!period)throw new ApiError(409,'TEMPLATE_INCOMPATIBLE','No shared complete reporting month is available.');
         draft.filters={dateRange:period};

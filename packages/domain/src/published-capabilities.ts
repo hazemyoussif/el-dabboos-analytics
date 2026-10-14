@@ -50,7 +50,7 @@ function resolvesSelection(release:PublishedAnalyticsRelease,query:AnalyticsQuer
 }
 /** Synthetic composition is explicit; it is never a fallback for a missing certified binding. */
 export function syntheticCapabilities(context: AnalyticsContext): PublishedAnalyticsCapabilities {
-  return { tenantId: context.tenantId,mode: 'synthetic',releases: [{ datasetId: 'synthetic',sourceId: 'synthetic',mappingId: 'synthetic',mappingVersion: '1',certificationReference: 'SYNTHETIC ONLY',capabilities: Object.values(semanticCatalog).map(metric => ({ metric: metric.id,summary: true,dimensions: metric.dimensions,analyses: ['comparison','movingAverage','runningTotal','percentageContribution','ranking','topN'] })) }] };
+  return { tenantId: context.tenantId,mode: 'synthetic',releases: [{ datasetId: 'synthetic',sourceId: 'synthetic',mappingId: 'synthetic',mappingVersion: '1',certificationReference: 'SYNTHETIC ONLY',capabilities: Object.values(semanticCatalog).map(metric => ({ metric: metric.id,summary: true,dimensions: metric.dimensions,analyses: ['comparison','movingAverage','runningTotal','percentageContribution','ranking','topN','pareto'] })) }] };
 }
 
 function aggregationIssues(query: AnalyticsQuery,published: PublishedAnalyticsCapabilities): string[] {

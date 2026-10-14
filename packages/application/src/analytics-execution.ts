@@ -83,5 +83,5 @@ export function analyticsResultDrillRequest(entry:AnalyticsSeriesResult,key:stri
 
 function hasValueTransform(query:AnalyticsQuery) {
  const analysis=query.analysis;
- return !!(analysis?.comparison || analysis?.movingAverage || analysis?.runningTotal || analysis?.percentageContribution);
+ return !!(analysis?.comparison || analysis?.movingAverage || analysis?.runningTotal || analysis?.percentageContribution || analysis?.pareto);
 }

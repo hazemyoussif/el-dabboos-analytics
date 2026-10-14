@@ -50,7 +50,7 @@ function aggregateExpression(semantics: MetricSemantics,parameters: unknown[],ag
   if (semantics.kind==='ratio' || semantics.kind==='duration_derived') return `coalesce(sum(value) FILTER (WHERE measure_id=${bind(parameters,semantics.numerator)}),0)::text AS numerator,coalesce(sum(value) FILTER (WHERE measure_id=${bind(parameters,semantics.denominator)}),0)::text AS denominator`;
   if (semantics.kind==='distinct_count') return `count(DISTINCT nullif(${dimensionSql(semantics.dimension)},'unassigned'))::text AS value`;
   const operation = { sum: 'sum',count: 'count',average: 'avg',min: 'min',max: 'max' }[aggregation];
-  return `coalesce(${snapshot ? 'sum' : operation}(value),${snapshot ? 'NULL' : '0'})::text AS value`;
+  return `coalesce(${snapshot ? snapshotOperation(semantics) : operation}(value),${snapshot ? 'NULL' : '0'})::text AS value`;
 }
 
 /** Aggregate categorical groups in one pass; never rescan the authorized ledger once per customer/rep. */
@@ -124,3 +124,5 @@ function averageValue(row:{numerator:string;denominator:string}) {
  const denominator=numericOutput(row.denominator)!;
  return denominator===0?0:numericOutput(row.numerator)!/denominator;
 }
+
+function snapshotOperation(semantics:MetricSemantics){return semantics.kind==='snapshot'?semantics.aggregation??'sum':'sum';}

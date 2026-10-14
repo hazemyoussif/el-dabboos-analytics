@@ -37,11 +37,11 @@ export function supportedTemplatePeriod(template:DashboardTemplate,published:Pub
   const from=end.toISOString().slice(0,10),to=new Date(Date.UTC(end.getUTCFullYear(),end.getUTCMonth()+1,0)).toISOString().slice(0,10);
   return period.from<=from?[{from,to}]:[];
  });
- const candidates=template.periodStrategy==='latest_complete_month'?completeMonths:[...periods,...periods.flatMap(start=>periods.map(end=>({from:start.from,to:end.to})))];
+ const candidates=template.periodStrategy==='latest_available_month'?periods:template.periodStrategy==='latest_complete_month'?completeMonths:[...periods,...periods.flatMap(start=>periods.map(end=>({from:start.from,to:end.to})))];
  const eligible=candidates.filter(period=>period.from<=period.to && (!template.tags.includes('historical') || period.from.slice(0,7)!==period.to.slice(0,7)) && template.widgets.every(widget=>widget.series.every(item=>
   published.releases.some(release=>release.period && release.period.from<=period.from && release.period.to>=period.to && !publishedQueryIssues({metric:item.metric,...(widget.dimension?{groupBy:widget.dimension}:{}),...(item.analysis?{analysis:item.analysis}:{}),dateRange:period},{...published,releases:[release]}).length)
  )));
- if(template.periodStrategy==='latest_complete_month')eligible.sort((left,right)=>right.to.localeCompare(left.to));
+ if(template.periodStrategy==='latest_complete_month'||template.periodStrategy==='latest_available_month')eligible.sort((left,right)=>right.to.localeCompare(left.to));
  if(template.tags.includes('historical'))eligible.sort((left,right)=>Date.parse(right.to)-Date.parse(right.from)-(Date.parse(left.to)-Date.parse(left.from)));
  return eligible[0];
 }

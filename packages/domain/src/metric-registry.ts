@@ -1,3 +1,4 @@
+import {businessMetricIds} from './business-catalog.ts';
 import type { LocalizedText, MetricId } from './contracts.ts';
 import { semanticCatalog } from './catalog.ts';
 
@@ -6,6 +7,7 @@ export type ProductMetric =
   | { id: MetricId; availability: 'available'; domain: MetricDomain; labels: LocalizedText }
   | { id: string; availability: 'planned'; domain: MetricDomain; labels: LocalizedText; reason: string };
 const domainFor = (id: MetricId): MetricDomain => {
+  const business=businessDomain(id);if(business)return business;
   if (['opportunity_count', 'pipeline_value', 'weighted_pipeline', 'win_rate'].includes(id)) return 'crm';
   if (id.startsWith('aged_') || ['net_aged_receivable','total_overdue_receivable','overdue_receivable_percentage','gross_open_receivable_components','credit_balances'].includes(id)) return 'finance';
   if (['customer_cash_collected','cash_applied_to_invoices','unallocated_customer_receipts','customer_collection_ratio','weighted_collection_days','receivables_due_for_collection'].includes(id)) return 'finance';
@@ -37,3 +39,13 @@ export const productMetricCatalog: readonly ProductMetric[] = [
   planned('maintenance_sla_compliance', 'maintenance', 'Maintenance SLA compliance', 'الالتزام بمستوى خدمة الصيانة', 'Requires approved SLA deadlines.'),
   planned('preventive_corrective_ratio', 'maintenance', 'Preventive/corrective maintenance ratio', 'نسبة الصيانة الوقائية إلى التصحيحية', 'Requires maintenance-type classification.'),
 ];
+
+function businessDomain(id:MetricId):MetricDomain|undefined{
+ if(!businessMetricIds.includes(id as import('./contracts.ts').BusinessMetricId))return undefined;
+ if(['internal_stock_quantity','expired_stock_quantity','near_expiry_stock_quantity','unknown_expiry_stock_quantity','negative_stock_positions','physical_return_quantity','internal_transfer_quantity','delivered_customer_quantity','physical_return_rate_quantity'].includes(id))return 'inventory';
+ if(id==='received_unbilled_quantity')return 'purchasing';
+ if(id.startsWith('supplier_')||['customer_balance_sales_percentage','customer_last_collection_date','receivables_due_next_month'].includes(id))return 'finance';
+ if(id.startsWith('customer_')||id.startsWith('observed_'))return 'customers';
+ if(id.startsWith('positive_')||['review_customer_balance','receivable_unknown_due','book_cash_balance','period_cash_collections','period_collection_percentage'].includes(id))return 'finance';
+ return undefined;
+}

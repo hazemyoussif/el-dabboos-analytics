@@ -50,6 +50,8 @@ export class OdooSnapshotLease {
   private requireAlive(): void {
     if (!this.alive || performance.now()>=this.deadline) throw new Error('Source snapshot lease lost or expired');
   }
+  /** Local deadline/error guard before a read; the result still requires a live-owner probe. */
+  assertActive():void {this.requireAlive();}
   async assertAlive(): Promise<void> {
     this.requireAlive();
     try {

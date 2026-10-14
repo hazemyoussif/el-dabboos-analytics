@@ -15,7 +15,7 @@ export async function queryMetadata(client: PoolClient,query: AnalyticsQuery,con
   const objects = [...new Set(mapping.measures.filter(mapping => requiredMeasures(query.metric).includes(mapping.measureId)).map(mapping => mapping.sourceObject))];
   const freshness = (await client.query(`SELECT min(latest) AS date, count(*) FILTER (WHERE latest IS NOT NULL)::int AS count FROM unnest($3::text[]) o(object) LEFT JOIN LATERAL (SELECT max(source_as_of) latest FROM mart.ingestion_batches WHERE tenant_id=$1 AND ${datasetPredicate} AND status='committed' AND pagination_complete AND o.object=ANY(source_objects)) freshness_values ON true`, [context.tenantId,dataset,objects])).rows[0];
   const output=await outputCertificationReference(client,{query,context,mapping});
-  const percentage = !!query.analysis?.percentageContribution;
+  const percentage = !!(query.analysis?.percentageContribution || query.analysis?.pareto);
 
   return { ...(options.snapshotAsOf?{snapshotAsOf:options.snapshotAsOf}:{}),...(mapping.approval.status==='approved' ? { release: { datasetId: mapping.datasetId,sourceId: mapping.sourceId,mappingId: mapping.mappingId,mappingVersion: mapping.mappingVersion,certificationReference: mapping.approval.reference,...(output ? { outputCertificationReference: output } : {}) } } : {}),sourceId: 'postgres',executedAt: (options.clock?.() ?? new Date()).toISOString(),...(coverage ? { dataThrough: coverage } : {}),...(freshness?.date && freshness.count === objects.length ? { sourceAsOf: freshness.date.toISOString() } : {}),metricType: percentage ? 'percentage' : metric.type,...(percentage ? { unit: '%' } : metric.presentation.unit ? { unit: metric.presentation.unit } : {}),semantics: semantics.kind };
 }

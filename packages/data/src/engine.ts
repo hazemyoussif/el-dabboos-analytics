@@ -1,4 +1,4 @@
-import { requiredMeasures, semanticCatalog, timeDimensions, validateQuery } from '@el-dabboos/domain';
+import { compatibleQuantityMetrics, requiredMeasures, semanticCatalog, timeDimensions, validateQuery } from '@el-dabboos/domain';
 import type { AdditiveAggregation, AnalyticsContext, AnalyticsQuery, AnalyticsResult, AnalyticsRow, DateRange, DimensionId, FactMeasureId, MetricId } from '@el-dabboos/domain';
 import { periodKeys, periodRange, previousTimeKey, shiftRange, timeKey } from './calendar.ts';
 import type { AnalyticsFact } from './facts.ts';
@@ -52,7 +52,7 @@ function evaluate(facts: readonly AnalyticsFact[], metricId: MetricId, query: An
   if (semantics.kind === 'snapshot') {
     const snapshots = latestSnapshots(facts, semantics.measure, range?.to).filter(f => filtered(f, query, context) &&
       (key === null || !groupBy || isTime(groupBy) || dimension(f, groupBy) === key));
-    return snapshots.length ? snapshots.reduce((sum, f) => sum + f.value, 0) : null;
+    return snapshots.length ? aggregate(snapshots.map(fact=>fact.value),semantics.aggregation??'sum') : null;
   }
   throw new Error('Comparison-derived metrics require comparison evaluation');
 }
@@ -78,7 +78,7 @@ function categoricalEvaluation(facts:readonly AnalyticsFact[],query:AnalyticsQue
  return (metricId:MetricId,range:DateRange|undefined,key:string|null):number|null=>{
   const semantics=semanticCatalog[metricId].semantics;
   if(key===null)return evaluate(facts,metricId,query,range,key,context);
-  if(semantics.kind==='snapshot')return totals(semantics.measure,range,'snapshot').get(key)??null;
+  if(semantics.kind==='snapshot')return categoricalSnapshotValue({semantics,facts,metricId,query,range,key,context,totals});
   if(semantics.kind==='additive'&&(metricId!==query.metric||defaultSum))return totals(semantics.measure,range,'event').get(key)??0;
   if(semantics.kind==='ratio'||semantics.kind==='duration_derived'){
    const basis=semantics.kind==='ratio'&&semantics.basis==='snapshot'?'snapshot':'event';
@@ -140,6 +140,7 @@ export function executeFacts(facts: readonly AnalyticsFact[], query: AnalyticsQu
   const metric = semanticCatalog[query.metric];
   const measures = new Set(requiredMeasures(query.metric));
   const scoped = facts.filter(f => f.tenantId === context.tenantId && measures.has(f.measureId));
+  validateQuantityUnits(scoped,query,context);
   const dataThrough = scoped.filter(f => (context.enforcedFilters ?? []).every(filter => filter.values.includes(dimension(f, filter.dimension) ?? ''))).reduce<string | undefined>((latest, fact) => !latest || fact.date > latest ? fact.date : latest, undefined);
   const comparison = query.analysis?.comparison ?? (metric.semantics.kind === 'comparison_derived' ? metric.semantics.defaultComparison : undefined);
   const valueAt=categoricalEvaluation(scoped,query,context);
@@ -177,6 +178,7 @@ export function executeFacts(facts: readonly AnalyticsFact[], query: AnalyticsQu
     const total = rows.reduce((sum, row) => sum + (row.value ?? 0), 0);
     rows = rows.map(row => ({ key: row.key, value: total === 0 ? null : (row.value ?? 0) / total * 100 }));
   }
+  rows=applyPareto(rows,query);
   if (query.analysis?.ranking) {
     const ranked = [...rows].sort((a, b) => numericOrder(a, b, 'top'));
     const ranks = new Map(ranked.map((row, index) => [row.key, index + 1]));
@@ -185,7 +187,7 @@ export function executeFacts(facts: readonly AnalyticsFact[], query: AnalyticsQu
   if (query.analysis?.topN) {
     rows = [...rows].sort((a, b) => numericOrder(a, b, query.analysis!.topN!.direction)).slice(0, query.analysis.topN.limit);
   }
-  const percentage = !!query.analysis?.percentageContribution;
+  const percentage = percentageAnalysis(query.analysis);
   return { metric: query.metric, groupBy: query.groupBy ?? null, rows,
     metadata: { sourceId: execution.sourceId, executedAt: execution.executedAt,
       ...(dataThrough ? { dataThrough } : {}),
@@ -193,4 +195,34 @@ export function executeFacts(facts: readonly AnalyticsFact[], query: AnalyticsQu
       metricType: percentage ? 'percentage' : metric.type,
       ...(percentage ? { unit: '%' } : metric.presentation.unit ? { unit: metric.presentation.unit } : {}),
       semantics: metric.semantics.kind } };
+}
+
+/** Positive net contributions only; nonpositive customers have no positive-sales Pareto share. */
+function paretoRows(rows:AnalyticsRow[]):AnalyticsRow[]{
+ const ranked=rows.filter(row=>row.value!==null&&row.value>0).sort((left,right)=>numericOrder(left,right,'top'));
+ const total=ranked.reduce((sum,row)=>sum+row.value!,0);let cumulative=0;
+ return ranked.map((row,index)=>{cumulative+=row.value!;return {key:row.key,value:cumulative/total*100,rank:index+1};});
+}
+
+function maximumSnapshot(semantics:import('@el-dabboos/domain').MetricSemantics){return semantics.kind==='snapshot'&&semantics.aggregation==='max';}
+function percentageAnalysis(analysis:AnalyticsQuery['analysis']){return !!(analysis?.percentageContribution||analysis?.pareto);}
+
+function applyPareto(rows:AnalyticsRow[],query:AnalyticsQuery){return query.analysis?.pareto?paretoRows(rows):rows;}
+function categoricalSnapshotValue(scope:{semantics:Extract<import('@el-dabboos/domain').MetricSemantics,{kind:'snapshot'}>;facts:readonly AnalyticsFact[];metricId:MetricId;query:AnalyticsQuery;range:DateRange|undefined;key:string;context:AnalyticsContext;totals:(measure:FactMeasureId,range:DateRange|undefined,basis:'snapshot'|'event')=>Map<string,number>}){
+ return maximumSnapshot(scope.semantics)?evaluate(scope.facts,scope.metricId,scope.query,scope.range,scope.key,scope.context):scope.totals(scope.semantics.measure,scope.range,'snapshot').get(scope.key)??null;
+}
+
+/** A product's base UOM can change between extractions; never silently add those quantities. */
+function validateQuantityUnits(facts:readonly AnalyticsFact[],query:AnalyticsQuery,context:AnalyticsContext){
+ if(!compatibleQuantityMetrics.includes(query.metric as import('@el-dabboos/domain').BusinessMetricId)||query.groupBy==='uom')return;
+ const semantics=semanticCatalog[query.metric].semantics;
+ const selected=semantics.kind==='snapshot'?latestSnapshots(facts,semantics.measure,query.dateRange?.to):facts.filter(fact=>inRange(fact,query.dateRange));
+ const units=new Map<string,Set<string>>();
+ for(const fact of selected){
+  if(!filtered(fact,query,context))continue;
+  const key=query.groupBy?dimension(fact,query.groupBy)??'unassigned':'summary',unit=fact.dimensions.uom;
+  if(!unit||unit==='unassigned')throw new Error('Compatible base UOM required');
+  const group=units.get(key)??new Set<string>();group.add(unit);units.set(key,group);
+  if(group.size>1)throw new Error('Product quantities span different base UOMs');
+ }
 }

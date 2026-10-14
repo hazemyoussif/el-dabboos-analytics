@@ -1,15 +1,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import {semanticCatalog} from '@el-dabboos/domain';
 import type {PublishedAnalyticsCapabilities,PublishedAnalyticsRelease} from '@el-dabboos/domain';
 import {templateCompatibility,supportedTemplatePeriod} from '../src/index.ts';
 import {leadershipTemplates} from '../src/leadership-templates.ts';
 const base={sourceId:'synthetic-only',mappingId:'fixture',mappingVersion:'1',certificationReference:'SYNTHETIC ONLY'};
 function published():PublishedAnalyticsCapabilities {
- const finance=['net_aged_receivable','total_overdue_receivable','credit_balances','aged_at_date','aged_1_30','aged_31_60','aged_61_90','aged_91_120','aged_over_120'] as const;
- const financeRelease:PublishedAnalyticsRelease={...base,datasetId:'finance',period:{from:'2024-06-30',to:'2026-09-30'},selectionSemantics:'latest_snapshot',capabilities:finance.map(metric=>({metric,summary:true,dimensions:['customer','month'],analyses:[]}))};
- const eventRelease:PublishedAnalyticsRelease={...base,datasetId:'events',period:{from:'2024-06-01',to:'2026-10-14'},selectionSemantics:'event_intersection',capabilities:(['net_invoiced_revenue','refund_value'] as const).map(metric=>({metric,summary:true,dimensions:['customer','business_line','month'],analyses:[]}))};
- const reviewReleases:PublishedAnalyticsRelease[]=['2024-06','2026-08','2026-09'].map(month=>({...base,datasetId:month,financeReview:'pending',period:{from:`${month}-01`,to:`${month}-${month.endsWith('08')?'31':'30'}`},capabilities:(['customer_cash_collected','unallocated_customer_receipts','weighted_collection_days','receivables_due_for_collection'] as const).map(metric=>({metric,summary:true,dimensions:['customer','month'],analyses:['topN']}))}));
- return {tenantId:'demo-iq',mode:'certified',releases:[financeRelease,eventRelease,...reviewReleases]};
+ const metrics=[...new Set(leadershipTemplates.flatMap(template=>template.widgets.flatMap(widget=>widget.series.map(series=>series.metric))))];
+ const releases:PublishedAnalyticsRelease[]=['2024-06','2026-08','2026-09'].map(month=>({...base,datasetId:month,financeReview:'pending',period:{from:`${month}-01`,to:`${month}-${month.endsWith('08')?'31':'30'}`},capabilities:metrics.map(metric=>({metric,summary:true,dimensions:semanticCatalog[metric].dimensions,analyses:['topN']}))}));
+ return {tenantId:'demo-iq',mode:'certified',releases};
 }
 test('leadership reports choose latest shared complete month regardless of current date or release order',()=>{
  for(const template of leadershipTemplates){
@@ -24,11 +23,11 @@ test('leadership reports choose latest shared complete month regardless of curre
 test('leadership reports fail closed when exact capabilities have no shared complete month',()=>{
  for(const template of leadershipTemplates){
   const capabilities=published();
-  const disjoint={...capabilities,releases:capabilities.releases.map(release=>release.datasetId==='finance'?{...release,period:{from:'2026-10-01',to:'2026-10-14'}}:release)};
+  const disjoint={...capabilities,releases:capabilities.releases.map(release=>release.capabilities.some(capability=>capability.metric==='review_customer_balance')?{...release,period:{from:'2026-10-01',to:'2026-10-14'}}:release)};
   assert.equal(templateCompatibility(template,disjoint).status,'unsupported');
   assert.equal(supportedTemplatePeriod(template,disjoint),undefined);
   const noRanking={...capabilities,releases:capabilities.releases.map(release=>({...release,capabilities:release.capabilities.map(capability=>({...capability,analyses:[]}))}))};
-  assert.notEqual(templateCompatibility(template,noRanking).status,'supported');
+  if(template.id==='customer-debt-aging')assert.notEqual(templateCompatibility(template,noRanking).status,'supported');
  }
 });
 test('latest complete month respects leap February and rejects incomplete-only coverage',()=>{

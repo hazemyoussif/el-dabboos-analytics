@@ -1,3 +1,4 @@
+import {seriesDisplayLabel} from '../rendering/shared.ts';
 import type { DashboardExecutionResult, WidgetExecution } from '@el-dabboos/application';
 import type { DashboardSpec, DashboardWidget, Locale, SemanticMetric, TenantProfile } from '@el-dabboos/domain';
 import type { SheetData } from 'write-excel-file/universal';
@@ -37,10 +38,10 @@ function seriesColumns(widget: DashboardWidget, entry: WidgetExecution | undefin
   const text = exportCopy[context.locale];
   return widget.series.flatMap(series => {
     const metric = context.catalog[series.metric];
-    const label = metric?.labels[context.locale] ?? series.metric;
+    const label = seriesDisplayLabel(series,context.catalog,context.locale);
     const result = entry?.seriesResults[series.id];
     const metricType = result?.status === 'success' ? result.result.metadata.metricType : series.analysis?.percentageContribution ? 'percentage' : metric?.type;
-    const unit = metricType === 'currency' ? context.profile.reportingCurrency : metricType === 'percentage' ? '%' : metric?.presentation.unit;
+    const unit = metricType === 'currency' ? context.profile.reportingCurrency : metricType === 'percentage' ? '%' : metricType==='date'?undefined:metric?.presentation.unit;
     const fields = [{ key: 'value' as const, label: unit ? `${label} (${unit})` : label }];
     const extras = [{ key: 'comparisonValue' as const, label: text.comparison }, { key: 'absoluteChange' as const, label: copy[context.locale].change }, { key: 'percentageChange' as const, label: text.percentChange }, { key: 'rank' as const, label: copy[context.locale].rank }];
     return [...fields, ...extras.filter(field => entry?.alignedRows.some(row => row.series[series.id]?.[field.key] !== undefined))].map(field => ({ seriesId: series.id, ...field, label: field.key === 'value' ? field.label : `${label} · ${field.label}` }));
@@ -60,7 +61,7 @@ export function widgetExportData(widget: DashboardWidget, entry: WidgetExecution
     [widgetExportTitle(widget, context)], ...contextRows(context),
     [text.status, text[entry?.status ?? 'error']], ...evidence, [],
     [widget.dimension ? copy[context.locale].dimensions[widget.dimension] : copy[context.locale].results, ...columns.map(column => column.label)],
-    ...(entry?.alignedRows ?? []).map(row => [exportKey(row.key, widget, entry, context), ...columns.map(column => row.series[column.seriesId]?.[column.key] ?? null)]),
+    ...(entry?.alignedRows ?? []).map(row => [exportKey(row.key, widget, entry, context), ...columns.map(column => exportCell(row.series[column.seriesId]?.[column.key] ?? null,column,widget,context))]),
     ...(!entry?.alignedRows.length ? [[text.empty]] : []),
   ];
 }
@@ -84,4 +85,9 @@ export function dashboardWorkbook(execution: DashboardExecutionResult, dashboard
     sheets: [title.replace(/[\\/:?*[\]']/g, ' ').replace(/\p{Cc}/gu, ' ').slice(0, 31).trim() || 'Dashboard'],
     data: [[[title], ...result.data.flatMap(section => [...section, [], []])]],
   };
+}
+
+function exportCell(value:number|null,column:{seriesId:string;key:string},widget:DashboardWidget,context:ExportContext){
+ const metric=widget.series.find(series=>series.id===column.seriesId)?.metric;
+ return value!==null&&column.key==='value'&&metric&&context.catalog[metric]?.type==='date'?new Date(value*86400000).toISOString().slice(0,10):value;
 }

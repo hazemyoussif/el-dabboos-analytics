@@ -39,3 +39,7 @@ No unrelated presentation redesign was made.
 - Existing web bundle-size warning remains. Hosted live report execution, authenticated customer-filter/keyboard/export flows and rendered Finance review status need operator acceptance after rollout; synthetic previews are not that acceptance.
 
 - Final unit/API suite: **886 passed**, zero skips. Frozen install, lint, architecture, quality (zero diagnostics), typecheck, API/web build and diff gates passed. PostgreSQL test cases all completed successfully as recorded above; the command launcher reported termination status 143 after the completed test summary, so CI must confirm the final release job exit before merge.
+
+## Expanded authorized purpose delivery
+
+The initial two-report slice is superseded in PR 32 by the [source-backed business purpose wave](business-purpose-dashboard-wave.md), following the fresh Company-1 read-only audit. The original signed aging and operational invoice definitions remain unchanged. Expanded reports use new, matching-source operands and a separate immutable business family, with Finance review pending. Earlier validation in this document applies only to the initial slice; final evidence belongs to the expanded delivery document.

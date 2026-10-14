@@ -41,6 +41,6 @@ export function odooSourceConfig(environment: Readonly<Record<string,string|unde
   const staging = stagingPolicy(environment,scope,companyIds);
   validateSourceHost(host,environment,staging);
   return { ...scope,companyIds,credentialPolicy: staging ? 'staging_read_only' : 'least_privilege',batchSize: integer(environment,'ODOO_SOURCE_BATCH_SIZE',500,1000),statementTimeoutMs: integer(environment,'ODOO_SOURCE_STATEMENT_TIMEOUT_MS',15000,120000),snapshotMaxDurationMs: integer(environment,'ODOO_SOURCE_SNAPSHOT_MAX_DURATION_MS',120000,600000),
-    connection: { options:'-c default_transaction_read_only=on',host,port: integer(environment,'ODOO_SOURCE_PORT',5432,65535),database: required(environment,'ODOO_SOURCE_DATABASE'),user: required(environment,'ODOO_SOURCE_USER'),password: required(environment,'ODOO_SOURCE_PASSWORD'),
+    connection: { query_timeout:integer(environment,'ODOO_SOURCE_STATEMENT_TIMEOUT_MS',15000,120000)+5000,options:'-c default_transaction_read_only=on',host,port: integer(environment,'ODOO_SOURCE_PORT',5432,65535),database: required(environment,'ODOO_SOURCE_DATABASE'),user: required(environment,'ODOO_SOURCE_USER'),password: required(environment,'ODOO_SOURCE_PASSWORD'),
       max: 1,connectionTimeoutMillis: integer(environment,'ODOO_SOURCE_CONNECT_TIMEOUT_MS',5000,30000),idleTimeoutMillis: 30000 } };
 }

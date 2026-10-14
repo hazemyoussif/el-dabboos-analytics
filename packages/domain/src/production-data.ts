@@ -79,7 +79,7 @@ export interface ProductionFact {
   currency?: CurrencyLineage;
   transaction?: TransactionEvidence;
   /** Display evidence only; stable dimensions remain the identity and authorization boundary. */
-  displayLabels?: Partial<Record<'customer' | 'salesperson' | 'businessLine' | 'product' | 'product_category', string>>;
+  displayLabels?: Partial<Record<'customer' | 'salesperson' | 'businessLine' | 'product' | 'product_category' | 'brand' | 'customer_segment' | 'customer_class' | 'uom' | 'journal' | 'supplier' | 'warehouse' | 'state', string>>;
 }
 export interface IngestionBatch extends SourceScope {
   batchId: string; datasetId: string; mappingId: string; mappingVersion: string; adapterVersion: string;
@@ -136,7 +136,7 @@ export function validateSourceMapping(value: unknown): asserts value is SourceMa
   if (!object(a)) fail('approval');
   if (a.status === 'pending') shape(a, ['status']);
   else { shape(a, ['status','reference','approvedAt']); if (a.status !== 'approved' || !text(a.reference) || !timestamp(a.approvedAt)) fail('approval'); }
-  if (!Array.isArray(value.measures) || !value.measures.length || value.measures.length > 64) fail('mapping_measures');
+  if (!Array.isArray(value.measures) || !value.measures.length || value.measures.length > 128) fail('mapping_measures');
   const seen = new Set<string>();
   for (const m of value.measures) {
     shape(m, ['measureId','sourceObject','grain','eligibleStates','recognitionRule','timeZone','amountBasis','taxTreatment','signConvention','identityRule','correctionRule','currencyPolicy','dimensionMappings']);
@@ -146,7 +146,7 @@ export function validateSourceMapping(value: unknown): asserts value is SourceMa
     if (!Array.isArray(m.eligibleStates) || m.eligibleStates.length > 32 || !m.eligibleStates.every(text)) fail('mapping_states');
     if (!object(m.dimensionMappings) || Object.entries(m.dimensionMappings).some(([d, rule]) => !measureDimensions(m.measureId as FactMeasureId).includes(d as DimensionId) || !text(rule))) fail('capability');
   }
-  if (!Array.isArray(value.capabilities) || !value.capabilities.length || value.capabilities.length > 64) fail('capability');
+  if (!Array.isArray(value.capabilities) || !value.capabilities.length || value.capabilities.length > 128) fail('capability');
   const metrics = new Set<string>();
   for (const c of value.capabilities) {
     shape(c, ['metric','dimensions']);
@@ -272,5 +272,5 @@ export function validateFactBatch(value: unknown, facts: readonly ProductionFact
 
 function validateDisplayLabels(labels: unknown): void {
   if (labels === undefined) return;
-  if (!object(labels) || Object.entries(labels).some(([key,value]) => !['customer','salesperson','businessLine','product','product_category'].includes(key) || typeof value !== 'string' || !value.trim() || value.length > 500)) fail('display_labels');
+  if (!object(labels) || Object.entries(labels).some(([key,value]) => !['customer','salesperson','businessLine','product','product_category','brand','customer_segment','customer_class','uom','journal','supplier','warehouse','state'].includes(key) || typeof value !== 'string' || !value.trim() || value.length > 500)) fail('display_labels');
 }

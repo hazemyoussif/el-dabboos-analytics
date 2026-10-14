@@ -25,7 +25,7 @@ test('published management default executes exact metrics while customer and Fin
 test('the twelve local dashboard templates are available and open through HTTP with staging per-metric releases in EN/AR',async()=>{
  const {dashboardTemplates}=await import('@el-dabboos/application');
  const {requiredMeasures,semanticCatalog}=await import('@el-dabboos/domain');
- const templates=dashboardTemplates.filter(template=>template.periodStrategy==='certified');
+ const templates=dashboardTemplates.filter(template=>template.periodStrategy==='certified'&&!template.tags.includes('source-business'));
  assert.equal(templates.length,12);
  const metrics=[...new Set(templates.flatMap(template=>template.widgets.flatMap(widget=>widget.series.map(series=>series.metric))))];
  const measures=[...new Set(metrics.flatMap(metric=>requiredMeasures(metric)))];

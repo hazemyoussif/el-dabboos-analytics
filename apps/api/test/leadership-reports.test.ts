@@ -2,27 +2,23 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {DatabaseSync} from 'node:sqlite';
 import type {AnalyticsFact} from '@el-dabboos/data';
-import type {MetricId,PublishedAnalyticsCapabilities} from '@el-dabboos/domain';
+import type {PublishedAnalyticsCapabilities} from '@el-dabboos/domain';
 import {MockAnalyticsRepository,SqliteDashboardRepository,createDashboardPersistenceSchema} from '@el-dabboos/data';
+import {requiredMeasures,semanticCatalog} from '@el-dabboos/domain';
+import {leadershipTemplates} from '../../../packages/application/src/leadership-templates.ts';
 import {buildApi} from '../src/app.ts';
-const finance=['net_aged_receivable','total_overdue_receivable','credit_balances','aged_at_date','aged_1_30','aged_31_60','aged_61_90','aged_91_120','aged_over_120'] as const;
-const cash=['customer_cash_collected','cash_applied_to_invoices','unallocated_customer_receipts','collection_amount_days','collection_applied_amount','receivables_due_for_collection'] as const;
-const reviewMetrics:MetricId[]=['customer_cash_collected','weighted_collection_days','receivables_due_for_collection','unallocated_customer_receipts'];
 const period={from:'2026-09-01',to:'2026-09-30'};
 const base={sourceId:'synthetic-only',mappingId:'fixture',mappingVersion:'1',certificationReference:'SYNTHETIC ONLY'};
+const metrics=[...new Set(leadershipTemplates.flatMap(template=>template.widgets.flatMap(widget=>widget.series.map(series=>series.metric))))];
 function capabilities(tenantId:string):PublishedAnalyticsCapabilities {
- return {tenantId,mode:'certified',releases:[
-  {...base,datasetId:'finance',selectionSemantics:'latest_snapshot',period:{from:'2024-06-30',to:'2026-09-30'},capabilities:finance.map(metric=>({metric,summary:true,dimensions:['customer','month'],analyses:[]}))},
-  {...base,datasetId:'sales',selectionSemantics:'event_intersection',period:{from:'2024-06-01',to:'2026-10-14'},capabilities:(['net_invoiced_revenue','refund_value'] as const).map(metric=>({metric,summary:true,dimensions:['business_line','customer','month'],analyses:[]}))},
-  {...base,datasetId:'review',financeReview:'pending',period,capabilities:reviewMetrics.map(metric=>({metric,summary:true,dimensions:['customer','month'],analyses:['topN']}))},
- ]};
+ return {tenantId,mode:'certified',releases:[{...base,datasetId:'business',financeReview:'pending',period,capabilities:metrics.map(metric=>({metric,summary:true,dimensions:semanticCatalog[metric].dimensions,analyses:['topN']}))}]};
 }
 function facts(tenantId:string):AnalyticsFact[] {
- return [
-  ...finance.flatMap(measureId=>['2026-08-31','2026-09-30'].map(date=>({tenantId,measureId,date,value:date.endsWith('08-31')?999:30,entityId:`customer:${measureId}`,dimensions:{customer:'fixture-customer'}}))),
-  ...cash.map(measureId=>({tenantId,measureId,date:measureId==='receivables_due_for_collection'?'2026-09-30':'2026-09-15',value:measureId==='collection_amount_days'?300:30,...(measureId==='receivables_due_for_collection'?{entityId:'due-customer'}:{}),dimensions:{customer:'fixture-customer'}})),
-  ...(['net_invoiced_revenue','refund_value'] as const).map(measureId=>({tenantId,measureId,date:'2026-09-15',value:30,dimensions:{customer:'fixture-customer',business_line:'fixture-line'}})),
- ];
+ const measures=[...new Set(metrics.flatMap(requiredMeasures))];
+ return measures.flatMap(measureId=>{
+  const snapshot=Object.values(semanticCatalog).some(metric=>metric.semantics.kind==='snapshot'&&metric.semantics.measure===measureId);
+  return (snapshot?['2026-08-31','2026-09-30']:['2026-09-15']).map(date=>({tenantId,measureId,date,value:date.endsWith('08-31')?999:30,...(snapshot?{entityId:`customer:${measureId}`} :{}),dimensions:{customer:'fixture-customer',customer_segment:'fixture-segment',brand:'fixture-brand'}}));
+ });
 }
 test('leadership HTTP reports open the published month after calendar rollover, preserve snapshots and remain unsaved in EN/AR',async()=>{
  const db=new DatabaseSync(':memory:');createDashboardPersistenceSchema(db);
@@ -38,9 +34,9 @@ test('leadership HTTP reports open the published month after calendar rollover, 
    const filtered=await app.inject({method:'POST',url:'/api/dashboards/execute',headers,payload:{dashboard:output.dashboard,overrides:{dimensions:[{dimension:'customer',values:['absent-synthetic-customer']}]}}});
    assert.equal(filtered.statusCode,200,filtered.body);assert.equal(filtered.json().metadata.failedSeries,0);
    const reset=await app.inject({method:'POST',url:'/api/dashboards/execute',headers,payload:{dashboard:output.dashboard}});
-   assert.equal(reset.statusCode,200,reset.body);assert.equal(reset.json().widgetResults.customer_cash_collected.seriesResults.customer_cash_collected.result.rows[0].value,30);
-   assert.equal(output.execution.widgetResults.net_aged_receivable.seriesResults.net_aged_receivable.result.rows[0].value,30,'latest snapshot, not August plus September');
-   assert.equal(output.execution.widgetResults.customer_cash_collected.seriesResults.customer_cash_collected.result.rows[0].value,30,'tenant-isolated cash');
+   assert.equal(reset.statusCode,200,reset.body);assert.equal(reset.json().widgetResults.period_cash_collections.seriesResults.period_cash_collections.result.rows[0].value,30);
+   assert.equal(output.execution.widgetResults.review_customer_balance.seriesResults.review_customer_balance.result.rows[0].value,30,'latest snapshot, not August plus September');
+   assert.equal(output.execution.widgetResults.period_cash_collections.seriesResults.period_cash_collections.result.rows[0].value,30,'tenant-isolated cash');
   }
   const saved=await app.inject({url:'/api/saved-dashboards',headers:{'x-demo-user-id':'demo-iq-admin','x-tenant-id':'demo-iq'}});
   assert.equal(saved.statusCode,200);assert.ok(!saved.body.includes('customer-debt-aging'));assert.ok(!saved.body.includes('executive-monthly-overview'));

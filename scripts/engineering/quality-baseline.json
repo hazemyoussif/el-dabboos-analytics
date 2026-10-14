@@ -548,12 +548,6 @@
       "ceiling": 1
     },
     {
-      "file": "packages/application/src/visualization-intent.ts",
-      "symbol": "resolveGenerationWidget",
-      "metric": "complexity",
-      "ceiling": 16
-    },
-    {
       "file": "packages/data/src/calendar.ts",
       "symbol": "addDays/binding:d",
       "metric": "shortNames",
@@ -622,12 +616,6 @@
     {
       "file": "packages/data/src/engine.ts",
       "symbol": "evaluate/latestSnapshots(facts, semantics.measure, range?.to).filter:callback0/binding:f",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/data/src/engine.ts",
-      "symbol": "evaluate/snapshots.reduce:callback0/binding:f",
       "metric": "shortNames",
       "ceiling": 1
     },
@@ -818,12 +806,6 @@
       "ceiling": 1
     },
     {
-      "file": "packages/data/src/postgres/records.ts",
-      "symbol": "factColumns/categoricalDimensions.map:callback0/binding:d",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
       "file": "packages/data/src/postgres/repository.ts",
       "symbol": "PostgresAnalyticsRepository/release/binding:m",
       "metric": "shortNames",
@@ -922,12 +904,6 @@
     {
       "file": "packages/data/src/sqlite.ts",
       "symbol": "Object.values(semanticCatalog).flatMap:callback0/binding:m",
-      "metric": "shortNames",
-      "ceiling": 1
-    },
-    {
-      "file": "packages/domain/src/catalog.ts",
-      "symbol": "Object.values(semantics).flatMap:callback0/binding:s",
       "metric": "shortNames",
       "ceiling": 1
     },

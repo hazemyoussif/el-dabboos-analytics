@@ -62,3 +62,6 @@ export {exposeReviewMonth} from './review/exposure.ts';
 export {reviewMapping} from './review/definitions.ts';
 export {OdooReviewReader} from './review/source.ts';
 export {OdooSnapshotLease} from './odoo/snapshot.ts';
+
+export {businessMapping} from './business/definitions.ts';
+export {OdooBusinessReader} from './business/source.ts';

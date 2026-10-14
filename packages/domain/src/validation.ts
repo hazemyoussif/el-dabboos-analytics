@@ -1,3 +1,4 @@
+import {compatibleQuantityMetrics} from './business-catalog.ts';
 import type { AnalyticsContext, AnalyticsQuery, DashboardPatch, DashboardSpec, DashboardWidget, DateRange, RelativeDatePreset, DimensionId, MetricId } from './contracts.ts';
 import { visualizationIssues } from './visualization.ts';
 import { widgetTypes } from './contracts.ts';
@@ -43,7 +44,7 @@ export function validateAnalysis(analysis: unknown, metricId: MetricId, groupBy?
     if (semantics.kind === 'comparison_derived' && !dateRange) throw new Error('Comparison-derived metric requires a date range');
     return;
   }
-  if (!record(analysis) || !exactKeys(analysis, ['comparison', 'movingAverage', 'runningTotal', 'percentageContribution', 'ranking', 'topN'])) throw new Error('Invalid analysis');
+  if (!record(analysis) || !exactKeys(analysis, ['comparison', 'movingAverage', 'runningTotal', 'percentageContribution', 'ranking', 'topN', 'pareto'])) throw new Error('Invalid analysis');
   if (analysis.comparison !== undefined && (!comparisons.includes(String(analysis.comparison)) || !dateRange)) throw new Error('Comparison requires a date range');
   if (semantics.kind === 'comparison_derived' && !dateRange) throw new Error('Comparison-derived metric requires a date range');
   if (analysis.comparison === 'month_over_month' && (groupBy === 'quarter' || groupBy === 'year')) throw new Error('Month-over-month requires date or month grouping');
@@ -54,6 +55,7 @@ export function validateAnalysis(analysis: unknown, metricId: MetricId, groupBy?
   }
   if (analysis.runningTotal !== undefined && (analysis.runningTotal !== true || !groupBy || !timeDimensions.includes(groupBy) || semantics.kind !== 'additive')) throw new Error('Running total requires an additive metric and ordered time dimension');
   if (analysis.percentageContribution !== undefined && (analysis.percentageContribution !== true || !groupBy || semantics.kind !== 'additive')) throw new Error('Percentage contribution requires grouped additive metric');
+  validatePareto(analysis,semantics,groupBy);
   if (analysis.ranking !== undefined && (analysis.ranking !== true || !groupBy)) throw new Error('Ranking requires grouping');
   if (analysis.topN !== undefined && (!record(analysis.topN) || !exactKeys(analysis.topN, ['direction', 'limit'], ['direction', 'limit']) ||
     !['top', 'bottom'].includes(String(analysis.topN.direction)) || !Number.isInteger(analysis.topN.limit) ||
@@ -81,6 +83,7 @@ export function validWidget(v: unknown, dateRange?: DateRange | RelativeDatePres
       if (!record(series) || typeof series.id !== 'string' || !/^[a-z0-9][a-z0-9_-]*$/.test(series.id) || series.id.length > 80) return false;
       if (index > 0 && record(series.analysis) && series.analysis.topN !== undefined) return false;
       validateMetricUse(series.metric, v.dimension, series.analysis, dateRange, filters);
+      validateBusinessWidget(series,v,filters);
     }
     if (visualizationIssues(v as unknown as DashboardWidget).length) return false;
     return true;
@@ -100,10 +103,25 @@ export function validateQuery(query: AnalyticsQuery, context: AnalyticsContext):
   if (!context?.tenantId?.trim() || !['en', 'ar'].includes(context.locale)) throw new Error('Tenant context and locale are required');
   if (!record(query) || !exactKeys(query, ['metric', 'aggregation', 'groupBy', 'dateRange', 'filters', 'analysis'], ['metric'])) throw new Error('Invalid analytics query');
   if (query.dateRange !== undefined && !validDateRange(query.dateRange)) throw new Error('Invalid date range');
+  validateBusinessQuery(query,context);
   validateMetricUse(query.metric, query.groupBy, query.analysis, query.dateRange, query.filters);
   if (query.aggregation !== undefined && (!['sum', 'count', 'average', 'min', 'max'].includes(query.aggregation) || semanticCatalog[query.metric].semantics.kind !== 'additive')) throw new Error('Aggregation override requires an additive metric');
 }
 
 export function validateDashboardPatch(v: unknown): asserts v is DashboardPatch {
   if (!checkPatchSchema(v)) throw new Error('Invalid DashboardPatch v2');
+}
+
+function validateBusinessQuery(query:AnalyticsQuery,context:AnalyticsContext){
+ if(compatibleQuantityMetrics.includes(query.metric as import('./contracts.ts').BusinessMetricId)&&query.groupBy!=='product'&&query.groupBy!=='uom'&&![...(query.filters??[]),...(context.enforcedFilters??[])].some(filter=>(filter.dimension==='product'||filter.dimension==='uom')&&filter.values.length===1))throw new Error('Quantity requires one product or compatible base UOM');
+ if(compatibleQuantityMetrics.includes(query.metric as import('./contracts.ts').BusinessMetricId)&&query.analysis)throw new Error('Quantity analyses require a defined compatible-unit calculation');
+ if(semanticCatalog[query.metric]?.type==='date'&&(query.analysis||query.aggregation))throw new Error('Calendar dates do not support numeric analysis');
+}
+
+function validatePareto(analysis:Record<string,unknown>,semantics:import('./contracts.ts').MetricSemantics,groupBy:DimensionId|undefined){
+ if(analysis.pareto!==undefined&&(analysis.pareto!==true||!groupBy||timeDimensions.includes(groupBy)||semantics.kind!=='additive'||Object.keys(analysis).some(key=>key!=='pareto')))throw new Error('Pareto requires a categorical additive metric without other analyses');
+}
+
+function validateBusinessWidget(series:Record<string,unknown>,widget:Record<string,unknown>,filters:unknown){
+ validateBusinessQuery({metric:series.metric as MetricId,...(widget.dimension?{groupBy:widget.dimension as DimensionId}:{}),...(series.analysis?{analysis:series.analysis as NonNullable<AnalyticsQuery['analysis']>}:{}),...(filters?{filters:filters as NonNullable<AnalyticsQuery['filters']>}:{} )},{tenantId:'canonical-validation',locale:'en'});
 }
