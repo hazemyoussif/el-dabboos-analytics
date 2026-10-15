@@ -7,6 +7,7 @@ import {groupedValueExpression,groupedUnsafeExpression} from '../postgres/groupe
 import {readGroupedSql} from '../postgres/result-window.ts';
 import {businessDefinitionVersion} from '../business/definitions.ts';
 import {reviewDefinitionVersion} from './definitions.ts';
+import {reviewSnapshotBase} from './snapshot-selection.ts';
 
 export interface ReviewGroupedScope {query:AnalyticsQuery;context:AnalyticsContext;range:DateRange;family:'review'|'business';revision:string;maxGroups:number;read?:AnalyticsReadOptions}
 export async function groupedReviewRows(client:PoolClient,scope:ReviewGroupedScope){
@@ -18,14 +19,14 @@ export async function groupedReviewRows(client:PoolClient,scope:ReviewGroupedSco
  const group=bind(params,query.groupBy),label=bind(params,dimensionLabelField(query.groupBy));
  const unsafe=groupedUnsafeExpression(query,params),value=groupedValueExpression(query,params),quantities=compatibleQuantityMetrics.includes(query.metric as import('@el-dabboos/domain').BusinessMetricId)&&query.groupBy!=='uom';
  const invalid=quantities?`count(DISTINCT base.dimensions->>'uom')<>1 OR bool_or(coalesce(base.dimensions->>'uom','unassigned')='unassigned')`:'false';
- const text=`WITH facts AS (
+ const base=snapshot?reviewSnapshotBase:`WITH facts AS (
  SELECT fact.measure_id,fact.amount value,fact.dimensions,fact.display_labels labels,fact.business_day business_date,fact.entity_id FROM mart.analytics_trusted_serving trusted JOIN mart.analytics_serving_members member USING(tenant_id,revision_id)
  JOIN mart.review_extractions extraction USING(tenant_id,partition_id) JOIN mart.review_facts fact USING(tenant_id,partition_id)
  WHERE trusted.tenant_id=$1 AND member.family=$4 AND extraction.definition_version=$5 AND fact.measure_id=ANY($2::text[])
- AND member.month<=date_trunc('month',$3::date) ${snapshot?'':`AND member.month>=date_trunc('month',${from}::date)`}
- AND fact.business_day<= $3::text ${snapshot?'':`AND fact.business_day>=${from}::text`}
- ),selected AS (${snapshot?`SELECT DISTINCT ON(measure_id,entity_id) * FROM facts ORDER BY measure_id,entity_id,business_date DESC`:'SELECT * FROM facts'}),
- base AS (SELECT * FROM selected)
+ AND member.month<=date_trunc('month',$3::date) AND member.month>=date_trunc('month',${from}::date)
+ AND fact.business_day<= $3::text AND fact.business_day>=${from}::text
+ ),base AS (SELECT * FROM facts)`;
+ const text=`${base}
  SELECT base.dimensions->>${group} key,${value} value,${invalid} invalid,${unsafe} unsafe,
  CASE WHEN count(DISTINCT base.labels->>${label})=1 THEN min(base.labels->>${label}) END label,max(base.business_date)::date through
  FROM base WHERE base.dimensions->>${group} IS NOT NULL ${filters.length?'AND '+filters.join(' AND '):''} GROUP BY 1`;

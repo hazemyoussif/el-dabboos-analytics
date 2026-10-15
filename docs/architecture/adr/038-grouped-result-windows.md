@@ -20,6 +20,18 @@ Continuation contains an output position and an opaque fingerprint bound to the 
 
 Migration 049 adds database-generated typed projections of immutable review-fact payload fields and a matching access index. Values cannot drift from payloads; source identities and publication history are unchanged. Event reads aggregate at the requested time grain before crossing the numeric boundary. Deployment requires an offline analytics migration; PostgreSQL must populate generated columns for existing rows, so migration time and disk use must be allowed for. No source reload or Odoo connection is needed.
 
+Migration 050 adds a narrow, non-unique snapshot identity index. For categorical
+snapshot and snapshot-ratio queries, the shared review/business adapter freezes
+the trusted eligible partition set, selects the latest identity per entity and
+measure from that index, then fetches operands only for those identities. The
+bounded lateral lookup stays in the selected tenant/partition/measure/entity/day.
+Dimension and policy filters remain after latest selection; a moved entity cannot
+reappear under an older assignment. Event reads retain their existing path.
+Ordinary vacuum visibility coverage is required to avoid history heap fetches;
+the initial deployment includes analytics-only `VACUUM (ANALYZE)` outside the
+migration transaction. No persistent rollup, extra approval, or timeout increase
+is introduced.
+
 Readiness distinguishes a confirmed absent baseline from a failed dependency check. Both fail closed; a transient check failure is not evidence that source data should be reloaded. Safe localized messages keep dependency details out of browser errors.
 
 ## Verification and limits

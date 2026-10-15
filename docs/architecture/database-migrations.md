@@ -10,14 +10,14 @@ closed. No accepted SQL or checksum is changed by milestone finalization.
 
 | Store | Current head | Registration / readiness | Explicit execution |
 | --- | --- | --- | --- |
-| PostgreSQL analytics mart | 049 `review_fact_projection` | [Manifest/runner](../../packages/data/src/postgres/migrations.ts), [runtime readiness](../../packages/data/src/postgres/readiness.ts) | `pnpm mart:migrate`; staging uses `pnpm staging migrate` |
+| PostgreSQL analytics mart | 050 `review_snapshot_identity` | [Manifest/runner](../../packages/data/src/postgres/migrations.ts), [runtime readiness](../../packages/data/src/postgres/readiness.ts) | `pnpm mart:migrate`; staging uses `pnpm staging migrate` |
 | PostgreSQL control | 009 `workspace_ai_settings` | [Manifest/runner/readiness](../../packages/data/src/control/migrations.ts) | `pnpm control migrate`; staging uses `pnpm staging migrate` |
 | SQLite governed metadata | 006 `workspace-ai-settings` | [Explicit registry/readiness](../../packages/data/src/metadata/migrations.ts) | `pnpm metadata:migrate <metadata-db-path>` against approved metadata storage |
 
 The mart history includes production roles/forced RLS (001–008), certification,
 published capabilities and exact receivable proofs (009–024), historical and
 operational trusted serving (025–030), Finance snapshot invariants/freeze
-(031–033), event rollups (034), drill lineage/access paths (035–038), historical anchor correction (039), unified serving (040), bounded historical imports (041), independently proven empty Finance snapshots (042), dataset-scoped exact ratio reconstruction (043), post-exposure Finance review (044), grouped exact review controls (045), the separate source-backed business family (046), and indexed immutable review/business membership reuse (047), and the shared review fact access index (048), and generated typed review-fact projections (049).
+(031–033), event rollups (034), drill lineage/access paths (035–038), historical anchor correction (039), unified serving (040), bounded historical imports (041), independently proven empty Finance snapshots (042), dataset-scoped exact ratio reconstruction (043), post-exposure Finance review (044), grouped exact review controls (045), the separate source-backed business family (046), and indexed immutable review/business membership reuse (047), and the shared review fact access index (048), and generated typed review-fact projections (049), and the narrow snapshot identity access index (050).
 Control 007 owns local authentication; 008 owns private analyst conversations and
 atomic question audit. SQLite metadata 005 provides the compatibility analyst
 history path. Demo analytics initialization is separate from governed metadata;
@@ -50,3 +50,11 @@ history or promise automatic destructive down migrations. Source/company mapping
 and serving promotion remain separately governed operations.
 
 Control 009 and SQLite metadata 006 add versioned workspace AI settings with encrypted API-key storage and the immutable `ai.settings_changed` audit action.
+
+Migration 050 is additive: it builds a non-unique index of validated snapshot
+identities without copying labels or source payloads, rewriting the fact heap,
+changing policies, or replacing publications. Allow disk for index construction
+and temporary sort files. After the index migration, ordinary `VACUUM (ANALYZE)
+mart.review_facts` maintenance is required for the initial index-only history
+read acceptance; run it outside a transaction as an authorized analytics database
+owner. This is distinct from source extraction and never targets Odoo.
