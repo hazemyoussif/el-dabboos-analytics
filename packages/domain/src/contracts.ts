@@ -100,7 +100,8 @@ export interface AnalyticsQuery {
 }
 /** Transient output selection. It never changes business filters or analysis populations. */
 export interface AnalyticsReadOptions {
-  window?: { limit: number; cursor?: AnalyticsResultCursor; search?: string; queries?: readonly AnalyticsQuery[] };
+  /** Delivery order is independent of full-population metric analysis. Rank requires Pareto. */
+  window?: { limit: number; cursor?: AnalyticsResultCursor; search?: string; queries?: readonly AnalyticsQuery[]; order?: 'identity' | 'rank' };
   outputKeys?: readonly string[];
   revision?: string;
 }

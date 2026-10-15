@@ -4,6 +4,7 @@ import { TrustedDrillThroughRepository } from '../../src/operational/drill-throu
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
+import type {Pool} from 'pg';
 import type { AnalyticsCursor,AnalyticsPartition,ProductionFact,DimensionId } from '@el-dabboos/domain';
 import { requiredMeasures } from '@el-dabboos/domain';
 import { AnalyticsOperations } from '../../../application/src/analytics-operations.ts';
@@ -658,6 +659,10 @@ test('published operational customer detail pages beyond the configured bound wi
   const dateRange={from:'2026-01-01',to:'2026-01-31'};
   const {DashboardExecutor}=await import('../../../application/src/executor.ts');
   const spec:import('@el-dabboos/domain').DashboardSpec={schemaVersion:2,id:'any-customer-report',locale:'en',title:{en:'Customer detail',ar:'تفاصيل العملاء'},filters:{dateRange},layout:{columns:1},widgets:[{id:'detail',type:'table',dimension:'customer',series:measures.map(metric=>({id:metric,metric}))}]};
+  const labels=observeLabelReads(fixture.db.runtime);
+  const labelled=await repository.execute({metric:'order_revenue',groupBy:'customer',dateRange},context,{window:{limit:3}});
+  assert.deepEqual(labelled.metadata.dimensionLabels,{'customer:000':'Customer 0','customer:001':'Customer 1','customer:002':'Customer 2'});
+  assert.equal(labels.count(),1,'one authorized read must supply both values and labels');
   const first=await new DashboardExecutor(repository).execute(spec,context),detail=first.widgetResults.detail!;
   assert.equal(detail.status,'success');assert.equal(detail.alignedRows.length,100);assert.equal(detail.alignedRows[0]?.key,'customer:000');assert.equal(detail.alignedRows[1]?.series.refund_value,null);
   const second=await new DashboardExecutor(repository).executeWidget(spec,'detail',context,{timeZone:'Asia/Baghdad',windows:{detail:{cursor:detail.window!.nextCursor!}}});
@@ -666,3 +671,16 @@ test('published operational customer detail pages beyond the configured bound wi
   const top=await repository.execute({metric:'order_revenue',groupBy:'customer',dateRange,analysis:{topN:{direction:'top',limit:1}}},context);assert.deepEqual(top.rows,[{key:'customer:127',value:25600}]);
  }finally{await fixture.db.close();}
 });
+
+function observeLabelReads(pool:Pool){
+ const connect=pool.connect.bind(pool),clients=new WeakSet<object>();let count=0;
+ pool.connect=(async()=>{
+  const client=await connect();
+  if(!clients.has(client)){
+   clients.add(client);const query=client.query.bind(client);
+   client.query=(async(sql:string,params?:unknown[])=>{if(sql.includes('array_agg(base.labels'))count++;return query(sql,params);}) as typeof client.query;
+  }
+  return client;
+ }) as typeof pool.connect;
+ return {count:()=>count};
+}

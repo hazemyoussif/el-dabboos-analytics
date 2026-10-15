@@ -55,3 +55,18 @@ test('stable Unicode tie order matches the reference engine and result continuat
   const actual=await readGroupedSql(client,{...query,analysis:{ranking:true,topN:{direction:'top',limit:7}}},context,input,'r1',10);assert.deepEqual(actual.rows,expected.rows);
  }finally{client.release();await db.close();}
 });
+
+
+test('delivery order preserves global Pareto values and binds continuation to identity or rank',{skip:!enabled},async()=>{
+ const db=await database(false),client=await db.runtime.connect();
+ try{
+  const paretoQuery:AnalyticsQuery={...query,analysis:{pareto:true}};
+  const first=await readGroupedSql(client,paretoQuery,context,population,'r1',3,{window:{limit:2,order:'identity'}});
+  assert.deepEqual(first.rows.map(row=>row.key),['00001','00002']);assert.deepEqual(first.rows.map(row=>row.rank),[5001,5000]);
+  assert.equal(first.window?.nextCursor?.position,undefined);assert.equal(first.rows[0]?.value,100);
+  const next=await readGroupedSql(client,paretoQuery,context,population,'r1',3,{window:{limit:2,order:'identity',cursor:first.window!.nextCursor!}});
+  assert.deepEqual(next.rows.map(row=>row.key),['00003','00004']);assert.deepEqual(next.rows.map(row=>row.rank),[4999,4998]);
+  await assert.rejects(readGroupedSql(client,paretoQuery,context,population,'r1',3,{window:{limit:2,order:'rank',cursor:first.window!.nextCursor!}}),AnalyticsResultWindowError);
+  await assert.rejects(readGroupedSql(client,query,context,population,'r1',3,{window:{limit:2,order:'rank'}}),AnalyticsResultWindowError);
+ }finally{client.release();await db.close();}
+});

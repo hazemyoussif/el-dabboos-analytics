@@ -24,7 +24,7 @@ function groupedPlan(request:GroupedRead,scope:string){
  const {query,input,read,maxGroups}=request,params=[...input.params];
  const search=read?.window?.search?.trim(),eligible=search?`WHERE position(lower(${bind(params,search)}) in lower(coalesce(label,'')))>0`:'';
  const selection=selectionSql(request,scope,params),limit=read?.window?.limit??read?.outputKeys?.length??maxGroups;
- const orderedWindow=Boolean(read?.window&&!query.analysis?.pareto);
+ const orderedWindow=Boolean(read?.window&&windowOrder(query,read)==='identity');
  const order=orderedWindow?'key COLLATE "C"':analysisOrder(query);
  return {limit,params,text:`WITH original AS MATERIALIZED (${input.text}),${groupedAnalysisSql(query)},eligible AS (SELECT * FROM analyzed ${eligible}),
  totals AS (SELECT count(*)::text total FROM eligible),provenance AS (SELECT max(through)::text through,bool_or(invalid) invalid,bool_or(unsafe) unsafe FROM original),page AS (
@@ -36,7 +36,7 @@ function selectionSql({read,query}:GroupedRead,scope:string,params:unknown[]){
  const conditions:string[]=[];
  if(read?.window?.cursor){
   const cursor=decodeCursor(read.window.cursor,scope);
-  if(query.analysis?.pareto){if(!Number.isSafeInteger(cursor.position)||cursor.position!<1)throw new AnalyticsResultWindowError();conditions.push(`rank>${bind(params,cursor.position)}::bigint`);}
+  if(windowOrder(query,read)==='rank'){if(!Number.isSafeInteger(cursor.position)||cursor.position!<1)throw new AnalyticsResultWindowError();conditions.push(`rank>${bind(params,cursor.position)}::bigint`);}
   else conditions.push(`key COLLATE "C">${bind(params,cursor.after)}::text COLLATE "C"`);
  }
  if(read?.outputKeys)conditions.push(`key=ANY(${bind(params,read.outputKeys)}::text[])`);
@@ -51,7 +51,7 @@ function projectSelection(all:ResultRow[],present:ResultRow[],request:GroupedRea
  const derived=Boolean(request.query.analysis?.percentageContribution||request.query.analysis?.pareto)||['ratio','duration_derived'].includes(semantics.kind);
  const rows=selected.map(row=>projectRow(row,derived)),labels=Object.fromEntries(selected.filter(row=>row.label).map(row=>[row.key!,row.label!]));
  const last=selected.at(-1);
- const cursor=last?{after:last.key!,scope,...(request.query.analysis?.pareto?{position:Number(last.rank)}:{})}:undefined;
+ const cursor=last?{after:last.key!,scope,...(windowOrder(request.query,request.read)==='rank'?{position:Number(last.rank)}:{})}:undefined;
  const window=request.read?.window?{total:Number(all[0]?.total??0),scope,...(present.length>limit&&cursor?{nextCursor:cursor}:{})}:undefined;
  return {rows,labels,dataThrough:all[0]?.through??null,...(window?{window}:{})};
 }
@@ -69,10 +69,11 @@ export function validateGroupedRead(query:AnalyticsQuery,read?:AnalyticsReadOpti
  if(!query.groupBy||!categoricalDimensions.includes(query.groupBy))throw new Error('Categorical output selection required');
  if(query.analysis?.comparison||query.analysis?.movingAverage||query.analysis?.runningTotal)throw new Error('Unsupported categorical analysis');
  if(read?.window&&read.outputKeys)throw new Error('Choose one output selection');
- if(read?.window)validateWindow(read.window);
+ if(read?.window){validateWindow(read.window);if(read.window.order==='rank'&&!query.analysis?.pareto)throw new AnalyticsResultWindowError();}
  if(read?.outputKeys)validateKeys(read.outputKeys);
 }
 function validateWindow(window:NonNullable<AnalyticsReadOptions['window']>){
+ if(window.order!==undefined&&!['identity','rank'].includes(window.order))throw new AnalyticsResultWindowError();
  if(!Number.isInteger(window.limit)||window.limit<1||window.limit>1000)throw new Error('Invalid result window');
  if(typeof(window.search??'')!=='string'||(window.search?.length??0)>200)throw new Error('Invalid result search');
 }
@@ -85,7 +86,8 @@ function derivedNumber(value:string|null){
  if(!Number.isFinite(parsed)||Math.abs(parsed)>Number.MAX_SAFE_INTEGER)throw new Error('Unsafe derived result');
  return parsed;
 }
-function windowScope({query,context,revision,read}:GroupedRead){return createHash('sha256').update(JSON.stringify([read?.window?.queries??[query],context.tenantId,context.locale,context.enforcedFilters??[],revision,read?.window?.search?.trim()??''])).digest('hex');}
+function windowOrder(query:AnalyticsQuery,read?:AnalyticsReadOptions){return read?.window?.order??(query.analysis?.pareto?'rank':'identity');}
+function windowScope({query,context,revision,read}:GroupedRead){return createHash('sha256').update(JSON.stringify([read?.window?.queries??[query],context.tenantId,context.locale,context.enforcedFilters??[],revision,windowOrder(query,read),read?.window?.search?.trim()??''])).digest('hex');}
 function decodeCursor(cursor:AnalyticsResultCursor,scope:string):AnalyticsResultCursor{
  if(cursor.scope!==scope||typeof cursor.after!=='string'||!cursor.after||cursor.after.length>200)throw new AnalyticsResultWindowError();
  return cursor;

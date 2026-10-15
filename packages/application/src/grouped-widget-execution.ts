@@ -23,7 +23,7 @@ export async function executeGroupedWidget(repository:AnalyticsRepository,widget
 }
 async function anchoredResults(repository:AnalyticsRepository,queries:AnalyticsQuery[],context:AnalyticsContext,request:WidgetWindowRequest&{limit:number}):Promise<{results:SeriesExecution[];window?:WidgetResultWindow}>{
  const paged=Boolean(queries[0]?.analysis?.pareto&&!queries[0]?.analysis?.topN);
- const anchor=await executeSeries(()=>repository.execute(queries[0]!,context,paged?{window:{...request,queries}}:undefined));
+ const anchor=await executeSeries(()=>repository.execute(queries[0]!,context,paged?{window:{...request,queries,order:'rank'}}:undefined));
  if(anchor.status==='error')return {results:queries.map(()=>anchor)};
  const keys=anchor.result.rows.map(row=>row.key).filter((key):key is string=>key!==null),results:SeriesExecution[]=[anchor];
  for(const query of queries.slice(1))results.push(await executeSeries(()=>repository.execute(query,context,{outputKeys:keys,...(anchor.result.metadata.servingRevision?{revision:anchor.result.metadata.servingRevision}:{})})));
@@ -32,7 +32,7 @@ async function anchoredResults(repository:AnalyticsRepository,queries:AnalyticsQ
 async function windowResults(repository:AnalyticsRepository,queries:AnalyticsQuery[],context:AnalyticsContext,request:WidgetWindowRequest&{limit:number}){
  const distinct=[...new Map(queries.map(query=>[analyticsQueryIdentity(query,context),query])).values()];
  const pages:SeriesExecution[]=[];
- for(const query of distinct)pages.push(await executeSeries(()=>repository.execute(query,context,{window:{...request,queries}})));
+ for(const query of distinct)pages.push(await executeSeries(()=>repository.execute(query,context,{window:{...request,queries,order:'identity'}})));
  const successes=pages.flatMap(result=>result.status==='success'?[result.result]:[]);
  const scopes=new Set(successes.map(result=>result.metadata.window?.scope)),revisions=new Set(successes.map(result=>result.metadata.servingRevision));
  if(scopes.size>1||revisions.size>1)throw new AnalyticsResultWindowError();

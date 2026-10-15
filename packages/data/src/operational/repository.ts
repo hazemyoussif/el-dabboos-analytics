@@ -52,7 +52,7 @@ export class TrustedAnalyticsRepository implements AnalyticsRepository,Dimension
    if(!metricRelease?.period)throw new Error('Uncertified trusted period');
    const months=await trustedMetricMonths(client,context.tenantId,query.metric);
    const selected=await servingRows(client,query,context,{from:metricRelease.period.from,to:metricRelease.period.to,cutoff:stored.cutoff.toISOString(),cutoffDay:stored.cutoff_day,months},{maxGroups:this.maxGroups,revision:stored.revision_id,...(read?{read}:{})});
-   const dimensionLabels=query.groupBy?await servingLabels(client,query.groupBy,context,query,selected.rows.map(row=>row.key)):{};
+   const dimensionLabels='labels' in selected?selected.labels:query.groupBy?await servingLabels(client,query.groupBy,context,query,selected.rows.map(row=>row.key)):{};
    return trustedFactResult(query,stored,selected,dimensionLabels,(this.options.clock?.()??new Date()).toISOString());
   },true,this.options.statementTimeoutMs??15000);
  }
