@@ -10,7 +10,8 @@ import { tenantTransaction } from '../postgres/session.ts';
 import type { HistoricalRepositoryOptions } from '../postgres/historical-repository.ts';
 import { servingLabels } from './serving-labels.ts';
 import {FinanceSnapshotRepository,financeMetric} from './finance-repository.ts';
-import {discoverCustomers} from './customer-discovery.ts';
+import {discoverTrustedDimensions} from './dimension-discovery.ts';
+import {dimensionDiscoveryScope} from '../postgres/discovery-scope.ts';
 import {trustedFactCapabilities,trustedMetricMonths} from './trusted-capabilities.ts';
 import { servingRows } from './serving-query.ts';
 /** Reads only a stored trusted manifest and approved capability projection. No source or proof port. */
@@ -52,10 +53,11 @@ export class TrustedAnalyticsRepository implements AnalyticsRepository,Dimension
  }
  async listDimensionValues(dimension:DimensionId,context:AnalyticsContext){return (await this.listDimensionOptions(dimension,context)).map(option=>option.id);}
  async searchDimensionOptions(dimension:DimensionId,context:AnalyticsContext,request:import('@el-dabboos/domain').DimensionDiscoveryRequest){
-  if(request.metric&&businessMetricIds.includes(request.metric as import('@el-dabboos/domain').BusinessMetricId)||['brand','customer_segment','customer_class','uom','journal','supplier'].includes(dimension))return this.business.searchDimensionOptions(dimension,context,request);
-  if(dimension==='product'||dimension==='product_category'||request.metric&&reviewQuery({metric:request.metric,groupBy:dimension},context))return this.review.searchDimensionOptions(dimension,context,request);
-  if(dimension!=='customer')return boundedDimensionPage(await this.listDimensionOptions(dimension,context),request);
-  return discoverCustomers(this.pool,context,request,await this.getPublishedCapabilities(context),this.options.statementTimeoutMs??15000);
+  const published=await this.getPublishedCapabilities(context);
+  const selected=dimensionDiscoveryScope(dimension,context,request,published),scoped={...request,metric:selected.metric,...(selected.range?{dateRange:selected.range}:{})};
+  if(businessMetricIds.includes(selected.metric as import('@el-dabboos/domain').BusinessMetricId))return this.business.searchDimensionOptions(dimension,context,scoped);
+  if(reviewQuery({metric:selected.metric,groupBy:dimension},context))return this.review.searchDimensionOptions(dimension,context,scoped);
+  return discoverTrustedDimensions(this.pool,{dimension,context,request:scoped,capabilities:published,timeout:this.options.statementTimeoutMs??15000});
  }
  async listDimensionOptions(dimension:DimensionId,context:AnalyticsContext) {
   const stored=await this.stored(context.tenantId);if(!stored)throw new Error('Trusted serving revision required');
@@ -99,11 +101,4 @@ function metricPresentation(query:AnalyticsQuery):Pick<AnalyticsResult['metadata
  const metric=semanticCatalog[query.metric];
  if(query.analysis?.percentageContribution)return {metricType:'percentage',semantics:metric.semantics.kind,unit:'%'};
  return {metricType:metric.type,semantics:metric.semantics.kind,...(metric.presentation.unit?{unit:metric.presentation.unit}:{})};
-}
-
-/** Low-cardinality governed lists reuse their existing bound, not a second pagination system. */
-function boundedDimensionPage(options:Array<{id:string;label?:string}>,request:import('@el-dabboos/domain').DimensionDiscoveryRequest):import('@el-dabboos/domain').DimensionDiscoveryPage {
- const limit=request.limit??50,search=request.search?.toLocaleLowerCase()??'',selected=request.selectedIds??[];
- if(request.cursor||!Number.isInteger(limit)||limit<1||limit>100||search.length>100||selected.length>1000)throw new Error('Invalid bounded dimension discovery');
- return {values:options.filter(option=>!search||option.label?.toLocaleLowerCase().includes(search)).slice(0,limit),selected:options.filter(option=>selected.includes(option.id))};
 }

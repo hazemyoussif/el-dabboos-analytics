@@ -9,7 +9,7 @@ import type { AnalyticsRepository, DashboardSpec, DashboardWidget } from '@el-da
 import { DashboardExecutor } from '@el-dabboos/application';
 import { blankDashboardDraft } from '../src/builder/model.ts';
 import { chartTheme, seriesColor } from '../src/rendering/chart-theme.ts';
-import { formatValue, paletteLabels } from '../src/i18n.ts';
+import { copy, formatValue, paletteLabels } from '../src/i18n.ts';
 import { savedDocument, documentIsDirty } from '../src/dashboard-lifecycle.ts';
 const widgets: DashboardWidget[] = widgetTypes.map((type,index)=>({ id:`w${index}`,type,series:[{ id:`s${index}`,metric:'revenue' },...(type==='combo'?[{ id:'profit',metric:'gross_profit' as const }]:[])],...(type==='kpi'?{}:{ dimension: ['line','area','combo'].includes(type)?'month' as const:'branch' as const }) }));
 const spec:DashboardSpec={...blankDashboardDraft(tenantProfiles['demo-iq'],'en').base,layout:{columns:12},widgets};
@@ -33,7 +33,7 @@ test('every renderer uses centralized presentation in both themes/locales withou
       const items=legendItems(props,entry);assert.equal(items[0].color,seriesColor(theme,0));assert.equal(items[1].reference,true);assert.ok(renderToStaticMarkup(createElement(ChartLegend,{items,locale})).includes('reference'));
       const categoryTooltip=renderToStaticMarkup(createElement(EnterpriseTooltip,{active:true,payload:[{value:100,payload:{name:'Category',sourceIndex:4}}],props,entry,composition:true,categoryIndices:[2,4]}));assert.ok(categoryTooltip.includes(seriesColor(theme,1)));
       const empty=renderToStaticMarkup(createElement(WidgetCard,{widget:w,entry:{...entry,alignedRows:[{key:'2026-01',series:{s1:{value:null}}}]},catalog:semanticCatalog,locale,profile:tenantProfiles['demo-iq']}));assert.ok(empty.includes('empty-state'));assert.ok(!empty.includes('100 IQD'));
-      const error=renderToStaticMarkup(createElement(WidgetCard,{widget:w,entry:{status:'error',alignedRows:[],seriesResults:{s1:{status:'error',error:{code:'FAILED',message:'Unavailable'}}}},catalog:semanticCatalog,locale,profile:tenantProfiles['demo-iq']}));assert.ok(error.includes('role="alert"'));assert.ok(error.includes('Unavailable'));
+      const error=renderToStaticMarkup(createElement(WidgetCard,{widget:w,entry:{status:'error',alignedRows:[],seriesResults:{s1:{status:'error',error:{code:'FAILED',message:'Unavailable'}}}},catalog:semanticCatalog,locale,profile:tenantProfiles['demo-iq']}));assert.ok(error.includes('role="alert"'));assert.ok(error.includes(copy[locale].failed));assert.ok(!error.includes('Unavailable'));
       const partial=renderToStaticMarkup(createElement(WidgetCard,{widget:w,entry:{...entry,status:'partial'},catalog:semanticCatalog,locale,profile:tenantProfiles['demo-iq']}));assert.ok(partial.includes('notice-warning'));assert.ok(partial.includes('role="status"'));
     }
   } finally {await server.close();}

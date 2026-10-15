@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import {AnalyticsQueryTimeoutError} from '@el-dabboos/domain';
 import { tenantTransaction, verifyMartRuntimeRole } from '../../src/postgres/session.ts';
 import { deploy, mapping } from './fixtures.ts';
 import { database, enabled } from './support.ts';
@@ -7,7 +8,7 @@ test('roles/RLS: forced scope, read-only runtime, immutable history, no DDL or r
   const db = await database();
   try {
     await verifyMartRuntimeRole(db.runtime);
-    assert.equal((await db.runtime.query('SELECT count(*)::int count FROM mart_admin.mart_schema_migrations')).rows[0].count,47);
+    assert.equal((await db.runtime.query('SELECT count(*)::int count FROM mart_admin.mart_schema_migrations')).rows[0].count,48);
     await assert.rejects(db.runtime.query('UPDATE mart_admin.mart_schema_migrations SET name=name'));
     for(const relation of ['analytics_partition_facts','analytics_drill_partitions','analytics_fact_revisions']){assert.equal((await db.runtime.query(`SELECT * FROM mart.${relation}`)).rowCount,0);await assert.rejects(db.runtime.query(`DELETE FROM mart.${relation}`));}
     await assert.rejects(verifyMartRuntimeRole(db.ingestor), /read-only/);
@@ -30,7 +31,7 @@ test('roles/RLS: forced scope, read-only runtime, immutable history, no DDL or r
     assert.equal((await tenantTransaction(db.ingestor,'a',c => c.query("UPDATE mart.ingestion_batches SET status='failed' WHERE tenant_id='b'"))).rowCount,0);
     assert.equal((await db.admin.query("SELECT status FROM mart.ingestion_batches WHERE tenant_id='b' AND batch_id='foreign'")).rows[0].status,'running');
     assert.equal((await db.admin.query("SELECT count(*) n FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='mart' AND c.relkind='r' AND c.relname<>'measure_definitions' AND (NOT c.relrowsecurity OR NOT c.relforcerowsecurity)")).rows[0].n,'0');
-    await assert.rejects(tenantTransaction(db.runtime,'a',c => c.query('SELECT pg_sleep(0.2)'),true,20), /statement timeout/);
+    await assert.rejects(tenantTransaction(db.runtime,'a',c => c.query('SELECT pg_sleep(0.2)'),true,20), AnalyticsQueryTimeoutError);
     assert.equal((await tenantTransaction(db.runtime,'b',c => c.query('SELECT 1 n'),true)).rows[0].n,1);
   } finally { await db.close(); }
 });

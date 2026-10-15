@@ -23,10 +23,15 @@ test('nullable KPI, unavailable coverage and diagnostic failures render governed
    assert.ok(render(partial).includes(locale==='en'?'data available through':'البيانات متاحة حتى'));
    const failed:WidgetExecution={status:'error',alignedRows:[],seriesResults:{value:{status:'error',error:{code:'SERIES_EXECUTION_FAILED',message:'Unsafe SQL numeric output'}}}};
    assert.ok(!/Unsafe SQL|NaN|Infinity/.test(render(failed)));
-   const limited=structuredClone(failed);if(limited.seriesResults.value!.status==='error')limited.seriesResults.value!.error={code:'RESULT_LIMIT_EXCEEDED',message:'internal bound'};assert.ok(render(limited).includes(locale==='en'?'Choose customers':'اختر عملاء'));
+   const limited=structuredClone(failed);if(limited.seriesResults.value!.status==='error')limited.seriesResults.value!.error={code:'RESULT_LIMIT_EXCEEDED',message:'internal bound'};assert.ok(render(limited).includes(locale==='en'?'This selection exceeds':'حجم الاختيار'));
    const dashboard={version:2,id:'bounded',title:{en:'Historical',ar:'تاريخي'},layout:{columns:12},filters:{},widgets:[widget,{...widget,id:'second'}]};
    const boundedView=renderToStaticMarkup(createElement(DashboardRenderer,{execution:{dashboard,widgetResults:{nullable:limited,second:limited},metadata:{}},catalog:semanticCatalog,locale,profile:tenantProfiles['demo-iq']}));
-   assert.equal(boundedView.split(locale==='en'?'Choose customers':'اختر عملاء').length-1,1);assert.ok(!boundedView.includes('internal bound'));
+   assert.equal(boundedView.split(locale==='en'?'This selection exceeds':'حجم الاختيار').length-1,3);assert.equal((boundedView.match(/widget-error/g)??[]).length,2);assert.ok(!boundedView.includes('internal bound'));
+
+   const table={...widget,type:'table',dimension:'customer',series:[...widget.series,{id:'failed',metric:'gross_profit'}]};
+   const partialTable={...entry,status:'partial',seriesResults:{...entry.seriesResults,failed:failed.seriesResults.value},alignedRows:[{key:'SYNTHETIC',series:{value:{value:null},failed:null}}]};
+   const tableView=renderToStaticMarkup(createElement(WidgetCard,{widget:table,entry:partialTable,catalog:semanticCatalog,locale,profile:tenantProfiles['demo-iq']}));
+   assert.ok(tableView.includes(locale==='en'?'Unavailable':'غير متاح'));assert.ok(tableView.includes('<td>—</td>'));assert.ok(!tableView.includes('Unsafe SQL'));
 
    const {MetricDefinitionBody}=await server.ssrLoadModule('/src/metrics/MetricDefinition.tsx');
    const proof={...result.metadata,reconciliation:{status:'exact' as const,reference:'synthetic-history',definitionReference:'standing-definition'}};

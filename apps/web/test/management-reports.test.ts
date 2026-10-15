@@ -83,3 +83,19 @@ test('mixed catalog distinguishes post-exposure review from certified series and
   }
  }finally{await server.close();}
 });
+
+
+test('report provenance follows executed dates instead of unresolved presets and remains neutral while loading',async()=>{
+ const server=await createServer({root:fileURLToPath(new URL('../',import.meta.url)),server:{middlewareMode:true},optimizeDeps:{noDiscovery:true},appType:'custom'});
+ try{
+  const {dashboardReportStatus,ReportStatus}=await server.ssrLoadModule('/src/reports/ManagementReports.tsx');
+  const dashboard={schemaVersion:2,id:'relative',title:{en:'Relative',ar:'نسبي'},locale:'en',layout:{columns:1},filters:{datePreset:'previous_month'},widgets:[{id:'one',type:'kpi',series:[{id:'count',metric:'order_count'}]}]};
+  const effectiveFilters={dateRange:published.releases[0]!.period};
+  assert.equal(dashboardReportStatus(published,dashboard,effectiveFilters),'certified');
+  assert.equal(dashboardReportStatus(published,dashboard,{dateRange:{from:'2025-01-01',to:'2025-01-31'}}),'unavailable');
+  for(const locale of ['en','ar']){
+   const status=renderToStaticMarkup(createElement(ReportStatus,{published,dashboard,effectiveFilters,busy:true,locale}));
+   assert.ok(status.includes(locale==='en'?'Checking data status':'جارٍ التحقق'));assert.ok(!status.includes('Not available'));
+  }
+ }finally{await server.close();}
+});

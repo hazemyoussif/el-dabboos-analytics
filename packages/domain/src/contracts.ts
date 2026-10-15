@@ -140,7 +140,7 @@ export interface DimensionValueRepository {
   listDimensionOptions?(dimension: DimensionId, context: AnalyticsContext): Promise<Array<{id:string;label?:string}>>;
   searchDimensionOptions?(dimension:DimensionId,context:AnalyticsContext,request:DimensionDiscoveryRequest):Promise<DimensionDiscoveryPage>;
 }
-export interface DimensionDiscoveryRequest {search?:string;cursor?:string;limit?:number;selectedIds?:readonly string[];metric?:MetricId;asOf?:string}
+export interface DimensionDiscoveryRequest {search?:string;cursor?:string;limit?:number;selectedIds?:readonly string[];metric?:MetricId;asOf?:string;dateRange?:DateRange}
 export interface DimensionDiscoveryPage {values:Array<{id:string;label?:string}>;selected:Array<{id:string;label?:string}>;nextCursor?:string}
 export interface AnalyticsRepository {
   execute(query: AnalyticsQuery, context: AnalyticsContext): Promise<AnalyticsResult>;

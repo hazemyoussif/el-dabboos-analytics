@@ -29,12 +29,12 @@ export function registerMetadataRoutes(app: FastifyInstance, services: RouteCont
     const published = await workspacePublishedCapabilities(services,context);
     if (!published.releases.some(release => release.capabilities.some(capability => capability.dimensions.includes(dimension as DimensionId))))
       return { dimension,availability: 'unavailable',reason: 'uncertified_dimension',values: [] };
-    if(dimension==='customer'&&services.deps.dimensionValues.searchDimensionOptions){
-      const page=await services.deps.dimensionValues.searchDimensionOptions('customer',analyticsContext(context),{limit:50});
-      return {dimension,values:dimensionOptionLabels(page.values,'customer',context.locale,profile),...(page.nextCursor?{nextCursor:page.nextCursor}:{})};
-    }
     let options: Array<{id:string;label?:string}>;
     try {
+      if(services.deps.dimensionValues.searchDimensionOptions){
+        const page=await services.deps.dimensionValues.searchDimensionOptions(dimension as DimensionId,analyticsContext(context),{limit:50});
+        return {dimension,values:dimensionOptionLabels(page.values,dimension as DimensionId,context.locale,profile),...(page.nextCursor?{nextCursor:page.nextCursor}:{})};
+      }
       const repository=services.deps.dimensionValues;
       options=repository.listDimensionOptions?await repository.listDimensionOptions(dimension as DimensionId,analyticsContext(context)):
         (await repository.listDimensionValues(dimension as DimensionId,analyticsContext(context))).map(id=>({id,...(published.mode==='synthetic'?{label:id.replaceAll('_',' ')}:{})}));

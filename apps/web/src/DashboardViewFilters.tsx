@@ -14,7 +14,7 @@ export function DashboardViewFilters({ dashboard, selection, effectiveRange, cat
     <div className="view-filter-controls"><DatePeriodControl filters={selection} effectiveRange={effectiveRange} timeZone={profile.timeZone} locale={locale} disabled={busy} onChange={date => onChange({ date })} />
       {dashboardFilterDimensions(dashboard, catalog).map(dimension => {
         const selected = selection.dimensions?.find(filter => filter.dimension === dimension)?.values ?? [];
-        return <DimensionFilterControl key={dimension} dimension={dimension} metric={dashboard.widgets[0]?.series[0]?.metric} asOf={effectiveRange?.to} values={selected} options={options[dimension] ?? []} locale={locale} disabled={busy} onChange={values => {
+        return <DimensionFilterControl key={dimension} dimension={dimension} metric={dashboard.widgets[0]?.series[0]?.metric} asOf={effectiveRange?.to} dateRange={effectiveRange} values={selected} options={options[dimension] ?? []} locale={locale} disabled={busy} onChange={values => {
           const dimensions = (selection.dimensions ?? []).filter(filter => filter.dimension !== dimension);
           if (values.length) dimensions.push({ dimension, values });
           onChange({ dimensions });

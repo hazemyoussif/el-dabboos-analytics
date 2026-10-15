@@ -109,10 +109,12 @@ test('shared filters display governed bilingual names while changes and restored
 
 test('customer discovery opens lazily, hydrates saved selections and follows bounded continuation',async()=>{
  const fixture=await domFixture();try {
-  const {CustomerFilterControl,CustomerDiscoveryContext}=await fixture.server.ssrLoadModule('/src/CustomerFilterControl.tsx');
+  const {DimensionSearchControl}=await fixture.server.ssrLoadModule('/src/DimensionSearchControl.tsx');
+  const {DimensionDiscoveryContext}=await fixture.server.ssrLoadModule('/src/DimensionDiscoveryContext.ts');
   const calls:import('@el-dabboos/domain').DimensionDiscoveryRequest[]=[];
   const load=async(query:import('@el-dabboos/domain').DimensionDiscoveryRequest)=>{calls.push(query);return {values:[{id:query.cursor?'source:second':'source:first',label:query.cursor?'Second customer':'First customer'}],selected:query.selectedIds?.length?[{id:'source:saved',label:'Saved customer'}]:[],...(query.cursor?{}:{nextCursor:'continuation'})};};
-  const render=(values:string[])=>createElement(CustomerDiscoveryContext.Provider,{value:load},createElement(CustomerFilterControl,{locale:'en',values,onChange:()=>{}}));
+  const discover=(_dimension:string,query:import('@el-dabboos/domain').DimensionDiscoveryRequest)=>load(query);
+  const render=(values:string[])=>createElement(DimensionDiscoveryContext.Provider,{value:discover},createElement(DimensionSearchControl,{dimension:'customer',locale:'en',values,onChange:()=>{}}));
   await act(async()=>fixture.root.render(render([])));await settle();assert.equal(calls.length,0);
   await act(async()=>fixture.container.querySelector('button')!.click());await settle();assert.equal(calls.length,1);assert.equal(calls[0]!.limit,50);
   const more=[...fixture.container.querySelectorAll('button')].find(button=>button.textContent==='Load more')!;
@@ -132,7 +134,7 @@ test('shared discovery hydrates restored IDs outside initial options in EN/AR wi
    await act(async()=>fixture.root.render(createElement(DimensionDiscoveryContext.Provider,{value:load},createElement(DimensionFilterControl,{dimension,locale,values:['source:saved'],options:[],onChange:()=>{changed=true;}}))));await settle();
    assert.equal(changed,false);assert.equal(calls.at(-1)?.dimension,dimension);assert.deepEqual(calls.at(-1)?.query.selectedIds,['source:saved']);assert.equal(calls.at(-1)?.query.limit,1);
    assert.ok(fixture.container.textContent?.includes(dimension==='business_line'?(locale==='ar'?'بدون سكر':'No Sugar'):'Saved actual name'));assert.ok(!fixture.container.textContent?.includes('source:'));
-   if(dimension!=='customer')assert.equal(fixture.container.querySelector('select')!.value,JSON.stringify(['source:saved']));
+   assert.ok(fixture.container.querySelector('button')?.textContent?.includes(dimension==='business_line'?(locale==='ar'?'بدون سكر':'No Sugar'):'Saved actual name'));
   }
  }finally{await fixture.close();}
 });
@@ -185,5 +187,35 @@ test('bar presentation preserves explicit bottom/Pareto order and temporal order
   assert.equal(orderedBarRows({...widget,series:[{...widget.series[0],analysis:{topN:{direction:'bottom',limit:2}}}]},data),data);
   assert.equal(orderedBarRows({...widget,series:[{...widget.series[0],analysis:{pareto:true}}]},data),data);
   assert.equal(orderedBarRows({...widget,dimension:'month'},data),data);
+ }finally{await fixture.close();}
+});
+
+
+test('dimension search retries failures, carries the active period and resets safely when the period changes',async()=>{
+ const fixture=await domFixture();try{
+  const {DimensionFilterControl}=await fixture.server.ssrLoadModule('/src/DimensionFilterControl.tsx');
+  const {DimensionDiscoveryContext}=await fixture.server.ssrLoadModule('/src/DimensionDiscoveryContext.ts');
+  const calls:Array<{dimension:string;request:import('@el-dabboos/domain').DimensionDiscoveryRequest}>=[];
+  let fail=true;
+  const load=async(dimension:string,request:import('@el-dabboos/domain').DimensionDiscoveryRequest)=>{calls.push({dimension,request});if(fail)throw new Error('private backend failure');return {values:[{id:'stable',label:'Governed label'}],selected:[]};};
+  for(const locale of ['en','ar']){
+   const period={from:'2026-09-01',to:'2026-09-30'};
+   const render=(dateRange:typeof period)=>createElement(DimensionDiscoveryContext.Provider,{value:load},createElement(DimensionFilterControl,{dimension:'salesperson',metric:'revenue',dateRange,locale,values:[],options:[],onChange:()=>{}}));
+   fail=true;
+   await act(async()=>fixture.root.render(render(period)));await settle();
+   assert.equal(fixture.container.querySelector('input'),null);
+   await act(async()=>fixture.container.querySelector('button')!.click());await settle();
+   assert.ok(fixture.container.querySelector('[role="alert"]'));assert.ok(!fixture.container.textContent?.includes('private'));
+   fail=false;
+   const search=[...fixture.container.querySelectorAll('button')].find(button=>button.textContent===(locale==='en'?'Search':'بحث'))!;
+   await act(async()=>search.click());await settle();
+   assert.equal(fixture.container.querySelector('[role="alert"]'),null);assert.ok(fixture.container.textContent?.includes('Governed label'));
+   assert.equal(calls.at(-1)?.dimension,'salesperson');assert.deepEqual(calls.at(-1)?.request.dateRange,period);
+   const changed={from:'2026-10-01',to:'2026-10-31'};
+   await act(async()=>fixture.root.render(render(changed)));await settle();
+   assert.equal(fixture.container.querySelector('input'),null);
+   await act(async()=>fixture.container.querySelector('button')!.click());await settle();
+   assert.deepEqual(calls.at(-1)?.request.dateRange,changed);
+  }
  }finally{await fixture.close();}
 });

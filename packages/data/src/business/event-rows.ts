@@ -10,11 +10,16 @@ export async function businessEventRows(client:PoolClient,scope:{query:Analytics
  const dimensions=[...new Set([...(quantities?['uom' as const]:[]),query.groupBy,...filters.map(filter=>filter.dimension)].filter(dimension=>dimension&&!['date','month','quarter','year'].includes(dimension)))];
  const params:unknown[]=[context.tenantId,requiredMeasures(query.metric),range.from,range.to,businessDefinitionVersion(),dimensions,dimensionLabelField(query.groupBy)];
  const predicates=filters.map(filter=>{params.push(filter.dimension,filter.values);return `payload->'dimensions'->>$${params.length-1}=ANY($${params.length}::text[])`;});
- const rows=(await client.query(`WITH selected AS(
-  SELECT fact.payload,extraction.source_cutoff,(SELECT coalesce(jsonb_object_agg(dimension.key,dimension.value),'{}'::jsonb) FROM jsonb_each(fact.payload->'dimensions') dimension WHERE dimension.key=ANY($6::text[])) dimensions
+ const rows=(await client.query(`WITH published_partitions AS MATERIALIZED (
+  SELECT member.tenant_id,member.partition_id,extraction.source_cutoff
   FROM mart.analytics_trusted_serving trusted JOIN mart.analytics_serving_members member USING(tenant_id,revision_id)
-  JOIN mart.review_extractions extraction USING(tenant_id,partition_id) JOIN mart.review_facts fact USING(tenant_id,partition_id)
-  WHERE trusted.tenant_id=$1 AND member.family='business' AND extraction.definition_version=$5 AND payload->>'measureId'=ANY($2::text[])
+  JOIN mart.review_extractions extraction USING(tenant_id,partition_id)
+  WHERE trusted.tenant_id=$1 AND member.family='business' AND extraction.definition_version=$5
+  AND member.month BETWEEN date_trunc('month',$3::date) AND date_trunc('month',$4::date)
+ ),selected AS(
+  SELECT fact.payload,partition.source_cutoff,(SELECT coalesce(jsonb_object_agg(dimension,fact.payload->'dimensions'->dimension),'{}'::jsonb) FROM unnest($6::text[]) dimension WHERE fact.payload->'dimensions'?dimension) dimensions
+  FROM published_partitions partition JOIN mart.review_facts fact USING(tenant_id,partition_id)
+  WHERE fact.tenant_id=$1 AND payload->>'measureId'=ANY($2::text[])
   AND payload->>'businessDate' BETWEEN $3::text AND $4::text ${predicates.length?'AND '+predicates.join(' AND '):''}
  ),grouped AS(
   SELECT payload->>'measureId' measure,${query.groupBy==='date'?"payload->>'businessDate'":"left(payload->>'businessDate',7)"} period,dimensions,

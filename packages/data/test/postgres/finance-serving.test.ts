@@ -54,7 +54,7 @@ test('more than 3000 governed customers use bounded stable search and selected-I
   assert.equal(first.values.length,50);assert.equal(first.selected[0]?.label,'Customer 3104');assert.ok(first.nextCursor);
   const second=await repository.searchDimensionOptions('customer',context,{...request,cursor:first.nextCursor});assert.equal(second.values.length,50);assert.equal(second.values[0]?.id,'fixture:00050');assert.equal(new Set([...first.values,...second.values].map(option=>option.id)).size,100);
   const search=await repository.searchDimensionOptions('customer',context,{...request,search:'Customer 310'});assert.equal(search.values.length,6);
-  await assert.rejects(repository.searchDimensionOptions('customer',{...context,enforcedFilters:[{dimension:'customer',values:['fixture:03104']}]},{...request,cursor:first.nextCursor}),/Invalid customer continuation/);
+  await assert.rejects(repository.searchDimensionOptions('customer',{...context,enforcedFilters:[{dimension:'customer',values:['fixture:03104']}]},{...request,cursor:first.nextCursor}),/Invalid dimension continuation/);
   const scoped=await repository.searchDimensionOptions('customer',{...context,enforcedFilters:[{dimension:'customer',values:['fixture:03104']}]},request);assert.deepEqual(scoped.values.map(option=>option.id),['fixture:03104']);
   const drill=new TrustedDrillThroughRepository(db.runtime,scope=>repository.getPublishedCapabilities(scope));
   const bucketQuery={metric:'aged_at_date' as const,dateRange:{from:'2025-10-01',to:'2026-10-08'}};
@@ -216,14 +216,14 @@ test('database guards refuse empty nonzero totals and nonempty null operands',{s
 test('forward empty-snapshot migration preserves an existing nonempty publication and migration replay',{skip:!enabled},async()=>{
  const db=await database(false),directory=await mkdtemp('/tmp/finance-before-empty-'),url=pathToFileURL(directory+'/');
  try {
-  await cp(migrationDirectory,url,{recursive:true});await rm(new URL('042_empty_finance_snapshots.sql',url));await rm(new URL('043_scoped_derived_inputs.sql',url));await rm(new URL('044_post_exposure_review.sql',url));await rm(new URL('045_grouped_review_controls.sql',url));await rm(new URL('046_business_purpose.sql',url));await rm(new URL('047_immutable_review_membership.sql',url));await migratePostgres(db.migrator,url);
+  await cp(migrationDirectory,url,{recursive:true});await rm(new URL('042_empty_finance_snapshots.sql',url));await rm(new URL('043_scoped_derived_inputs.sql',url));await rm(new URL('044_post_exposure_review.sql',url));await rm(new URL('045_grouped_review_controls.sql',url));await rm(new URL('046_business_purpose.sql',url));await rm(new URL('047_immutable_review_membership.sql',url));await rm(new URL('048_review_serving_access.sql',url));await migratePostgres(db.migrator,url);
   const specification=mapping(),rule=specification.measures[2]!;
   specification.measures=receivableMeasures.map(measureId=>({...rule,measureId,dimensionMappings:{customer:'Synthetic governed identity'}}));
   specification.capabilities=receivableMeasures.map(metric=>({metric,dimensions:['customer','month']}));
   await deploy(db.migrator,specification);await bootstrapOperationalServing(db.migrator,'a');
   await publishFinanceSnapshot(db.ingestor,evidence('2026-09-30'));
   const before=(await db.admin.query('SELECT * FROM mart.finance_snapshot_evidence')).rows;
-  assert.deepEqual(await migratePostgres(db.migrator),[42,43,44,45,46,47]);assert.deepEqual(await migratePostgres(db.migrator),[]);
+  assert.deepEqual(await migratePostgres(db.migrator),[42,43,44,45,46,47,48]);assert.deepEqual(await migratePostgres(db.migrator),[]);
   assert.deepEqual((await db.admin.query('SELECT * FROM mart.finance_snapshot_evidence')).rows,before);
   await publishFinanceSnapshot(db.ingestor,evidence('2026-06-30',0));
   const repository=new TrustedAnalyticsRepository(db.runtime,{reportingCurrencies:{a:'IQD'}});

@@ -3,7 +3,7 @@ import { validateDashboardOverrideDimensions, resolveDashboardFilters } from './
 import type { DashboardExecutionScope, EffectiveDashboardFilters } from './dashboard-filters.ts';
 import { analyticsQueryIdentity, executionConcurrency, normalizeAnalyticsQuery, runBounded } from './query-execution.ts';
 import type { DashboardExecutionOptions } from './query-execution.ts';
-import { validateDashboardSpec, validateQuery,AnalyticsResultLimitError } from '@el-dabboos/domain';
+import { validateDashboardSpec, validateQuery,AnalyticsResultLimitError,AnalyticsQueryTimeoutError } from '@el-dabboos/domain';
 import type { AnalyticsContext, AnalyticsQuery, AnalyticsRepository, AnalyticsResult, AnalyticsRow, DashboardSpec } from '@el-dabboos/domain';
 
 export type SeriesExecution = { status: 'success'; result: AnalyticsResult } | { status: 'error'; error: { code: string; message: string } };
@@ -72,6 +72,7 @@ export class DashboardExecutor {
   }
 }
 function seriesFailure(error:unknown):SeriesExecution {
-  if(error instanceof AnalyticsResultLimitError)return {status:'error',error:{code:'RESULT_LIMIT_EXCEEDED',message:'Choose customers or narrow the dates to view this report.'}};
-  return {status:'error',error:{code:'SERIES_EXECUTION_FAILED',message:error instanceof Error&&!/SQL|Unsafe.*result|NaN|Infinity/.test(error.message)?error.message:'This metric is temporarily unavailable.'}};
+  if(error instanceof AnalyticsResultLimitError)return {status:'error',error:{code:'RESULT_LIMIT_EXCEEDED',message:'Narrow the selection to view this result within the query limit.'}};
+  if(error instanceof AnalyticsQueryTimeoutError)return {status:'error',error:{code:'QUERY_TIMEOUT',message:'This selection could not be loaded within the query time limit.'}};
+  return {status:'error',error:{code:'SERIES_EXECUTION_FAILED',message:'This metric is temporarily unavailable.'}};
 }

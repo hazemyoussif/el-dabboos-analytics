@@ -52,3 +52,22 @@ test('default limiter is eight and invalid concurrency fails before execution', 
   await new DashboardExecutor(repository).execute(spec(widgets), context); assert.equal(peak, 8);
   for (const maxConcurrency of [0, -1, 1.5, 65, NaN]) assert.throws(() => new DashboardExecutor(repository, undefined, { maxConcurrency }), /concurrency/);
 });
+
+
+test('shared execution reports safe typed timeouts and withholds arbitrary adapter details',async()=>{
+ const {AnalyticsQueryTimeoutError}=await import('@el-dabboos/domain');
+ for(const failure of [new AnalyticsQueryTimeoutError(),new Error('private adapter address and SELECT secret')]){
+  const executor=new DashboardExecutor({execute:async()=>{throw failure;}});
+  const output=await executor.execute(spec([widget('one'),widget('two')]),context);
+  assert.equal(output.metadata.failedSeries,2);
+  for(const entry of Object.values(output.widgetResults)){
+   assert.equal(entry.status,'error');
+   const series=entry.seriesResults.value!;
+   assert.equal(series.status,'error');
+   if(series.status==='error'){
+    assert.equal(series.error.code,failure instanceof AnalyticsQueryTimeoutError?'QUERY_TIMEOUT':'SERIES_EXECUTION_FAILED');
+    assert.ok(!series.error.message.includes('private'));assert.ok(!series.error.message.includes('SELECT'));
+   }
+  }
+ }
+});
