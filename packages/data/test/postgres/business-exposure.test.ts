@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {semanticCatalog,requiredMeasures,validateProductionFact,AnalyticsResultLimitError} from '@el-dabboos/domain';
+import type {PoolClient} from 'pg';
+import {reviewEventRows} from '../../src/review/event-rows.ts';
 import type {ProductionFact,FactMeasureId} from '@el-dabboos/domain';
 import {database,enabled} from './support.ts';
 import {deploy,mapping} from './fixtures.ts';
@@ -25,7 +27,7 @@ function fixture(month='2026-09',current=false,family:'review'|'business'='busin
  const controls:ReviewControl[]=facts.flatMap(fact=>[{measure:fact.measureId,dimensions:fact.dimensions,value:fact.value,count:'1'},{measure:fact.measureId,dimensions:null,value:fact.value,count:'1'}]);
  return {tenantId:'a',month,mapping,cutoff,revision:'SYNTHETIC ONLY',facts:pages(facts),controls:async()=>controls,assertAlive:async()=>{}};
 }
-async function* pages(facts:ProductionFact[]){yield facts;}
+async function* pages(facts:ProductionFact[]){for(let offset=0;offset<facts.length;offset+=1000)yield facts.slice(offset,offset+1000);}
 test('business exposure preserves every original family, controls all tuples and serves exact money, dates and consecutive events',{skip:!enabled},async()=>{
  const db=await database();
  try{
@@ -111,5 +113,59 @@ test('unchanged immutable review and business members copy without rechecking al
   }
   for(const table of ['review_facts','review_controls'])await assert.rejects(tenantTransaction(db.ingestor,'a',client=>client.query(`INSERT INTO mart.${table} SELECT * FROM mart.${table} WHERE tenant_id='a' AND partition_id=$1 LIMIT 1`,[prior.partitionId])),/Exposed review contents are immutable/);
   await assert.rejects(db.admin.query("DELETE FROM mart.analytics_serving_members WHERE tenant_id='a' AND revision_id=$1",[prior.revisionId]),/immutable/i);
+ }finally{await db.close();}
+});
+
+
+test('shared event reads and discovery select only trusted measures, months and policy scope across retained history',{skip:!enabled},async()=>{
+ const db=await database();
+ try{
+  await deploy(db.migrator,mapping());await bootstrapOperationalServing(db.migrator,'a');
+  for(const month of ['2026-07','2026-08','2026-09']){
+   const source=fixture(month),original:ProductionFact[]=[];
+   for await(const page of source.facts)original.push(...page);
+   const base=original.find(fact=>fact.measureId==='period_net_sales')!;
+   const repeated=Array.from({length:20000},(_,index)=>({...base,value:'0.000001',currency:{...base.currency!,transactionValue:'0.000001'},sourceRecordId:String(index),dimensions:{...base.dimensions,customer:`${month}:customer:${index%2}`},displayLabels:{customer:`${month} customer ${index%2}`}}));
+   const others=original.filter(fact=>fact.measureId!==base.measureId);
+   const controls:ReviewControl[]=[...others.flatMap(fact=>[{measure:fact.measureId,dimensions:fact.dimensions,value:fact.value,count:'1'},{measure:fact.measureId,dimensions:null,value:fact.value,count:'1'}]),
+    ...[0,1].map(index=>({measure:base.measureId,dimensions:{...base.dimensions,customer:`${month}:customer:${index}`},value:'0.010000',count:'10000'})),{measure:base.measureId,dimensions:null,value:'0.020000',count:'20000'}];
+   await exposeReviewMonth(db.ingestor,{...source,facts:pages([...others,...repeated]),controls:async()=>controls},'business');
+  }
+  await db.admin.query('ANALYZE mart.review_facts');
+  const repository=new TrustedAnalyticsRepository(db.runtime,{reportingCurrencies:{a:'IQD'}}),context={tenantId:'a',locale:'en' as const};
+  const dateRange={from:'2026-09-01',to:'2026-09-30'};
+  const result=await repository.execute({metric:'period_net_sales',dateRange},context);
+  assert.equal(result.rows[0]?.value,0.02);
+  assert.deepEqual((await repository.execute({metric:'period_net_sales',dateRange:{from:'2026-07-01',to:'2026-09-30'},groupBy:'month'},context)).rows.map(row=>row.value),[0.02,0.02,0.02]);
+  const request={metric:'period_net_sales' as const,dateRange,limit:1,selectedIds:['2026-09:customer:1']};
+  const first=await repository.searchDimensionOptions('customer',context,request);
+  assert.equal(first.values.length,1);assert.equal(first.selected[0]?.id,'2026-09:customer:1');assert.ok(first.nextCursor);
+  const second=await repository.searchDimensionOptions('customer',context,{...request,cursor:first.nextCursor});
+  assert.equal(second.values[0]?.id,'2026-09:customer:1');assert.equal(second.nextCursor,undefined);
+  for(const changed of [{...request,dateRange:{from:'2026-08-01',to:'2026-08-31'}},{...request,metric:'period_invoice_sales' as const}])await assert.rejects(repository.searchDimensionOptions('customer',context,{...changed,cursor:first.nextCursor}),/Invalid review continuation/);
+  const scoped={...context,enforcedFilters:[{dimension:'customer' as const,values:['2026-09:customer:1']}]};
+  assert.deepEqual((await repository.searchDimensionOptions('customer',scoped,request)).values.map(value=>value.id),['2026-09:customer:1']);
+  assert.equal((await repository.execute({metric:'period_net_sales',dateRange},scoped)).rows[0]?.value,0.01);
+  await assert.rejects(repository.searchDimensionOptions('customer',scoped,{...request,cursor:first.nextCursor}),/Invalid review continuation/);
+  const august=await repository.searchDimensionOptions('customer',context,{...request,dateRange:{from:'2026-08-01',to:'2026-08-31'}});
+  assert.ok(august.values.every(value=>value.id.startsWith('2026-08:')));assert.deepEqual(august.selected,[]);
+  for(const dimension of ['salesperson','brand','customer_segment'] as const){
+   const page=await repository.searchDimensionOptions(dimension,context,{metric:'period_net_sales',dateRange,limit:1});
+   assert.equal(page.values[0]?.id,`fixture:${dimension}`);
+  }
+  await assert.rejects(repository.searchDimensionOptions('business_line',context,request),/Uncertified discovery/);
+  const plans:unknown[]=[];
+  await tenantTransaction(db.runtime,'a',async client=>{
+   const observed={query:async(sql:string,params:unknown[])=>{
+    const plan=await client.query('EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) '+sql,params);plans.push(plan.rows[0]['QUERY PLAN']);return client.query(sql,params);
+   }} as unknown as PoolClient;
+   const {rows}=await reviewEventRows(observed,{query:{metric:'period_net_sales'},context,range:dateRange,family:'business'});
+   assert.equal(rows.length,1);assert.equal(rows[0]?.payload.value,'0.020000');
+  },true);
+  const planText=JSON.stringify(plans);
+  assert.match(planText,/review_facts_measure_date/);
+  console.info('shared-read-plan',JSON.stringify({syntheticFacts:60000,index:'review_facts_measure_date',selectedMonthlyCandidates:20024}));
+  const indexes=await db.admin.query("SELECT indexdef FROM pg_indexes WHERE schemaname='mart' AND indexname='review_facts_measure_date'");
+  assert.match(indexes.rows[0].indexdef,/tenant_id, partition_id/);assert.match(indexes.rows[0].indexdef,/measureId/);assert.match(indexes.rows[0].indexdef,/businessDate/);
  }finally{await db.close();}
 });

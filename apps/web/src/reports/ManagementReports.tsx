@@ -8,7 +8,7 @@ import { publishedQueryIssues,semanticCatalog } from '@el-dabboos/domain';
 import type { ReactNode } from 'react';
 import { copy } from '../i18n.ts';
 import type { DashboardSpec,Locale,PublishedAnalyticsCapabilities,TenantProfile,AnalyticsResult } from '@el-dabboos/domain';
-import type { ManagementControlReview } from '@el-dabboos/application';
+import type { EffectiveDashboardFilters,ManagementControlReview } from '@el-dabboos/application';
 import type { AccessibleTemplate } from '../api/client.ts';
 import { formatDate,formatTimestamp } from '../i18n.ts';
 export type ManagementPage='finance-control'|'data-status'|'customer-unavailable';
@@ -27,16 +27,18 @@ function CapabilityStatus({published,locale}:Pick<InfoProps,'published'|'locale'
 export function ManagementInfo(props:InfoProps){if(props.page==='customer-unavailable')return <CustomerUnavailable {...props}/>;if(props.page==='finance-control')return publishedReceivables(props.published) ? <FinancePublishedNotice locale={props.locale}/> : <FinanceValidation {...props}/>;return <DataStatus {...props}/>;}
 export function ManagementArea({children,page,profile,published,statusView,...props}:Omit<InfoProps,'page'|'profile'|'published'>&{page:ManagementPage|null;profile:TenantProfile|null;published:PublishedAnalyticsCapabilities|undefined;children:ReactNode;statusView?:ReactNode}){if(page==='data-status'&&statusView)return <>{statusView}</>;if(!page||!profile||!published)return <>{children}</>;return <ManagementInfo {...props} page={page} profile={profile} published={published}/>;}
 export function reportStatusLabel(mode:PublishedAnalyticsCapabilities['mode']|'review',locale:Locale) {return mode==='review'?names[locale].review:mode==='certified'?names[locale].certified:locale==='ar'?'بيانات تجريبية':'Demo data';}
-export function dashboardReportStatus(published:PublishedAnalyticsCapabilities,dashboard:DashboardSpec|null) {
+export function dashboardReportStatus(published:PublishedAnalyticsCapabilities,dashboard:DashboardSpec|null,effectiveFilters?:EffectiveDashboardFilters) {
  if(published.mode==='synthetic')return 'synthetic';
  if(!dashboard)return 'unavailable';
- const releases=dashboard.widgets.flatMap(widget=>widget.series.map(series=>published.releases.find(release=>!publishedQueryIssues({metric:series.metric,...(widget.dimension?{groupBy:widget.dimension}:{}),...(series.analysis?{analysis:series.analysis}:{}),...(dashboard.filters?.dateRange?{dateRange:dashboard.filters.dateRange}:{}),...(dashboard.filters?.dimensions?{filters:dashboard.filters.dimensions}:{})},{...published,releases:[release]}).length)));
+ const filters=effectiveFilters??dashboard.filters;
+ const releases=dashboard.widgets.flatMap(widget=>widget.series.map(series=>published.releases.find(release=>!publishedQueryIssues({metric:series.metric,...(widget.dimension?{groupBy:widget.dimension}:{}),...(series.analysis?{analysis:series.analysis}:{}),...(filters?.dateRange?{dateRange:filters.dateRange}:{}),...(filters?.dimensions?{filters:filters.dimensions}:{})},{...published,releases:[release]}).length)));
  if(releases.some(release=>!release))return 'unavailable';
  return releases.some(release=>release?.financeReview==='pending')?'review':'certified';
 }
-export function ReportStatus({published,locale,dashboard}:{published:PublishedAnalyticsCapabilities|undefined;locale:Locale;dashboard:DashboardSpec|null}) {
+export function ReportStatus({published,locale,dashboard,effectiveFilters,busy}:{published:PublishedAnalyticsCapabilities|undefined;locale:Locale;dashboard:DashboardSpec|null;effectiveFilters?:EffectiveDashboardFilters;busy?:boolean}) {
  if(!published)return null;
- const state=dashboardReportStatus(published,dashboard);
+ if(busy)return <span className="report-status" role="status">{locale==='ar'?'جارٍ التحقق من حالة البيانات…':'Checking data status…'}</span>;
+ const state=dashboardReportStatus(published,dashboard,effectiveFilters);
  return <span className="report-status">{state==='unavailable'?names[locale].unavailable:reportStatusLabel(state,locale)}</span>;
 }
 function sourceLabel(published:PublishedAnalyticsCapabilities,locale:Locale) {

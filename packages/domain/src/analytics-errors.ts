@@ -11,3 +11,8 @@ export class UncertifiedDimensionError extends Error {
 export class DimensionDiscoveryLimitError extends Error {
   constructor(readonly dimension: DimensionId) { super('Discovery exceeds technical bound'); }
 }
+
+/** Safe execution category; adapter details never enter dashboard results. */
+export class AnalyticsQueryTimeoutError extends Error {
+ constructor(){super('Analytics query timed out');this.name='AnalyticsQueryTimeoutError';}
+}

@@ -2,7 +2,7 @@ import { discoverWorkspaceAccess, isPlatformOnlyAccess, selectWorkspaceProfile }
 import { useEffect, useRef, useState } from 'react';
 import type { DashboardExecutionResult } from '@el-dabboos/application';
 import type { AccessControlledDashboardRecord as DashboardRecord, DashboardSpec, Locale, ProductMetric, PublishedAnalyticsCapabilities, SemanticMetric, TenantProfile } from '@el-dabboos/domain';
-import { ApiClientError, createSavedDashboard, executeDashboard, getCapabilities, getFilterOptions, getSavedDashboard, getSemanticCatalog,
+import { ApiClientError, createSavedDashboard, executeDashboard, getCapabilities, getSavedDashboard, getSemanticCatalog,
   executeSavedDashboard, getTemplates, instantiateTemplate, listSavedDashboards, updateSavedDashboard } from '../api/client.ts';
 import type { AccessibleTemplate, ApiSession, DemoUser } from '../api/client.ts';
 import type { FilterOptions } from '../builder/BuilderWorkspace.tsx';
@@ -42,8 +42,6 @@ export function useWorkspace(authenticatedUser?: DemoUser) {
   const [navigationRevision, setNavigationRevision] = useState(0);
   const nextNavigation = () => setNavigationRevision(value => value + 1);
   const requestId = useRef(0);
-  const metadataScope = useRef(0);
-  const showFilterOptionsError = (selectedLocale:Locale,scope:number) => {if(scope===metadataScope.current)setError(selectedLocale==='ar'?'تعذر تحميل خيارات بعض المرشحات. أعد تحميل الصفحة للمحاولة مجدداً.':'Some filter choices could not load. Reload the page to retry.');};
   const beginRequest = () => ++requestId.current;
   const isCurrent = (id: number) => id === requestId.current;
   const session = (selectedProfile: TenantProfile = profile!, selectedLocale: Locale = locale, selectedUserId = userId): ApiSession =>
@@ -74,7 +72,6 @@ export function useWorkspace(authenticatedUser?: DemoUser) {
   const loadWorkspace = async (nextUserId: string, nextTenantId?: string, restoreRoute = true) => {
     nextNavigation();
     const id = beginRequest();
-    const scope=++metadataScope.current;
     setUserId(nextUserId); setLoading(true); setError(null); setDocument(null); setExecution(null); setSavedDashboards([]);
     setFilterOptions({}); setPermissions([]); setPlatformPermissions([]); setProfile(null); setProfiles([]);
     if(!restoreRoute)navigateWorkspace({kind:'workspace'},true);
@@ -105,7 +102,7 @@ export function useWorkspace(authenticatedUser?: DemoUser) {
       if(!isCurrent(id))return;
       const capabilities=initialCapabilities;
       publishWorkspaceMetadata({users,membership,selected,nextLocale,nextUserId,catalogResponse,templatesResponse,capabilities,saved});
-      const report=await loadWorkspaceReport(selectedSession,requestedRoute,catalogResponse.metrics,templatesResponse,{record:resolved?.record,onOptions:options=>{if(scope===metadataScope.current)setFilterOptions(options);},onOptionsError:()=>showFilterOptionsError(nextLocale,scope)});
+      const report=await loadWorkspaceReport(selectedSession,requestedRoute,templatesResponse,{record:resolved?.record});
       if (!isCurrent(id)) return;
       setDocument(report.opened);setExecution(report.openedExecution);
 
@@ -159,13 +156,7 @@ export function useWorkspace(authenticatedUser?: DemoUser) {
     finally { if (isCurrent(id)) setLoading(false); }
   };
   const selectLocale = (next: Locale) => {
-    const scope=++metadataScope.current;
     setLocale(next); storeLocale(preferences(), next);
-    if (profile) {
-      const id = requestId.current;
-      void getFilterOptions(session(profile, next),[...new Set(Object.values(catalog).flatMap(metric=>metric.dimensions))],()=>showFilterOptionsError(next,scope)).then(options => { if (isCurrent(id)&&scope===metadataScope.current) setFilterOptions(options); })
-        .catch(() => { if (isCurrent(id)&&scope===metadataScope.current) setFilterOptions({}); });
-    }
   };
   const applyWorkingSpec = (spec: DashboardSpec | null) => setDocument(current => current ? editDocument(current, spec) : spec ? generatedDocument(spec) : newManualDocument());
   const startManual = () => { nextNavigation(); beginRequest(); setError(null); setDocument(newManualDocument()); setExecution(null); navigate(null); };

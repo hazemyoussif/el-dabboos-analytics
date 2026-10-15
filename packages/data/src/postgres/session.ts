@@ -1,4 +1,5 @@
 import { Pool } from 'pg';
+import {AnalyticsQueryTimeoutError} from '@el-dabboos/domain';
 import type { PoolClient } from 'pg';
 
 export function createMartPool(connectionString: string, max = 8): Pool {
@@ -17,6 +18,7 @@ export async function tenantTransaction<T>(pool: Pool, tenantId: string, operati
     await client.query('COMMIT'); return value;
   } catch (error) {
     try { await client.query('ROLLBACK'); } catch { broken = true; }
+    if(readOnly===true&&error&&typeof error==='object'&&'code' in error&&error.code==='57014')throw new AnalyticsQueryTimeoutError();
     throw error;
   } finally { client.release(broken); }
 }

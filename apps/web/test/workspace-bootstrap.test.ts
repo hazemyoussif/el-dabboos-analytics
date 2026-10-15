@@ -1,6 +1,5 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {semanticCatalog} from '@el-dabboos/domain';
 import type {DashboardSpec} from '@el-dabboos/domain';
 import {loadWorkspaceReport} from '../src/workspace-bootstrap.ts';
 import {getFilterOptions} from '../src/api/client.ts';
@@ -9,30 +8,20 @@ const dashboard:DashboardSpec={schemaVersion:2,id:'report',locale:'en',title:{en
 const execution={dashboard,widgetResults:{},metadata:{executedAt:'2026-10-12',succeeded:1,failed:0,succeededSeries:1,failedSeries:0}};
 const templates={templates:[]};
 const response=(value:unknown,status=200)=>new Response(JSON.stringify(value),{status});
-test('a failed optional filter request cannot discard a successful report or become its loading dependency',async()=>{
+test('opening a report never requests full-population filter options',async()=>{
  const original=globalThis.fetch,calls:string[]=[];
- let finishFilter!:(value:Response)=>void;
- let filterFailed!:()=>void;
- const failed=new Promise<void>(resolve=>{filterFailed=resolve;});
- globalThis.fetch=async input=>{
-  calls.push(String(input));
-  if(String(input).includes('/instantiate'))return response({dashboard,execution});
-  return new Promise(resolve=>{finishFilter=resolve;});
- };
- try {
-  const result=await loadWorkspaceReport(session,{kind:'report',id:'receivables-aging'},[semanticCatalog.order_count],templates,{onOptionsError:filterFailed});
+ globalThis.fetch=async input=>{calls.push(String(input));if(!String(input).includes('/instantiate'))throw new Error('Unrelated discovery');return response({dashboard,execution});};
+ try{
+  const result=await loadWorkspaceReport(session,{kind:'report',id:'receivables-aging'},templates);
   assert.deepEqual(result.opened?.spec,dashboard);assert.deepEqual(result.openedExecution,execution);
-  assert.ok(calls[0]?.endsWith('/receivables-aging/instantiate'));
-  finishFilter(response({error:{code:'INTERNAL_ERROR',message:'Internal server error'}},500));
-  await failed;
-  assert.deepEqual(result.openedExecution,execution);
+  assert.equal(calls.length,1);assert.ok(calls[0]?.endsWith('/receivables-aging/instantiate'));
  }finally{globalThis.fetch=original;}
 });
 test('report failure remains visible and does not start unrelated filter discovery',async()=>{
  const original=globalThis.fetch,calls:string[]=[];
  globalThis.fetch=async input=>{calls.push(String(input));return response({error:{code:'INTERNAL_ERROR',message:'Internal server error'}},500);};
  try {
-  await assert.rejects(loadWorkspaceReport(session,{kind:'report',id:'receivables-aging'},[semanticCatalog.order_count],templates),/Internal server error/);
+  await assert.rejects(loadWorkspaceReport(session,{kind:'report',id:'receivables-aging'},templates),/Internal server error/);
   assert.equal(calls.length,1);assert.ok(calls[0]?.endsWith('/instantiate'));
  }finally{globalThis.fetch=original;}
 });

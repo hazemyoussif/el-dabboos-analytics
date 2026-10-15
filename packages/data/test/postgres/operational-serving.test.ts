@@ -630,3 +630,16 @@ test('legacy staging metadata over exact tuples executes customer reports and ev
   await assert.rejects(fixture.repository.execute({metric:'order_revenue',groupBy:'branch',dateRange:{from:'2026-01-01',to:'2026-02-28'}},context),/Unsupported dimension/);
  }finally{await fixture.db.close();}
 });
+
+
+test('shared snapshot discovery uses one eligible cutoff before the range start and rejects absent history',{skip:!enabled},async()=>{
+ const db=await database();try{
+  const calibration=fact('snapshot-calibration',{measureId:'outstanding_amount',businessDate:'2026-01-15',value:'0.000000',dimensions:{branch:'cairo'}});
+  await deploy(db.migrator,mapping(),calibration);await bootstrapOperationalServing(db.migrator,'a');
+  const repository=new TrustedAnalyticsRepository(db.runtime,{reportingCurrencies:{a:'IQD'}}),context={tenantId:'a',locale:'en' as const};
+  const options=await repository.searchDimensionOptions('branch',context,{metric:'outstanding_amount',dateRange:{from:'2026-01-20',to:'2026-01-31'}});
+  assert.deepEqual(options.values,[{id:'cairo'}]);
+  const absent=await repository.searchDimensionOptions('branch',context,{metric:'outstanding_amount',dateRange:{from:'2026-01-01',to:'2026-01-14'}});
+  assert.deepEqual(absent.values,[]);
+ }finally{await db.close();}
+});

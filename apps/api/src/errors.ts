@@ -1,3 +1,4 @@
+import {AnalyticsQueryTimeoutError} from '@el-dabboos/domain';
 import { AuthorizationError, DashboardLibraryError, DashboardPersistenceError, StructuredPlanningError, UnsupportedDemoIntentError } from '@el-dabboos/application';
 import type { FastifyInstance } from 'fastify';
 import { ProviderTransportError } from './providers/openai-compatible.ts';
@@ -10,6 +11,7 @@ function providerStatus(error: ProviderTransportError): number {
   return 502;
 }
 function errorStatus(error: unknown): number {
+  if(error instanceof AnalyticsQueryTimeoutError)return 503;
   if (error instanceof ApiError) return error.statusCode;
   if (error instanceof DashboardLibraryError) return error.code === 'FOLDER_NOT_FOUND' ? 404 : 400;
   if (error instanceof AuthorizationError) return 403;
@@ -21,6 +23,7 @@ function errorStatus(error: unknown): number {
   return messageStatus(error);
 }
 function errorCode(error: unknown, status: number): string {
+  if(error instanceof AnalyticsQueryTimeoutError)return 'QUERY_TIMEOUT';
   if (error instanceof DashboardLibraryError || error instanceof ApiError || error instanceof AuthorizationError || error instanceof DashboardPersistenceError || error instanceof StructuredPlanningError || error instanceof UnsupportedDemoIntentError || error instanceof ProviderTransportError) return error.code;
   return status === 400 ? 'VALIDATION_ERROR' : 'INTERNAL_ERROR';
 }
