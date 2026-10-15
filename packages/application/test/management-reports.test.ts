@@ -48,7 +48,7 @@ test('every locally available dashboard binds staging metric releases to a share
   ...metrics.map(metric=>({...published.releases[0]!,datasetId:`trusted-${metric}`,period,selectionSemantics:'event_intersection' as const,capabilities:[{metric,summary:true,dimensions:['month','business_line','salesperson','customer'] as const,analyses:[]}]})),
   {...published.releases[0]!,datasetId:'trusted-finance',period:{from:'2024-06-30',to:'2026-09-30'},selectionSemantics:'latest_snapshot',capabilities:finance.map(metric=>({metric,summary:true,dimensions:['month','customer'],analyses:[]}))},
  ]};
- const templates=dashboardTemplates.filter(template=>template.periodStrategy==='certified');
+ const templates=dashboardTemplates.filter(template=>template.periodStrategy==='certified'&&!template.tags.includes('source-business'));
  assert.equal(templates.length,12);
  for(const template of templates)for(const locale of ['en','ar'] as const){
   assert.equal(templateCompatibility(template,staging).status,'supported',template.id);

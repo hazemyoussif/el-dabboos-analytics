@@ -241,3 +241,12 @@ test('trusted tenant Revenue preference compiles net invoiced revenue without ch
   assert.equal(run().widgets[0]!.series[0]!.metric,'revenue');
   assert.equal(minimal.widgets[0]!.series[0]!.metric,'revenue');
 });
+
+test('explicit Pareto intent compiles canonically and dates/quantities default to tables',()=>{
+ const pareto=run({titleEn:'Pareto',titleAr:'باريتو',widgets:[{dimension:'customer',series:[{metric:'period_net_sales',pareto:true}]}]});
+ assert.deepEqual(pareto.widgets[0]?.series[0]?.analysis,{pareto:true});
+ for(const metric of ['customer_last_invoice_date','internal_stock_quantity'] as const){
+  const spec=run({titleEn:'Source',titleAr:'المصدر',widgets:[{dimension:metric==='internal_stock_quantity'?'product':'customer',series:[{metric}]}]});
+  assert.equal(spec.widgets[0]?.type,'table');
+ }
+});

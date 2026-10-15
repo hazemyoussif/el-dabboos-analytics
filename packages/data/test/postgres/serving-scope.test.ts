@@ -41,7 +41,7 @@ test('statement scope preserves runtime visibility, unbound/pending exclusion, t
   await rm(new URL('039_remove_stale_historical_september_anchor.sql',baseline));
   await rm(new URL('040_unified_serving.sql',baseline));
   await rm(new URL('041_historical_month_imports.sql',baseline));
-  await rm(new URL('042_empty_finance_snapshots.sql',baseline));await rm(new URL('043_scoped_derived_inputs.sql',baseline));await rm(new URL('044_post_exposure_review.sql',baseline));await rm(new URL('045_grouped_review_controls.sql',baseline));
+  await rm(new URL('042_empty_finance_snapshots.sql',baseline));await rm(new URL('043_scoped_derived_inputs.sql',baseline));await rm(new URL('044_post_exposure_review.sql',baseline));await rm(new URL('045_grouped_review_controls.sql',baseline));await rm(new URL('046_business_purpose.sql',baseline));
   await migratePostgres(db.migrator,baseline);
   for(const tenant of ['a','b','unbound']) {
    await deploy(db.migrator,mapping(tenant));

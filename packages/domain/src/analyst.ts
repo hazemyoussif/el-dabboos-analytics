@@ -2,7 +2,7 @@ import type { RequestContext } from './security.ts';
 import type { AnalysisSpec, AnalyticsFilter, AnalyticsQuery, AnalyticsResult, DashboardSpec, DimensionId, MetricId } from './contracts.ts';
 export interface AnalyticsSeriesIntent {
   metric: MetricId; comparison?: AnalysisSpec['comparison']; movingAverageWindow?: number;
-  runningTotal?: boolean; percentageContribution?: boolean; ranking?: boolean;
+  runningTotal?: boolean; percentageContribution?: boolean; ranking?: boolean; pareto?: boolean;
   topNDirection?: 'top' | 'bottom'; topNLimit?: number;
 }
 export interface AnalyticsIntent {

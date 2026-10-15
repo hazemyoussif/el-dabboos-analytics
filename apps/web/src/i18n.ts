@@ -1,3 +1,4 @@
+import {numberFormatter} from './presentation/number-format.ts';
 import { dimensionLabels } from '@el-dabboos/domain';
 import type { DimensionId, GovernedPalette, Locale, MetricType, TenantProfile } from '@el-dabboos/domain';
 export const appearanceCopy = {
@@ -52,9 +53,10 @@ export const localeTag = (locale: Locale, profile: TenantProfile): string => `${
 export function formatValue(value: number | null, type: MetricType, locale: Locale, profile: TenantProfile, unit?: string): string {
   if (value === null) return '—';
   const language = localeTag(locale, profile);
-  if (type === 'currency') return new Intl.NumberFormat(language, { style: 'currency', currency: profile.reportingCurrency, maximumFractionDigits: 0 }).format(value);
-  if (type === 'percentage') return `${new Intl.NumberFormat(language, { maximumFractionDigits: 1 }).format(value)}%`;
-  const number = new Intl.NumberFormat(language, { maximumFractionDigits: type === 'duration' ? 1 : 0 }).format(value);
+  if (type === 'currency') return numberFormatter(language, { style: 'currency', currency: profile.reportingCurrency, maximumFractionDigits: 0 }).format(value);
+  if (type === 'percentage') return `${numberFormatter(language, { maximumFractionDigits: 1 }).format(value)}%`;
+  if(type==='date')return new Intl.DateTimeFormat(language,{timeZone:'UTC',year:'numeric',month:'short',day:'numeric'}).format(new Date(value*86400000));
+  const number = numberFormatter(language, { maximumFractionDigits: type === 'duration' ? 1 : unit==='base_quantity'?6:0 }).format(value);
   return type === 'duration' ? `${number} ${locale === 'ar' ? (unit==='days'?'يوم':'ساعة') : unit ?? 'hours'}` : number;
 }
 export function formatDate(value: string, locale: Locale, profile: TenantProfile): string {
@@ -70,7 +72,7 @@ export function formatKey(key: string | null, dimension: DimensionId | undefined
   if (dimension === 'month' && /^\d{4}-\d{2}$/.test(key)) return new Intl.DateTimeFormat(localeTag(locale, profile), { month: 'short', year: 'numeric', timeZone: profile.timeZone }).format(new Date(`${key}-01T12:00:00Z`));
   if (dimension === 'date' && /^\d{4}-\d{2}-\d{2}$/.test(key)) return formatDate(key, locale, profile);
   const match = key.match(/^(customer|product|equipment|salesperson|technician)_(\d+)$/);
-  if (match) return `${copy[locale].dimensions[match[1] as DimensionId]} ${new Intl.NumberFormat(localeTag(locale, profile), { useGrouping: false }).format(Number(match[2]))}`;
+  if (match) return `${copy[locale].dimensions[match[1] as DimensionId]} ${numberFormatter(localeTag(locale, profile), { useGrouping: false }).format(Number(match[2]))}`;
   return key.replaceAll('_', ' ');
 }
 

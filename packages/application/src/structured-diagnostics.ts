@@ -13,7 +13,7 @@ export interface StructuredPlannerDiagnostic {
 const visibleFields = new Set(['id', 'widgetId', 'seriesId', 'metric', 'type', 'locale', 'dimension', 'comparison', 'direction', 'op', 'from', 'to']);
 const knownFields = new Set(['schemaVersion', 'id', 'title', 'locale', 'filters', 'dateRange', 'dimensions', 'layout', 'columns', 'items',
   'widgets', 'widget', 'widgetId', 'seriesId', 'changes', 'presentation', 'series', 'metric', 'type', 'dimension', 'analysis', 'comparison', 'movingAverage', 'window',
-  'runningTotal', 'percentageContribution', 'ranking', 'topN', 'direction', 'limit', 'operations', 'op', 'en', 'ar', 'from', 'to',
+  'runningTotal', 'percentageContribution', 'ranking','pareto', 'topN', 'direction', 'limit', 'operations', 'op', 'en', 'ar', 'from', 'to',
   'titleEn', 'titleAr', 'datePreset', 'dateFrom', 'dateTo', 'movingAverageWindow', 'topNDirection', 'topNLimit', 'mark', 'requestedPresentation', 'palette', 'orientation', 'pieVariant', 'legend', 'dataLabels', 'curve', 'values', 'x', 'y', 'w', 'h', 'minW', 'minH']);
 function safeShape(value: unknown, field = '', depth = 0): unknown {
   if (depth > 8) return '[depth limit]';

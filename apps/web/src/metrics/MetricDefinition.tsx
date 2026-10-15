@@ -19,7 +19,7 @@ export function MetricDefinitionBody({ metric, locale, currency, metadata }: Pro
  const status = metricTrustStatus(metric,metadata,published,locale);
  const fields = [
   [text.formula, help.formula[locale]], [text.includes, help.inclusionSummary[locale]], [text.excludes, help.exclusionSummary[locale]],
-  [text.date, help.dateBasis[locale]], [text.unit, definitionUnit(metric,locale,currency)],
+  [text.date, help.dateBasis[locale]], [text.unit, definitionUnit(metric,locale,currency,metadata)],
   [text.type, text[help.metricType]], [text.credits, help.refundCreditBehavior[locale]], [text.aggregation, help.aggregationBehavior[locale]],
   [text.dimensions, (publication?.capabilities.find(capability => capability.metric === metric.id)?.dimensions ?? metric.dimensions).map(dimension => copy[locale].dimensions[dimension]).join(locale === 'ar' ? '، ' : ', ') || '—'],
   [text.version, String(help.definitionVersion)], [text.period, metadata?.dataThrough ?? publication?.period?.to ?? '—'], [text.asOf, metadata?.sourceAsOf ?? '—'],
@@ -76,7 +76,10 @@ function metricTrustStatus(metric:SemanticMetric,metadata:AnalyticsResult['metad
  return approved?definitionCopy[locale].certified:definitionStatus(metadata,locale);
 }
 
-function definitionUnit(metric:SemanticMetric,locale:Locale,currency:string|undefined){
+function definitionUnit(metric:SemanticMetric,locale:Locale,currency:string|undefined,metadata:AnalyticsResult['metadata']|undefined){
+ if(metadata?.metricType==='percentage')return '%';
+ if(metric.type==='date')return locale==='ar'?'تاريخ تقويمي':'Calendar date';
+ if(metric.presentation.unit==='base_quantity')return locale==='ar'?'وحدة المنتج الأساسية':'Product base unit';
  if(metric.type==='currency')return currency??'—';
  if(metric.presentation.unit==='days'&&locale==='ar')return 'يوم';
  return metric.presentation.unit??(locale==='ar'?'عدد':'Count');

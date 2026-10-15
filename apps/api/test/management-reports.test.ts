@@ -13,6 +13,7 @@ test('published management default executes exact metrics while customer and Fin
   const templates=(await app.inject({url:'/api/dashboard-templates',headers})).json();assert.equal(templates.defaultTemplateId,'executive-sales-invoicing');
   for(const id of ['executive-sales-invoicing','business-line-performance','salesperson-performance','invoice-refund-operations']) {
    const result=await app.inject({url:`/api/dashboard-templates/${id}/instantiate`,headers});assert.equal(result.statusCode,200);assert.equal(result.json().execution.metadata.failedSeries,0);
+   if(id==='executive-sales-invoicing')assert.ok(result.json().dashboard.widgets.every((widget:{type:string})=>widget.type==='kpi'),'unpublished monthly charts keep the original executive report available');
    assert.deepEqual(result.json().dashboard.filters,{datePreset:'current_year'});
   }
   assert.equal((await app.inject({url:'/api/dashboard-templates/customer-performance/instantiate',headers})).statusCode,409);
@@ -25,7 +26,7 @@ test('published management default executes exact metrics while customer and Fin
 test('the twelve local dashboard templates are available and open through HTTP with staging per-metric releases in EN/AR',async()=>{
  const {dashboardTemplates}=await import('@el-dabboos/application');
  const {requiredMeasures,semanticCatalog}=await import('@el-dabboos/domain');
- const templates=dashboardTemplates.filter(template=>template.periodStrategy==='certified');
+ const templates=dashboardTemplates.filter(template=>template.periodStrategy==='certified'&&!template.tags.includes('source-business'));
  assert.equal(templates.length,12);
  const metrics=[...new Set(templates.flatMap(template=>template.widgets.flatMap(widget=>widget.series.map(series=>series.metric))))];
  const measures=[...new Set(metrics.flatMap(metric=>requiredMeasures(metric)))];

@@ -1,4 +1,4 @@
-import { semanticCatalog, timeDimensions } from '@el-dabboos/domain';
+import { compatibleQuantityMetrics, semanticCatalog, timeDimensions } from '@el-dabboos/domain';
 import type { DashboardSeries, DimensionId, WidgetPresentation, WidgetType } from '@el-dabboos/domain';
 import type { RequestedPresentation } from './generation-plan.ts';
 
@@ -8,10 +8,9 @@ export function resolveGenerationWidget(input: { dimension?: DimensionId; series
   { type: WidgetType; dimension?: DimensionId; series: DashboardSeries[]; presentation?: WidgetPresentation } {
   const { dimension, requestedPresentation } = input;
   const time = dimension !== undefined && timeDimensions.includes(dimension);
-  const units = input.series.map(series => series.analysis?.percentageContribution ? 'percentage:%'
+  const units = input.series.map(series => series.analysis?.percentageContribution||series.analysis?.pareto ? 'percentage:%'
     : `${semanticCatalog[series.metric]?.type}:${semanticCatalog[series.metric]?.presentation.unit ?? ''}`);
-  const defaultType: WidgetType = input.series.length === 1 && dimension === undefined ? 'kpi'
-    : dimension === undefined || new Set(units).size > 1 ? 'table' : time ? 'line' : 'bar';
+  const defaultType = defaultWidgetType(input.series, dimension, units, time);
   const { type, ...explicit } = requestedPresentation ?? { type: defaultType };
   const presentation: WidgetPresentation = {
     ...(type === 'bar' ? { orientation: time ? 'vertical' : 'horizontal' } : {}),
@@ -25,4 +24,15 @@ export function resolveGenerationWidget(input: { dimension?: DimensionId; series
   }));
   return { type, ...(dimension !== undefined ? { dimension } : {}), series,
     ...(Object.keys(presentation).length ? { presentation } : {}) };
+}
+
+function defaultWidgetType(series: DashboardSeries[], dimension: DimensionId | undefined, units: string[], time: boolean): WidgetType {
+  if (series.length === 1 && dimension === undefined) return 'kpi';
+  if (dimension === undefined || new Set(units).size > 1 || sourceTable(series)) return 'table';
+  return time ? 'line' : 'bar';
+}
+
+function sourceTable(series: DashboardSeries[]) {
+  return series.some(series => semanticCatalog[series.metric].type === 'date'
+    || compatibleQuantityMetrics.includes(series.metric as import('@el-dabboos/domain').BusinessMetricId));
 }

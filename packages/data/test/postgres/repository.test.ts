@@ -19,6 +19,7 @@ const queries: AnalyticsQuery[] = [
   { metric: 'sales_growth',dateRange: range,groupBy: 'month' },
   { metric: 'revenue',dateRange: range,groupBy: 'branch',analysis: { topN: { direction: 'top',limit: 1 } } },
   { metric: 'revenue',dateRange: range,groupBy: 'branch',analysis: { ranking: true } },
+  { metric: 'revenue',dateRange: range,groupBy: 'branch',analysis: { pareto: true } },
   { metric: 'revenue',dateRange: range,groupBy: 'month',analysis: { movingAverage: { window: 2 } } },
   { metric: 'revenue',dateRange: range,groupBy: 'month',analysis: { runningTotal: true } },
   { metric: 'revenue',dateRange: range,groupBy: 'branch',analysis: { percentageContribution: true } },
@@ -87,7 +88,7 @@ test('repository: certification/currency gates, query bounds, numeric refusal an
 });
 
 test('repository parity: every executable catalog family, inventory/finance snapshots, duration ratios and moved attribution', { skip: !enabled },async t => {
-  const { categoricalDimensions,requiredMeasures,semanticCatalog,timeDimensions,factMeasureIds } = await import('@el-dabboos/domain');
+  const { compatibleQuantityMetrics,categoricalDimensions,requiredMeasures,semanticCatalog,timeDimensions,factMeasureIds } = await import('@el-dabboos/domain');
   const db = await database();
   try {
     const m = mapping();
@@ -107,10 +108,12 @@ test('repository parity: every executable catalog family, inventory/finance snap
     const facts: AnalyticsFact[] = canonical.map(f => ({ tenantId: f.tenantId,measureId: f.measureId,date: f.businessDate,value: Number(f.value),dimensions: f.dimensions,...(f.entityId ? { entityId: f.entityId } : {}) }));
     const repo = new PostgresAnalyticsRepository(db.runtime,{ reportingCurrencies: { a: 'IQD' },clock });
     for (const metric of Object.values(semanticCatalog)) await t.test(metric.id,async () => {
-      const dimension = m.capabilities.find(c => c.metric===metric.id)!.dimensions.find(d => categoricalDimensions.includes(d));
+      const quantity=compatibleQuantityMetrics.includes(metric.id as import('@el-dabboos/domain').BusinessMetricId);
+      const dimension = quantity?'uom':m.capabilities.find(c => c.metric===metric.id)!.dimensions.find(d => categoricalDimensions.includes(d));
       for (const groupBy of [undefined,'month' as const,dimension]) {
         const q: AnalyticsQuery = { metric: metric.id,dateRange: range,...(groupBy ? { groupBy } : {}) };
         const ctx = { tenantId: 'a',locale: 'en' as const };
+        if(quantity&&groupBy!=='uom'){await assert.rejects(repo.execute(q,ctx),/Quantity/);continue;}
         if (['average_confirmed_order_value','average_invoice_value','net_aged_receivable','total_overdue_receivable','gross_open_receivable_components','credit_balances','overdue_receivable_percentage'].includes(metric.id) || metric.id.startsWith('aged_')) {
           await assert.rejects(repo.execute(q,ctx),/Uncertified derived|Unsupported dimension/);
           continue;
@@ -118,7 +121,7 @@ test('repository parity: every executable catalog family, inventory/finance snap
         const expected = executeFacts(facts,q,ctx,{ sourceId: 'postgres',executedAt: clock().toISOString(),sourceAsOf: '2026-10-01T10:00:00.000Z' });
         const actual=await repo.execute(q,ctx);
         expected.metadata.release={datasetId:'release',sourceId:'fixture',mappingId:'synthetic',mappingVersion:'1',certificationReference:'SYNTHETIC TEST ONLY'};
-        if(metric.semantics.kind==='snapshot')expected.metadata.snapshotAsOf='2026-02-28';
+        if(metric.semantics.kind==='snapshot'||metric.semantics.kind==='ratio'&&metric.semantics.basis==='snapshot')expected.metadata.snapshotAsOf='2026-02-28';
         assert.deepEqual(actual,expected);
         if (dimension) {
           const restricted = { ...ctx,enforcedFilters: [{ dimension,values: ['original'] }] };

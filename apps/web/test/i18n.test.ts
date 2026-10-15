@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { tenantProfiles } from '@el-dabboos/domain';
+import { semanticCatalog,tenantProfiles } from '@el-dabboos/domain';
 import { conversationalCopy, copy, formatDate, formatKey, formatTimestamp, formatValue, localeTag } from '../src/i18n.ts';
+import {formatSeriesValue} from '../src/rendering/shared.ts';
 const iq = tenantProfiles['demo-iq'];
 const eg = tenantProfiles['demo-eg'];
 test('Iraqi and Egyptian profiles control currency and locale formatting', () => {
@@ -41,4 +42,19 @@ test('data coverage and optional source update labels are distinct and localized
   assert.equal(copy.ar.sourceUpdated, 'تحديث المصدر');
   assert.match(formatTimestamp('2026-01-30T08:00:00.000Z', 'en', iq), /11:00/u);
   assert.match(formatTimestamp('2026-01-30T08:00:00.000Z', 'en', eg), /10:00/u);
+});
+
+test('calendar dates render as localized dates and fractional base quantities remain visible',()=>{
+ const epochDay=Date.parse('2026-09-05T00:00:00Z')/86400000;
+ assert.match(formatValue(epochDay,'date','en',iq),/2026/);
+ assert.ok(!formatValue(epochDay,'date','en',iq).includes(String(epochDay)));
+ assert.match(formatValue(epochDay,'date','ar',iq),/[٠-٩]/u);
+ assert.match(formatValue(0.125,'number','en',iq,'base_quantity'),/0.125/);
+});
+
+test('monetary contribution analyses render percentages rather than currency in the shared precise formatter',()=>{
+ for(const analysis of [{pareto:true as const},{percentageContribution:true as const}]){
+  const widget={id:'synthetic',type:'table' as const,dimension:'customer' as const,series:[{id:'share',metric:'period_net_sales' as const,analysis}]};
+  assert.equal(formatSeriesValue(widget,semanticCatalog,'en',iq,'share',50),'50%');
+ }
 });

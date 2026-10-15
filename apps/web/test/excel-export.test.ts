@@ -95,3 +95,12 @@ test('every additional table exposes Excel export in both languages, including l
     }
   } finally { await server.close(); }
 });
+
+test('calendar-date exports use ISO dates rather than epoch-day codes',()=>{
+ const dates={...widget,series:[{id:'last-date',metric:'customer_last_invoice_date' as const}]};
+ const epoch=Date.parse('2026-09-05T00:00:00Z')/86400000;
+ const dateEntry:WidgetExecution={status:'success',seriesResults:{},alignedRows:[{key:'customer1',series:{'last-date':{value:epoch}}}]};
+ const exported=tableWorkbook(dates,dateEntry,{catalog:semanticCatalog,locale:'en',profile:tenantProfiles['demo-iq']});
+ assert.ok(exported.data[0]!.some(row=>row.includes('2026-09-05')));
+ assert.ok(!JSON.stringify(exported.data).includes('epoch_day'));
+});

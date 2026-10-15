@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { AuthorizationError, selectDefaultTemplate, templateCompatibility,assertPublishedDashboard,dashboardTemplates, getDashboardTemplate, instantiateDashboardTemplate } from '@el-dabboos/application';
+import { supportedPurposeTemplate,supportedTemplatePeriod, AuthorizationError, selectDefaultTemplate, templateCompatibility,assertPublishedDashboard,dashboardTemplates, getDashboardTemplate, instantiateDashboardTemplate } from '@el-dabboos/application';
 import { workspacePublishedCapabilities } from '../published-analytics.ts';
 import { analyticsContext } from '../context.ts';
 import type { RouteContext } from '../context.ts';
@@ -9,9 +9,10 @@ export function registerTemplateRoutes(app: FastifyInstance, services: RouteCont
   app.get('/api/dashboard-templates', async request => {
     const { context } = await services.session(request.headers); services.authorize(context, 'dashboard:view');
     const published = await workspacePublishedCapabilities(services,context);
-    const templates = dashboardTemplates.map(template => {
+    const templates = dashboardTemplates.map(sourceTemplate => {
+      const template=supportedPurposeTemplate(sourceTemplate,published);
       const compatibility = templateCompatibility(template,published);
-      const allowed = services.templateAllowed(template,context);
+      const allowed = services.templateAllowed(sourceTemplate,context);
       return { ...template,compatibility,availability: !allowed ? 'restricted' : compatibility.status==='supported' ? 'available' : 'incompatible',
         ...(!allowed ? { reason: 'Contains metrics unavailable to this user.' } : compatibility.status!=='supported' ? { reason: 'This template requires analytics capabilities that are not available for this workspace.' } : {}) };
     });
@@ -22,13 +23,20 @@ export function registerTemplateRoutes(app: FastifyInstance, services: RouteCont
     return services.checked(context, 'dashboard.execute', async () => {
       services.authorize(context, 'dashboard:view', 'analytics:query');
       await services.requireData(context.tenant.tenantId);
-      const template = getDashboardTemplate(request.params.id);
-      if (!template) throw new ApiError(404, 'TEMPLATE_NOT_FOUND', 'Unknown dashboard template.');
-      if (!services.templateAllowed(template, context)) throw new AuthorizationError('TEMPLATE_FORBIDDEN', 'Template contains unavailable metrics.');
+      const sourceTemplate = getDashboardTemplate(request.params.id);
+      if (!sourceTemplate) throw new ApiError(404, 'TEMPLATE_NOT_FOUND', 'Unknown dashboard template.');
+      if (!services.templateAllowed(sourceTemplate, context)) throw new AuthorizationError('TEMPLATE_FORBIDDEN', 'Template contains unavailable metrics.');
       const published = await workspacePublishedCapabilities(services,context);
+      const template=supportedPurposeTemplate(sourceTemplate,published);
       const compatibility = templateCompatibility(template,published);
       if (compatibility.status!=='supported') throw new ApiError(409,'TEMPLATE_INCOMPATIBLE',`This template requires analytics capabilities that are not available for this workspace: ${compatibility.missing.join(', ')}.`);
-      const dashboard = services.ensureDashboard(instantiateDashboardTemplate(template, profile, services.clock(), context.locale), context);
+      const draft = instantiateDashboardTemplate(template, profile, services.clock(), context.locale);
+      if(published.mode==='certified' && (template.periodStrategy==='latest_complete_month'||template.periodStrategy==='latest_available_month'||template.periodStrategy==='published_history')){
+        const period=supportedTemplatePeriod(template,published);
+        if(!period)throw new ApiError(409,'TEMPLATE_INCOMPATIBLE','No shared complete reporting month is available.');
+        draft.filters={dateRange:period};
+      }
+      const dashboard=services.ensureDashboard(draft,context);
       assertPublishedDashboard(dashboard,published,profile.timeZone,services.clock());
       return { dashboard, execution: await services.executor.execute(dashboard, analyticsContext(context), { timeZone: profile.timeZone }) };
     }, request.params.id);

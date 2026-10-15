@@ -1,3 +1,4 @@
+import {compatibleQuantityMetrics} from './business-catalog.ts';
 import type { DashboardWidget, SemanticMetric } from './contracts.ts';
 import { semanticCatalog, timeDimensions } from './catalog.ts';
 
@@ -5,6 +6,7 @@ import { semanticCatalog, timeDimensions } from './catalog.ts';
 export function visualizationIssues(widget: DashboardWidget, catalog: Record<string, SemanticMetric> = semanticCatalog): string[] {
   const issues: string[] = [];
   const { type, dimension, series, presentation = {} } = widget;
+  issues.push(...calendarDateIssues(widget,catalog),...quantityChartIssues(widget));
   const time = dimension !== undefined && timeDimensions.includes(dimension);
   if (type === 'kpi' && (series.length !== 1 || dimension !== undefined)) issues.push('KPI requires one series and no dimension');
   if (type !== 'kpi' && !dimension) issues.push('Visualization requires grouping');
@@ -16,12 +18,12 @@ export function visualizationIssues(widget: DashboardWidget, catalog: Record<str
       const metric = catalog[item.metric];
       const analysis = item.analysis;
       if (!metric || !['additive', 'snapshot'].includes(metric.semantics.kind) || metric.type === 'duration' || metric.type === 'percentage' ||
-        analysis?.comparison || analysis?.movingAverage || analysis?.runningTotal || analysis?.percentageContribution)
+        invalidCompositionAnalysis(analysis))
         issues.push('Composition requires additive or snapshot values without derived analysis');
     }
   }
   if (['line', 'area', 'bar', 'combo'].includes(type)) {
-    const units = series.map(item => item.analysis?.percentageContribution ? 'percentage:%' : `${catalog[item.metric]?.type}:${catalog[item.metric]?.presentation.unit ?? ''}`);
+    const units = series.map(item => item.analysis?.percentageContribution||item.analysis?.pareto ? 'percentage:%' : `${catalog[item.metric]?.type}:${catalog[item.metric]?.presentation.unit ?? ''}`);
     if (new Set(units).size > 1) issues.push('Single axis requires matching metric type and unit');
   }
   if (presentation.orientation !== undefined && type !== 'bar') issues.push('Orientation is only supported for Bar');
@@ -32,3 +34,13 @@ export function visualizationIssues(widget: DashboardWidget, catalog: Record<str
   if (series.some(item => item.presentation !== undefined && type !== 'combo')) issues.push('Series marks are only supported for Combo');
   return issues;
 }
+
+function calendarDateIssues(widget:DashboardWidget,catalog:Record<string,SemanticMetric>){
+ return widget.series.some(item=>catalog[item.metric]?.type==='date')&&!['table','kpi'].includes(widget.type)?['Calendar dates require a table or KPI']:[];
+}
+
+function quantityChartIssues(widget:DashboardWidget){
+ return widget.type!=='table'&&widget.series.some(series=>compatibleQuantityMetrics.includes(series.metric as import('./contracts.ts').BusinessMetricId))?['Base quantities require a table with product or compatible-unit grouping']:[];
+}
+
+function invalidCompositionAnalysis(analysis:import('./contracts.ts').AnalysisSpec|undefined){return !!(analysis?.comparison||analysis?.movingAverage||analysis?.runningTotal||analysis?.percentageContribution||analysis?.pareto);}

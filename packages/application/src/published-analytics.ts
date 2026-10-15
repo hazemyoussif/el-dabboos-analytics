@@ -28,7 +28,7 @@ export function templateCompatibility(template: DashboardTemplate,published: Pub
     return attempts.find(issues => !issues.length) ?? attempts[0] ?? [`metric:${requirement.metric}`];
   });
   const supported = checks.filter(issues => !issues.length).length;
-  if(published.mode==='certified' && template.periodStrategy==='certified' && supported===checks.length && !supportedTemplatePeriod(template,published))return {status:'unsupported' as const,missing:['period:shared-coverage'],requirements};
+  if(published.mode==='certified' && template.periodStrategy && supported===checks.length && !supportedTemplatePeriod(template,published))return {status:'unsupported' as const,missing:['period:shared-coverage'],requirements};
   return { status: supported===checks.length ? 'supported' as const : supported ? 'partially_supported' as const : 'unsupported' as const,
     missing: [...new Set(checks.flat())],requirements };
 }

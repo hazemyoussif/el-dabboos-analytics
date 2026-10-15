@@ -8,7 +8,7 @@ const object = <T extends object>(properties: T, required: string[]) => ({ type:
 export const analyticsSeriesSchema = object({
   metric: choice(Object.keys(semanticCatalog)), comparison: choice(['previous_period', 'month_over_month', 'year_over_year']),
   movingAverageWindow: { type: 'integer', minimum: 2, maximum: 24 },
-  runningTotal: { type: 'boolean' }, percentageContribution: { type: 'boolean' }, ranking: { type: 'boolean' },
+  runningTotal: { type: 'boolean' }, percentageContribution: { type: 'boolean' }, ranking: { type: 'boolean' },pareto:{type:'boolean'},
   topNDirection: choice(['top', 'bottom']), topNLimit: { type: 'integer', minimum: 1, maximum: 100 },
 }, ['metric']);
 
@@ -17,7 +17,7 @@ export function compileAnalyticsSeries(series: AnalyticsSeriesIntent): { metric:
   const analysis: AnalysisSpec = {};
   if (series.comparison) analysis.comparison = series.comparison;
   if (series.movingAverageWindow !== undefined) analysis.movingAverage = { window: series.movingAverageWindow };
-  for (const key of ['runningTotal', 'percentageContribution', 'ranking'] as const) if (series[key]) analysis[key] = true;
+  for (const key of ['runningTotal', 'percentageContribution', 'ranking','pareto'] as const) if (series[key]) analysis[key] = true;
   if (series.topNDirection && series.topNLimit !== undefined) analysis.topN = { direction: series.topNDirection, limit: series.topNLimit };
   return { metric: series.metric, ...(Object.keys(analysis).length ? { analysis } : {}) };
 }

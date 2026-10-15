@@ -37,3 +37,5 @@ export * from './drill-through.ts';
 export * from './analyst.ts';
 
 export * from './workspace-ai-settings.ts';
+
+export * from './business-catalog.ts';

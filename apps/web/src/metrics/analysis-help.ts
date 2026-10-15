@@ -7,5 +7,6 @@ export function analysisHelp(analysis:AnalysisSpec|undefined,locale:Locale):[str
   const text=descriptions[locale],fields:[string,string][]=[];
   if (analysis?.comparison==='month_over_month') fields.push([text.comparison,text.formula],[locale==='ar'?'سلوك فترة المقارنة':'Comparison period behavior',text.period]);
   if (analysis?.movingAverage) fields.push([`${text.moving}: ${analysis.movingAverage.window}`,text.window]);
+  if(analysis?.pareto)fields.push([locale==='ar'?'باريتو المبيعات الموجبة (التعريف 1)':'Positive-sales Pareto (definition 1)',locale==='ar'?'ترتيب المساهمات الموجبة تنازلياً بهوية ثابتة للتعادل؛ النسبة التراكمية = مجموع المساهمات حتى الصف ÷ إجمالي المساهمات الموجبة × ١٠٠. أول صف يصل إلى ٨٠٪ يحدد المجموعة. تُستبعد القيم الصفرية والسالبة.':'Sort positive contributions descending, with stable identity ties. Cumulative share = contributions through this row / all positive contributions × 100. The first row reaching 80% defines the set. Zero and negative contributions are excluded.']);
   return fields;
 }

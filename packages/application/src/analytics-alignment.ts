@@ -1,4 +1,4 @@
-import type { DashboardWidget } from '@el-dabboos/domain';
+import type { AnalyticsRow,DashboardWidget } from '@el-dabboos/domain';
 import type { AlignedSeriesValue, AlignedWidgetRow, SeriesExecution } from './executor.ts';
 
 export function alignAnalyticsSeries(widget: Pick<DashboardWidget,'dimension'|'series'>, results: Record<string, SeriesExecution>): AlignedWidgetRow[] {
@@ -6,7 +6,7 @@ export function alignAnalyticsSeries(widget: Pick<DashboardWidget,'dimension'|'s
   if (selected?.analysis?.topN && results[selected.id]?.status !== 'success') return [];
   const successful = widget.series.flatMap(series => {
     const entry = results[series.id];
-    return entry?.status === 'success' ? [{ series, rows: entry.result.rows }] : [];
+    return entry?.status === 'success' ? [{ series, rows: entry.result.rows, indexed: indexRows(entry.result.rows) }] : [];
   });
   if (successful.length === 0) return [];
   const keys: Array<string | null> = [];
@@ -19,7 +19,7 @@ export function alignAnalyticsSeries(widget: Pick<DashboardWidget,'dimension'|'s
   return keys.map(key => {
     const series: Record<string, AlignedSeriesValue | null> = {};
     for (const item of successful) {
-      const row = item.rows.find(candidate => candidate.key === key);
+      const row = item.indexed.get(key);
       series[item.series.id] = row ? { value: row.value,
         ...(row.comparisonValue !== undefined ? { comparisonValue: row.comparisonValue } : {}),
         ...(row.absoluteChange !== undefined ? { absoluteChange: row.absoluteChange } : {}),
@@ -28,4 +28,10 @@ export function alignAnalyticsSeries(widget: Pick<DashboardWidget,'dimension'|'s
     }
     return { key, series };
   });
+}
+
+function indexRows(rows:readonly AnalyticsRow[]) {
+ const indexed=new Map<string|null,AnalyticsRow>();
+ for(const row of rows)if(!indexed.has(row.key))indexed.set(row.key,row);
+ return indexed;
 }

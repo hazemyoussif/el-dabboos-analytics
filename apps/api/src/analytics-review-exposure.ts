@@ -1,9 +1,9 @@
 import {randomUUID} from 'node:crypto';
-import {createMartPool,createOdooSourcePool,tenantTransaction,readBaseline,OdooSnapshotLease,reviewMapping,OdooReviewReader,exposeReviewMonth} from '@el-dabboos/data';
+import {createMartPool,createOdooSourcePool,tenantTransaction,readBaseline,OdooSnapshotLease,reviewMapping,OdooReviewReader,OdooBusinessReader,businessMapping,exposeReviewMonth} from '@el-dabboos/data';
 import {resolveOdooSourceConfig} from './source-connections.ts';
 import {assertHostedMartUrl} from './hosted-mart-url.ts';
 /** Explicit operator month exposure; no Finance approval record is required or fabricated. */
-export async function exposeAnalyticsReview(tenantId:string,month:string,environment:NodeJS.ProcessEnv) {
+export async function exposeAnalyticsReview(tenantId:string,month:string,environment:NodeJS.ProcessEnv,family:'review'|'business'='review') {
  if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month))throw new Error('Explicit YYYY-MM month required');
  const mart=createMartPool(assertHostedMartUrl(environment.MART_INGESTOR_URL,environment,'Configured mart writer required'),1);
  try{
@@ -13,9 +13,9 @@ export async function exposeAnalyticsReview(tenantId:string,month:string,environ
   try{
    const lease=await OdooSnapshotLease.open(owner,config,config.snapshotMaxDurationMs,config.credentialPolicy);
    try{
-    const mapping=reviewMapping({tenantId,sourceId:baseline.sourceId,currency:baseline.reportingCurrency,timeZone:baseline.mappings[0]!.measures[0]!.timeZone,datasetId:`review:${month}:${randomUUID()}`});
-    const source=new OdooReviewReader(reader,config,lease,{month,mapping});
-    return await exposeReviewMonth(mart,{tenantId,month,mapping,cutoff:lease.evidence.sourceAsOf,revision:lease.evidence.frozenRevision,facts:source.facts(),controls:()=>source.controls(),assertAlive:()=>lease.assertAlive()});
+    const mapping=(family==='business'?businessMapping:reviewMapping)({tenantId,sourceId:baseline.sourceId,currency:baseline.reportingCurrency,timeZone:baseline.mappings[0]!.measures[0]!.timeZone,datasetId:`${family}:${month}:${randomUUID()}`,current:month===new Intl.DateTimeFormat('en-CA',{timeZone:baseline.mappings[0]!.measures[0]!.timeZone,year:'numeric',month:'2-digit'}).format(new Date(lease.evidence.sourceAsOf)).slice(0,7)});
+    const source=new (family==='business'?OdooBusinessReader:OdooReviewReader)(reader,config,lease,{month,mapping});
+    return await exposeReviewMonth(mart,{tenantId,month,mapping,cutoff:lease.evidence.sourceAsOf,revision:lease.evidence.frozenRevision,facts:source.facts(),controls:()=>source.controls(),assertAlive:()=>lease.assertAlive()},family);
    }finally{await lease.close();}
   }finally{await Promise.all([owner.end(),reader.end()]);}
  }finally{await mart.end();}

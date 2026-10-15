@@ -12,7 +12,7 @@ export interface WidgetIntentChanges {
 }
 export interface AnalysisChanges {
   comparison?: AnalysisSpec['comparison'] | null; movingAverageWindow?: number | null;
-  runningTotal?: boolean; percentageContribution?: boolean; ranking?: boolean;
+  runningTotal?: boolean; percentageContribution?: boolean; ranking?: boolean; pareto?: boolean;
   topNDirection?: 'top' | 'bottom' | null; topNLimit?: number | null;
 }
 export interface SeriesIntentChanges { metric?: MetricId; analysis?: AnalysisChanges | null; presentation?: null }
@@ -53,7 +53,7 @@ export const dashboardEditPlanSchema = { ...object({ operations: { type: 'array'
     legend: choice(['auto', 'show', 'hide', null]), dataLabels: choice(['auto', 'show', 'hide', null]), curve: choice(['straight', 'smooth', null]) }),
   analysis: nullableObject({ comparison: choice(['previous_period', 'month_over_month', 'year_over_year', null]),
     movingAverageWindow: { type: ['integer', 'null'], minimum: 2, maximum: 24 },
-    runningTotal: { type: 'boolean' }, percentageContribution: { type: 'boolean' }, ranking: { type: 'boolean' },
+    runningTotal: { type: 'boolean' }, percentageContribution: { type: 'boolean' }, ranking: { type: 'boolean' },pareto:{type:'boolean'},
     topNDirection: choice(['top', 'bottom', null]), topNLimit: { type: ['integer', 'null'], minimum: 1, maximum: 100 } }),
   dateRange: nullableObject({ from: { type: 'string' }, to: { type: 'string' } }, ['from', 'to']),
   filter: object({ dimension: { type: 'string' }, values: { type: 'array', minItems: 1, maxItems: 100, items: text } }, ['dimension', 'values']),
@@ -92,7 +92,7 @@ function mergeAnalysis(current: AnalysisSpec | undefined, changes: AnalysisChang
   else if (changes.comparison !== undefined) analysis.comparison = changes.comparison;
   if (changes.movingAverageWindow === null) delete analysis.movingAverage;
   else if (changes.movingAverageWindow !== undefined) analysis.movingAverage = { window: changes.movingAverageWindow };
-  for (const key of ['runningTotal', 'percentageContribution', 'ranking'] as const) {
+  for (const key of ['runningTotal', 'percentageContribution', 'ranking','pareto'] as const) {
     if (changes[key] === false) delete analysis[key]; else if (changes[key] === true) analysis[key] = true;
   }
   if (changes.topNDirection === null || changes.topNLimit === null) {

@@ -30,6 +30,7 @@ export function analyzeRows(input: AnalyticsRow[],query: AnalyticsQuery,comparis
     const total = rows.reduce((sum,row) => sum+(row.value ?? 0),0);
     rows = rows.map(row => ({ key: row.key,value: total===0 ? null : (row.value ?? 0)/total*100 }));
   }
+  if (query.analysis?.pareto) rows = cumulativePositiveShare(rows);
   if (query.analysis?.ranking) {
     const ranks = new Map([...rows].sort(numericOrder('top')).map((row,index) => [row.key,index+1]));
     rows = rows.map(row => ({ ...row,rank: ranks.get(row.key)! }));
@@ -37,4 +38,14 @@ export function analyzeRows(input: AnalyticsRow[],query: AnalyticsQuery,comparis
   if (query.analysis?.topN) rows = [...rows].sort(numericOrder(query.analysis.topN.direction)).slice(0,query.analysis.topN.limit);
   if (rows.some(row => Object.values(row).some(value => typeof value==='number' && (!Number.isFinite(value) || Math.abs(value)>Number.MAX_SAFE_INTEGER)))) throw new Error('Unsafe derived result');
   return rows;
+}
+
+function cumulativePositiveShare(rows: AnalyticsRow[]): AnalyticsRow[] {
+  const positive = rows.filter(row => row.value !== null && row.value > 0).sort(numericOrder('top'));
+  const total = positive.reduce((sum, row) => sum + row.value!, 0);
+  let cumulative = 0;
+  return positive.map((row, index) => {
+    cumulative += row.value!;
+    return { key: row.key, value: cumulative / total * 100, rank: index + 1 };
+  });
 }

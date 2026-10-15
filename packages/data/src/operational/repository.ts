@@ -1,3 +1,4 @@
+import {businessMetricIds} from '@el-dabboos/domain';
 import {productReviewMetrics} from '../review/definitions.ts';
 import {ReviewAnalyticsRepository,reviewQuery} from '../review/repository.ts';
 import { trustedDimensionOptions } from './dimension-options.ts';
@@ -17,18 +18,21 @@ export class TrustedAnalyticsRepository implements AnalyticsRepository,Dimension
  private readonly maxGroups:number;
  private readonly finance:FinanceSnapshotRepository;
  private readonly review:ReviewAnalyticsRepository;
- constructor(private readonly pool:Pool,private readonly options:HistoricalRepositoryOptions){this.maxGroups=options.historicalMaxGroups??options.maxGroups??4000;if(!Number.isInteger(this.maxGroups)||this.maxGroups<1||this.maxGroups>5000)throw new Error('Invalid trusted group bound');this.finance=new FinanceSnapshotRepository(pool,options.statementTimeoutMs,this.maxGroups);this.review=new ReviewAnalyticsRepository(pool,options.statementTimeoutMs,this.maxGroups);}
+ private readonly business:ReviewAnalyticsRepository;
+ constructor(private readonly pool:Pool,private readonly options:HistoricalRepositoryOptions){this.maxGroups=options.historicalMaxGroups??options.maxGroups??4000;if(!Number.isInteger(this.maxGroups)||this.maxGroups<1||this.maxGroups>5000)throw new Error('Invalid trusted group bound');this.finance=new FinanceSnapshotRepository(pool,options.statementTimeoutMs,this.maxGroups);this.review=new ReviewAnalyticsRepository(pool,options.statementTimeoutMs,this.maxGroups);this.business=new ReviewAnalyticsRepository(pool,options.statementTimeoutMs,options.historicalMaxGroups??options.maxGroups??10000,'business');}
  async isDataReady(tenantId:string){return await this.stored(tenantId)!==null;}
  async getPublishedCapabilities(context:AnalyticsContext):Promise<PublishedAnalyticsCapabilities>{
   const stored=await this.stored(context.tenantId);
   if(!stored)return {tenantId:context.tenantId,mode:'certified',releases:[]};
   const finance=await this.finance.capabilities(context);
   const review=await this.review.capabilities(context);
-  return policyCapabilities({...stored.capabilities,releases:[...stored.capabilities.releases,...(finance?.releases??[]),...review.releases]},context);
+  const business=await this.business.capabilities(context);
+  return policyCapabilities({...stored.capabilities,releases:[...stored.capabilities.releases,...(finance?.releases??[]),...review.releases,...business.releases]},context);
  }
  async execute(query:AnalyticsQuery,context:AnalyticsContext):Promise<AnalyticsResult> {
   validateQuery(query,context);
   const stored=await this.stored(context.tenantId);if(!stored)throw new Error('Trusted serving revision required');
+  if(businessMetricIds.includes(query.metric as import('@el-dabboos/domain').BusinessMetricId))return this.business.execute(query,context);
   const reviewFallback=productReviewMetrics.includes(query.metric)&&publishedQueryIssues({...query,filters:[...(query.filters??[]),...(context.enforcedFilters??[])]},stored.capabilities).length>0;
   if(reviewQuery(query,context)||reviewFallback)return this.review.execute(query,context);
   if(financeMetric(query.metric)){const capabilities=await this.finance.capabilities(context);if(capabilities)return this.finance.execute(query,context,capabilities);}
@@ -48,6 +52,7 @@ export class TrustedAnalyticsRepository implements AnalyticsRepository,Dimension
  }
  async listDimensionValues(dimension:DimensionId,context:AnalyticsContext){return (await this.listDimensionOptions(dimension,context)).map(option=>option.id);}
  async searchDimensionOptions(dimension:DimensionId,context:AnalyticsContext,request:import('@el-dabboos/domain').DimensionDiscoveryRequest){
+  if(request.metric&&businessMetricIds.includes(request.metric as import('@el-dabboos/domain').BusinessMetricId)||['brand','customer_segment','customer_class','uom','journal','supplier'].includes(dimension))return this.business.searchDimensionOptions(dimension,context,request);
   if(dimension==='product'||dimension==='product_category'||request.metric&&reviewQuery({metric:request.metric,groupBy:dimension},context))return this.review.searchDimensionOptions(dimension,context,request);
   if(dimension!=='customer')return boundedDimensionPage(await this.listDimensionOptions(dimension,context),request);
   return discoverCustomers(this.pool,context,request,await this.getPublishedCapabilities(context),this.options.statementTimeoutMs??15000);
@@ -58,7 +63,9 @@ export class TrustedAnalyticsRepository implements AnalyticsRepository,Dimension
   const capabilities=await this.getPublishedCapabilities(context);
   const eligible=capabilities.releases.flatMap(release=>release.capabilities).filter(capability=>capability.dimensions.includes(dimension)&&(context.enforcedFilters??[]).every(filter=>capability.dimensions.includes(filter.dimension)));
   if(!eligible.length)throw new Error('Uncertified discovery/policy dimension');
-  const reviewOptions=await this.review.dimensionOptions(dimension,context);
+  const businessOptions=dimension==='customer'?[]:await this.business.dimensionOptions(dimension,context);
+  if(['brand','customer_segment','customer_class','uom','journal','supplier','warehouse'].includes(dimension))return businessOptions;
+  const reviewOptions=[...await this.review.dimensionOptions(dimension,context),...businessOptions];
   if(dimension==='product'||dimension==='product_category')return reviewOptions;
   return tenantTransaction(this.pool,context.tenantId,async client=>{
    const options=await trustedDimensionOptions(client,{dimension,context,metric:eligible[0]!.metric,measures:[...new Set(eligible.flatMap(capability=>requiredMeasures(capability.metric)))],maxGroups:this.maxGroups});

@@ -4,7 +4,7 @@ import {publishedQueryIssues,requiredMeasures,validDateRange} from '@el-dabboos/
 import type {AnalyticsContext,DimensionId,DimensionDiscoveryRequest,DimensionDiscoveryPage,PublishedAnalyticsCapabilities} from '@el-dabboos/domain';
 import {tenantTransaction} from '../postgres/session.ts';
 import {sourceDisplayLabel,dimensionLabelField} from '../postgres/query-labels.ts';
-export async function discoverReviewDimensions(pool:Pool,scope:{dimension:DimensionId;context:AnalyticsContext;request:DimensionDiscoveryRequest;capabilities:PublishedAnalyticsCapabilities;timeout:number}):Promise<DimensionDiscoveryPage>{
+export async function discoverReviewDimensions(pool:Pool,scope:{dimension:DimensionId;context:AnalyticsContext;request:DimensionDiscoveryRequest;capabilities:PublishedAnalyticsCapabilities;timeout:number;family?:'review'|'business'}):Promise<DimensionDiscoveryPage>{
  const {dimension,context,request,capabilities}=scope,limit=request.limit??50,search=request.search??'',selected=request.selectedIds??[];
  validateBounds(request);
  const metric=request.metric??capabilities.releases.flatMap(release=>release.capabilities).find(capability=>capability.dimensions.includes(dimension))?.metric;
@@ -18,7 +18,7 @@ export async function discoverReviewDimensions(pool:Pool,scope:{dimension:Dimens
    SELECT fact.payload->'dimensions'->>$2 id,CASE WHEN count(DISTINCT fact.payload->'displayLabels'->>$3)=1 THEN min(fact.payload->'displayLabels'->>$3) END label
    FROM mart.analytics_trusted_serving trusted JOIN mart.analytics_serving_members member USING(tenant_id,revision_id)
    JOIN mart.review_facts fact USING(tenant_id,partition_id)
-   WHERE trusted.tenant_id=$1 AND member.family='review' AND fact.payload->>'measureId'=ANY($4::text[])
+   WHERE trusted.tenant_id=$1 AND member.family='${scope.family??'review'}' AND fact.payload->>'measureId'=ANY($4::text[])
    AND (fact.payload->>'businessDate')::date<=$5::date AND fact.payload->'dimensions'->>$2 IS NOT NULL
    ${filters.length?'AND '+filters.join(' AND '):''} GROUP BY fact.payload->'dimensions'->>$2),
    page AS (SELECT * FROM candidates WHERE id COLLATE "C">$6 AND (coalesce(label,'') ILIKE $7 ESCAPE '\\' OR id ILIKE $7 ESCAPE '\\') ORDER BY id COLLATE "C" LIMIT ${limit+1})
