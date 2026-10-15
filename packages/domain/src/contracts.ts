@@ -98,6 +98,19 @@ export interface AnalyticsQuery {
   filters?: AnalyticsFilter[];
   analysis?: AnalysisSpec;
 }
+/** Transient output selection. It never changes business filters or analysis populations. */
+export interface AnalyticsReadOptions {
+  window?: { limit: number; cursor?: AnalyticsResultCursor; search?: string; queries?: readonly AnalyticsQuery[] };
+  outputKeys?: readonly string[];
+  revision?: string;
+}
+/** Scope is an opaque fingerprint; the after-key is only an output position, never authorization. */
+export interface AnalyticsResultCursor { scope: string; after: string; position?: number }
+export interface AnalyticsResultWindow {
+  total: number;
+  scope: string;
+  nextCursor?: AnalyticsResultCursor;
+}
 export interface AnalyticsRow {
   key: string | null;
   value: number | null;
@@ -111,6 +124,8 @@ export interface AnalyticsResult {
   groupBy: DimensionId | null;
   rows: AnalyticsRow[];
   metadata: {
+    window?: AnalyticsResultWindow;
+    servingRevision?: string;
     /** Effective governed cutoff; snapshots are never added across this date. */
     snapshotAsOf?: string;
     /** Per-point immutable lineage for historical Finance trends. */
@@ -143,7 +158,8 @@ export interface DimensionValueRepository {
 export interface DimensionDiscoveryRequest {search?:string;cursor?:string;limit?:number;selectedIds?:readonly string[];metric?:MetricId;asOf?:string;dateRange?:DateRange}
 export interface DimensionDiscoveryPage {values:Array<{id:string;label?:string}>;selected:Array<{id:string;label?:string}>;nextCursor?:string}
 export interface AnalyticsRepository {
-  execute(query: AnalyticsQuery, context: AnalyticsContext): Promise<AnalyticsResult>;
+  readonly supportsResultWindows?: true;
+  execute(query: AnalyticsQuery, context: AnalyticsContext, read?: AnalyticsReadOptions): Promise<AnalyticsResult>;
 }
 export const widgetTypes = ['kpi', 'line', 'area', 'bar', 'pie', 'treemap', 'combo', 'table'] as const;
 export type WidgetType = typeof widgetTypes[number];

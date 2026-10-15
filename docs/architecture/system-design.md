@@ -51,7 +51,7 @@ See [domain contracts](../../packages/domain/src/contracts.ts), [security](../..
 
 API validates identity membership and route permission; canonical validators enforce full JSON Schema, semantic analysis, visualization and layout rules; metric authorization runs before execution and again after planning/editing. Policy filters travel through RequestContext → AnalyticsContext and are ANDed with user filters; they are not editable spec state. Saved record access is tenant/owner/scope-aware, with metric authorization even for shared records.
 
-Executor validates, normalizes and deduplicates queries **within one execute call**, then runs unique repository calls with a configurable bound (default 8). Identity includes metric/aggregation/group/date/filters/analysis and tenant/locale/enforced policy. No global cache exists. Result clones preserve independent series behavior and deterministic widget order. Failure isolation and required top-N anchor semantics are unchanged. [ADR 023](adr/023-execution-and-runtime-readiness.md).
+Executor validates, normalizes and deduplicates queries **within one execute call**, then runs unique repository calls with a configurable bound (default 8). Identity includes metric/aggregation/group/date/filters/analysis and tenant/locale/enforced policy. Categorical response windows and anchor peer execution follow [ADR 038](adr/038-grouped-result-windows.md). Transient output selection stays outside canonical dashboard content and does not change global analytic populations. No global cache exists. Result clones preserve independent series behavior and deterministic widget order. Failure isolation and required top-N anchor semantics are unchanged. [ADR 023](adr/023-execution-and-runtime-readiness.md).
 
 ## Structured planning
 

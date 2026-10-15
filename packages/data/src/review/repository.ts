@@ -1,5 +1,8 @@
+import {groupedReviewResult} from './grouped-result.ts';
+import {categoricalDimensions} from '@el-dabboos/domain';
+import type {AnalyticsReadOptions} from '@el-dabboos/domain';
 import {businessEventWindows} from '../business/history.ts';
-import {reviewEventRows} from './event-rows.ts';
+import {readReviewFacts,reviewMembers as members} from './read-facts.ts';
 import type {ReviewReadFact} from './event-rows.ts';
 import {businessDefinitionVersion} from '../business/definitions.ts';
 import {discoverReviewDimensions} from './discovery.ts';
@@ -11,28 +14,22 @@ import {tenantTransaction} from '../postgres/session.ts';
 import {executeFacts} from '../engine.ts';
 import {numericOutput} from '../postgres/sql.ts';
 import {reviewDefinitionVersion,reviewMetrics,productReviewMetrics} from './definitions.ts';
-const members=`mart.analytics_trusted_serving trusted JOIN mart.analytics_serving_members member USING(tenant_id,revision_id)
- JOIN mart.analytics_partitions part USING(tenant_id,partition_id) JOIN mart.review_extractions extraction USING(tenant_id,partition_id)`;
 /** Reads the one trusted manifest. Business review state never authorizes a query. */
 export class ReviewAnalyticsRepository {
  constructor(private readonly pool:Pool,private readonly timeout=15000,private readonly maxGroups=3000,private readonly family:'review'|'business'='review'){}
  async capabilities(context:AnalyticsContext):Promise<PublishedAnalyticsCapabilities> {
   return tenantTransaction(this.pool,context.tenantId,async client=>({tenantId:context.tenantId,mode:'certified',releases:await releases(client,context,this.family)}),true,this.timeout);
  }
- async execute(query:AnalyticsQuery,context:AnalyticsContext):Promise<AnalyticsResult> {
+ async execute(query:AnalyticsQuery,context:AnalyticsContext,read?:AnalyticsReadOptions):Promise<AnalyticsResult> {
   validateQuery(query,context);
   return tenantTransaction(this.pool,context.tenantId,async client=>{
    const published:PublishedAnalyticsCapabilities={tenantId:context.tenantId,mode:'certified',releases:await releases(client,context,this.family)};
    const checked={...query,filters:[...(query.filters??[]),...(context.enforcedFilters??[])]};
    if(publishedQueryIssues(checked,published).length)throw new Error('Unexposed review query');
    const release=published.releases.find(release=>!publishedQueryIssues(checked,{...published,releases:[release]}).length)!;
-   const range=query.dateRange??release.period!,params:unknown[]=[context.tenantId,requiredMeasures(query.metric),range.from,range.to];
-   const filters=checked.filters.map(filter=>{params.push(filter.dimension,filter.values);return `fact.payload->'dimensions'->>$${params.length-1}=ANY($${params.length}::text[])`;});
-   const event=aggregatedEventRead(query);
-   const result=event?await reviewEventRows(client,{query,context,range,family:this.family}):{sourceCutoff:undefined,...await client.query<{payload:ReviewReadFact;source_cutoff:Date}>(`SELECT fact.payload,extraction.source_cutoff FROM ${members} JOIN mart.review_facts fact USING(tenant_id,partition_id)
-    WHERE trusted.tenant_id=$1 AND member.family='${this.family}' AND extraction.definition_version=$${params.push((this.family==='business'?businessDefinitionVersion:reviewDefinitionVersion)())}
-    AND fact.payload->>'measureId'=ANY($2::text[]) AND member.month BETWEEN date_trunc('month',$3::date) AND date_trunc('month',$4::date)
-    ${filters.length?'AND '+filters.join(' AND '):''} ORDER BY member.month,fact.fact_key LIMIT 250001`,params)};
+   const range=query.dateRange??release.period!;
+   if(query.groupBy&&categoricalDimensions.includes(query.groupBy))return groupedReviewResult(client,{query,context,range,family:this.family,release,maxGroups:this.maxGroups,...(read?{read}:{})});
+   const result=await readReviewFacts(client,{query,context,range,family:this.family});
    if(result.rows.length>250000)throw new Error('Review fact query exceeds bounded execution');
    const facts=result.rows.map(row=>{const fact=row.payload;return {tenantId:fact.tenantId,measureId:fact.measureId,date:fact.businessDate,value:numericOutput(fact.value)!,dimensions:fact.dimensions,...fact.entityId?{entityId:fact.entityId}:{}};});
    const cutoff=reviewSourceCutoff(result);
@@ -84,11 +81,6 @@ function reviewLabels(facts:readonly ReviewReadFact[],query:AnalyticsQuery,conte
  return Object.fromEntries([...labels].filter(([,peers])=>peers.size===1).map(([id,peers])=>[id,sourceDisplayLabel([...peers][0]!,context.locale)]));
 }
 
-function aggregatedEventRead(query:AnalyticsQuery){
- if(query.aggregation&&query.aggregation!=='sum')return false;
- const semantics=semanticCatalog[query.metric].semantics;
- return semantics.kind==='additive'||semantics.kind==='duration_derived'||semantics.kind==='ratio'&&semantics.basis!=='snapshot';
-}
 function analysisMetadata(query:AnalyticsQuery){return query.analysis?{analysis:query.analysis}:{};}
 
 function snapshotQuery(query:AnalyticsQuery){const semantics=semanticCatalog[query.metric].semantics;return semantics.kind==='snapshot'||semantics.kind==='ratio'&&semantics.basis==='snapshot';}

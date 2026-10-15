@@ -2,6 +2,9 @@ import type { DimensionId } from './contracts.ts';
 export class AnalyticsResultLimitError extends Error {
   constructor(readonly dimension:DimensionId){super('Governed result limit exceeded');this.name='AnalyticsResultLimitError';}
 }
+export class AnalyticsResultWindowError extends Error {
+  constructor(){super('Result window is invalid or stale');this.name='AnalyticsResultWindowError';}
+}
 /** Discovery metadata only. This never authorizes a filter, grouping or query. */
 export class UncertifiedDimensionError extends Error {
   constructor(readonly dimension: DimensionId) { super('Uncertified discovery dimension'); }

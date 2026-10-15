@@ -16,6 +16,7 @@ import { registerIdentityRoutes } from './routes/identity.ts';
 import { registerMetadataRoutes } from './routes/metadata.ts';
 import { registerTemplateRoutes } from './routes/templates.ts';
 import { registerAnalyticsRoutes } from './routes/analytics.ts';
+import {registerResultWindowRoutes} from './routes/result-windows.ts';
 import { registerDashboardRoutes } from './routes/dashboards.ts';
 import { registerSavedDashboardRoutes } from './routes/saved-dashboards.ts';
 
@@ -38,6 +39,7 @@ export async function buildApi(deps: ApiDependencies, runtime: { corsOrigins?: r
   registerAnalyticsRoutes(app, services);
   registerAnalyticsStatusRoutes(app, services);
   registerDashboardRoutes(app, services);
+  registerResultWindowRoutes(app, services);
   registerAnalystRoutes(app, services);
   registerSavedDashboardRoutes(app, services);
   registerDashboardLibraryRoutes(app, services);

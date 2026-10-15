@@ -122,3 +122,12 @@ html[dir=rtl] .viewer-item { direction: rtl; }
 .excel-export { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-block-end: var(--space-2); font-size: var(--text-xs); }
 .excel-export button { min-height: 36px; }
 .excel-export [role=alert] { color: var(--danger); }
+
+.widget:has(> .result-window) {overflow:auto;}
+.widget:has(> .result-window) > .table-wrap {flex:1 0 8rem;}
+.result-window {display:flex;flex:none;flex-wrap:wrap;align-items:end;gap:var(--space-2);padding-block:var(--space-2);font-size:var(--text-xs);}
+.result-window form {display:flex;gap:var(--space-2);align-items:end;flex-wrap:wrap;min-width:0;flex:1 1 15rem;}
+.result-window label {display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2);min-width:0;flex:1 1 10rem;}
+.result-window input {min-width:0;max-width:100%;flex:1 1 8rem;inline-size:8rem;}
+.result-window .row-pages {padding-block-start:0;}
+.result-window small,.result-window [role=alert] {flex-basis:100%;margin:0;}

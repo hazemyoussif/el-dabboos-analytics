@@ -1,4 +1,6 @@
 export * from './executor.ts';
+export type {WidgetWindowRequest,WidgetResultWindow} from './grouped-widget-execution.ts';
+export {windowedWidget} from './grouped-widget-execution.ts';
 export * from './planner.ts';
 export * from './templates.ts';
 export * from './evals.ts';

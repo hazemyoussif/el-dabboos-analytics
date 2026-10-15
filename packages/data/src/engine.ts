@@ -1,4 +1,4 @@
-import { compatibleQuantityMetrics, requiredMeasures, semanticCatalog, timeDimensions, validateQuery } from '@el-dabboos/domain';
+import { compareAnalyticsKeys,compatibleQuantityMetrics, requiredMeasures, semanticCatalog, timeDimensions, validateQuery } from '@el-dabboos/domain';
 import type { AdditiveAggregation, AnalyticsContext, AnalyticsQuery, AnalyticsResult, AnalyticsRow, DateRange, DimensionId, FactMeasureId, MetricId } from '@el-dabboos/domain';
 import { periodKeys, periodRange, previousTimeKey, shiftRange, timeKey } from './calendar.ts';
 import type { AnalyticsFact } from './facts.ts';
@@ -103,7 +103,7 @@ function currentKeys(facts: readonly AnalyticsFact[], query: AnalyticsQuery, con
     return [...new Set(facts.filter(fact => requiredMeasures(query.metric).includes(fact.measureId) && filtered(fact, query, context))
       .map(fact => dimension(fact, groupBy)).filter((key): key is string => key !== undefined))].sort();
   }
-  return [...keys].sort();
+  return [...keys].sort(compareAnalyticsKeys);
 }
 function rangeForKey(query: AnalyticsQuery, key: string | null): DateRange | undefined {
   if (key === null || !query.groupBy || !isTime(query.groupBy)) return query.dateRange;
@@ -130,9 +130,9 @@ function average(values: Array<number | null>): number | null {
   return present.length ? present.reduce((sum, v) => sum + v, 0) / present.length : null;
 }
 function numericOrder(a: AnalyticsRow, b: AnalyticsRow, direction: 'top' | 'bottom'): number {
-  if (a.value === null) return b.value === null ? String(a.key).localeCompare(String(b.key)) : 1;
+  if (a.value === null) return b.value === null ? compareAnalyticsKeys(a.key,b.key) : 1;
   if (b.value === null) return -1;
-  return (direction === 'top' ? b.value - a.value : a.value - b.value) || String(a.key).localeCompare(String(b.key));
+  return (direction === 'top' ? b.value - a.value : a.value - b.value) || compareAnalyticsKeys(a.key,b.key);
 }
 export function executeFacts(facts: readonly AnalyticsFact[], query: AnalyticsQuery, context: AnalyticsContext, execution: ExecutionMetadata): AnalyticsResult {
   validateQuery(query, context);
