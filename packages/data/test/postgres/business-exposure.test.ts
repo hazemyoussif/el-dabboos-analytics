@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {semanticCatalog,requiredMeasures,validateProductionFact,AnalyticsResultLimitError} from '@el-dabboos/domain';
 import type {PoolClient} from 'pg';
-import {businessEventRows} from '../../src/business/event-rows.ts';
+import {reviewEventRows} from '../../src/review/event-rows.ts';
 import type {ProductionFact,FactMeasureId} from '@el-dabboos/domain';
 import {database,enabled} from './support.ts';
 import {deploy,mapping} from './fixtures.ts';
@@ -159,7 +159,7 @@ test('shared event reads and discovery select only trusted measures, months and 
    const observed={query:async(sql:string,params:unknown[])=>{
     const plan=await client.query('EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) '+sql,params);plans.push(plan.rows[0]['QUERY PLAN']);return client.query(sql,params);
    }} as unknown as PoolClient;
-   const rows=await businessEventRows(observed,{query:{metric:'period_net_sales'},context,range:dateRange});
+   const {rows}=await reviewEventRows(observed,{query:{metric:'period_net_sales'},context,range:dateRange,family:'business'});
    assert.equal(rows.length,1);assert.equal(rows[0]?.payload.value,'0.020000');
   },true);
   const planText=JSON.stringify(plans);

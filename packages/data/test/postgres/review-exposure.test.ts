@@ -9,6 +9,7 @@ import {reviewMapping} from '../../src/review/definitions.ts';
 import {mapReviewRow} from '../../src/review/mapper.ts';
 import {TrustedAnalyticsRepository} from '../../src/operational/repository.ts';
 import type {ReviewControl} from '../../src/review/source.ts';
+import type {Pool} from 'pg';
 import type {FactMeasureId,ProductionFact} from '@el-dabboos/domain';
 const values:Partial<Record<FactMeasureId,string>>={customer_cash_collected:'150.000000',cash_applied_to_invoices:'100.000000',unallocated_customer_receipts:'50.000000',collection_amount_days:'2000.000000',collection_applied_amount:'100.000000',order_margin:'40.000000',order_untaxed_value:'200.000000',net_invoiced_revenue:'120.000000',invoiced_revenue:'125.000000',refund_value:'5.000000',receivables_due_for_collection:'30.000000'};
 function fixture(legacy?:'1'|'2'){
@@ -74,7 +75,41 @@ test('many distinct source-control tuples reconcile within bounded execution wit
   const summaries=original.map(fact=>({measure:fact.measureId,dimensions:null,value:(BigInt(fact.value.replace('.',''))*BigInt(customers)/1000000n).toString()+'.000000',count:String(customers)}));
   const result=await exposeReviewMonth(db.ingestor,{...source,facts:pages(facts),controls:async()=>[...tuples,...summaries]});
   assert.equal(result.facts,customers*original.length);assert.equal(result.controls,facts.length+original.length);
+  const observed=observeReviewRead(db.runtime),started=performance.now();
   const output=await new TrustedAnalyticsRepository(db.runtime,{reportingCurrencies:{a:'IQD'}}).execute({metric:'customer_cash_collected',dateRange:{from:'2026-09-01',to:'2026-09-30'}},{tenantId:'a',locale:'en'});
   assert.equal(output.rows[0]?.value,750000);
+  const measurement={customers,elapsedMs:performance.now()-started,...observed.report()};
+  assert.ok(measurement.rows<=2);assert.ok(measurement.bytes<4096);assert.ok(measurement.calls<=9);
+  console.info('review-read-benchmark',JSON.stringify(measurement));
+  const repository=new TrustedAnalyticsRepository(db.runtime,{reportingCurrencies:{a:'IQD'}});
+  for(const aggregation of ['count','average','min','max'] as const)await assert.rejects(repository.execute({metric:'customer_cash_collected',aggregation,dateRange:{from:'2026-09-01',to:'2026-09-30'}},{tenantId:'a',locale:'en'}),/Unexposed review query/);
+  const empty=await repository.execute({metric:'customer_cash_collected',dateRange:{from:'2026-09-01',to:'2026-09-14'}},{tenantId:'a',locale:'en'});
+  assert.equal(empty.rows[0]?.value,0);assert.equal(empty.metadata.sourceAsOf,source.cutoff);
+  const ranked=await repository.execute({metric:'customer_cash_collected',groupBy:'customer',dateRange:{from:'2026-09-01',to:'2026-09-30'},analysis:{topN:{direction:'top',limit:10},percentageContribution:true}},{tenantId:'a',locale:'en'});
+  assert.equal(ranked.rows.length,10);assert.ok(ranked.rows.every(row=>Math.abs(row.value!-0.02)<1e-12));
+  const weighted=await repository.execute({metric:'weighted_collection_days',dateRange:{from:'2026-09-01',to:'2026-09-30'}},{tenantId:'a',locale:'en'});
+  assert.equal(weighted.rows[0]?.value,20);
+  const snapshot=await repository.execute({metric:'receivables_due_for_collection',dateRange:{from:'2026-09-01',to:'2026-09-30'}},{tenantId:'a',locale:'en'});
+  assert.equal(snapshot.rows[0]?.value,150000);assert.equal(snapshot.metadata.snapshotAsOf,'2026-09-30');
+
+
  }finally{await db.close();}
 });
+
+function observeReviewRead(pool:Pool){
+ const connect=pool.connect.bind(pool),clients=new WeakSet<object>();
+ let calls=0,rows=0,bytes=0;
+ pool.connect=(async()=>{
+  const client=await connect();
+  if(!clients.has(client)){
+   clients.add(client);const query=client.query.bind(client);
+   client.query=(async(sql:string,params?:unknown[])=>{
+    const result=await query(sql,params);calls++;
+    if(sql.includes('fact.payload')||sql.includes('published_partitions')){rows+=result.rows.length;bytes+=Buffer.byteLength(JSON.stringify(result.rows));}
+    return result;
+   }) as typeof client.query;
+  }
+  return client;
+ }) as typeof pool.connect;
+ return {report(){return {calls,rows,bytes};}};
+}
