@@ -219,3 +219,26 @@ test('dimension search retries failures, carries the active period and resets sa
   }
  }finally{await fixture.close();}
 });
+
+
+test('editor dimension search uses the executed relative period without editing the draft',async()=>{
+ const fixture=await domFixture();try{
+  const {BuilderWorkspace}=await fixture.server.ssrLoadModule('/src/builder/BuilderWorkspace.tsx');
+  const {DimensionDiscoveryContext}=await fixture.server.ssrLoadModule('/src/DimensionDiscoveryContext.ts');
+  const {startBuilder}=await import('../src/builder/model.ts');
+  const {productMetricCatalog}=await import('@el-dabboos/domain');
+  const calls:import('@el-dabboos/domain').DimensionDiscoveryRequest[]=[];
+  const load=async(_dimension:string,request:import('@el-dabboos/domain').DimensionDiscoveryRequest)=>{calls.push(request);return {values:[],selected:[]};};
+  const dateRange={from:'2025-01-01',to:'2025-12-31'};
+  for(const locale of ['en','ar']){
+   let commands=0;
+   const spec={schemaVersion:2 as const,id:'relative-editor',locale:locale as 'en'|'ar',title:{en:'SYNTHETIC',ar:'تجريبي'},filters:{datePreset:'previous_year' as const},layout:{columns:3 as const},widgets:[{id:'one',type:'kpi' as const,series:[{id:'value',metric:'revenue' as const}]}]};
+   const history=startBuilder({kind:'dashboard',spec});
+   const execution={dashboard:spec,widgetResults:{},metadata:{executedAt:'2026-10-15',effectiveFilters:{dateRange},succeeded:0,failed:0,succeededSeries:0,failedSeries:0}};
+   await act(async()=>fixture.root.render(createElement(DimensionDiscoveryContext.Provider,{value:load},createElement(BuilderWorkspace,{history,execution,locale,catalog:semanticCatalog,registry:productMetricCatalog,profile:tenantProfiles['demo-iq'],filterOptions:{},busy:false,onCommand:()=>{commands++;},onUndo:()=>{},onRedo:()=>{}}))));
+   const opener=fixture.container.querySelector<HTMLButtonElement>('.builder-filters .dimension-search > button')!;
+   await act(async()=>opener.click());await settle();
+   assert.deepEqual(calls.at(-1)?.dateRange,dateRange);assert.equal(calls.at(-1)?.metric,'revenue');assert.equal(commands,0);assert.equal(history.present.kind,'dashboard');
+  }
+ }finally{await fixture.close();}
+});
