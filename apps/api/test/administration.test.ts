@@ -6,13 +6,13 @@ import { AccessControlError, tenantProfiles } from '@el-dabboos/domain';
 import { MockAnalyticsRepository, generateSeedFacts, migrateMetadata, seedDemoAdministration, SqliteAdministrationStore } from '@el-dabboos/data';
 import { buildApi } from '../src/app.ts';
 const headers = (user = 'demo-iq-admin', tenant = 'demo-iq') => ({ 'x-demo-user-id': user, 'x-tenant-id': tenant, 'x-locale': 'en' });
-async function setup() {
+async function setup(dataReady:(id:string)=>Promise<boolean>=async id=>id==='demo-iq'||id==='demo-eg') {
     const db = new DatabaseSync(':memory:');
     migrateMetadata(db, { reconcile: seedDemoAdministration });
     const store = new SqliteAdministrationStore(db), repository = new MockAnalyticsRepository([...generateSeedFacts('demo-iq'), ...generateSeedFacts('demo-eg')]);
     const app = await buildApi({ analyticsRepository: repository, dimensionValues: repository, libraryRepository: store.library, administration: { unitOfWork: store, directory: store.directory, profiles: store.profiles, authenticate: async (h) => { const id = h['x-demo-user-id']; if (typeof id !== 'string')
                 throw new AccessControlError('IDENTITY_REQUIRED'); const binding = await store.read(t => t.users.findIdentity('synthetic', id)); if (!binding)
-                throw new AccessControlError('IDENTITY_REQUIRED'); return binding.id; }, dataReady: async (id) => id === 'demo-iq' || id === 'demo-eg' } });
+                throw new AccessControlError('IDENTITY_REQUIRED'); return binding.id; }, dataReady } });
     return { app, db, store };
 }
 const spec: DashboardSpec = { schemaVersion: 2, id: 'portable', title: { en: 'Agent sales', ar: 'مبيعات الوكلاء' }, locale: 'en', filters: {}, layout: { columns: 1 }, widgets: [{ id: 'sales', type: 'kpi', series: [{ id: 'revenue', metric: 'revenue' }] }] };
@@ -158,4 +158,11 @@ test('governed pagination fills accessible pages after hidden records and binds 
         await app.close();
         db.close();
     }
+});
+
+test('readiness failures remain distinct from confirmed missing data and withhold dependency details',async()=>{
+ for(const failure of [false,true]){
+  const {app,db}=await setup(async()=>{if(failure)throw new Error('SENSITIVE database connection details');return false;});
+  try{const response=await app.inject({method:'POST',url:'/api/dashboards/execute',headers:headers(),payload:{dashboard:spec}});assert.equal(response.statusCode,503);assert.equal(response.json().error.code,failure?'ANALYTICS_UNAVAILABLE':'DATA_NOT_READY');assert.doesNotMatch(response.body,/SENSITIVE/);}finally{await app.close();db.close();}
+ }
 });

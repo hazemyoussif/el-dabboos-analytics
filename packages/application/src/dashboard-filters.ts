@@ -6,7 +6,7 @@ export type DashboardDateSelection = { mode: 'relative'; preset: RelativeDatePre
 /** Execution-only. Undefined inherits; null date / empty dimensions explicitly remove business defaults. */
 export interface DashboardFilterOverrides { date?: DashboardDateSelection | null; dimensions?: AnalyticsFilter[] }
 export interface EffectiveDashboardFilters { dateRange?: DateRange; dimensions?: AnalyticsFilter[] }
-export interface DashboardExecutionScope { timeZone: string; overrides?: DashboardFilterOverrides }
+export interface DashboardExecutionScope { timeZone: string; overrides?: DashboardFilterOverrides; windows?: Record<string,import('./grouped-widget-execution.ts').WidgetWindowRequest> }
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 const exact = (v: Record<string, unknown>, keys: string[]) => Object.keys(v).every(key => keys.includes(key));
 export function validateDashboardFilterOverrides(value: unknown): asserts value is DashboardFilterOverrides {

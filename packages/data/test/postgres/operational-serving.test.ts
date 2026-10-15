@@ -4,6 +4,7 @@ import { TrustedDrillThroughRepository } from '../../src/operational/drill-throu
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
+import type {Pool} from 'pg';
 import type { AnalyticsCursor,AnalyticsPartition,ProductionFact,DimensionId } from '@el-dabboos/domain';
 import { requiredMeasures } from '@el-dabboos/domain';
 import { AnalyticsOperations } from '../../../application/src/analytics-operations.ts';
@@ -643,3 +644,43 @@ test('shared snapshot discovery uses one eligible cutoff before the range start 
   assert.deepEqual(absent.values,[]);
  }finally{await db.close();}
 });
+
+test('published operational customer detail pages beyond the configured bound with asymmetric measure populations',{skip:!enabled,timeout:60000},async()=>{
+ const fixture=await setup('fixture',false,false,undefined,true);
+ try{
+  const measures=['order_revenue','order_count','invoiced_revenue','refund_value','net_invoiced_revenue','invoice_count','refund_count'] as const;
+  fixture.source.rows=Array.from({length:128},(_,index)=>measures.filter(measure=>!['refund_value','refund_count'].includes(measure)||index%4===0).map(measureId=>{
+   const amount=measureId.endsWith('count')?(measureId==='order_count'?2:1):measureId==='order_revenue'?(index+1)*200:measureId==='refund_value'?(index+1)*5:(index+1)*(measureId==='net_invoiced_revenue'&&index%4===0?95:100);
+   const value=`${amount}.000000`,row=januaryFact({sourceRecordId:index?`paged:${index}:${measureId}`:`calibration-${measureId}`,measureId,value,dimensions:{customer:`customer:${String(index).padStart(3,'0')}`,salesperson:'rep:1',business_line:'line:1'},displayLabels:{customer:`Customer ${index}`}});
+   if(measureId.endsWith('count'))delete row.currency;else row.currency={...row.currency!,transactionValue:value};return row;
+  })).flat();
+  assert.equal((await fixture.run()).status,'passed');
+  const repository=new TrustedAnalyticsRepository(fixture.db.runtime,{reportingCurrencies:{a:'IQD'},maxGroups:100}),context={tenantId:'a',locale:'en' as const};
+  const dateRange={from:'2026-01-01',to:'2026-01-31'};
+  const {DashboardExecutor}=await import('../../../application/src/executor.ts');
+  const spec:import('@el-dabboos/domain').DashboardSpec={schemaVersion:2,id:'any-customer-report',locale:'en',title:{en:'Customer detail',ar:'تفاصيل العملاء'},filters:{dateRange},layout:{columns:1},widgets:[{id:'detail',type:'table',dimension:'customer',series:measures.map(metric=>({id:metric,metric}))}]};
+  const labels=observeLabelReads(fixture.db.runtime);
+  const labelled=await repository.execute({metric:'order_revenue',groupBy:'customer',dateRange},context,{window:{limit:3}});
+  assert.deepEqual(labelled.metadata.dimensionLabels,{'customer:000':'Customer 0','customer:001':'Customer 1','customer:002':'Customer 2'});
+  assert.equal(labels.count(),1,'one authorized read must supply both values and labels');
+  const first=await new DashboardExecutor(repository).execute(spec,context),detail=first.widgetResults.detail!;
+  assert.equal(detail.status,'success');assert.equal(detail.alignedRows.length,100);assert.equal(detail.alignedRows[0]?.key,'customer:000');assert.equal(detail.alignedRows[1]?.series.refund_value,null);
+  const second=await new DashboardExecutor(repository).executeWidget(spec,'detail',context,{timeZone:'Asia/Baghdad',windows:{detail:{cursor:detail.window!.nextCursor!}}});
+  assert.equal(second.status,'success');assert.equal(second.alignedRows.length,28);assert.equal(second.alignedRows.at(-1)?.key,'customer:127');assert.equal(second.alignedRows.at(-1)?.series.order_revenue?.value,25600);
+  await assert.rejects(repository.execute({metric:'order_revenue',groupBy:'customer',dateRange},context),/limit/i);
+  const top=await repository.execute({metric:'order_revenue',groupBy:'customer',dateRange,analysis:{topN:{direction:'top',limit:1}}},context);assert.deepEqual(top.rows,[{key:'customer:127',value:25600}]);
+ }finally{await fixture.db.close();}
+});
+
+function observeLabelReads(pool:Pool){
+ const connect=pool.connect.bind(pool),clients=new WeakSet<object>();let count=0;
+ pool.connect=(async()=>{
+  const client=await connect();
+  if(!clients.has(client)){
+   clients.add(client);const query=client.query.bind(client);
+   client.query=(async(sql:string,params?:unknown[])=>{if(sql.includes('array_agg(base.labels'))count++;return query(sql,params);}) as typeof client.query;
+  }
+  return client;
+ }) as typeof pool.connect;
+ return {count:()=>count};
+}

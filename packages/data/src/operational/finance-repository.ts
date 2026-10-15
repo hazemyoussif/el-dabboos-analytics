@@ -1,4 +1,6 @@
 import {financeSnapshotCandidates,financeSelectedBalances} from './finance-selection.ts';
+import {groupedFinanceResult} from './finance-grouped-query.ts';
+import type {AnalyticsReadOptions} from '@el-dabboos/domain';
 import type {Pool} from 'pg';
 import {publishedQueryIssues,semanticCatalog,validateQuery,AnalyticsResultLimitError} from '@el-dabboos/domain';
 import type {AnalyticsContext,AnalyticsQuery,AnalyticsResult,PublishedAnalyticsCapabilities} from '@el-dabboos/domain';
@@ -36,26 +38,27 @@ export class FinanceSnapshotRepository {
     capabilities}]};
   },true,this.timeout);
  }
- async execute(query:AnalyticsQuery,context:AnalyticsContext,capabilities:PublishedAnalyticsCapabilities):Promise<AnalyticsResult>{
+ async execute(query:AnalyticsQuery,context:AnalyticsContext,capabilities:PublishedAnalyticsCapabilities,read?:AnalyticsReadOptions):Promise<AnalyticsResult>{
   validateQuery(query,context);
   if(publishedQueryIssues({...query,filters:[...(query.filters??[]),...(context.enforcedFilters??[])]},capabilities).length)throw new Error('Uncertified Finance query');
   return tenantTransaction(this.pool,context.tenantId,async client=>{
+   if(query.groupBy==='customer')return groupedFinanceResult(client,query,context,capabilities,{maxGroups:this.maxGroups,...(read?{read}:{})});
    const params:unknown[]=[context.tenantId];
    const cutoffs=query.groupBy==='month'?periodKeys(query.dateRange!,'month').map(month=>({key:month,end:monthEnd(month)})).filter(slot=>slot.end<=query.dateRange!.to):[{key:null,end:query.dateRange?.to??capabilities.releases[0]!.period!.to}];
    params.push(JSON.stringify(cutoffs));const conditions=financeFilters(query,context,params);
-   const expression=financeExpression(query,params),group=query.groupBy==='customer'?'customer.customer_id':'slot.key';
+   const expression=financeExpression(query,params),group='slot.key';
    const result=await client.query(`WITH candidates AS MATERIALIZED (${financeSnapshotCandidates(query,context)}),selected AS MATERIALIZED (
     SELECT slot.key,publication.* FROM jsonb_to_recordset($2::jsonb) slot(key text,"end" date)
     JOIN LATERAL (SELECT * FROM candidates WHERE snapshot_date${query.groupBy==='month'?'=':'<='}slot."end" ORDER BY snapshot_date DESC,priority DESC LIMIT 1) publication ON true)
     SELECT ${group} key,${expression},max(slot.snapshot_date)::text snapshot_date,
      max(slot.source_cutoff) source_cutoff,min(slot.definition_version) definition_version,
      min(slot.source_revision) source_revision,min(slot.snapshot_id) snapshot_id,
-     ${query.groupBy==='customer'?'min(customer.label)':'NULL::text'} label
+     NULL::text label
     FROM selected slot
     LEFT JOIN LATERAL (${financeSelectedBalances}) customer ON ${conditions}
     GROUP BY ${group} ORDER BY ${group} LIMIT ${this.maxGroups+1}`,params);
    if(result.rows.length>this.maxGroups)throw new AnalyticsResultLimitError(query.groupBy!);
-   const rows=result.rows.filter(row=>query.groupBy!=='customer'||row.key!==null).map(row=>({key:row.key as string|null,value:financeValue(query,row)}));
+   const rows=result.rows.map(row=>({key:row.key as string|null,value:financeValue(query,row)}));
    const latest=result.rows.map(row=>row.snapshot_date as string).sort().at(-1),evidence=result.rows.find(row=>row.snapshot_date===latest),metric=semanticCatalog[query.metric];
    const metadata:AnalyticsResult['metadata']={sourceId:'postgres',executedAt:new Date().toISOString(),metricType:query.analysis?.percentageContribution?'percentage':metric.type,semantics:metric.semantics.kind,...(query.analysis?{analysis:query.analysis}:{}),...(query.analysis?.percentageContribution?{unit:'%'}:metric.presentation.unit?{unit:metric.presentation.unit}:{})};
    if(!latest)return {metric:query.metric,groupBy:query.groupBy??null,rows:[{key:null,value:null}],metadata:{...metadata,availability:{state:'DATA_NOT_READY',reason:'no_snapshot'}}};

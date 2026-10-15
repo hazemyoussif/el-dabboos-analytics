@@ -1,8 +1,9 @@
+import {WidgetResultWindow} from './rendering/WidgetResultWindow.tsx';
 import {executionFailureLabel} from './rendering/execution-feedback.ts';
 import {seriesDisplayLabel} from './rendering/shared.ts';
 import { ExcelExportButton } from './export/ExcelExportButton.tsx';
 import { dashboardWorkbook } from './export/excel-data.ts';
-import { useRef, useState } from 'react';
+import { useEffect,useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { DrillDetails,drillActionLabel } from './DrillDetails.tsx';
 import { drillRequestFor } from './drill-context.ts';
@@ -35,7 +36,7 @@ const icons = { kpi: TrendingUp, line: ChartLine, area: ChartArea, bar: ChartBar
 const renderers = { kpi: KpiContent, line: LineContent, area: AreaContent, bar: BarContent, pie: PieContent, treemap: TreemapContent, combo: ComboContent, table: TableContent };
 
 interface Props { execution: DashboardExecutionResult; catalog: Record<string, SemanticMetric>; locale: Locale; profile: TenantProfile }
-export function WidgetCard({ widget, dashboardPalette, entry, catalog, locale, profile, exportMetadata, onDrill, canDrill }: { widget: DashboardWidget; dashboardPalette?: GovernedPalette; entry: WidgetExecution | undefined; exportMetadata?: DashboardExecutionResult['metadata']; onDrill?: (seriesId:string,key:string|null,opener?:Element)=>void; canDrill?: (seriesId:string,key:string|null)=>boolean; catalog: Record<string, SemanticMetric>; locale: Locale; profile: TenantProfile }) {
+export function WidgetCard({ widget, dashboardPalette, entry, catalog, locale, profile, exportMetadata, onDrill, canDrill, windowControls }: { widget: DashboardWidget; dashboardPalette?: GovernedPalette; entry: WidgetExecution | undefined; windowControls?:ReactNode; exportMetadata?: DashboardExecutionResult['metadata']; onDrill?: (seriesId:string,key:string|null,opener?:Element)=>void; canDrill?: (seriesId:string,key:string|null)=>boolean; catalog: Record<string, SemanticMetric>; locale: Locale; profile: TenantProfile }) {
   const t = copy[locale];
   const theme = withGovernedPalette(useChartTheme(), resolveGovernedPalette(widget.presentation?.palette, dashboardPalette));
   const Icon = icons[widget.type];
@@ -54,20 +55,23 @@ export function WidgetCard({ widget, dashboardPalette, entry, catalog, locale, p
   const content = !hasData && widget.type!=='kpi' ? <EmptyState>{t.empty}</EmptyState> : <Content {...props} />;
   const summary = widget.type !== 'kpi' && widget.type !== 'table' && <ChartValueDetails props={props}/>;
   const reading = <><WidgetHeading title={title} subtitle={subtitle} widget={widget} catalog={catalog} locale={locale} profile={profile} entry={entry} Icon={Icon} showDefinitions={widget.type !== 'table'} />{showPartial && <Notice>{t.partial}: {failures.join(' · ')}</Notice>}{content}<DataAvailability entry={entry} locale={locale} profile={profile} /></>;
-  return <article className={`widget widget-${widget.type}`}><WidgetReadingLayout widget={widget} locale={locale} onDrill={onDrill} canDrill={canDrill}>{reading}</WidgetReadingLayout>{summary}</article>;
+  return <article className={`widget widget-${widget.type}`}><WidgetReadingLayout widget={widget} locale={locale} onDrill={onDrill} canDrill={canDrill}>{reading}</WidgetReadingLayout>{windowControls}{summary}</article>;
 }
 export function DashboardRenderer({ execution, catalog, locale, profile, dashboardOverride, session }: Props & { dashboardOverride?: DashboardSpec; session?:ApiSession }) {
+  const [pageResults,setPageResults]=useState<Record<string,WidgetExecution>>({});
+  useEffect(()=>setPageResults({}),[execution]);
+  const displayed={...execution,widgetResults:{...execution.widgetResults,...pageResults}};
   const [selection,setSelection]=useState<DrillRequest|null>(null);
   const drillOpener=useRef<Element|null>(null);
   const spec = dashboardOverride ?? execution.dashboard;
   const layout = resolveDashboardLayout(spec);
   const bounded=Object.values(execution.widgetResults).some(entry=>Object.values(entry.seriesResults).some(series=>series.status==='error'&&series.error.code==='RESULT_LIMIT_EXCEEDED'));
   const filterLabels=Object.assign({},...Object.values(execution.widgetResults).flatMap(entry=>Object.values(entry.seriesResults).flatMap(series=>series.status==='success'?[series.result.metadata.dimensionLabels??{}]:[]))) as Record<string,string>;
-  return <><ExcelExportButton locale={locale} kind="dashboard" disabled={!spec.widgets.length} createWorkbook={() => dashboardWorkbook(execution, spec, { catalog, locale, profile })} />{selection&&session&&<DrillDetails opener={drillOpener.current} selection={selection} session={session} profile={profile} filterLabels={filterLabels} onClose={()=>setSelection(null)}/ >}{bounded&&<Notice>{boundGuidance(locale)}</Notice>}<div className="viewer-canvas">{spec.widgets.map(widget => {
+  return <><ExcelExportButton locale={locale} kind="dashboard" disabled={!spec.widgets.length} createWorkbook={() => dashboardWorkbook(displayed, spec, { catalog, locale, profile })} />{selection&&session&&<DrillDetails opener={drillOpener.current} selection={selection} session={session} profile={profile} filterLabels={filterLabels} onClose={()=>setSelection(null)}/ >}{bounded&&<Notice>{boundGuidance(locale)}</Notice>}<div className="viewer-canvas">{spec.widgets.map(widget => {
     const entry=execution.widgetResults[widget.id];
     const item = layout.items?.find(candidate => candidate.widgetId === widget.id);
     return <div key={widget.id} className="viewer-item" style={item ? { gridColumn: `${item.x + 1} / span ${item.w}`, gridRow: `${item.y + 1} / span ${item.h}` } : undefined}>
-      <WidgetCard widget={widget} exportMetadata={execution.metadata} dashboardPalette={spec.presentation?.palette} entry={entry} {...(session&&entry?{canDrill:(seriesId:string,key:string|null)=>drillRequestFor(execution,widget,entry,seriesId,key)!==null,onDrill:(seriesId:string,key:string|null,opener?:Element)=>{const request=drillRequestFor(execution,widget,entry,seriesId,key);if(request){drillOpener.current=opener??document.activeElement;setSelection(request);}}}:{})} catalog={catalog} locale={locale} profile={profile} />
+      <WidgetResultWindow onChange={result=>setPageResults(previous=>({...previous,[widget.id]:result}))} entry={entry} execution={execution} dashboard={spec} widgetId={widget.id} session={session} locale={locale}>{(visibleEntry,controls)=><WidgetCard windowControls={controls} widget={widget} exportMetadata={execution.metadata} dashboardPalette={spec.presentation?.palette} entry={visibleEntry} {...(session&&visibleEntry?{canDrill:(seriesId:string,key:string|null)=>drillRequestFor(displayed,widget,visibleEntry!,seriesId,key)!==null,onDrill:(seriesId:string,key:string|null,opener?:Element)=>{const request=drillRequestFor(displayed,widget,visibleEntry!,seriesId,key);if(request){drillOpener.current=opener??document.activeElement;setSelection(request);}}}:{})} catalog={catalog} locale={locale} profile={profile} />}</WidgetResultWindow>
     </div>;
   })}</div></>;
 }

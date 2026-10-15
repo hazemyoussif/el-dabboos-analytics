@@ -1,3 +1,4 @@
+import {apiErrorCopy} from './error-copy.ts';
 import { apiLocation, validateApiBase } from './api-location.ts';
 import type { DashboardExecutionResult, templateCompatibility, DashboardTemplate, DashboardFilterOverrides } from '@el-dabboos/application';
 import { categoricalDimensions } from '@el-dabboos/domain';
@@ -14,11 +15,11 @@ export class ApiClientError extends Error {
 const apiBase = validateApiBase((import.meta as ImportMeta & { env?: { VITE_API_BASE_URL?: string } }).env?.VITE_API_BASE_URL);
 let syntheticHeaders = (import.meta as ImportMeta & { env?: { PROD?: boolean } }).env?.PROD !== true;
 export function configureIdentityMode(mode: string): void { syntheticHeaders = mode==='synthetic'; }
-export async function request<T>(session: ApiSession, path: string, method: string, body?: unknown): Promise<T> {
-  const response = await fetch(apiLocation(path,apiBase), { method, credentials: 'include',headers: { ...(body === undefined ? {} : { 'content-type': 'application/json' }), ...(syntheticHeaders ? { 'x-demo-user-id': session.userId } : {}), 'x-tenant-id': session.tenantId, 'x-locale': session.locale }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
+export async function request<T>(session: ApiSession, path: string, method: string, body?: unknown, signal?:AbortSignal): Promise<T> {
+  const response = await fetch(apiLocation(path,apiBase), { method, ...(signal?{signal}:{}), credentials: 'include',headers: { ...(body === undefined ? {} : { 'content-type': 'application/json' }), ...(syntheticHeaders ? { 'x-demo-user-id': session.userId } : {}), 'x-tenant-id': session.tenantId, 'x-locale': session.locale }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
   const data = await response.json() as T & ApiError;
   if (response.status===401 && !syntheticHeaders && typeof window!=='undefined') window.dispatchEvent(new Event('dabboos-session-expired'));
-  if (!response.ok) throw new ApiClientError(response.status, data.error?.code ?? 'REQUEST_FAILED', data.error?.message ?? `Request failed (${response.status})`);
+  if (!response.ok) throw new ApiClientError(response.status, data.error?.code ?? 'REQUEST_FAILED', apiErrorCopy(data.error?.code??'REQUEST_FAILED',data.error?.message ?? `Request failed (${response.status})`,session.locale));
   return data;
 }
 const demoSession = (userId: string): ApiSession => ({ userId, tenantId: 'demo-iq', locale: 'ar' });
@@ -67,3 +68,5 @@ export const getManagementControlReview=(session:ApiSession)=>request<{review:im
 export const discoverDimension=(session:ApiSession,dimension:DimensionId,query:import('@el-dabboos/domain').DimensionDiscoveryRequest)=>request<import('@el-dabboos/domain').DimensionDiscoveryPage>(session,`/api/dimensions/${encodeURIComponent(dimension)}/search`,'POST',query);
 
 export const drillThrough=(session:ApiSession,query:import('@el-dabboos/domain').DrillRequest)=>request<import('@el-dabboos/domain').DrillPage>(session,'/api/analytics/drill-through','POST',query);
+
+export const readWidgetWindow=({session,dashboard,widgetId,window,overrides,signal}:{session:ApiSession;dashboard:DashboardSpec;widgetId:string;window:import('@el-dabboos/application').WidgetWindowRequest;overrides:DashboardFilterOverrides;signal?:AbortSignal})=>request<import('@el-dabboos/application').WidgetExecution>(session,`/api/dashboards/widgets/${encodeURIComponent(widgetId)}/window`,'POST',{dashboard,window,overrides},signal);

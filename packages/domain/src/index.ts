@@ -1,4 +1,5 @@
 export * from './contracts.ts';
+export * from './analytics-order.ts';
 export * from './catalog.ts';
 export * from './validation.ts';
 export * from "./patch.ts";

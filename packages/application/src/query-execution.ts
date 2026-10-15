@@ -1,5 +1,5 @@
 import { semanticCatalog } from '@el-dabboos/domain';
-import type { AnalyticsContext, AnalyticsFilter, AnalyticsQuery } from '@el-dabboos/domain';
+import type { AnalyticsContext, AnalyticsFilter, AnalyticsQuery,AnalyticsReadOptions,AnalyticsRepository,AnalyticsResult } from '@el-dabboos/domain';
 const filters = (items: readonly AnalyticsFilter[] = []): AnalyticsFilter[] => items.map(item => ({ dimension: item.dimension, values: [...new Set(item.values)].sort() }))
   .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
 /** Normalize validated queries without weakening validation or changing policy intersection. */
@@ -18,12 +18,22 @@ function stable(value: unknown): unknown {
   return value;
 }
 /** Request-local identity includes tenant, locale and effective policy; never a global cache key. */
-export function analyticsQueryIdentity(query: AnalyticsQuery, context: AnalyticsContext): string {
-  return JSON.stringify(stable({ query: normalizeAnalyticsQuery(query), tenantId: context.tenantId, locale: context.locale, enforcedFilters: filters(context.enforcedFilters) }));
+export function analyticsQueryIdentity(query: AnalyticsQuery, context: AnalyticsContext,read?:AnalyticsReadOptions): string {
+  return JSON.stringify(stable({ query: normalizeAnalyticsQuery(query), tenantId: context.tenantId, locale: context.locale, enforcedFilters: filters(context.enforcedFilters),...(read?{read}:{}) }));
+}
+/** Full and windowed reads share work only inside one authorized dashboard execution. */
+export function requestScopedAnalytics(repository:AnalyticsRepository,onFailure?:(query:AnalyticsQuery,error:unknown)=>void):AnalyticsRepository{
+ const reads=new Map<string,Promise<AnalyticsResult>>();
+ return {...(repository.supportsResultWindows?{supportsResultWindows:true as const}:{}),execute(query,context,read){
+  const key=analyticsQueryIdentity(query,context,read);
+  let result=reads.get(key);
+  if(!result){result=Promise.resolve().then(()=>repository.execute(query,context,read)).catch(error=>{onFailure?.(query,error);throw error;});reads.set(key,result);}
+  return result;
+ }};
 }
 export interface DashboardExecutionOptions {
   maxConcurrency?: number;
-  onSeriesFailure?: (diagnostic:{metric:AnalyticsQuery['metric'];category:'unsafe_numeric'|'execution_failure'})=>void;
+  onSeriesFailure?: (diagnostic:{metric:AnalyticsQuery['metric'];category:'unsafe_numeric'|'execution_failure';code?:string})=>void;
 }
 export const defaultExecutionConcurrency = 8;
 export function executionConcurrency(value = defaultExecutionConcurrency): number {

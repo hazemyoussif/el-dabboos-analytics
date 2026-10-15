@@ -86,7 +86,9 @@ export function createRouteContext(deps: ApiDependencies): RouteContext {
   };
   const requireData = async (tenantId: string) => {
     if (!deps.administration) return;
-    const ready = await deps.administration.dataReady(tenantId).catch(() => false);
+    let ready:boolean;
+    try{ready=await deps.administration.dataReady(tenantId);}
+    catch{throw new ApiError(503,'ANALYTICS_UNAVAILABLE','Analytics could not be checked. Please retry.');}
     if (!ready) throw new ApiError(503, 'DATA_NOT_READY', 'Approved analytics data is not ready for this workspace.');
   };
   const session = async (headers: Record<string, unknown>): Promise<{ context: RequestContext; profile: TenantProfile }> => {

@@ -1,33 +1,17 @@
+import {fixture,pages} from './business-fixture.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {semanticCatalog,requiredMeasures,validateProductionFact,AnalyticsResultLimitError} from '@el-dabboos/domain';
+import {AnalyticsResultLimitError} from '@el-dabboos/domain';
 import type {PoolClient} from 'pg';
 import {reviewEventRows} from '../../src/review/event-rows.ts';
-import type {ProductionFact,FactMeasureId} from '@el-dabboos/domain';
+import type {ProductionFact} from '@el-dabboos/domain';
 import {database,enabled} from './support.ts';
 import {deploy,mapping} from './fixtures.ts';
 import {bootstrapOperationalServing} from '../../src/operational/baseline.ts';
 import {tenantTransaction} from '../../src/postgres/session.ts';
-import {reviewMapping} from '../../src/review/definitions.ts';
-import {businessMapping} from '../../src/business/definitions.ts';
 import {exposeReviewMonth} from '../../src/review/exposure.ts';
 import {TrustedAnalyticsRepository} from '../../src/operational/repository.ts';
 import type {ReviewControl} from '../../src/review/source.ts';
-const values:Partial<Record<FactMeasureId,string>>={period_net_sales:'120.000000',period_invoice_sales:'125.000000',period_invoice_refunds:'5.000000',period_cash_collections:'150.000000',period_collection_sales:'120.000000',customer_period_sales:'120.000000',review_customer_balance:'30.000000',internal_stock_quantity:'13.000000'};
-function fixture(month='2026-09',current=false,family:'review'|'business'='business'){
- const mapping=(family==='business'?businessMapping:reviewMapping)({tenantId:'a',sourceId:'fixture',currency:'IQD',timeZone:'Asia/Baghdad',datasetId:`SYNTHETIC BUSINESS ${month}`,current});
- const end=new Date(Date.UTC(Number(month.slice(0,4)),Number(month.slice(5)),0)).toISOString().slice(0,10),cutoff='2026-11-02T09:00:00.000Z';
- const facts:ProductionFact[]=mapping.measures.map(rule=>{
-  const snapshot=Object.values(semanticCatalog).some(metric=>metric.semantics.kind==='snapshot'&&metric.semantics.measure===rule.measureId),monetary=Object.values(semanticCatalog).some(metric=>metric.type==='currency'&&metric.semantics.kind!=='ratio'&&requiredMeasures(metric.id).includes(rule.measureId));
-  const dimensions=Object.fromEntries(Object.keys(rule.dimensionMappings).map(dimension=>[dimension,`fixture:${dimension}`]));
-  const value=rule.measureId.endsWith('_date')?`${Date.parse(month+'-05T00:00:00Z')/86400000}.000000`:values[rule.measureId]??'1.000000';
-  const fact:ProductionFact={tenantId:'a',datasetId:mapping.datasetId,measureId:rule.measureId,kind:snapshot?'snapshot':'event',businessDate:snapshot?end:month+'-15',value,dimensions,sourceId:'fixture',sourceObject:rule.sourceObject,sourceRecordId:'10',componentId:'whole',sourceVersion:cutoff,sourceRevision:'1',mappingId:mapping.mappingId,mappingVersion:mapping.mappingVersion,batchId:mapping.datasetId,sourceAsOf:cutoff,frozenRevision:'SYNTHETIC ONLY',status:'active',...(snapshot?{entityId:`${rule.sourceObject}:10`}:{}),...(monetary?{currency:{mode:'native',transactionCurrency:'IQD',transactionValue:value,reportingCurrency:'IQD',policyReference:rule.currencyPolicy}}:{})};
-  validateProductionFact(fact,mapping);return fact;
- });
- const controls:ReviewControl[]=facts.flatMap(fact=>[{measure:fact.measureId,dimensions:fact.dimensions,value:fact.value,count:'1'},{measure:fact.measureId,dimensions:null,value:fact.value,count:'1'}]);
- return {tenantId:'a',month,mapping,cutoff,revision:'SYNTHETIC ONLY',facts:pages(facts),controls:async()=>controls,assertAlive:async()=>{}};
-}
-async function* pages(facts:ProductionFact[]){for(let offset=0;offset<facts.length;offset+=1000)yield facts.slice(offset,offset+1000);}
 test('business exposure preserves every original family, controls all tuples and serves exact money, dates and consecutive events',{skip:!enabled},async()=>{
  const db=await database();
  try{
@@ -111,7 +95,10 @@ test('unchanged immutable review and business members copy without rechecking al
    await tenantTransaction(db.ingestor,'a',client=>client.query("INSERT INTO mart.analytics_partitions(tenant_id,partition_id,month,family) VALUES('a',$1,'2026-10-01',$2)",[`SYNTHETIC-INVALID-${family}`,family]));
    await assert.rejects(tenantTransaction(db.ingestor,'a',client=>client.query("INSERT INTO mart.analytics_serving_members(tenant_id,revision_id,month,partition_id,family) VALUES('a','SYNTHETIC-COPY','2026-10-01',$1,$2)",[`SYNTHETIC-INVALID-${family}`,family])),/Incomplete or mismatched/);
   }
-  for(const table of ['review_facts','review_controls'])await assert.rejects(tenantTransaction(db.ingestor,'a',client=>client.query(`INSERT INTO mart.${table} SELECT * FROM mart.${table} WHERE tenant_id='a' AND partition_id=$1 LIMIT 1`,[prior.partitionId])),/Exposed review contents are immutable/);
+  for(const table of ['review_facts','review_controls']){
+   const columns=table==='review_facts'?'tenant_id,partition_id,fact_key,payload':null;
+   await assert.rejects(tenantTransaction(db.ingestor,'a',client=>client.query(`INSERT INTO mart.${table} ${columns?'('+columns+')':''} SELECT ${columns??'*'} FROM mart.${table} WHERE tenant_id='a' AND partition_id=$1 LIMIT 1`,[prior.partitionId])),/Exposed review contents are immutable/);
+  }
   await assert.rejects(db.admin.query("DELETE FROM mart.analytics_serving_members WHERE tenant_id='a' AND revision_id=$1",[prior.revisionId]),/immutable/i);
  }finally{await db.close();}
 });
@@ -163,9 +150,9 @@ test('shared event reads and discovery select only trusted measures, months and 
    assert.equal(rows.length,1);assert.equal(rows[0]?.payload.value,'0.020000');
   },true);
   const planText=JSON.stringify(plans);
-  assert.match(planText,/review_facts_measure_date/);
-  console.info('shared-read-plan',JSON.stringify({syntheticFacts:60000,index:'review_facts_measure_date',selectedMonthlyCandidates:20024}));
-  const indexes=await db.admin.query("SELECT indexdef FROM pg_indexes WHERE schemaname='mart' AND indexname='review_facts_measure_date'");
-  assert.match(indexes.rows[0].indexdef,/tenant_id, partition_id/);assert.match(indexes.rows[0].indexdef,/measureId/);assert.match(indexes.rows[0].indexdef,/businessDate/);
+  assert.match(planText,/review_facts_typed_access/);
+  console.info('shared-read-plan',JSON.stringify({syntheticFacts:60000,index:'review_facts_typed_access',selectedMonthlyCandidates:20024}));
+  const indexes=await db.admin.query("SELECT indexdef FROM pg_indexes WHERE schemaname='mart' AND indexname='review_facts_typed_access'");
+  assert.match(indexes.rows[0].indexdef,/tenant_id, partition_id/);assert.match(indexes.rows[0].indexdef,/measure_id/);assert.match(indexes.rows[0].indexdef,/business_day/);
  }finally{await db.close();}
 });

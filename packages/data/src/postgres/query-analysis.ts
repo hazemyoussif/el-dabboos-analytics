@@ -1,11 +1,12 @@
+import {compareAnalyticsKeys} from '@el-dabboos/domain';
 import type { AnalyticsQuery, AnalyticsRow } from '@el-dabboos/domain';
 export const compareValues = (value: number|null,prior: number|null) => ({ comparisonValue: prior,absoluteChange: value===null || prior===null ? null : value-prior,percentageChange: value===null || prior===null || prior===0 ? null : (value-prior)/Math.abs(prior)*100 });
 const mean = (values: (number|null)[]) => { const present = values.filter((value): value is number => value!==null); return present.length ? present.reduce((sum,value) => sum+value,0)/present.length : null; };
 function numericOrder(direction: 'top'|'bottom') {
   return (left: AnalyticsRow,right: AnalyticsRow): number => {
-    if (left.value===null) return right.value===null ? String(left.key).localeCompare(String(right.key)) : 1;
+    if (left.value===null) return right.value===null ? compareAnalyticsKeys(left.key,right.key) : 1;
     if (right.value===null) return -1;
-    return (direction==='top' ? right.value-left.value : left.value-right.value) || String(left.key).localeCompare(String(right.key));
+    return (direction==='top' ? right.value-left.value : left.value-right.value) || compareAnalyticsKeys(left.key,right.key);
   };
 }
 function movingAverage(rows: AnalyticsRow[],window: number,comparison: boolean): AnalyticsRow[] {

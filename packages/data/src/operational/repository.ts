@@ -4,7 +4,7 @@ import {ReviewAnalyticsRepository,reviewQuery} from '../review/repository.ts';
 import { trustedDimensionOptions } from './dimension-options.ts';
 import type { Pool,PoolClient } from 'pg';
 import { validateQuery,publishedQueryIssues,semanticCatalog,categoricalDimensions,requiredMeasures } from '@el-dabboos/domain';
-import type { AnalyticsContext,AnalyticsQuery,AnalyticsRepository,AnalyticsResult,DimensionId,DimensionValueRepository,PublishedAnalyticsCapabilities } from '@el-dabboos/domain';
+import type { AnalyticsContext,AnalyticsQuery,AnalyticsRepository,AnalyticsResult,DimensionId,DimensionValueRepository,PublishedAnalyticsCapabilities,AnalyticsReadOptions } from '@el-dabboos/domain';
 import { compatibleOperationalDefinition } from './definition-version.ts';
 import { tenantTransaction } from '../postgres/session.ts';
 import type { HistoricalRepositoryOptions } from '../postgres/historical-repository.ts';
@@ -19,6 +19,7 @@ interface FactServingState {
 }
 /** Reads only a stored trusted manifest and approved capability projection. No source or proof port. */
 export class TrustedAnalyticsRepository implements AnalyticsRepository,DimensionValueRepository {
+ readonly supportsResultWindows=true as const;
  private readonly maxGroups:number;
  private readonly finance:FinanceSnapshotRepository;
  private readonly review:ReviewAnalyticsRepository;
@@ -31,15 +32,15 @@ export class TrustedAnalyticsRepository implements AnalyticsRepository,Dimension
   const [finance,review,business]=await Promise.all([this.finance.capabilities(context),this.review.capabilities(context),this.business.capabilities(context)]);
   return policyCapabilities({...stored.capabilities,releases:[...stored.capabilities.releases,...(finance?.releases??[]),...review.releases,...business.releases]},context);
  }
- async execute(query:AnalyticsQuery,context:AnalyticsContext):Promise<AnalyticsResult> {
+ async execute(query:AnalyticsQuery,context:AnalyticsContext,read?:AnalyticsReadOptions):Promise<AnalyticsResult> {
   validateQuery(query,context);
   const reviewed=this.reviewReader(query,context);
-  if(reviewed){if(!await this.isDataReady(context.tenantId))throw new Error('Trusted serving revision required');return reviewed.execute(query,context);}
-  if(financeMetric(query.metric)){if(!await this.isDataReady(context.tenantId))throw new Error('Trusted serving revision required');const capabilities=await this.finance.capabilities(context);if(capabilities)return this.finance.execute(query,context,capabilities);}
-  const result=await this.executeLegacy(query,context);
-  return result??this.review.execute(query,context);
+  if(reviewed){if(!await this.isDataReady(context.tenantId))throw new Error('Trusted serving revision required');return reviewed.execute(query,context,read);}
+  if(financeMetric(query.metric)){if(!await this.isDataReady(context.tenantId))throw new Error('Trusted serving revision required');const capabilities=await this.finance.capabilities(context);if(capabilities)return this.finance.execute(query,context,capabilities,read);}
+  const result=await this.executeLegacy(query,context,read);
+  return result??this.review.execute(query,context,read);
  }
- private executeLegacy(query:AnalyticsQuery,context:AnalyticsContext):Promise<AnalyticsResult|null>{
+ private executeLegacy(query:AnalyticsQuery,context:AnalyticsContext,read?:AnalyticsReadOptions):Promise<AnalyticsResult|null>{
   return tenantTransaction(this.pool,context.tenantId,async client=>{
    if(!await this.baseline(client,context.tenantId))throw new Error('Trusted serving revision required');
    const baseline=(await client.query<FactServingState>(`SELECT baseline.period_from::text coverage_from,baseline.reporting_currency,trusted.revision_id,coalesce(cursor.cutoff,revision.cutoff) cutoff,(coalesce(cursor.cutoff,revision.cutoff) AT TIME ZONE (baseline.specification->0->'measures'->0->>'timeZone'))::date::text cutoff_day,ARRAY(SELECT month::text FROM mart.analytics_serving_members WHERE tenant_id=baseline.tenant_id AND revision_id=trusted.revision_id AND family='facts') months,CASE WHEN EXISTS(SELECT 1 FROM mart.analytics_serving_members WHERE tenant_id=baseline.tenant_id AND revision_id=trusted.revision_id AND family='facts' AND month>baseline.period_to) THEN (coalesce(cursor.cutoff,revision.cutoff) AT TIME ZONE (baseline.specification->0->'measures'->0->>'timeZone'))::date::text ELSE baseline.period_to::text END current_through FROM mart.analytics_baselines baseline JOIN mart.analytics_trusted_serving trusted USING(tenant_id) JOIN mart.analytics_serving_revisions revision USING(tenant_id,revision_id) LEFT JOIN mart.analytics_source_cursors cursor USING(tenant_id) WHERE baseline.tenant_id=$1`,[context.tenantId])).rows[0];
@@ -50,8 +51,8 @@ export class TrustedAnalyticsRepository implements AnalyticsRepository,Dimension
    const metricRelease=stored.capabilities.releases.find((release:import('@el-dabboos/domain').PublishedAnalyticsRelease)=>release.capabilities.some(capability=>capability.metric===query.metric))!;
    if(!metricRelease?.period)throw new Error('Uncertified trusted period');
    const months=await trustedMetricMonths(client,context.tenantId,query.metric);
-   const selected=await servingRows(client,query,context,{from:metricRelease.period.from,to:metricRelease.period.to,cutoff:stored.cutoff.toISOString(),cutoffDay:stored.cutoff_day,months},this.maxGroups);
-   const dimensionLabels=query.groupBy?await servingLabels(client,query.groupBy,context,query,selected.rows.map(row=>row.key)):{};
+   const selected=await servingRows(client,query,context,{from:metricRelease.period.from,to:metricRelease.period.to,cutoff:stored.cutoff.toISOString(),cutoffDay:stored.cutoff_day,months},{maxGroups:this.maxGroups,revision:stored.revision_id,...(read?{read}:{})});
+   const dimensionLabels='labels' in selected?selected.labels:query.groupBy?await servingLabels(client,query.groupBy,context,query,selected.rows.map(row=>row.key)):{};
    return trustedFactResult(query,stored,selected,dimensionLabels,(this.options.clock?.()??new Date()).toISOString());
   },true,this.options.statementTimeoutMs??15000);
  }
@@ -119,5 +120,5 @@ function metricPresentation(query:AnalyticsQuery):Pick<AnalyticsResult['metadata
 function trustedFactResult(query:AnalyticsQuery,stored:FactServingState&{capabilities:PublishedAnalyticsCapabilities},selected:Awaited<ReturnType<typeof servingRows>>,dimensionLabels:Record<string,string>,executedAt:string):AnalyticsResult{
  const metric=semanticCatalog[query.metric],snapshot=metric.semantics.kind==='snapshot'||metric.semantics.kind==='ratio'&&metric.semantics.basis==='snapshot';
  const release=stored.capabilities.releases[0]!;
- return {metric:query.metric,groupBy:query.groupBy??null,rows:selected.rows,metadata:{...(selected.coverage?{coverage:selected.coverage}:{}),...(selected.availability?{availability:selected.availability}:{}),...(query.analysis?{analysis:query.analysis}:{}),...(Object.keys(dimensionLabels).length?{dimensionLabels}:{}),sourceId:'postgres',executedAt,sourceAsOf:stored.cutoff.toISOString(),...metricPresentation(query),...(selected.dataThrough?{dataThrough:selected.dataThrough}:{}),...(snapshot&&selected.dataThrough?{snapshotAsOf:selected.dataThrough}:{}),release:{datasetId:stored.revision_id,sourceId:release.sourceId,mappingId:release.mappingId,mappingVersion:release.mappingVersion,certificationReference:release.certificationReference,outputCertificationReference:stored.revision_id}}};
+ return {metric:query.metric,groupBy:query.groupBy??null,rows:selected.rows,metadata:{servingRevision:stored.revision_id,...('window' in selected&&selected.window?{window:selected.window}:{}),...(selected.coverage?{coverage:selected.coverage}:{}),...(selected.availability?{availability:selected.availability}:{}),...(query.analysis?{analysis:query.analysis}:{}),...(Object.keys(dimensionLabels).length?{dimensionLabels}:{}),sourceId:'postgres',executedAt,sourceAsOf:stored.cutoff.toISOString(),...metricPresentation(query),...(selected.dataThrough?{dataThrough:selected.dataThrough}:{}),...(snapshot&&selected.dataThrough?{snapshotAsOf:selected.dataThrough}:{}),release:{datasetId:stored.revision_id,sourceId:release.sourceId,mappingId:release.mappingId,mappingVersion:release.mappingVersion,certificationReference:release.certificationReference,outputCertificationReference:stored.revision_id}}};
 }
