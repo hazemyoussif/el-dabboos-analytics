@@ -12,6 +12,8 @@ import {tenantTransaction} from '../../src/postgres/session.ts';
 import {exposeReviewMonth} from '../../src/review/exposure.ts';
 import {TrustedAnalyticsRepository} from '../../src/operational/repository.ts';
 import type {ReviewControl} from '../../src/review/source.ts';
+interface PlanNode {['Node Type']:string;['Index Name']?:string;['Heap Fetches']?:number;Plans?:PlanNode[]}
+function planNodes(plan:PlanNode):PlanNode[]{return [plan,...(plan.Plans??[]).flatMap(planNodes)];}
 test('business exposure preserves every original family, controls all tuples and serves exact money, dates and consecutive events',{skip:!enabled},async()=>{
  const db=await database();
  try{
@@ -118,7 +120,7 @@ test('shared event reads and discovery select only trusted measures, months and 
     ...[0,1].map(index=>({measure:base.measureId,dimensions:{...base.dimensions,customer:`${month}:customer:${index}`},value:'0.010000',count:'10000'})),{measure:base.measureId,dimensions:null,value:'0.020000',count:'20000'}];
    await exposeReviewMonth(db.ingestor,{...source,facts:pages([...others,...repeated]),controls:async()=>controls},'business');
   }
-  await db.admin.query('ANALYZE mart.review_facts');
+  await db.admin.query('VACUUM (ANALYZE) mart.review_facts');
   const repository=new TrustedAnalyticsRepository(db.runtime,{reportingCurrencies:{a:'IQD'}}),context={tenantId:'a',locale:'en' as const};
   const dateRange={from:'2026-09-01',to:'2026-09-30'};
   const result=await repository.execute({metric:'period_net_sales',dateRange},context);
@@ -141,16 +143,17 @@ test('shared event reads and discovery select only trusted measures, months and 
    assert.equal(page.values[0]?.id,`fixture:${dimension}`);
   }
   await assert.rejects(repository.searchDimensionOptions('business_line',context,request),/Uncertified discovery/);
-  const plans:unknown[]=[];
+  const plans:PlanNode[]=[];
   await tenantTransaction(db.runtime,'a',async client=>{
    const observed={query:async(sql:string,params:unknown[])=>{
-    const plan=await client.query('EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) '+sql,params);plans.push(plan.rows[0]['QUERY PLAN']);return client.query(sql,params);
+    const plan=await client.query('EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) '+sql,params);plans.push(plan.rows[0]['QUERY PLAN'][0].Plan);return client.query(sql,params);
    }} as unknown as PoolClient;
    const {rows}=await reviewEventRows(observed,{query:{metric:'period_net_sales'},context,range:dateRange,family:'business'});
    assert.equal(rows.length,1);assert.equal(rows[0]?.payload.value,'0.020000');
   },true);
   const planText=JSON.stringify(plans);
   assert.match(planText,/review_facts_typed_access/);
+  assert.ok(plans.flatMap(planNodes).some(node=>node['Node Type']==='Index Only Scan'&&node['Index Name']==='review_facts_typed_access'&&node['Heap Fetches']===0),'visible scalar event history must read exact amounts without fetching fact envelopes');
   console.info('shared-read-plan',JSON.stringify({syntheticFacts:60000,index:'review_facts_typed_access',selectedMonthlyCandidates:20024}));
   const indexes=await db.admin.query("SELECT indexdef FROM pg_indexes WHERE schemaname='mart' AND indexname='review_facts_typed_access'");
   assert.match(indexes.rows[0].indexdef,/tenant_id, partition_id/);assert.match(indexes.rows[0].indexdef,/measure_id/);assert.match(indexes.rows[0].indexdef,/business_day/);

@@ -216,14 +216,14 @@ test('database guards refuse empty nonzero totals and nonempty null operands',{s
 test('forward empty-snapshot migration preserves an existing nonempty publication and migration replay',{skip:!enabled},async()=>{
  const db=await database(false),directory=await mkdtemp('/tmp/finance-before-empty-'),url=pathToFileURL(directory+'/');
  try {
-  await cp(migrationDirectory,url,{recursive:true});await rm(new URL('042_empty_finance_snapshots.sql',url));await rm(new URL('043_scoped_derived_inputs.sql',url));await rm(new URL('044_post_exposure_review.sql',url));await rm(new URL('045_grouped_review_controls.sql',url));await rm(new URL('046_business_purpose.sql',url));await rm(new URL('047_immutable_review_membership.sql',url));await rm(new URL('048_review_serving_access.sql',url));await rm(new URL('049_review_fact_projection.sql',url));await rm(new URL('050_review_snapshot_identity.sql',url));await migratePostgres(db.migrator,url);
+  await cp(migrationDirectory,url,{recursive:true});await rm(new URL('042_empty_finance_snapshots.sql',url));await rm(new URL('043_scoped_derived_inputs.sql',url));await rm(new URL('044_post_exposure_review.sql',url));await rm(new URL('045_grouped_review_controls.sql',url));await rm(new URL('046_business_purpose.sql',url));await rm(new URL('047_immutable_review_membership.sql',url));await rm(new URL('048_review_serving_access.sql',url));await rm(new URL('049_review_fact_projection.sql',url));await rm(new URL('050_review_snapshot_identity.sql',url));await rm(new URL('051_review_typed_cover.sql',url));await migratePostgres(db.migrator,url);
   const specification=mapping(),rule=specification.measures[2]!;
   specification.measures=receivableMeasures.map(measureId=>({...rule,measureId,dimensionMappings:{customer:'Synthetic governed identity'}}));
   specification.capabilities=receivableMeasures.map(metric=>({metric,dimensions:['customer','month']}));
   await deploy(db.migrator,specification);await bootstrapOperationalServing(db.migrator,'a');
   await publishFinanceSnapshot(db.ingestor,evidence('2026-09-30'));
   const before=(await db.admin.query('SELECT * FROM mart.finance_snapshot_evidence')).rows;
-  assert.deepEqual(await migratePostgres(db.migrator),[42,43,44,45,46,47,48,49,50]);assert.deepEqual(await migratePostgres(db.migrator),[]);
+  assert.deepEqual(await migratePostgres(db.migrator),[42,43,44,45,46,47,48,49,50,51]);assert.deepEqual(await migratePostgres(db.migrator),[]);
   assert.deepEqual((await db.admin.query('SELECT * FROM mart.finance_snapshot_evidence')).rows,before);
   await publishFinanceSnapshot(db.ingestor,evidence('2026-06-30',0));
   const repository=new TrustedAnalyticsRepository(db.runtime,{reportingCurrencies:{a:'IQD'}});

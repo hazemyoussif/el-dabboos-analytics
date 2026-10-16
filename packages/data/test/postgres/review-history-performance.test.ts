@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import type {ProductionFact,AnalyticsQuery} from '@el-dabboos/domain';
+import type {ProductionFact,AnalyticsQuery,AnalyticsContext,DateRange} from '@el-dabboos/domain';
+import type {PoolClient} from 'pg';
+import {groupedReviewRows} from '../../src/review/grouped-query.ts';
 import {database,enabled} from './support.ts';
 import {deploy,mapping} from './fixtures.ts';
 import {fixture,pages} from './business-fixture.ts';
@@ -8,6 +10,16 @@ import {bootstrapOperationalServing} from '../../src/operational/baseline.ts';
 import {exposeReviewMonth} from '../../src/review/exposure.ts';
 import {TrustedAnalyticsRepository} from '../../src/operational/repository.ts';
 import {tenantTransaction} from '../../src/postgres/session.ts';
+
+async function groupingPlan(client:PoolClient,context:AnalyticsContext,range:DateRange){
+ let statement:{text:string;params:unknown[]}|undefined;
+ const capture={query:async(text:string,params:unknown[])=>{statement={text,params};return {rows:[]};}} as unknown as PoolClient;
+ await groupedReviewRows(capture,{query:{metric:'period_net_sales',groupBy:'salesperson',dateRange:range},context,range,family:'business',revision:'synthetic',maxGroups:4000});
+ assert.ok(statement);
+ const plan=(await client.query('EXPLAIN (ANALYZE,BUFFERS,TIMING OFF,FORMAT JSON) '+statement.text,statement.params)).rows[0]['QUERY PLAN'][0];
+ assert.equal(plan.Plan['Temp Written Blocks'],0,'categorical consistency checks must not spill the wide fact population');
+ return {executionMs:plan['Execution Time'],tempWrittenBlocks:plan.Plan['Temp Written Blocks']};
+}
 
 test('multi-month history reduces exact typed operands without transferring fact history',{skip:!enabled,timeout:120000},async()=>{
  const db=await database();
@@ -40,6 +52,7 @@ test('multi-month history reduces exact typed operands without transferring fact
      WHERE trusted.tenant_id=$1 AND member.family='business' AND ${measure}=$2 AND ${date} BETWEEN $3::text AND $4::text`,['a','period_net_sales',query.dateRange!.from,query.dateRange!.to])).rows[0]['QUERY PLAN'][0];
     output[projected?'typed':'payload']={executionMs:plan['Execution Time'],sharedHitBlocks:plan.Plan['Shared Hit Blocks']};
    }
+   output.categorical=await groupingPlan(client,context,query.dateRange!);
    return output;
   },true);
   console.info('review-history-benchmark',JSON.stringify({syntheticFacts:300000,executionMs,maxOutputRows:3,plans}));

@@ -32,6 +32,17 @@ the initial deployment includes analytics-only `VACUUM (ANALYZE)` outside the
 migration transaction. No persistent rollup, extra approval, or timeout increase
 is introduced.
 
+Migration 051 replaces the typed-access index with the same keys plus included
+entity identity and exact amount. Narrow event/history reads can use index-only
+access without copying source envelopes or attribution objects. Shared categorical
+review/business grouping detects one non-null label by equal minimum and maximum
+labels, preserving missing/conflicting evidence. Unit validity uses equivalent
+bounds plus the existing unknown-unit rejection. Removing these DISTINCT
+aggregates allows hash grouping instead of sorting full attribution rows. Exact
+values, latest selection, policy filters, full-population safety checks and output
+windows keep their existing order. This is an adapter query/access-path change,
+not a report or metric exception.
+
 Readiness distinguishes a confirmed absent baseline from a failed dependency check. Both fail closed; a transient check failure is not evidence that source data should be reloaded. Safe localized messages keep dependency details out of browser errors.
 
 ## Verification and limits

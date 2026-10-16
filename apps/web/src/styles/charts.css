@@ -1,4 +1,4 @@
-.chart-wrap { flex: 1; min-height: 100px; width: 100%; margin-top: var(--space-3); display: flex; flex-direction: column; direction: ltr; }
+.chart-wrap { flex: 1 0 190px; height: 190px; min-height: 190px; width: 100%; margin-top: var(--space-3); display: flex; flex-direction: column; direction: ltr; }
 .chart-plot { flex: 1; min-height: 0; min-width: 0; position: relative; }
 .bar-scroll { height: 100%; overflow: auto; scrollbar-width: thin; }
 .chart-legend { flex: none; list-style: none; padding: var(--space-2) 0 0; margin: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 14px; max-height: 52px; overflow: auto; font-size: var(--text-xs); color: var(--text-secondary); }
@@ -25,4 +25,4 @@ html[dir=rtl] .chart-legend { direction: rtl; font-family: var(--font-arabic); }
 .table-row-search small { color: var(--text-muted); }
 @media(max-width:760px) { .viewer-item:has(> .widget .row-pages),.viewer-item:has(> .widget .table-row-search) { height:420px; } }
 
-@media(max-width:760px) { .viewer-item:has(> .widget .chart-wrap) { height:480px; } }
+@media(max-width:760px) { .viewer-item:has(> .widget .chart-wrap) { height:auto; min-height:480px; } }

@@ -50,12 +50,13 @@ summary::-webkit-details-marker { display: none; }
 .series-warning,.partial-note { padding: var(--space-2); border-radius: var(--radius-sm); font-size: var(--text-xs); }
 .empty-state,.empty-workspace { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-2); min-height: 100px; padding: var(--space-4); text-align: center; color: var(--text-muted); font-size: var(--text-sm); }
 .empty-state p { margin: 0; }.empty-state>svg { width: 24px; height: 24px; }
-.viewer-canvas { display: grid; grid-template-columns: repeat(12,minmax(0,1fr)); grid-auto-rows: 74px; gap: 14px; direction: ltr; }
-.viewer-canvas:has(> .viewer-item > .widget-kpi) { grid-auto-rows: minmax(74px, auto); }
+.viewer-canvas { display: grid; grid-template-columns: repeat(12,minmax(0,1fr)); grid-auto-rows: minmax(74px, auto); gap: 14px; direction: ltr; }
 .viewer-item { min-width: 0; min-height: 0; direction: ltr; }
 .viewer-item>.widget { height: 100%; min-height: 0; overflow: hidden; }
 .viewer-item:has(> .widget-kpi), .viewer-item > .widget-kpi { min-height: min-content; }
 .viewer-item > .widget-kpi { overflow: visible; }
+.viewer-item:has(> .widget > .chart-wrap), .viewer-item > .widget:has(> .chart-wrap) { min-height: min-content; }
+.viewer-item > .widget:has(> .chart-wrap) { overflow: visible; }
 html[dir=rtl] .viewer-item { direction: rtl; }
 .catalog-panel { background: var(--surface-primary); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: var(--text-secondary); font-size: var(--text-xs); }
 .catalog-panel summary { padding: var(--space-3); font-weight: 500; }
@@ -123,7 +124,7 @@ html[dir=rtl] .viewer-item { direction: rtl; }
 .excel-export button { min-height: 36px; }
 .excel-export [role=alert] { color: var(--danger); }
 
-.widget:has(> .result-window) {overflow:auto;}
+.widget-table:has(> .result-window) {overflow:auto;}
 .widget:has(> .result-window) > .table-wrap {flex:1 0 8rem;}
 .result-window {display:flex;flex:none;flex-wrap:wrap;align-items:end;gap:var(--space-2);padding-block:var(--space-2);font-size:var(--text-xs);}
 .result-window form {display:flex;gap:var(--space-2);align-items:end;flex-wrap:wrap;min-width:0;flex:1 1 15rem;}
