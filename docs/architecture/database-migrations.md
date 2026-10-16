@@ -10,7 +10,7 @@ closed. No accepted SQL or checksum is changed by milestone finalization.
 
 | Store | Current head | Registration / readiness | Explicit execution |
 | --- | --- | --- | --- |
-| PostgreSQL analytics mart | 051 `review_typed_cover` | [Manifest/runner](../../packages/data/src/postgres/migrations.ts), [runtime readiness](../../packages/data/src/postgres/readiness.ts) | `pnpm mart:migrate`; staging uses `pnpm staging migrate` |
+| PostgreSQL analytics mart | 052 `review_amount_cover` | [Manifest/runner](../../packages/data/src/postgres/migrations.ts), [runtime readiness](../../packages/data/src/postgres/readiness.ts) | `pnpm mart:migrate`; staging uses `pnpm staging migrate` |
 | PostgreSQL control | 009 `workspace_ai_settings` | [Manifest/runner/readiness](../../packages/data/src/control/migrations.ts) | `pnpm control migrate`; staging uses `pnpm staging migrate` |
 | SQLite governed metadata | 006 `workspace-ai-settings` | [Explicit registry/readiness](../../packages/data/src/metadata/migrations.ts) | `pnpm metadata:migrate <metadata-db-path>` against approved metadata storage |
 
@@ -69,3 +69,14 @@ index is larger and cannot use B-tree deduplication. There is one typed-access
 index after success. Index-only reads depend on existing visibility coverage.
 See the [measured query evidence](../qa/report-query-optimization-2026-10-16.md)
 and [staging maintenance](../integration/shared-staging.md#typed-covering-index-migration-051).
+
+
+Migration 052 replaces the typed-access index with the same keys and `INCLUDE(amount)`.
+It retains scalar event coverage while leaving ordered snapshot identities on the
+existing snapshot index. No canonical facts, heap, controls, serving history, RLS
+or permissions change. Construction needs temporary index/WAL headroom and a
+maintenance window for table locks. The runner commits index replacement and its
+ledger row atomically; a schema-51 failure after the old-index drop restores the
+original index OID/file/definition and data state. Older migration bytes remain
+unchanged. Company index-only rehearsal restored Collections below its deadline;
+acceptance of the combined history query remains pending.
