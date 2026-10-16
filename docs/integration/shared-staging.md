@@ -78,6 +78,8 @@ pnpm staging verify
 
 Provision creates role groups/logins first, then the two databases. It only targets `el_dabboos_control_staging` and `el_dabboos_analytics_staging`. Explicit migrate applies the current immutable migration manifests, verifies histories/checksums and installs scoped login grants. The [collections review wave](collections-product-margin-wave.md) adds mart versions 044–045. Version-040 adoption stages a standalone differently versioned Finance anchor only when its published snapshots are exact, then restores its unchanged certified binding on the same transaction after verifying every snapshot survives adoption. Released migration bytes and approvals remain unchanged. See the [current migration inventory](../architecture/database-migrations.md). Runtime startup never repairs or migrates the governed schema. Older local databases require explicit approved migration before running the current API; no live database version is inferred from this runbook. A partially completed explicit migration remains safe to rerun; never start API until `verify` succeeds. For managed services where the administrator cannot create these roles/databases, an authorized DBA must provide equivalent reviewed isolation and grants before migration. Do not weaken runtime checks to accommodate elevated credentials.
 
+For the initial migration-050 deployment, follow the [snapshot index maintenance](#snapshot-identity-index-maintenance-migration-050) step after migrate and before verify/restart.
+
 ## Governed bootstrap
 
 Review the JSON manifest before execution. Exact field validation rejects unknown fields, connection strings, credentials in identifiers, invalid tenant configuration, company scopes, duplicate identities/roles/sources and missing tenant admin. Fields include bootstrap ID, customer, tenant configuration, disabled provider/subject placeholders, existing tenant roles and non-secret source references. Tenant config is IQ / IQD / Asia/Baghdad / iq / ar. The source is `el-dabboos-odoo18-pg`, tenant `el-dabboos-iq`, company `["1"]`, connection reference `odoo-staging-main`.
@@ -195,3 +197,28 @@ build number. Local Git builds derive the revision count automatically. Builds
 without Git or an explicit number identify themselves as `development`, rather
 than inventing a release number. The value is baked into the web artifact and
 does not change when viewing reports or switching locale.
+
+## Snapshot identity index maintenance (migration 050)
+
+Before this release, confirm the approved analytics database, a verified restore
+point and free disk for the additive index build and temporary files. The existing
+normal deployment keeps API/web stopped during `staging migrate`. Migration 050
+creates a narrow non-unique index and does not repeat migration 049's table rewrite.
+Run ordinary PostgreSQL maintenance **after migration and before verification and
+application restart**, using the approved analytics database owner:
+
+```sql
+VACUUM (ANALYZE) mart.review_facts;
+```
+
+Run this as a standalone statement, outside an explicit transaction. It updates
+PostgreSQL visibility/statistics for existing analytics rows; source Odoo is never
+contacted or modified. The migration ledger stays immutable and is never manually
+edited. Continue the normal `staging verify` and image restart only after success.
+
+The snapshot query preserves the trusted partition set and all historical facts.
+Its index-only speedup depends on visibility coverage: synthetic fresh pages without
+that coverage did not reproduce the large improvement. Check the actual runtime
+plan and report latency after deployment rather than assuming the local benchmark
+applies to company hardware. Normal autovacuum must remain enabled for subsequent
+analytics ingestion; immutable older partitions can retain their visibility coverage.

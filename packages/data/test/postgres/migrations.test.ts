@@ -9,10 +9,10 @@ test('migrations: empty, rerun, same-session concurrent runners and ledger', { s
   const db = await database(false);
   try {
     const results = await Promise.all([migratePostgres(db.migrator), migratePostgres(db.migrator)]);
-    assert.deepEqual(results.flat().sort((left,right)=>left-right), Array.from({length:49},(_,index)=>index+1));
+    assert.deepEqual(results.flat().sort((left,right)=>left-right), Array.from({length:50},(_,index)=>index+1));
     assert.deepEqual(await migratePostgres(db.migrator), []);
     const { rows } = await db.migrator.query('SELECT * FROM mart_admin.mart_schema_migrations ORDER BY version');
-    assert.equal(rows.length, 49); assert.match(rows[0].sha256, /^[a-f0-9]{64}$/); assert.equal(rows[0].name, '001_production_foundation.sql');
+    assert.equal(rows.length, 50); assert.match(rows[0].sha256, /^[a-f0-9]{64}$/); assert.equal(rows[0].name, '001_production_foundation.sql');
     assert.equal((await db.migrator.query("SELECT to_regclass('mart.fact_revisions') AS name")).rows[0].name, 'mart.fact_revisions');
     const index=(await db.migrator.query("SELECT indexdef FROM pg_indexes WHERE schemaname='mart' AND indexname='analytics_partition_facts_revision_lookup'")).rows[0];
     const range=(await db.migrator.query("SELECT indexdef FROM pg_indexes WHERE schemaname='mart' AND indexname='analytics_fact_revisions_drill_range'")).rows[0];
@@ -38,14 +38,14 @@ test('migrations: checksum refusal, failed SQL rollback, gaps and newer database
       await assert.rejects(migratePostgres(db.migrator,url),/checksum/);
       await writeFile(artifact,original);
     }
-    await writeFile(new URL('050_failure.sql', url), 'CREATE TABLE mart.rolled_back (id integer); SELECT nonexistent_column;');
+    await writeFile(new URL('051_failure.sql', url), 'CREATE TABLE mart.rolled_back (id integer); SELECT nonexistent_column;');
     await assert.rejects(migratePostgres(db.migrator, url));
     assert.equal((await db.migrator.query("SELECT to_regclass('mart.rolled_back') AS name")).rows[0].name, null);
-    assert.equal((await db.migrator.query('SELECT count(*) AS n FROM mart_admin.mart_schema_migrations')).rows[0].n, '49');
-    await rm(new URL('050_failure.sql', url));
-    await writeFile(new URL('051_gap.sql', url), 'SELECT 1');
+    assert.equal((await db.migrator.query('SELECT count(*) AS n FROM mart_admin.mart_schema_migrations')).rows[0].n, '50');
+    await rm(new URL('051_failure.sql', url));
+    await writeFile(new URL('052_gap.sql', url), 'SELECT 1');
     await assert.rejects(migratePostgres(db.migrator, url), /contiguous/);
-    await rm(new URL('051_gap.sql', url)); await rm(new URL('041_historical_month_imports.sql', url));await rm(new URL('042_empty_finance_snapshots.sql', url));await rm(new URL('043_scoped_derived_inputs.sql', url));await rm(new URL('044_post_exposure_review.sql', url));await rm(new URL('045_grouped_review_controls.sql', url));await rm(new URL('046_business_purpose.sql', url));await rm(new URL('047_immutable_review_membership.sql', url));await rm(new URL('048_review_serving_access.sql', url));await rm(new URL('049_review_fact_projection.sql',url));
+    await rm(new URL('052_gap.sql', url)); await rm(new URL('041_historical_month_imports.sql', url));await rm(new URL('042_empty_finance_snapshots.sql', url));await rm(new URL('043_scoped_derived_inputs.sql', url));await rm(new URL('044_post_exposure_review.sql', url));await rm(new URL('045_grouped_review_controls.sql', url));await rm(new URL('046_business_purpose.sql', url));await rm(new URL('047_immutable_review_membership.sql', url));await rm(new URL('048_review_serving_access.sql', url));await rm(new URL('049_review_fact_projection.sql',url));await rm(new URL('050_review_snapshot_identity.sql',url));
     await assert.rejects(migratePostgres(db.migrator, url), /history/);
   } finally { await db.close(); await rm(tmp, { recursive: true }); }
 });
