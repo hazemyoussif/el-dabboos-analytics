@@ -271,3 +271,17 @@ control timings, check real runtime access and all reports after deployment,
 including snapshots, quantity validity, ratios, nulls and paging. Schema/index
 maintenance neither refreshes Odoo data nor supplies Finance approval. See the
 [forward-fix evidence](../qa/shared-report-forward-fix-2026-10-16.md).
+
+## Scheduled jobs and future schema maintenance
+
+Use [the schedule lifecycle runbook](staging-schedules.md) when enabling operational
+sync and daily reconciliation. Jobs resolve the healthy deployed API image ID and
+verify its exact schema before source access. They cover operational events and
+summaries; Finance month ends and business/review extractions remain separate.
+
+Once scheduling is installed, use `bash infra/staging/deploy.sh` for normal
+API/web releases with the existing protected runtime/operator configuration. It
+shares a host lock with jobs across migration, verification and healthy restart,
+and refuses orphan workers. No manual scheduler image pin update is required.
+Raw migration/deployment commands above describe the underlying operations; do not
+run them independently of this maintenance exclusion while timers are enabled.
