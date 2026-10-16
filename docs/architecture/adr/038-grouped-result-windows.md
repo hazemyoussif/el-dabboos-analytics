@@ -47,6 +47,23 @@ Readiness distinguishes a confirmed absent baseline from a failed dependency che
 
 ## Verification and limits
 
-Focused tests cover published operational populations above configured bounds, asymmetric series, complete traversal above 5,000 groups, scoped continuations, full-population Top-N/Pareto/contribution, exact Finance dates, readiness failures, and a 300,000-fact multi-month workload. Full gate results belong in the delivery evidence, not this design decision.
+Focused tests cover published operational populations above configured bounds, asymmetric series, complete traversal above 5,000 groups, scoped continuations, full-population Top-N/Pareto/contribution, exact Finance dates, readiness failures, and a 60,000-fact multi-month workload with diverse customer attribution, 31 salespeople and seven states. Full gate results belong in the delivery evidence, not this design decision.
 
 This is bounded response delivery, not an unlimited source-query budget. PostgreSQL statement/pool bounds remain in place. Aborting a browser page request prevents stale UI updates; it does not establish cancellation of already running SQL. Large composed result sets can still encounter a resource failure and must report it honestly. Hosted SQL latency must be checked after deployment. Full-dataset streaming exports and persisted review rollups are not introduced.
+
+
+### Forward correction: source planning and aggregate width
+
+Review/business event grouping resolves the eligible trusted partition set through
+the same caller-owned repeatable-read transaction, then binds that actual set to
+the fact scan. This makes membership cardinality visible when PostgreSQL plans the
+query; there is no cross-request cache. Snapshot identity/date selection stays on
+its existing path. Both paths project scalar grouping operands after policy/user
+filtering and latest-snapshot selection. Single-use event operands remain foldable
+so PostgreSQL can use parallel aggregation without an intermediate spool; snapshots
+retain their materialization boundary. This preserves exact numeric,
+label/UOM, distinct-count and complete-population analysis semantics before windows.
+Migration 052 keeps amount coverage while removing unordered entity coverage from
+typed access. Top N, paging and application timeouts are unchanged. Local proofs
+and pending company acceptance are recorded in the
+[forward-fix evidence](../../qa/shared-report-forward-fix-2026-10-16.md).

@@ -19,12 +19,13 @@ async function preservedState(pool:Pool){
   (SELECT revision_id FROM mart.analytics_trusted_serving WHERE tenant_id='a') trusted_revision,
   (SELECT jsonb_build_array(relrowsecurity,relforcerowsecurity) FROM pg_class WHERE oid='mart.review_facts'::regclass) rls`)).rows[0];
 }
-for(const version of [49,50])test(`populated schema-${version} upgrade covers reads without rewriting facts, controls, serving history or RLS`,{skip:!enabled},async()=>{
+for(const version of [49,50,51])test(`populated schema-${version} upgrade covers reads without rewriting facts, controls, serving history or RLS`,{skip:!enabled},async()=>{
  const db=await database(false),directory=await mkdtemp('/tmp/dabboos-snapshot-upgrade-'),manifest=pathToFileURL(directory+'/');
  try{
   await cp(migrationDirectory,manifest,{recursive:true});
   if(version===49)await rm(new URL('050_review_snapshot_identity.sql',manifest));
-  await rm(new URL('051_review_typed_cover.sql',manifest));
+  if(version<51)await rm(new URL('051_review_typed_cover.sql',manifest));
+  await rm(new URL('052_review_amount_cover.sql',manifest));
   await migratePostgres(db.migrator,manifest);
   await deploy(db.migrator,mapping());await bootstrapOperationalServing(db.migrator,'a');
   await exposeReviewMonth(db.ingestor,fixture('2026-09',false,'review'));
@@ -37,13 +38,22 @@ for(const version of [49,50])test(`populated schema-${version} upgrade covers re
    assert.equal((await db.admin.query("SELECT indnatts FROM pg_index WHERE indexrelid='mart.review_facts_typed_access'::regclass")).rows[0].indnatts,4,'a failed replacement restores the old index');
    assert.equal((await db.admin.query('SELECT max(version) version FROM mart_admin.mart_schema_migrations')).rows[0].version,50);
   }
-  assert.deepEqual(await migratePostgres(db.migrator),version===49?[50,51]:[51]);
+  if(version===51){
+   const indexState=async()=> (await db.admin.query("SELECT oid,relfilenode,pg_get_indexdef(oid) definition FROM pg_class WHERE oid='mart.review_facts_typed_access'::regclass")).rows[0];
+   const originalIndex=await indexState(),replacement=await readFile(new URL('052_review_amount_cover.sql',migrationDirectory),'utf8');
+   await writeFile(new URL('052_review_amount_cover.sql',manifest),replacement.replace('ALTER INDEX mart.review_facts_amount_cover','SELECT nonexistent_column;\nALTER INDEX mart.review_facts_amount_cover'));
+   await assert.rejects(migratePostgres(db.migrator,manifest),/nonexistent_column/);
+   assert.deepEqual(await indexState(),originalIndex);assert.deepEqual(await preservedState(db.admin),before);
+   assert.equal((await db.admin.query("SELECT to_regclass('mart.review_facts_amount_cover') duplicate")).rows[0].duplicate,null);
+   assert.equal((await db.admin.query('SELECT max(version) version FROM mart_admin.mart_schema_migrations')).rows[0].version,51);
+  }
+  assert.deepEqual(await migratePostgres(db.migrator),version===49?[50,51,52]:version===50?[51,52]:[52]);
   assert.deepEqual(await preservedState(db.admin),before);
   assert.deepEqual(await migratePostgres(db.migrator),[]);
   const index=(await db.admin.query("SELECT indisvalid,indisunique FROM pg_index WHERE indexrelid='mart.review_facts_snapshot_identity'::regclass")).rows[0];
   assert.deepEqual(index,{indisvalid:true,indisunique:false});
   const typed=(await db.admin.query("SELECT indisvalid,indisunique,indnkeyatts,indnatts FROM pg_index WHERE indexrelid='mart.review_facts_typed_access'::regclass")).rows[0];
-  assert.deepEqual(typed,{indisvalid:true,indisunique:false,indnkeyatts:4,indnatts:6});
+  assert.deepEqual(typed,{indisvalid:true,indisunique:false,indnkeyatts:4,indnatts:5});
   assert.equal((await db.admin.query("SELECT to_regclass('mart.review_facts_typed_cover') duplicate")).rows[0].duplicate,null);
   const result=await new TrustedAnalyticsRepository(db.runtime,{reportingCurrencies:{a:'IQD'}}).execute({metric:'receivables_due_for_collection',groupBy:'customer',dateRange:{from:'2026-09-01',to:'2026-09-30'}},{tenantId:'a',locale:'en'});
   assert.equal(result.rows[0]?.value,1);assert.equal(result.metadata.release?.financeReview,'pending');

@@ -241,3 +241,33 @@ and exact plans linked in the [optimization evidence](../qa/report-query-optimiz
 then repeat the default history, debt and certified-aging report checks. Record
 results separately from synthetic benchmarks. Do not declare the company timeouts
 resolved until the deployed release passes those checks.
+
+
+## Collections and history forward candidate (migration 052)
+
+Candidate only: require the combined company rehearsal before publishing this
+release. Migration 052 changes one existing index to amount-only coverage; it adds
+no table or dataset reload and does not rewrite the source heap. Use the normal
+approved backup, build, stop, migrate, verify and restart workflow after acceptance.
+Allow new-index construction plus WAL headroom while the old index still exists.
+The transaction locks the fact table; keep applications stopped during migration.
+The same forward image must be used for verification/startup at schema 052; do not
+start an older schema-051 image or edit the immutable ledger to bypass readiness.
+
+The shared history candidate resolves trusted event membership on the same
+repeatable-read connection and projects scalar aggregation operands. The first
+combined rehearsal failed the history deadline and was rolled back; it is not
+release evidence. The revised event query permits folding of its single-use
+projection, preserving snapshot materialization. A prepared runtime-role read-only
+preflight measures both histories without service stops or index changes. It
+requires approval for those company reads. Final combined verification still
+requires explicit maintenance approval before an uncommitted index replacement.
+It compares Collections, both failing history breakdowns, debt balance and monthly
+event totals with the current deployed SQL; all five candidate statements must
+meet the existing 15-second deadline and return exactly identical raw results.
+
+A passing owner-role rehearsal is not the runtime/browser acceptance gate. Review
+control timings, check real runtime access and all reports after deployment,
+including snapshots, quantity validity, ratios, nulls and paging. Schema/index
+maintenance neither refreshes Odoo data nor supplies Finance approval. See the
+[forward-fix evidence](../qa/shared-report-forward-fix-2026-10-16.md).
