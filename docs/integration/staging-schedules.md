@@ -1,39 +1,101 @@
 # Staging analytics schedules
 
-The host invokes the existing analytics CLI in the deployed commit-pinned API image. There is no worker framework, in-process scheduler, model dependency or new database schema. The runtime API does not receive source credentials.
+The host runs the existing analytics CLI in the healthy deployed API image. The jobs configuration contains protected file references, tenant and API container identity, never credentials or a second release pin. Each invocation inspects that container, requires a healthy running commit-tagged image, and executes its immutable local image ID with `--pull never`. An old `STAGING_API_IMAGE` in an existing jobs file is ignored. Runtime API containers still have no source credentials.
 
-`el-dabboos-analytics-sync.timer` runs sync five minutes after the previous invocation finishes (first invocation five minutes after timer activation). `el-dabboos-analytics-daily.timer` runs daily reconciliation and then presence sweep at 00:00 UTC / 03:00 Baghdad. Both services share a nonblocking host lock, so an overlapping scheduled invocation is skipped and logged. The existing tenant writer lock still protects against manual jobs. A failed reconciliation prevents the following sweep, exits nonzero and leaves a failed systemd service plus the existing durable run evidence. Failed jobs retain the existing rollback/cursor rules. No source/SQL deadline is increased; systemd terminates a stuck service after fifteen minutes. Replays use the existing cursor and unchanged-run lifecycle.
+## Scope and integrity
 
-`ANALYTICS_JOB_TRIGGER=scheduled` records the actual origin in the existing audit. Normal CLI invocations retain `operator`; the HTTP path retains `manual`.
+The sync timer runs five minutes after activation and five minutes after the previous invocation finishes. Daily reconciliation followed by the presence sweep runs at 00:00 UTC / 03:00 Baghdad. Reconciliation failure stops the sweep. All jobs retain the existing tenant writer lock, independent source controls, candidate rollback, immutable serving publication and successful cursor rules. Source access stays read-only through the existing adapter. Nothing marks Finance approval.
 
-## Prepare without starting
+These two schedules cover the existing operational fact/event/summary path. They **do not refresh** immutable Finance month ends or the newer `review` and `business` extraction families. Their existing `expose` / `expose-business` commands replace a complete month with a new immutable partition. Repeating those full loaders every five minutes would consume source capacity and grow history even when business values have not changed. A separate change-aware refresh design and measured source proof are required for those families; no whole-history loop or automatic month-end publication is installed here. Read source timestamps separately when reviewing their dashboards.
 
-Copy `infra/staging/jobs.env.example` to `/opt/el-dabboos/secrets/staging-jobs.env`, set its image to the deployed full commit SHA, and keep it root-owned mode 0600. It contains release metadata and existing protected env-file paths, not credential values. Keep the operator/source files unchanged. The runner rejects an unpinned image and uses `--pull never` to execute only the locally built release.
+The runner and [normal deployment command](#deployments-and-schema-updates) share `/run/lock/el-dabboos-analytics.lock`. If overriding `STAGING_ANALYTICS_LOCK_FILE`, export the identical path for jobs and deployment. Keep this lock file's inode in place; never remove it to bypass a running operation. A scheduled sync skips a busy lock and records the skip in the system journal. Foreground activation sets `STAGING_JOB_REQUIRE_RUN=1`, making such a skip exit 75 rather than pass the activation gate. Daily/check operations wait up to five minutes; deployment waits up to fifteen minutes before any maintenance. Existing systemd total job and source/SQL deadlines remain unchanged.
 
-```sh
+Before a job receives source configuration it runs `staging-cli.ts verify` using only the protected operator file. This checks intended staging database identities, immutable schema history and runtime roles. A migration mismatch or unhealthy API stops before Odoo access. `verify-schedule` then requires an established baseline, a trusted revision and completed event aggregate coverage, using only read-only analytics status. `check` runs these offline checks without source configuration. Its optional `STAGING_JOB_REQUIRE_FRESH=1` additionally requires no unresolved candidate, a recent zero-mismatch successful sync, finite freshness within the configured target and no later failed job. A failed candidate is retained evidence, not an active writer; normal scheduled sync can retry through the existing validated lifecycle. Activation requires that unresolved candidate to have been resolved by a successful run. Old failure evidence predating the successful sync is retained and does not block recovery. Readiness is structural evidence, not source reconciliation or freshness proof.
+
+Worker containers carry the staging analytics-job label. Exit/signal cleanup removes the specific container ID created by that invocation. If a killed host process leaves a container alive, subsequent jobs and deployment refuse to proceed. Inspect that container and recover explicitly; do not delete the lock or blindly retry maintenance. Scheduled job origin remains `scheduled` in the existing durable analytics audit. Preflight/container failures remain visible through systemd; timers do not deliver external notifications.
+
+## Install definitions without starting jobs
+
+On the company host, retain the existing protected operator and Odoo configuration files. For a **new** jobs configuration only:
+
+```bash
+cd /opt/el-dabboos/analytics
+if ! test -e /opt/el-dabboos/secrets/staging-jobs.env; then
+  install -m 600 infra/staging/jobs.env.example /opt/el-dabboos/secrets/staging-jobs.env
+fi
+```
+
+For an existing jobs file, preserve all configured paths and tenant. Add `STAGING_API_CONTAINER=el-dabboos-staging-api-1` if absent. The old image pin is no longer used. Check that `STAGING_SOURCE_ENV_FILE` points to the existing protected source configuration used by the accepted loader; a missing file is a blocker, never a reason to invent credentials or fall back to another connection. Keep this metadata file root-owned mode 0600.
+
+Install both timers and their shared service only after the reviewed release is present on the host:
+
+```bash
 install -m 644 infra/staging/el-dabboos-analytics@.service /etc/systemd/system/
 install -m 644 infra/staging/el-dabboos-analytics-sync.timer /etc/systemd/system/
 install -m 644 infra/staging/el-dabboos-analytics-daily.timer /etc/systemd/system/
 systemctl daemon-reload
 ```
 
-This installs definitions only. It does not enable timers, start jobs, restart the stopped PR19 container or load any source data. Deployments must update the image in `staging-jobs.env` together with API/web. Timer configuration alone does not prove data freshness.
+This does not enable timers, load source data, migrate databases or restart the old PR19 evidence container.
 
-## Verify before enabling
+## Refresh now and enable only on success
 
-Complete the required historical loading through [the existing monthly path](hosted-historical-parity.md). Check stored coverage, zero pending aggregates and independently published customer month-end snapshots. Run one foreground sync using the deployed image and existing operator/source configuration; inspect its result, zero mismatches, cursor and trusted revision. Run it again to verify replay rather than assuming every replay is unchanged when the source has moved. Verify report reads and filters after those operations. Keep the original `el-dabboos-sync-pr19` container stopped as evidence.
+Historical serving coverage, pending candidates/aggregates and accepted exact snapshots must already be checked. The current staging has historical evidence through September; verify the actual status rather than substituting a new bootstrap or historical reload. Keep the original stopped PR19 container as evidence.
 
-Only after those hosted checks pass:
+The following foreground sequence deliberately performs the authorized sync and reconciliation. It uses the already-protected connection, never prints credentials, and enables neither timer if any operation fails. Inspect the JSON for exact controls, cursor movement and the trusted revision. A replay may change if Odoo changed between the two snapshots.
 
-```sh
+```bash
+(
+set -e
+cd /opt/el-dabboos/analytics
+set -a
+source /opt/el-dabboos/secrets/staging-jobs.env
+set +a
+systemctl disable --now el-dabboos-analytics-sync.timer el-dabboos-analytics-daily.timer
+for unit in el-dabboos-analytics@sync.service el-dabboos-analytics@daily.service; do
+  state=$(systemctl is-active "$unit" || true)
+  case "$state" in
+    inactive|failed) ;;
+    *) printf 'Wait for the active service before activation: %s (%s)\n' "$unit" "$state"; exit 75 ;;
+  esac
+done
+export STAGING_JOB_REQUIRE_RUN=1
+bash infra/staging/analytics-job.sh check
+bash infra/staging/analytics-job.sh sync
+bash infra/staging/analytics-job.sh sync
+bash infra/staging/analytics-job.sh daily
+STAGING_JOB_REQUIRE_FRESH=1 bash infra/staging/analytics-job.sh check
 systemctl enable --now el-dabboos-analytics-sync.timer el-dabboos-analytics-daily.timer
 systemctl list-timers 'el-dabboos-analytics-*'
+)
 ```
 
-Monitor `journalctl -u 'el-dabboos-analytics@*'` and the existing analytics status endpoint for failures, freshness and pending candidates. Daily audit success does not resolve failed sync evidence. Timers do not send notifications; alert delivery is outside this change. To stop future runs, disable both timers; an already running service must be stopped separately when needed. No automatic retry loops or bootstrap operations are added.
+Do not substitute `|| true` for a failed foreground stage. A successful sync/replay can be `passed` or `unchanged`; a failed reconciliation exits nonzero. If activation stops, leave scheduling disabled and review the safe result together with `journalctl -u 'el-dabboos-analytics@*'`. Review finance/report reads against the final trusted revision separately. Timer presence alone never proves fresh data.
 
-These jobs update the existing operational event/summary path. Immutable customer Finance month ends are loaded with the existing explicit Finance loader; they are not fabricated or silently refreshed by the timers. Finishing historical Finance loading and future month-end publication are separate from incremental source freshness.
+## Deployments and schema updates
 
-## Report loading
+Use the shared deployment entry point for every future release, including releases with migrations. After the reviewed main checkout has been pulled and its exact SHA checked, set the existing configuration references and run:
 
-The workspace renders completed report execution before requesting optional filter choices. Choice requests run sequentially; a failed dimension leaves other successful choices available and displays a bilingual retry message. Customer search remains the existing bounded server search. Query/result bounds remain unchanged: high-cardinality customer detail requires a selected customer/date scope and never silently drops rows. No report/template availability is hardcoded.
+```bash
+export STAGING_RUNTIME_ENV_FILE=/opt/el-dabboos/secrets/staging-runtime.env
+export STAGING_OPERATOR_ENV_FILE=/opt/el-dabboos/secrets/staging-operator.env
+export STAGING_DATABASE_NETWORK=dabboos-analytics-mart_default
+export STAGING_WEB_PORT=8088
+bash infra/staging/deploy.sh
+```
+
+This requires a clean checkout, derives API/web tags and public build number from its commit, and builds while the current release remains available. It then waits for the shared job lock, rejects orphan workers, stops API/web, runs explicit migrations and role/schema verification, and starts both services with `--wait`. The lock is held through health checks. A failed migration or verification stops the sequence before restart; preserve the failure and recover using verified binary/schema compatibility. It never blindly restarts an old image against a new schema.
+
+Enabled timers remain enabled through maintenance; a sync can only skip the shared lock. After successful restart, the next job resolves the new healthy API image ID and verifies its matching schema before receiving source configuration. No jobs image pin needs a manual update. Do not bypass this entry point with raw `migrate` or an independent deployment while timers are enabled. Restore backups through the same maintenance exclusion; bootstrap/provision, rollback and database restore remain separate explicit operations.
+
+After a release changes timer/service definitions, reinstall those three unit files and run `systemctl daemon-reload`. For this runner migration, stop/disable existing timers before replacing old scripts and wait for old services to finish: an invocation already running the previous runner has no new safety guarantees. Existing approved backup/restore policy still applies.
+
+## Verify ongoing operation
+
+```bash
+systemctl list-timers 'el-dabboos-analytics-*'
+systemctl status el-dabboos-analytics@sync.service el-dabboos-analytics@daily.service --no-pager
+journalctl -u 'el-dabboos-analytics@*' --since '1 hour ago' --no-pager
+```
+
+Check the read-only analytics status for recent successful sync, zero mismatches, no pending candidate/aggregates and intended trusted revision. A failure preserves the last trusted data and must be investigated. Daily success does not clear failed sync evidence. To stop future invocations, disable both timers; an active job needs separate controlled stopping. Source credential rotation, recovery and notifications are outside this setup.

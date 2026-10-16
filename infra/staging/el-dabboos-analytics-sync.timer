@@ -2,7 +2,7 @@
 Description=Update El Dabboos staging analytics after each five-minute idle period
 
 [Timer]
-OnBootSec=5min
+OnActiveSec=5min
 OnUnitInactiveSec=5min
 Unit=el-dabboos-analytics@sync.service
 

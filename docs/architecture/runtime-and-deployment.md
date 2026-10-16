@@ -112,3 +112,5 @@ LLM diagnostics disabled except in approved protected investigation.
 
 [Production readiness](../integration/production-readiness.md) owns remaining
 hosting, privacy, identity activation, load, backup and operational approval gates.
+
+The [staging schedules](../integration/staging-schedules.md) use the healthy deployed API image ID, an offline schema/role check, and a shared host maintenance lock. Once timers are installed, `infra/staging/deploy.sh` owns the normal build → lock → stop → migrate → verify → healthy restart sequence. This prevents scheduled ingestion from overlapping schema maintenance; no source configuration is supplied to preflight or the runtime API. These timers cover the existing operational path; newer business/review and immutable Finance snapshot publication remain separate.
