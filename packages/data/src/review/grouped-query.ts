@@ -18,7 +18,7 @@ export async function groupedReviewRows(client:PoolClient,scope:ReviewGroupedSco
  const filters=[...(query.filters??[]),...(context.enforcedFilters??[])].map(filter=>`base.dimensions->>${bind(params,filter.dimension)}=ANY(${bind(params,filter.values)}::text[])`);
  const group=bind(params,query.groupBy),label=bind(params,dimensionLabelField(query.groupBy));
  const unsafe=groupedUnsafeExpression(query,params),value=groupedValueExpression(query,params),quantities=compatibleQuantityMetrics.includes(query.metric as import('@el-dabboos/domain').BusinessMetricId)&&query.groupBy!=='uom';
- const invalid=quantities?`count(DISTINCT base.dimensions->>'uom')<>1 OR bool_or(coalesce(base.dimensions->>'uom','unassigned')='unassigned')`:'false';
+ const invalid=quantities?`min(base.dimensions->>'uom') IS DISTINCT FROM max(base.dimensions->>'uom') OR bool_or(coalesce(base.dimensions->>'uom','unassigned')='unassigned')`:'false';
  const base=snapshot?reviewSnapshotBase:`WITH facts AS (
  SELECT fact.measure_id,fact.amount value,fact.dimensions,fact.display_labels labels,fact.business_day business_date,fact.entity_id FROM mart.analytics_trusted_serving trusted JOIN mart.analytics_serving_members member USING(tenant_id,revision_id)
  JOIN mart.review_extractions extraction USING(tenant_id,partition_id) JOIN mart.review_facts fact USING(tenant_id,partition_id)
@@ -26,9 +26,11 @@ export async function groupedReviewRows(client:PoolClient,scope:ReviewGroupedSco
  AND member.month<=date_trunc('month',$3::date) AND member.month>=date_trunc('month',${from}::date)
  AND fact.business_day<= $3::text AND fact.business_day>=${from}::text
  ),base AS (SELECT * FROM facts)`;
+ // Equal non-null label bounds identify one distinct label without a wide DISTINCT sort.
+ // Missing labels and conflicting labels remain null; UOM validity uses the same rule.
  const text=`${base}
  SELECT base.dimensions->>${group} key,${value} value,${invalid} invalid,${unsafe} unsafe,
- CASE WHEN count(DISTINCT base.labels->>${label})=1 THEN min(base.labels->>${label}) END label,max(base.business_date)::date through
+ CASE WHEN min(base.labels->>${label})=max(base.labels->>${label}) THEN min(base.labels->>${label}) END label,max(base.business_date)::date through
  FROM base WHERE base.dimensions->>${group} IS NOT NULL ${filters.length?'AND '+filters.join(' AND '):''} GROUP BY 1`;
  const selected=await readGroupedSql(client,{query,context,input:{text,params},revision,maxGroups,...(read?{read}:{})});
  return {...selected,labels:Object.fromEntries(Object.entries(selected.labels).map(([key,label])=>[key,sourceDisplayLabel(label,context.locale)]))};

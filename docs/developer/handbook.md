@@ -98,6 +98,8 @@ Tables use bounded internal vertical/horizontal scrolling with sticky column hea
 
 Available report, template and saved-dashboard destinations are native links. Right-click offers browser link actions; middle-click and Ctrl/Cmd-click open another tab without replacing the current draft. Ordinary clicks keep the existing guarded navigation and unsaved-change checks. Unavailable destinations remain disabled controls. Mobile drawer keyboard containment includes the new links.
 
+Chart cards fit their headings, legends, paging/search controls and chart-value action without an outer scrollbar. Viewer grid tracks can grow while preserving saved grid coordinates; the builder layout model is unchanged. The plot retains a bounded scrolling viewport, and chart-value/detail tables keep their internal table scrolling. This also applies to chart-only reports and wrapped Arabic/mobile controls.
+
 ### Purposeful charts and large reports
 
 The source-backed management templates add chart companions where trends, ranked comparisons or cumulative positive sales share clarify the question. Detail tables remain available. Optional new charts appear only when their published metric/grouping pairs cover the report period; missing chart capabilities retain the original supported report. Pareto shows its actual cumulative percentage on a 0–100% axis with an 80% reference; it never mixes monetary bars and percentages on one axis. Monetary margin and margin percentage use separate panels. Calendar dates, mixed product-unit quantities and actionable exceptions remain tables. Known aging, credits, provisional segments, book balances and observed cohorts keep their existing definitions and limitations.

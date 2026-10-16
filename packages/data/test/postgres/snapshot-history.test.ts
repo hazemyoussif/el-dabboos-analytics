@@ -70,7 +70,7 @@ test('snapshot history reads identities from the covering index before fetching 
    assert.equal(result.rows.length,50);assert.ok(result.rows.every(row=>row.value===0.0002));
    const statement=statements.at(-1)!;
    const explain=(await client.query('EXPLAIN (ANALYZE,BUFFERS,TIMING OFF,FORMAT JSON) '+statement.text,statement.params)).rows[0]['QUERY PLAN'][0];
-   const covered=nodes(explain.Plan).filter(node=>node['Node Type']==='Index Only Scan'&&node['Index Name']==='review_facts_snapshot_identity');
+   const covered=nodes(explain.Plan).filter(node=>node['Node Type']==='Index Only Scan'&&['review_facts_snapshot_identity','review_facts_typed_access'].includes(node['Index Name']??''));
    assert.ok(covered.length>0,'history selection must use the identity index without carrying historical payloads');
    assert.ok(covered.every(node=>node['Heap Fetches']===0),'visible history must not fetch source envelopes for old rows');
    return {syntheticSnapshots:records*6,executionMs:explain['Execution Time'],indexOnlyHeapFetches:covered.map(node=>node['Heap Fetches'])};

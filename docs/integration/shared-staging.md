@@ -222,3 +222,22 @@ that coverage did not reproduce the large improvement. Check the actual runtime
 plan and report latency after deployment rather than assuming the local benchmark
 applies to company hardware. Normal autovacuum must remain enabled for subsequent
 analytics ingestion; immutable older partitions can retain their visibility coverage.
+
+## Typed covering index (migration 051)
+
+Use the normal backup/restore verification, image build, application stop,
+`staging migrate`, `staging verify` and restart workflow. Migration 051 replaces
+the typed-access index in a transaction and leaves the fact heap, controls, trusted
+revision, existing reports and immutable publications intact. No source reload or
+Odoo connection is required. Before migration, confirm the intended analytics
+database and disk headroom for the new index alongside the old index, build sort
+files and WAL. It has included amount/entity columns, so it is larger than the
+old deduplicated index. No duplicate typed-access index remains after success.
+
+The ordinary visibility maintenance documented above still applies when needed;
+051 itself does not rewrite the heap or clear its visibility map. Keep normal
+autovacuum enabled. After readiness succeeds, rerun the bounded read-only profile
+and exact plans linked in the [optimization evidence](../qa/report-query-optimization-2026-10-16.md),
+then repeat the default history, debt and certified-aging report checks. Record
+results separately from synthetic benchmarks. Do not declare the company timeouts
+resolved until the deployed release passes those checks.
