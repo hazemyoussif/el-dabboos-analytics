@@ -1,3 +1,4 @@
+import {preparedRuntimeDiagnostics} from './prepared-runtime.mjs';
 import { baselineSourceCommit, baselineProvenanceDiagnostics } from './baseline-policy.mjs';
 import { changedArtifactDiagnostics } from './diff.mjs';
 import { execFileSync } from 'node:child_process';
@@ -7,7 +8,7 @@ import { checkImports, resolver } from './architecture.mjs';
 const files = execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard'], { encoding: 'utf8' }).trim().split('\n').filter(file => existsSync(file)).filter(file => /^(apps|packages)\/[^/]+\/src\/.*\.tsx?$/.test(file));
 const mode = process.argv[2];
 let diagnostics;
-if (mode === 'architecture') diagnostics = files.flatMap(file => checkImports(file, readFileSync(file, 'utf8'), resolver(process.cwd())));
+if (mode === 'architecture') diagnostics = [...files.flatMap(file => checkImports(file, readFileSync(file, 'utf8'), resolver(process.cwd()))),...preparedRuntimeDiagnostics(process.cwd())];
 else if (mode === 'quality') {
   const baseline = JSON.parse(readFileSync('scripts/engineering/quality-baseline.json', 'utf8'));
   const historicalFiles = execFileSync('git', ['ls-tree', '-r', '--name-only', baselineSourceCommit], { encoding: 'utf8' }).split('\n').filter(file => /^(apps|packages)\/[^/]+\/src\/.*\.tsx?$/.test(file));

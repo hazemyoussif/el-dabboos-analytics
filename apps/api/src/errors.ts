@@ -1,4 +1,4 @@
-import {AnalyticsQueryTimeoutError} from '@el-dabboos/domain';
+import {AnalyticsQueryTimeoutError,AnalyticsPublicationChangedError} from '@el-dabboos/domain';
 import { AuthorizationError, DashboardLibraryError, DashboardPersistenceError, StructuredPlanningError, UnsupportedDemoIntentError } from '@el-dabboos/application';
 import type { FastifyInstance } from 'fastify';
 import { ProviderTransportError } from './providers/openai-compatible.ts';
@@ -10,8 +10,14 @@ function providerStatus(error: ProviderTransportError): number {
   if (error.code === 'LLM_TIMEOUT') return 504;
   return 502;
 }
+function analyticsFailure(error: unknown) {
+  if(error instanceof AnalyticsPublicationChangedError)return {status:503,code:'ANALYTICS_REVISION_CHANGED'};
+  if(error instanceof AnalyticsQueryTimeoutError)return {status:503,code:'QUERY_TIMEOUT'};
+  return undefined;
+}
 function errorStatus(error: unknown): number {
-  if(error instanceof AnalyticsQueryTimeoutError)return 503;
+  const analytics=analyticsFailure(error);
+  if(analytics)return analytics.status;
   if (error instanceof ApiError) return error.statusCode;
   if (error instanceof DashboardLibraryError) return error.code === 'FOLDER_NOT_FOUND' ? 404 : 400;
   if (error instanceof AuthorizationError) return 403;
@@ -23,7 +29,8 @@ function errorStatus(error: unknown): number {
   return messageStatus(error);
 }
 function errorCode(error: unknown, status: number): string {
-  if(error instanceof AnalyticsQueryTimeoutError)return 'QUERY_TIMEOUT';
+  const analytics=analyticsFailure(error);
+  if(analytics)return analytics.code;
   if (error instanceof DashboardLibraryError || error instanceof ApiError || error instanceof AuthorizationError || error instanceof DashboardPersistenceError || error instanceof StructuredPlanningError || error instanceof UnsupportedDemoIntentError || error instanceof ProviderTransportError) return error.code;
   return status === 400 ? 'VALIDATION_ERROR' : 'INTERNAL_ERROR';
 }

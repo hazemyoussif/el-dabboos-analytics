@@ -77,3 +77,6 @@ export function periodKeys(range: DateRange, dimension: DimensionId): string[] {
   }
   return keys;
 }
+
+/** ISO month-end calculation shared by source preparation and serving metadata. */
+export function monthEnd(month:string){const date=new Date(`${month}-01T00:00:00Z`);date.setUTCMonth(date.getUTCMonth()+1);date.setUTCDate(0);return date.toISOString().slice(0,10);}

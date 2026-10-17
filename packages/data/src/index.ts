@@ -65,3 +65,5 @@ export {OdooSnapshotLease} from './odoo/snapshot.ts';
 
 export {businessMapping} from './business/definitions.ts';
 export {OdooBusinessReader} from './business/source.ts';
+
+export {PublishedAnalyticsRepository} from './published-repository.ts';

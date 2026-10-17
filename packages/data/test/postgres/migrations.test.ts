@@ -2,17 +2,18 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { mkdtemp, cp, writeFile, readFile, rm } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
-import { migratePostgres, migrationDirectory } from '../../src/postgres/migrations.ts';
+import { migratePostgres, migrationDirectory, loadPostgresMigrations } from '../../src/postgres/migrations.ts';
 import { database, enabled } from './support.ts';
 
 test('migrations: empty, rerun, same-session concurrent runners and ledger', { skip: !enabled }, async () => {
   const db = await database(false);
   try {
     const results = await Promise.all([migratePostgres(db.migrator), migratePostgres(db.migrator)]);
-    assert.deepEqual(results.flat().sort((left,right)=>left-right), Array.from({length:52},(_,index)=>index+1));
+    const manifest=await loadPostgresMigrations();
+    assert.deepEqual(results.flat().sort((left,right)=>left-right),manifest.map(migration=>migration.version));
     assert.deepEqual(await migratePostgres(db.migrator), []);
     const { rows } = await db.migrator.query('SELECT * FROM mart_admin.mart_schema_migrations ORDER BY version');
-    assert.equal(rows.length, 52); assert.match(rows[0].sha256, /^[a-f0-9]{64}$/); assert.equal(rows[0].name, '001_production_foundation.sql');
+    assert.equal(rows.length,manifest.length); assert.match(rows[0].sha256, /^[a-f0-9]{64}$/); assert.equal(rows[0].name, '001_production_foundation.sql');
     assert.equal((await db.migrator.query("SELECT to_regclass('mart.fact_revisions') AS name")).rows[0].name, 'mart.fact_revisions');
     const index=(await db.migrator.query("SELECT indexdef FROM pg_indexes WHERE schemaname='mart' AND indexname='analytics_partition_facts_revision_lookup'")).rows[0];
     const range=(await db.migrator.query("SELECT indexdef FROM pg_indexes WHERE schemaname='mart' AND indexname='analytics_fact_revisions_drill_range'")).rows[0];
@@ -26,6 +27,8 @@ test('migrations: empty, rerun, same-session concurrent runners and ledger', { s
 });
 test('migrations: checksum refusal, failed SQL rollback, gaps and newer database refusal', { skip: !enabled }, async () => {
   const db = await database(); const tmp = await mkdtemp('/tmp/dabboos-migrations-'); const url = pathToFileURL(`${tmp}/`);
+  const manifest=await loadPostgresMigrations(),head=manifest.at(-1)!.version;
+  const failure=new URL(`${String(head+1).padStart(3,'0')}_failure.sql`,url),gap=new URL(`${String(head+2).padStart(3,'0')}_gap.sql`,url);
   try {
     await cp(migrationDirectory, url, { recursive: true });
     await writeFile(new URL('001_production_foundation.sql', url), '-- tampered');
@@ -38,14 +41,15 @@ test('migrations: checksum refusal, failed SQL rollback, gaps and newer database
       await assert.rejects(migratePostgres(db.migrator,url),/checksum/);
       await writeFile(artifact,original);
     }
-    await writeFile(new URL('053_failure.sql', url), 'CREATE TABLE mart.rolled_back (id integer); SELECT nonexistent_column;');
+    await writeFile(failure, 'CREATE TABLE mart.rolled_back (id integer); SELECT nonexistent_column;');
     await assert.rejects(migratePostgres(db.migrator, url));
     assert.equal((await db.migrator.query("SELECT to_regclass('mart.rolled_back') AS name")).rows[0].name, null);
-    assert.equal((await db.migrator.query('SELECT count(*) AS n FROM mart_admin.mart_schema_migrations')).rows[0].n, '52');
-    await rm(new URL('053_failure.sql', url));
-    await writeFile(new URL('054_gap.sql', url), 'SELECT 1');
+    assert.equal((await db.migrator.query('SELECT count(*) AS n FROM mart_admin.mart_schema_migrations')).rows[0].n, String(head));
+    await rm(failure);
+    await writeFile(gap, 'SELECT 1');
     await assert.rejects(migratePostgres(db.migrator, url), /contiguous/);
-    await rm(new URL('054_gap.sql', url)); await rm(new URL('041_historical_month_imports.sql', url));await rm(new URL('042_empty_finance_snapshots.sql', url));await rm(new URL('043_scoped_derived_inputs.sql', url));await rm(new URL('044_post_exposure_review.sql', url));await rm(new URL('045_grouped_review_controls.sql', url));await rm(new URL('046_business_purpose.sql', url));await rm(new URL('047_immutable_review_membership.sql', url));await rm(new URL('048_review_serving_access.sql', url));await rm(new URL('049_review_fact_projection.sql',url));await rm(new URL('050_review_snapshot_identity.sql',url));await rm(new URL('051_review_typed_cover.sql',url));await rm(new URL('052_review_amount_cover.sql',url));
+    await rm(gap);
+    for(const migration of manifest.filter(migration=>migration.version>=41))await rm(new URL(migration.name,url));
     await assert.rejects(migratePostgres(db.migrator, url), /history/);
   } finally { await db.close(); await rm(tmp, { recursive: true }); }
 });

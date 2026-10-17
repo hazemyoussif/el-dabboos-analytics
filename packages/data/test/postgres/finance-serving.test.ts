@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {database,enabled} from './support.ts';
 import {mkdtemp,cp,rm} from 'node:fs/promises';
 import {pathToFileURL} from 'node:url';
-import {migrationDirectory,migratePostgres} from '../../src/postgres/migrations.ts';
+import {migrationDirectory,migratePostgres,loadPostgresMigrations} from '../../src/postgres/migrations.ts';
 import {deploy,mapping} from './fixtures.ts';
 import {tenantTransaction} from '../../src/postgres/session.ts';
 import {bootstrapOperationalServing} from '../../src/operational/baseline.ts';
@@ -12,6 +12,10 @@ import {publishFinanceSnapshot} from '../../src/operational/finance-publication.
 import type {FinanceSnapshotEvidence} from '../../src/operational/finance-publication.ts';
 import {TrustedAnalyticsRepository} from '../../src/operational/repository.ts';
 import {receivableMeasures} from '../../src/receivable-aging.ts';
+import type {Pool} from 'pg';
+import {AnalyticsPublicationChangedError} from '@el-dabboos/domain';
+import type {AnalyticsQuery,AnalyticsResult,AnalyticsRepository,DashboardSpec} from '@el-dabboos/domain';
+import {DashboardExecutor} from '../../../application/src/executor.ts';
 function evidence(date:string,count=1):FinanceSnapshotEvidence {
  const values=Object.fromEntries(receivableMeasures.map(measure=>[measure,['net_aged_receivable','aged_at_date','gross_open_receivable_components'].includes(measure)?'100.000000':'0.000000']));
  return {tenantId:'a',date,currency:'IQD',sourceCutoff:'2026-10-08T00:21:08.728Z',sourceRevision:'synthetic-retained-snapshot',totals:Object.fromEntries(receivableMeasures.map(measure=>[measure,['net_aged_receivable','aged_at_date','gross_open_receivable_components'].includes(measure)?`${count*100}.000000`:'0.000000'])),customers:Array.from({length:count},(_,index)=>({id:`fixture:${String(index).padStart(5,'0')}`,label:`Customer ${index}`,actual:values,expected:{...values}}))};
@@ -25,6 +29,103 @@ async function fixture(summaryOnly=false){
  await bootstrapOperationalServing(db.migrator,'a');
  return {db,repository:new TrustedAnalyticsRepository(db.runtime,{reportingCurrencies:{a:'IQD'}})};
 }
+function countSummaryReads(pool:Pool){
+ let count=0;
+ const clients=new WeakSet<object>(),connect=pool.connect.bind(pool);
+ pool.connect=(async()=>{
+  const client=await connect();
+  if(!clients.has(client)){
+   clients.add(client);const query=client.query.bind(client);
+   client.query=(async(sql:string,params?:unknown[])=>{if(sql.includes('invalid_measures'))count++;return query(sql,params);}) as typeof client.query;
+  }
+  return client;
+ }) as typeof pool.connect;
+ return ()=>count;
+}
+function withoutExecutionTime(result:AnalyticsResult){const copy=structuredClone(result);copy.metadata.executedAt='ignored';return copy;}
+
+test('execution-scoped Finance summaries share one reduction with exact values and provenance',{skip:!enabled},async()=>{
+ const {db,repository}=await fixture();try{
+  const published=await publishFinanceSnapshot(db.migrator,evidence('2026-09-30',3));
+  assert.ok(published.revisionId);
+  const context={tenantId:'a',locale:'en' as const},queries=receivableMeasures.map(metric=>({metric,dateRange:{from:'2026-01-01',to:'2026-10-08'}}));
+  const expected=await Promise.all(queries.map(query=>repository.execute(query,context)));
+  for(const result of expected)result.metadata.servingRevision=published.revisionId;
+  const count=countSummaryReads(db.runtime),scope=await repository.createExecutionScope(context);
+  const selected=await Promise.all(queries.map(query=>scope.execute(query,context)));
+  assert.equal(count(),1);
+  assert.deepEqual(selected.map(withoutExecutionTime),expected.map(withoutExecutionTime));
+  assert.deepEqual(selected.map(result=>result.rows[0]?.value),[300,300,0,0,0,0,0,0,300,0]);
+  const again=await repository.createExecutionScope(context);await again.execute(queries[0]!,context);assert.equal(count(),2);
+  const policy={...context,enforcedFilters:[{dimension:'customer' as const,values:['fixture:00000']}]};
+  const policyScope=await repository.createExecutionScope(policy),scoped=await policyScope.execute(queries[0]!,policy);
+  assert.equal(scoped.rows[0]?.value,100);assert.equal(count(),3);
+  const absent={...context,enforcedFilters:[{dimension:'customer' as const,values:['fixture:absent']}]};
+  const absentScope=await repository.createExecutionScope(absent),empty=await absentScope.execute(queries[0]!,absent);
+  assert.equal(empty.rows[0]?.value,0);assert.equal(count(),4);
+  await assert.rejects(async()=>scope.execute(queries[0]!,{tenantId:'b',locale:'en'}),/context changed/);
+  await assert.rejects(async()=>scope.execute(queries[0]!,policy),/context changed/);
+  assert.equal(count(),4);
+ }finally{await db.close();}
+});
+
+test('summary operand reuse separates cutoffs and monthly shape and observes publication changes',{skip:!enabled},async()=>{
+ const {db,repository}=await fixture();try{
+  for(const [date,count] of [['2026-08-31',1],['2026-09-30',2]] as const)await publishFinanceSnapshot(db.migrator,evidence(date,count));
+  const count=countSummaryReads(db.runtime),context={tenantId:'a',locale:'ar' as const},scope=await repository.createExecutionScope(context);
+  const query:AnalyticsQuery={metric:'net_aged_receivable',dateRange:{from:'2026-08-01',to:'2026-09-30'}};
+  assert.equal((await scope.execute(query,context)).rows[0]?.value,200);
+  const months=await scope.execute({...query,groupBy:'month'},context);
+  assert.deepEqual(months.rows.map(row=>row.value),[100,200]);assert.equal(count(),2);
+  const prior=await scope.execute({...query,dateRange:{from:'2026-08-01',to:'2026-09-15'}},context);
+  assert.equal(prior.rows[0]?.value,100);assert.equal(prior.metadata.snapshotAsOf,'2026-08-31');assert.equal(count(),3);
+  await publishFinanceSnapshot(db.migrator,evidence('2026-09-30',3));
+  await assert.rejects(scope.execute(query,context),AnalyticsPublicationChangedError);
+  await assert.rejects(scope.verifyExecution!(),AnalyticsPublicationChangedError);
+  const fresh=await repository.createExecutionScope(context),changed=await fresh.execute(query,context);assert.equal(changed.rows[0]?.value,300);assert.equal(count(),4);
+  assert.notEqual(changed.metadata.release?.datasetId,months.metadata.drillReleases?.['2026-09']);
+  const missing=await fresh.execute({...query,dateRange:{from:'2025-01-01',to:'2025-10-30'}},context);
+  assert.equal(missing.rows[0]?.value,null);assert.equal(missing.metadata.availability?.state,'DATA_NOT_READY');
+ }finally{await db.close();}
+});
+
+test('unsafe summary operands fail only dependent metrics in a shared reduction',{skip:!enabled},async()=>{
+ const {db,repository}=await fixture();try{
+  const snapshot=evidence('2026-09-30');
+  for(const measure of ['net_aged_receivable','aged_at_date','gross_open_receivable_components']){
+   snapshot.customers[0]!.actual[measure]='9007199254740992.000000';snapshot.totals[measure]='9007199254740992.000000';
+  }
+  snapshot.customers[0]!.expected={...snapshot.customers[0]!.actual};
+  await publishFinanceSnapshot(db.migrator,snapshot);
+  const count=countSummaryReads(db.runtime),context={tenantId:'a',locale:'en' as const},scope=await repository.createExecutionScope(context);
+  const dateRange={from:'2026-09-01',to:'2026-09-30'};
+  await assert.rejects(scope.execute({metric:'net_aged_receivable',dateRange},context),/Unsafe SQL numeric output/);
+  assert.equal((await scope.execute({metric:'aged_1_30',dateRange},context)).rows[0]?.value,0);assert.equal(count(),1);
+ }finally{await db.close();}
+});
+test('a real Finance publication between widgets retries the complete dashboard against one revision',{skip:!enabled},async()=>{
+ const {db,repository}=await fixture();try{
+  await publishFinanceSnapshot(db.migrator,evidence('2026-09-30'));
+  let scopes=0,changed=false,latest:string|undefined;
+  const hooked:AnalyticsRepository={execute:repository.execute.bind(repository),async createExecutionScope(context){
+   scopes++;const pinned=await repository.createExecutionScope(context);
+   return {...pinned,async execute(query,actor,read){
+    const selected=await pinned.execute(query,actor,read);
+    if(!changed){changed=true;latest=(await publishFinanceSnapshot(db.migrator,evidence('2026-09-30',2))).revisionId;}
+    return selected;
+   }};
+  }};
+  const dashboard:DashboardSpec={schemaVersion:2,id:'snapshot-race',locale:'en',title:{en:'Race',ar:'تزامن'},filters:{dateRange:{from:'2026-09-01',to:'2026-09-30'}},layout:{columns:12},widgets:[
+   {id:'total',type:'kpi',series:[{id:'total',metric:'net_aged_receivable'}]},
+   {id:'current',type:'kpi',series:[{id:'current',metric:'aged_at_date'}]},
+  ]};
+  const output=await new DashboardExecutor(hooked,undefined,{maxConcurrency:1}).execute(dashboard,{tenantId:'a',locale:'en'});
+  assert.equal(scopes,2);assert.equal(output.metadata.servingRevision,latest);assert.equal(output.metadata.succeededSeries,2);
+  for(const entry of Object.values(output.widgetResults))for(const series of Object.values(entry.seriesResults)){
+   assert.equal(series.status,'success');if(series.status==='success'){assert.equal(series.result.rows[0]?.value,200);assert.equal(series.result.metadata.servingRevision,latest);}
+  }
+ }finally{await db.close();}
+});
 test('unified exact customer snapshots resolve historical, middle-date, latest and absent cutoffs without rewriting certificates',{skip:!enabled},async()=>{
  const {db,repository}=await fixture();try {
   const prior=(await db.admin.query('SELECT specification FROM mart.release_certifications')).rows;
@@ -216,14 +317,15 @@ test('database guards refuse empty nonzero totals and nonempty null operands',{s
 test('forward empty-snapshot migration preserves an existing nonempty publication and migration replay',{skip:!enabled},async()=>{
  const db=await database(false),directory=await mkdtemp('/tmp/finance-before-empty-'),url=pathToFileURL(directory+'/');
  try {
-  await cp(migrationDirectory,url,{recursive:true});await rm(new URL('042_empty_finance_snapshots.sql',url));await rm(new URL('043_scoped_derived_inputs.sql',url));await rm(new URL('044_post_exposure_review.sql',url));await rm(new URL('045_grouped_review_controls.sql',url));await rm(new URL('046_business_purpose.sql',url));await rm(new URL('047_immutable_review_membership.sql',url));await rm(new URL('048_review_serving_access.sql',url));await rm(new URL('049_review_fact_projection.sql',url));await rm(new URL('050_review_snapshot_identity.sql',url));await rm(new URL('051_review_typed_cover.sql',url));await rm(new URL('052_review_amount_cover.sql',url));await migratePostgres(db.migrator,url);
+  const pending=(await loadPostgresMigrations()).filter(migration=>migration.version>=42);
+  await cp(migrationDirectory,url,{recursive:true});for(const migration of pending)await rm(new URL(migration.name,url));await migratePostgres(db.migrator,url);
   const specification=mapping(),rule=specification.measures[2]!;
   specification.measures=receivableMeasures.map(measureId=>({...rule,measureId,dimensionMappings:{customer:'Synthetic governed identity'}}));
   specification.capabilities=receivableMeasures.map(metric=>({metric,dimensions:['customer','month']}));
   await deploy(db.migrator,specification);await bootstrapOperationalServing(db.migrator,'a');
   await publishFinanceSnapshot(db.ingestor,evidence('2026-09-30'));
   const before=(await db.admin.query('SELECT * FROM mart.finance_snapshot_evidence')).rows;
-  assert.deepEqual(await migratePostgres(db.migrator),[42,43,44,45,46,47,48,49,50,51,52]);assert.deepEqual(await migratePostgres(db.migrator),[]);
+  assert.deepEqual(await migratePostgres(db.migrator),pending.map(migration=>migration.version));assert.deepEqual(await migratePostgres(db.migrator),[]);
   assert.deepEqual((await db.admin.query('SELECT * FROM mart.finance_snapshot_evidence')).rows,before);
   await publishFinanceSnapshot(db.ingestor,evidence('2026-06-30',0));
   const repository=new TrustedAnalyticsRepository(db.runtime,{reportingCurrencies:{a:'IQD'}});

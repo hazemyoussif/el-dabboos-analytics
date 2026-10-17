@@ -3,12 +3,13 @@ import test from 'node:test';
 import {AnalyticsQueryTimeoutError} from '@el-dabboos/domain';
 import { tenantTransaction, verifyMartRuntimeRole } from '../../src/postgres/session.ts';
 import { deploy, mapping } from './fixtures.ts';
+import {loadPostgresMigrations} from '../../src/postgres/migrations.ts';
 import { database, enabled } from './support.ts';
 test('roles/RLS: forced scope, read-only runtime, immutable history, no DDL or role escalation and pool reuse', { skip: !enabled }, async () => {
   const db = await database();
   try {
     await verifyMartRuntimeRole(db.runtime);
-    assert.equal((await db.runtime.query('SELECT count(*)::int count FROM mart_admin.mart_schema_migrations')).rows[0].count,52);
+    assert.equal((await db.runtime.query('SELECT count(*)::int count FROM mart_admin.mart_schema_migrations')).rows[0].count,(await loadPostgresMigrations()).length);
     await assert.rejects(db.runtime.query('UPDATE mart_admin.mart_schema_migrations SET name=name'));
     for(const relation of ['analytics_partition_facts','analytics_drill_partitions','analytics_fact_revisions']){assert.equal((await db.runtime.query(`SELECT * FROM mart.${relation}`)).rowCount,0);await assert.rejects(db.runtime.query(`DELETE FROM mart.${relation}`));}
     await assert.rejects(verifyMartRuntimeRole(db.ingestor), /read-only/);

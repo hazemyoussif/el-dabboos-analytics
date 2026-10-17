@@ -1,3 +1,4 @@
+import {prepareActivatedPublication} from '../prepared/publication.ts';
 import { randomUUID } from 'node:crypto';
 import type { Pool,PoolClient } from 'pg';
 import type { AnalyticsCursor,AnalyticsJobRequest,AnalyticsJobRun,AnalyticsOperationalStore,AnalyticsOperationalTransaction,AnalyticsPartition,AnalyticsSourceSnapshot,OperationalReconciliation,FactRevisionChange } from '@el-dabboos/domain';
@@ -65,6 +66,7 @@ class OperationalTransaction implements AnalyticsOperationalTransaction {
  }
  async promote(release:string,_evidence:OperationalReconciliation) {
   void _evidence;
+  await prepareActivatedPublication(this.client,{tenantId:this.baseline.tenantId,revisionId:release});
   await this.client.query('UPDATE mart.analytics_trusted_serving SET revision_id=$2 WHERE tenant_id=$1',[this.baseline.tenantId,release]);
  }
  commitCursor(cursor:AnalyticsCursor){return writeOperationalCursor(this.client,{tenantId:this.baseline.tenantId,runId:this.runId,cursor});}

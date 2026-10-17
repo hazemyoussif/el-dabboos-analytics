@@ -1,3 +1,4 @@
+import {executeAnalyticsPreparation,isAnalyticsPreparationCommand} from './analytics-preparation.ts';
 import {assertAnalyticsScheduleReady} from './analytics-schedule-status.ts';
 import {exposeAnalyticsReview} from './analytics-review-exposure.ts';
 import type { AnalyticsPartition } from '@el-dabboos/domain';
@@ -8,6 +9,7 @@ import { assertHostedMartUrl } from './hosted-mart-url.ts';
 async function main() {
   const [command,flag,tenantId,...extra]=process.argv.slice(2);
   if(flag!=='--tenant'||!tenantId?.trim())throw new Error('Explicit tenant required');
+  if(isAnalyticsPreparationCommand(command)){process.stdout.write(JSON.stringify(await executeAnalyticsPreparation(command,tenantId,extra,process.env))+'\n');return;}
   if(command==='expose'||command==='expose-business'){await exposeCommand(tenantId,extra,command==='expose-business'?'business':'review');return;}
   if(command==='status'||command==='verify-schedule'){await readAnalyticsStatus(command,tenantId,extra);return;}
   if(extra.length && (extra.length!==2||extra[0]!=='--mode'))throw new Error('Invalid analytics job flags');

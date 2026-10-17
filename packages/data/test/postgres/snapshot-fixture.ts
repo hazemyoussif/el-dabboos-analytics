@@ -3,10 +3,10 @@ import type {ReviewControl} from '../../src/review/source.ts';
 import {fixture,pages} from './business-fixture.ts';
 
 export interface SnapshotInput {measure:FactMeasureId;entity:string;customer:string;value:string}
-export async function snapshotSource(month:string,family:'review'|'business',inputs:SnapshotInput[],cutoff='2026-11-02T09:00:00.000Z'){
- const source=fixture(month,false,family),original:ProductionFact[]=[];
+export async function snapshotSource(month:string,family:'review'|'business',inputs:SnapshotInput[],cutoff='2026-11-02T09:00:00.000Z',options:{emptyMeasures?:readonly FactMeasureId[];current?:boolean}={}){
+ const source=fixture(month,options.current??false,family),original:ProductionFact[]=[];
  for await(const page of source.facts)original.push(...page);
- const replaced=new Set(inputs.map(input=>input.measure));
+ const replaced=new Set([...inputs.map(input=>input.measure),...(options.emptyMeasures??[])]);
  const facts=original.filter(fact=>!replaced.has(fact.measureId)).map(fact=>({...fact,sourceAsOf:cutoff,sourceVersion:cutoff}));
  for(const input of inputs){
   const base=original.find(fact=>fact.measureId===input.measure)!;
@@ -14,7 +14,7 @@ export async function snapshotSource(month:string,family:'review'|'business',inp
    dimensions:{...base.dimensions,customer:`fixture:${input.customer}`},displayLabels:{customer:`Synthetic ${input.customer}`},
    ...(base.currency?{currency:{...base.currency,transactionValue:input.value}}:{})});
  }
- return {...source,cutoff,facts:pages(facts),controls:async()=>snapshotControls(facts)};
+ return {...source,cutoff,facts:pages(facts),controls:async()=>[...snapshotControls(facts),...(options.emptyMeasures??[]).map(measure=>({measure,dimensions:null,value:'0.000000',count:'0'}))]};
 }
 function snapshotControls(facts:ProductionFact[]):ReviewControl[]{
  const grouped=new Map<string,{measure:FactMeasureId;dimensions:ProductionFact['dimensions']|null;value:bigint;count:bigint}>();

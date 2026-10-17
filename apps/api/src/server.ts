@@ -9,7 +9,7 @@ import { openLocalAuthentication } from './auth/runtime.ts';
 import { openControlStorage } from './control-storage.ts';
 import type { StructuredPlannerDiagnostic } from '@el-dabboos/application';
 import { StructuredAnalyticsPlanner, StructuredDashboardPlanner } from '@el-dabboos/application';
-import { MockAnalyticsRepository, PostgresOperationalStatus, TrustedAnalyticsRepository, SqliteAnalyticsRepository, createMartPool, createSqliteSchema, generateSeedFacts, assertMartRuntimeReady } from '@el-dabboos/data';
+import { MockAnalyticsRepository, PostgresOperationalStatus, PublishedAnalyticsRepository, SqliteAnalyticsRepository, createMartPool, createSqliteSchema, generateSeedFacts, assertMartRuntimeReady } from '@el-dabboos/data';
 import type { AnalyticsRepository, DashboardPlanner, DimensionValueRepository } from '@el-dabboos/domain';
 import { existsSync, realpathSync } from 'node:fs';
 import { resolve, } from 'node:path';
@@ -54,8 +54,8 @@ else {
     const pool = createMartPool(config.postgres.runtimeUrl, config.postgres.poolMax);
     operationalStatus=new PostgresOperationalStatus(pool);
     pool.on('error', () => { process.stderr.write('PostgreSQL pool connection failed\n'); });
-    repository = new TrustedAnalyticsRepository(pool, { reportingCurrencies: {}, reportingCurrency: async (id) => (await administration.profiles.get(id, 'en'))?.reportingCurrency ?? null, statementTimeoutMs: config.postgres.statementTimeoutMs, maxGroups: config.postgres.maxGroups, maxDateSpanDays: config.postgres.maxDateSpanDays });
-    const postgresRepository = repository as TrustedAnalyticsRepository;
+    repository = new PublishedAnalyticsRepository(pool, { reportingCurrencies: {}, reportingCurrency: async (id) => (await administration.profiles.get(id, 'en'))?.reportingCurrency ?? null, statementTimeoutMs: config.postgres.statementTimeoutMs, maxGroups: config.postgres.maxGroups, maxDateSpanDays: config.postgres.maxDateSpanDays });
+    const postgresRepository = repository as PublishedAnalyticsRepository;
     drillThroughRepository = new TrustedDrillThroughRepository(pool,context=>postgresRepository.getPublishedCapabilities(context),config.postgres.statementTimeoutMs);
     dataReady = id => postgresRepository.isDataReady(id);
     close = () => pool.end();
@@ -100,7 +100,7 @@ const workspaceAiAdministration = createWorkspaceAiAdministration(workspaceAiCon
 const workspaceAi = createWorkspaceAiResolver({ read: administration.read.bind(administration), config: workspaceAiConfig, cipher: workspaceAiCipher, dimensionValues: repository });
 const sourceRelay=await localAnalyticsSourceRelay(process.env);
 const operationalCommands=manualAnalyticsCommands(provider,process.env);
-const app = await buildApi({ workspaceAi, workspaceAiAdministration, analystRepository:administration.analyst,...(analystPlanner?{analystPlanner}:{}),...(analystSynthesis?{analystSynthesis}:{}), ...(drillThroughRepository?{drillThroughRepository}:{}), ...(operationalCommands?{operationalCommands}:{}), ...(operationalStatus?{operationalStatus}:{}), ...(provider==='postgres' ? { publishedCapabilities: repository as TrustedAnalyticsRepository } : {}),analyticsRepository: repository, dimensionValues: repository, executionConcurrency: config.executionConcurrency,
+const app = await buildApi({ workspaceAi, workspaceAiAdministration, analystRepository:administration.analyst,...(analystPlanner?{analystPlanner}:{}),...(analystSynthesis?{analystSynthesis}:{}), ...(drillThroughRepository?{drillThroughRepository}:{}), ...(operationalCommands?{operationalCommands}:{}), ...(operationalStatus?{operationalStatus}:{}), ...(provider==='postgres' ? { publishedCapabilities: repository as PublishedAnalyticsRepository } : {}),analyticsRepository: repository, dimensionValues: repository, executionConcurrency: config.executionConcurrency,
     readiness: { persistence: async () => { await localAuth?.ready(); return controlStorage.ready(); }, analytics: analyticsReady },
     administration: { unitOfWork: administration, directory: administration.directory, profiles: administration.profiles, dataReady,
         ...(localAuth ? { provisionEmployee: localAuth.provisionEmployee,provisionWorkspaceEmployee:localAuth.provisionWorkspaceEmployee } : {}),

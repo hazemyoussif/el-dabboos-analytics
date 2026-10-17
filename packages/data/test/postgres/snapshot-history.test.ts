@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import type {AnalyticsQuery,FactMeasureId} from '@el-dabboos/domain';
 import type {PoolClient} from 'pg';
-import {AnalyticsResultWindowError} from '@el-dabboos/domain';
+import {AnalyticsResultWindowError,AnalyticsPublicationChangedError} from '@el-dabboos/domain';
 import {database,enabled} from './support.ts';
 import {deploy,mapping} from './fixtures.ts';
 import {snapshotSource} from './snapshot-fixture.ts';
@@ -42,7 +42,11 @@ for(const family of ['review','business'] as const)test(`${family} snapshot hist
   }
   const first=await repository.execute(query,context,{window:{limit:1}});assert.equal(first.rows[0]?.key,'fixture:a');
   const second=await repository.execute(query,context,{window:{limit:1,cursor:first.metadata.window!.nextCursor!}});assert.equal(second.rows[0]?.key,'fixture:b');
+  const pinned=await repository.createExecutionScope(context);
+  assert.equal((await pinned.execute(query,context)).metadata.servingRevision,pinned.servingRevision);
   await exposeReviewMonth(db.ingestor,await snapshotSource('2026-10',family,[{measure,entity:'move',customer:'b',value:'1000.000000'}],'2026-11-04T09:00:00.000Z'),family);
+  for(const stale of [query,{metric:query.metric,dateRange:range},{metric:'revenue' as const,dateRange:range}])await assert.rejects(pinned.execute(stale,context),AnalyticsPublicationChangedError);
+  await assert.rejects(pinned.verifyExecution!(),AnalyticsPublicationChangedError);
   assert.deepEqual((await repository.execute(query,context)).rows,result.rows);
   await assert.rejects(repository.execute(query,context,{window:{limit:1,cursor:first.metadata.window!.nextCursor!}}),AnalyticsResultWindowError);
   const invisible=await tenantTransaction(db.runtime,'other',client=>groupedReviewRows(client,{query,context,range,family,revision:'test',maxGroups:3000}),true);

@@ -70,7 +70,7 @@ export function receivableControls(partitions:readonly AnalyticsPartition[],snap
  }));
 }
 export function snapshotMetric(metric:AnalyticsPartition['metric']){const semantics=semanticCatalog[metric].semantics;return semantics.kind==='snapshot'||semantics.kind==='ratio'&&semantics.basis==='snapshot';}
-export function monthEnd(month:string){const date=new Date(`${month}-01T00:00:00Z`);date.setUTCMonth(date.getUTCMonth()+1);date.setUTCDate(0);return date.toISOString().slice(0,10);}
+export {monthEnd} from '../calendar.ts';
 
 const qualityChecks=new WeakMap<OdooSnapshotLease,{through:string;check:Promise<void>}>();
 export function validateSnapshotQuality(pool:Pool,lease:OdooSnapshotLease,config:OdooSourceConfig,through:string) {

@@ -7,6 +7,17 @@ const context: AnalyticsContext = { tenantId: 'demo-iq', locale: 'en', enforcedF
 const spec = (widgets: DashboardWidget[]): DashboardSpec => ({ schemaVersion: 2, id: 'bounded', title: { en: 'Bounded', ar: 'محدود' }, locale: 'en', filters: { dateRange: { from: '2026-01-01', to: '2026-06-30' } }, layout: { columns: 12 }, widgets });
 const widget = (id: string, metric: AnalyticsQuery['metric'] = 'revenue'): DashboardWidget => ({ id, type: 'kpi', series: [{ id: 'value', metric }] });
 const result = (query: AnalyticsQuery): AnalyticsResult => ({ metric: query.metric, groupBy: query.groupBy ?? null, rows: [{ key: query.groupBy ? '2026-01' : null, value: 12, comparisonValue: null, rank: 1 }], metadata: { sourceId: 'fake', executedAt: '2026-01-01', metricType: 'currency', semantics: 'additive' } });
+test('each execution creates a fresh optional adapter scope and never uses root reads',async()=>{
+ let scopes=0;
+ const calls:number[]=[];
+ const repository:AnalyticsRepository={
+  async createExecutionScope(){const scope=++scopes;return {execute:async query=>{calls.push(scope);return result(query);}};},
+  execute:async()=>{throw new Error('Root reads must not run');},
+ };
+ const executor=new DashboardExecutor(repository);
+ for(const tenantId of ['demo-iq','demo-iq','demo-eg'])await executor.execute(spec([widget('one'),widget('two','gross_profit')]),{...context,tenantId});
+ assert.equal(scopes,3);assert.deepEqual(calls,[1,1,2,2,3,3]);
+});
 test('identical series in one widget and across widgets share a request-scoped repository call', async () => {
   let calls = 0; const repository: AnalyticsRepository = { execute: async query => { calls++; return result(query); } };
   const output = await new DashboardExecutor(repository).execute(spec([{ id: 'line', type: 'line', dimension: 'month', series: [{ id: 'a', metric: 'revenue' }, { id: 'b', metric: 'revenue' }] }, { id: 'area', type: 'area', dimension: 'month', series: [{ id: 'c', metric: 'revenue' }] }]), context);

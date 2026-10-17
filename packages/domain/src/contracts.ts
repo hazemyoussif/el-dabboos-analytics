@@ -160,7 +160,14 @@ export interface DimensionDiscoveryRequest {search?:string;cursor?:string;limit?
 export interface DimensionDiscoveryPage {values:Array<{id:string;label?:string}>;selected:Array<{id:string;label?:string}>;nextCursor?:string}
 export interface AnalyticsRepository {
   readonly supportsResultWindows?: true;
+  /** Optional fresh adapter scope for one execution; shared operands never outlive it. */
+  createExecutionScope?(context:AnalyticsContext): Promise<AnalyticsExecutionScope>;
   execute(query: AnalyticsQuery, context: AnalyticsContext, read?: AnalyticsReadOptions): Promise<AnalyticsResult>;
+}
+/** Verification runs after every read has settled, before the attempt is returned. */
+export interface AnalyticsExecutionScope extends AnalyticsRepository {
+  readonly servingRevision?: string;
+  verifyExecution?(): Promise<void>;
 }
 export const widgetTypes = ['kpi', 'line', 'area', 'bar', 'pie', 'treemap', 'combo', 'table'] as const;
 export type WidgetType = typeof widgetTypes[number];
