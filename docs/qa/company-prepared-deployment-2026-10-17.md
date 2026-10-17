@@ -1,6 +1,6 @@
 # Prepared-serving company deployment — 17 October 2026
 
-This release contains the prepared-serving implementation already active on laptop staging, recovered from that running image. It includes immutable migrations 053–055. The unfinished source-refresh subsystem and migrations 056–060 are excluded. Existing operational timers remain unchanged. No claim is made that Finance, Collections and Business now refresh hourly.
+This release contains the prepared-serving implementation already active on laptop staging, recovered from that running image. It includes immutable migrations 053–055. The subsequent [isolated discovery fix](company-prepared-discovery-preflight-2026-10-17.md) adds forward migration 056 after the original company inventory timed out. The unfinished source-refresh subsystem and its unpublished migrations are excluded. Existing operational timers remain unchanged. No claim is made that Finance, Collections and Business now refresh hourly.
 
 Local acceptance is recorded in [the completed evidence](local-prepared-serving-2026-10-17.md): 43 validated chunks, 27 available reports, no failed widgets/series, exact accepted source controls, original data/manifest preserved, and backend execution of 23–1,098 ms on existing laptop coverage. Company history and hardware are larger/different; this is not a company performance guarantee.
 
