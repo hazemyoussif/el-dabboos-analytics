@@ -19,3 +19,8 @@ export class DimensionDiscoveryLimitError extends Error {
 export class AnalyticsQueryTimeoutError extends Error {
  constructor(){super('Analytics query timed out');this.name='AnalyticsQueryTimeoutError';}
 }
+
+/** A whole execution must be discarded; independently successful widgets cannot be returned. */
+export class AnalyticsPublicationChangedError extends Error {
+ constructor(){super('Data changed while this report loaded. Please refresh.');this.name='AnalyticsPublicationChangedError';}
+}

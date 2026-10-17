@@ -1,7 +1,7 @@
 import type {PoolClient} from 'pg';
 import type {AnalyticsQuery,PublishedAnalyticsCapabilities,PublishedAnalyticsRelease,PublishedMetricCapability} from '@el-dabboos/domain';
 import {semanticCatalog} from '@el-dabboos/domain';
-import {monthEnd} from './receivables.ts';
+import {monthEnd} from '../calendar.ts';
 import {dailyEventCapabilities} from './daily-capabilities.ts';
 
 /** Only immutable members of the current revision contribute capability and coverage. */

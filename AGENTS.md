@@ -28,6 +28,10 @@ For implementation tasks where the user explicitly asks to apply the quality gat
 
 Do not load this skill for backend, domain, data, integration, infrastructure, or non-UI documentation work unless that task also changes the web presentation. Project architecture, domain invariants, and ADRs override generic aesthetic guidance.
 
+## Prepared serving constraint
+
+The user requires background preparation and serving of prepared data across all report families. Expensive aggregation, snapshot-history reconstruction and correction processing belong in preparation, never a dashboard request. Runtime selection must retain tenant/policy filters, exact cutoff/currency semantics and immutable publication. Reuse existing prepared datasets; build missing serving grains through one governed mechanism. Prove coverage and correctness across all exposed reports before cutover. Never introduce a raw-history fallback, report-specific optimization or alternative architecture without asking the user. See [ADR 040](docs/architecture/adr/040-prepared-analytics-serving.md).
+
 ## Engineering quality gate
 
 Green tests are necessary but not sufficient. Follow [engineering standards](docs/developer/engineering-standards.md): review naming, responsibility, abstraction quality, dependency direction, transaction clarity, security readability, error ownership and test maintainability. Run architecture, baseline-aware quality and diff gates. New code has no debt allowance; historical debt may not grow. Do not game metrics or baseline access-control blockers.

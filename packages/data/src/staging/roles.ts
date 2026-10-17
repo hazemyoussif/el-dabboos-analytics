@@ -48,7 +48,7 @@ export async function grantStagingPrivileges(client: PoolClient, identity: Stagi
 async function grantAdministrationSchema(client: PoolClient, identity: StagingIdentity): Promise<void> {
     const { login } = stagingIdentities[identity];
     if (identity==='controlApp') await client.query(`GRANT USAGE ON SCHEMA control_admin,auth TO ${login}`);
-    if (identity==='martRuntime') await client.query(`GRANT USAGE ON SCHEMA mart_admin TO ${login}`);
+    if (identity==='martRuntime'||identity==='martIngestor') await client.query(`GRANT USAGE ON SCHEMA mart_admin TO ${login}`);
 }
 async function grantRuntimePolicies(client: PoolClient, login: string): Promise<void> {
     const policies = (await client.query(`SELECT format('ALTER POLICY %I ON mart.%I TO dabboos_runtime,%I',polname,relname,$1::text) sql,polname

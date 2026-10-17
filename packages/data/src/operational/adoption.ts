@@ -1,3 +1,4 @@
+import {prepareActivatedPublication} from '../prepared/publication.ts';
 import {assertAdoptionHeadParity} from './adoption-parity.ts';
 import {randomUUID} from 'node:crypto';
 import type {PoolClient} from 'pg';
@@ -56,6 +57,7 @@ export async function adoptCertifiedServing(client:PoolClient,tenantId:string,mi
  const revisionId=randomUUID();
  await refreshOperationalMonths(client,{tenantId,revisionId,parent:prior??null,runId:null,cutoff,purpose:'adoption',additionalAffectedMonths:snapshots.map(snapshot=>snapshot.snapshot_date.slice(0,7)),partitionCapabilities:baseline.partitionCapabilities},months);
  for(const snapshot of snapshots)await attachFinancePartition(client,{tenantId,revisionId,snapshotId:snapshot.snapshot_id,date:snapshot.snapshot_date});
+ if(!migration)await prepareActivatedPublication(client,{tenantId,revisionId});
  await client.query('INSERT INTO mart.analytics_trusted_serving VALUES($1,$2) ON CONFLICT(tenant_id) DO UPDATE SET revision_id=EXCLUDED.revision_id',[tenantId,revisionId]);
  return {alreadyBootstrapped:false,revisionId,cutoff,canonicalFacts,months};
 }

@@ -1,3 +1,4 @@
+import {prepareActivatedPublication} from '../prepared/publication.ts';
 import {scopedCanonicalFactCtes} from '../postgres/scoped-canonical-facts.ts';
 import {categoricalDimensions} from '@el-dabboos/domain';
 import {assertPublicationOperator} from '../postgres/release-certification.ts';
@@ -47,6 +48,7 @@ export async function importCertifiedHistoricalMonth(pool:Pool,scope:HistoricalI
   if(!cutoff)throw new Error('Certified source cutoff required');
   const revisionId=randomUUID(),refreshStart=performance.now();
   await refreshOperationalMonths(client,{tenantId:scope.tenantId,revisionId,parent,runId:null,cutoff,purpose:'adoption',partitionCapabilities:certified.partitionCapabilities},[scope.month]);
+  await prepareActivatedPublication(client,{tenantId:scope.tenantId,revisionId});
   const promoted=await client.query('UPDATE mart.analytics_trusted_serving SET revision_id=$2 WHERE tenant_id=$1 AND revision_id=$3',[scope.tenantId,revisionId,parent]);
   if(promoted.rowCount!==1)throw new Error('Historical trusted parent conflict');
   const details={canonicalFacts,ingestionMs,refreshMs:performance.now()-refreshStart,sourceCutoff:cutoff};

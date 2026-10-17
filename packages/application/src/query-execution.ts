@@ -1,5 +1,5 @@
-import { semanticCatalog } from '@el-dabboos/domain';
-import type { AnalyticsContext, AnalyticsFilter, AnalyticsQuery,AnalyticsReadOptions,AnalyticsRepository,AnalyticsResult } from '@el-dabboos/domain';
+import { semanticCatalog,AnalyticsPublicationChangedError } from '@el-dabboos/domain';
+import type { AnalyticsContext, AnalyticsFilter, AnalyticsQuery,AnalyticsReadOptions,AnalyticsExecutionScope,AnalyticsResult } from '@el-dabboos/domain';
 const filters = (items: readonly AnalyticsFilter[] = []): AnalyticsFilter[] => items.map(item => ({ dimension: item.dimension, values: [...new Set(item.values)].sort() }))
   .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
 /** Normalize validated queries without weakening validation or changing policy intersection. */
@@ -22,14 +22,32 @@ export function analyticsQueryIdentity(query: AnalyticsQuery, context: Analytics
   return JSON.stringify(stable({ query: normalizeAnalyticsQuery(query), tenantId: context.tenantId, locale: context.locale, enforcedFilters: filters(context.enforcedFilters),...(read?{read}:{}) }));
 }
 /** Full and windowed reads share work only inside one authorized dashboard execution. */
-export function requestScopedAnalytics(repository:AnalyticsRepository,onFailure?:(query:AnalyticsQuery,error:unknown)=>void):AnalyticsRepository{
+export function requestScopedAnalytics(repository:AnalyticsExecutionScope,onFailure?:(query:AnalyticsQuery,error:unknown)=>void,maxConcurrency=defaultExecutionConcurrency):AnalyticsExecutionScope{
+ let conflict:AnalyticsPublicationChangedError|undefined;
  const reads=new Map<string,Promise<AnalyticsResult>>();
- return {...(repository.supportsResultWindows?{supportsResultWindows:true as const}:{}),execute(query,context,read){
+ const scheduler=new RequestReadScheduler(executionConcurrency(maxConcurrency));
+ return {...(repository.supportsResultWindows?{supportsResultWindows:true as const}:{}),...(repository.servingRevision?{servingRevision:repository.servingRevision}:{}),async verifyExecution(){await repository.verifyExecution?.();if(conflict)throw conflict;},execute(query,context,read){
   const key=analyticsQueryIdentity(query,context,read);
   let result=reads.get(key);
-  if(!result){result=Promise.resolve().then(()=>repository.execute(query,context,read)).catch(error=>{onFailure?.(query,error);throw error;});reads.set(key,result);}
+  if(!result){result=Promise.resolve().then(()=>scheduler.execute(()=>repository.execute(query,context,read))).catch(error=>{if(error instanceof AnalyticsPublicationChangedError)conflict=error;onFailure?.(query,error);throw error;});reads.set(key,result);}
   return result;
  }};
+}
+
+/** One request-wide bound includes grouped peers and hydration reads. */
+class RequestReadScheduler {
+ private active=0;
+ private readonly waiting:Array<()=>void>=[];
+ constructor(private readonly limit:number){}
+ async execute<T>(read:()=>Promise<T>):Promise<T>{
+  if(this.active<this.limit)this.active++;
+  else await new Promise<void>(resolve=>this.waiting.push(resolve));
+  try{return await read();}
+  finally{
+   const next=this.waiting.shift();
+   if(next)next();else this.active--;
+  }
+ }
 }
 export interface DashboardExecutionOptions {
   maxConcurrency?: number;

@@ -40,3 +40,5 @@ export * from './analyst.ts';
 export * from './workspace-ai-settings.ts';
 
 export * from './business-catalog.ts';
+
+export * from './prepared-serving.ts';

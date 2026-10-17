@@ -4,10 +4,11 @@ import type {WidgetResultWindow} from './grouped-widget-execution.ts';
 import {seriesFailure} from './series-failure.ts';
 import { validateDashboardOverrideDimensions, resolveDashboardFilters } from './dashboard-filters.ts';
 import type { DashboardExecutionScope, EffectiveDashboardFilters } from './dashboard-filters.ts';
-import { analyticsQueryIdentity, executionConcurrency, normalizeAnalyticsQuery, runBounded,requestScopedAnalytics } from './query-execution.ts';
+import { analyticsQueryIdentity, executionConcurrency, normalizeAnalyticsQuery, runBounded } from './query-execution.ts';
+import {consistentAnalyticsExecution} from './consistent-execution.ts';
 import type { DashboardExecutionOptions } from './query-execution.ts';
 import { validateDashboardSpec, validateQuery } from '@el-dabboos/domain';
-import type { AnalyticsContext, AnalyticsQuery, AnalyticsRepository, AnalyticsResult, AnalyticsRow, DashboardSpec } from '@el-dabboos/domain';
+import type { AnalyticsContext, AnalyticsQuery, AnalyticsRepository,AnalyticsExecutionScope, AnalyticsResult, AnalyticsRow, DashboardSpec } from '@el-dabboos/domain';
 
 export type SeriesExecution = { status: 'success'; result: AnalyticsResult } | { status: 'error'; error: { code: string; message: string } };
 export type AlignedSeriesValue = Pick<AnalyticsRow, 'value' | 'comparisonValue' | 'absoluteChange' | 'percentageChange' | 'rank'>;
@@ -21,7 +22,7 @@ export interface WidgetExecution {
 export interface DashboardExecutionResult {
   dashboard: DashboardSpec;
   widgetResults: Record<string, WidgetExecution>;
-  metadata: { effectiveFilters?: EffectiveDashboardFilters; executedAt: string; succeeded: number; failed: number; succeededSeries: number; failedSeries: number };
+  metadata: { servingRevision?:string;effectiveFilters?: EffectiveDashboardFilters; executedAt: string; succeeded: number; failed: number; succeededSeries: number; failedSeries: number };
 }
 export class DashboardExecutor {
   private readonly concurrency: number;
@@ -38,12 +39,15 @@ export class DashboardExecutor {
     if (!context.tenantId.trim() || !['en', 'ar'].includes(context.locale)) throw new Error('Invalid analytics context');
     const now = this.clock();
     const effectiveFilters = resolveDashboardFilters(spec.filters, scope, now);
-    const repository=requestScopedAnalytics(this.repository,(query,error)=>this.options.onSeriesFailure?.({metric:query.metric,category:error instanceof Error&&/Unsafe SQL numeric output/.test(error.message)?'unsafe_numeric':'execution_failure',code:seriesFailure(error).error.code}));
     validateDashboardOverrideDimensions(spec,scope?.overrides);
+    return consistentAnalyticsExecution(this.repository,context,{...this.options,maxConcurrency:this.concurrency},repository=>this.executePlan(spec,context,{repository,effectiveFilters,scope,now}));
+  }
+  private async executePlan(spec:DashboardSpec,context:AnalyticsContext,prepared:{repository:AnalyticsExecutionScope;effectiveFilters:EffectiveDashboardFilters;scope:DashboardExecutionScope|undefined;now:Date}):Promise<DashboardExecutionResult>{
+    const {repository,effectiveFilters,scope,now}=prepared;
     // All normalized requests are planned before any repository call starts.
     const jobs = new Map<string, { query: AnalyticsQuery; result?: SeriesExecution }>();
     const failure = seriesFailure;
-    const grouped=spec.widgets.filter(widget=>this.repository.supportsResultWindows&&windowedWidget(widget));
+    const grouped=spec.widgets.filter(widget=>repository.supportsResultWindows&&windowedWidget(widget));
     const plan = spec.widgets.filter(widget=>!grouped.includes(widget)).map(widget => ({ widget, series: widget.series.map(series => {
       const query: AnalyticsQuery = { metric: series.metric,
         ...(widget.dimension ? { groupBy: widget.dimension } : {}),
@@ -84,7 +88,7 @@ export class DashboardExecutor {
     const succeeded = Object.values(widgetResults).filter(value => value.status !== 'error').length;
     const succeededSeries = Object.values(widgetResults).reduce((sum,value) => sum + Object.values(value.seriesResults).filter(result => result.status === 'success').length, 0);
     const totalSeries = spec.widgets.reduce((sum, widget) => sum + widget.series.length, 0);
-    return { dashboard: spec, widgetResults, metadata: { effectiveFilters, executedAt: now.toISOString(), succeeded, failed: spec.widgets.length - succeeded,
+    return { dashboard: spec, widgetResults, metadata: { ...(repository.servingRevision?{servingRevision:repository.servingRevision}:{}),effectiveFilters, executedAt: now.toISOString(), succeeded, failed: spec.widgets.length - succeeded,
       succeededSeries, failedSeries: totalSeries - succeededSeries } };
   }
 }

@@ -25,25 +25,25 @@ async function anchoredResults(repository:AnalyticsRepository,queries:AnalyticsQ
  const paged=Boolean(queries[0]?.analysis?.pareto&&!queries[0]?.analysis?.topN);
  const anchor=await executeSeries(()=>repository.execute(queries[0]!,context,paged?{window:{...request,queries,order:'rank'}}:undefined));
  if(anchor.status==='error')return {results:queries.map(()=>anchor)};
- const keys=anchor.result.rows.map(row=>row.key).filter((key):key is string=>key!==null),results:SeriesExecution[]=[anchor];
- for(const query of queries.slice(1))results.push(await executeSeries(()=>repository.execute(query,context,{outputKeys:keys,...(anchor.result.metadata.servingRevision?{revision:anchor.result.metadata.servingRevision}:{})})));
+ const keys=anchor.result.rows.map(row=>row.key).filter((key):key is string=>key!==null);
+ const peers=await Promise.all(queries.slice(1).map(query=>executeSeries(()=>repository.execute(query,context,{outputKeys:keys,...(anchor.result.metadata.servingRevision?{revision:anchor.result.metadata.servingRevision}:{})}))));
+ const results:SeriesExecution[]=[anchor,...peers];
  return {results,...(paged&&anchor.result.metadata.window?{window:{...anchor.result.metadata.window,limit:request.limit,...(request.search?{search:request.search}:{})}}:{})};
 }
 async function windowResults(repository:AnalyticsRepository,queries:AnalyticsQuery[],context:AnalyticsContext,request:WidgetWindowRequest&{limit:number}){
  const distinct=[...new Map(queries.map(query=>[analyticsQueryIdentity(query,context),query])).values()];
- const pages:SeriesExecution[]=[];
- for(const query of distinct)pages.push(await executeSeries(()=>repository.execute(query,context,{window:{...request,queries,order:'identity'}})));
+ const pages=await Promise.all(distinct.map(query=>executeSeries(()=>repository.execute(query,context,{window:{...request,queries,order:'identity'}}))));
  const successes=pages.flatMap(result=>result.status==='success'?[result.result]:[]);
  const scopes=new Set(successes.map(result=>result.metadata.window?.scope)),revisions=new Set(successes.map(result=>result.metadata.servingRevision));
  if(scopes.size>1||revisions.size>1)throw new AnalyticsResultWindowError();
  const population=[...new Set(successes.flatMap(result=>result.rows.flatMap(row=>row.key===null?[]:[row.key])))].sort(compareAnalyticsKeys);
  const keys=population.slice(0,request.limit),more=population.length>request.limit||successes.some(result=>result.metadata.window?.nextCursor);
  const scope=successes[0]?.metadata.window?.scope;
- const cache=new Map<string,SeriesExecution>();
- for(let index=0;index<distinct.length;index++){
-  const query=distinct[index]!,page=pages[index]!;
-  cache.set(analyticsQueryIdentity(query,context),page.status==='error'?page:await selectedResult(repository,query,context,page.result,keys));
- }
+ const cache=new Map(await Promise.all(distinct.map(async(query,index)=>{
+  const page=pages[index]!;
+  const result=page.status==='error'?page:await selectedResult(repository,query,context,page.result,keys);
+  return [analyticsQueryIdentity(query,context),result] as const;
+ })));
  const total=distinct.length===1?successes[0]?.metadata.window?.total:!more&&!request.cursor?population.length:undefined;
  return {results:queries.map(query=>cache.get(analyticsQueryIdentity(query,context))!),window:{limit:request.limit,...(total!==undefined?{total}:{}),...(more&&scope&&keys.length?{nextCursor:{scope,after:keys.at(-1)!}}:{}),...(request.search?{search:request.search}:{})}};
 }

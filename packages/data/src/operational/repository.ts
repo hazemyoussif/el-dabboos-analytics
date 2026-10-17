@@ -10,6 +10,9 @@ import { tenantTransaction } from '../postgres/session.ts';
 import type { HistoricalRepositoryOptions } from '../postgres/historical-repository.ts';
 import { servingLabels } from './serving-labels.ts';
 import {FinanceSnapshotRepository,financeMetric} from './finance-repository.ts';
+import {FinanceSummaryReads} from './finance-summary.ts';
+import {pinnedTrustedExecution} from './execution-scope.ts';
+import {requireServingRevision} from '../postgres/serving-revision.ts';
 import {discoverTrustedDimensions} from './dimension-discovery.ts';
 import {dimensionDiscoveryScope} from '../postgres/discovery-scope.ts';
 import {trustedFactCapabilities,trustedMetricMonths} from './trusted-capabilities.ts';
@@ -24,7 +27,8 @@ export class TrustedAnalyticsRepository implements AnalyticsRepository,Dimension
  private readonly finance:FinanceSnapshotRepository;
  private readonly review:ReviewAnalyticsRepository;
  private readonly business:ReviewAnalyticsRepository;
- constructor(private readonly pool:Pool,private readonly options:HistoricalRepositoryOptions){this.maxGroups=options.historicalMaxGroups??options.maxGroups??4000;if(!Number.isInteger(this.maxGroups)||this.maxGroups<1||this.maxGroups>5000)throw new Error('Invalid trusted group bound');this.finance=new FinanceSnapshotRepository(pool,options.statementTimeoutMs,this.maxGroups);this.review=new ReviewAnalyticsRepository(pool,options.statementTimeoutMs,this.maxGroups);this.business=new ReviewAnalyticsRepository(pool,options.statementTimeoutMs,options.historicalMaxGroups??options.maxGroups??10000,'business');}
+ constructor(private readonly pool:Pool,private readonly options:HistoricalRepositoryOptions,summaries?:FinanceSummaryReads){this.maxGroups=options.historicalMaxGroups??options.maxGroups??4000;if(!Number.isInteger(this.maxGroups)||this.maxGroups<1||this.maxGroups>5000)throw new Error('Invalid trusted group bound');this.finance=new FinanceSnapshotRepository(pool,options.statementTimeoutMs,this.maxGroups,summaries);this.review=new ReviewAnalyticsRepository(pool,options.statementTimeoutMs,this.maxGroups);this.business=new ReviewAnalyticsRepository(pool,options.statementTimeoutMs,options.historicalMaxGroups??options.maxGroups??10000,'business');}
+ createExecutionScope(context:AnalyticsContext){return pinnedTrustedExecution(this.pool,new TrustedAnalyticsRepository(this.pool,this.options,new FinanceSummaryReads()),context,this.options.statementTimeoutMs);}
  async isDataReady(tenantId:string){return tenantTransaction(this.pool,tenantId,async client=>Boolean(await this.baseline(client,tenantId)),true,this.options.statementTimeoutMs??15000);}
  async getPublishedCapabilities(context:AnalyticsContext):Promise<PublishedAnalyticsCapabilities>{
   const stored=await this.stored(context.tenantId);
@@ -45,6 +49,7 @@ export class TrustedAnalyticsRepository implements AnalyticsRepository,Dimension
    if(!await this.baseline(client,context.tenantId))throw new Error('Trusted serving revision required');
    const baseline=(await client.query<FactServingState>(`SELECT baseline.period_from::text coverage_from,baseline.reporting_currency,trusted.revision_id,coalesce(cursor.cutoff,revision.cutoff) cutoff,(coalesce(cursor.cutoff,revision.cutoff) AT TIME ZONE (baseline.specification->0->'measures'->0->>'timeZone'))::date::text cutoff_day,ARRAY(SELECT month::text FROM mart.analytics_serving_members WHERE tenant_id=baseline.tenant_id AND revision_id=trusted.revision_id AND family='facts') months,CASE WHEN EXISTS(SELECT 1 FROM mart.analytics_serving_members WHERE tenant_id=baseline.tenant_id AND revision_id=trusted.revision_id AND family='facts' AND month>baseline.period_to) THEN (coalesce(cursor.cutoff,revision.cutoff) AT TIME ZONE (baseline.specification->0->'measures'->0->>'timeZone'))::date::text ELSE baseline.period_to::text END current_through FROM mart.analytics_baselines baseline JOIN mart.analytics_trusted_serving trusted USING(tenant_id) JOIN mart.analytics_serving_revisions revision USING(tenant_id,revision_id) LEFT JOIN mart.analytics_source_cursors cursor USING(tenant_id) WHERE baseline.tenant_id=$1`,[context.tenantId])).rows[0];
    if(!baseline)throw new Error('Trusted serving revision required');
+   requireServingRevision(baseline.revision_id,read?.revision);
    const stored={...baseline,capabilities:await trustedFactCapabilities(client,context.tenantId,baseline.current_through)};
    if(productReviewMetrics.includes(query.metric)&&publishedQueryIssues({...query,filters:[...(query.filters??[]),...(context.enforcedFilters??[])]},stored.capabilities).length)return null;
    authorizeStored(query,context,stored.capabilities);

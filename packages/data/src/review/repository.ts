@@ -1,29 +1,30 @@
+import {reviewPublication} from './publication.ts';
 import {groupedReviewResult} from './grouped-result.ts';
 import {categoricalDimensions} from '@el-dabboos/domain';
 import type {AnalyticsReadOptions} from '@el-dabboos/domain';
-import {businessEventWindows} from '../business/history.ts';
 import {readReviewFacts,reviewMembers as members} from './read-facts.ts';
 import type {ReviewReadFact} from './event-rows.ts';
-import {businessDefinitionVersion} from '../business/definitions.ts';
 import {discoverReviewDimensions} from './discovery.ts';
 import {sourceDisplayLabel,dimensionLabelField} from '../postgres/query-labels.ts';
-import type {Pool,PoolClient} from 'pg';
+import type {Pool} from 'pg';
 import {validateQuery,publishedQueryIssues,requiredMeasures,semanticCatalog,AnalyticsResultLimitError} from '@el-dabboos/domain';
-import type {AnalyticsContext,AnalyticsQuery,AnalyticsResult,PublishedAnalyticsCapabilities,PublishedAnalyticsRelease,DimensionId} from '@el-dabboos/domain';
+import type {AnalyticsContext,AnalyticsQuery,AnalyticsResult,PublishedAnalyticsCapabilities,DimensionId} from '@el-dabboos/domain';
 import {tenantTransaction} from '../postgres/session.ts';
+import {requireServingRevision} from '../postgres/serving-revision.ts';
 import {executeFacts} from '../engine.ts';
 import {numericOutput} from '../postgres/sql.ts';
-import {reviewDefinitionVersion,reviewMetrics,productReviewMetrics} from './definitions.ts';
 /** Reads the one trusted manifest. Business review state never authorizes a query. */
 export class ReviewAnalyticsRepository {
  constructor(private readonly pool:Pool,private readonly timeout=15000,private readonly maxGroups=3000,private readonly family:'review'|'business'='review'){}
  async capabilities(context:AnalyticsContext):Promise<PublishedAnalyticsCapabilities> {
-  return tenantTransaction(this.pool,context.tenantId,async client=>({tenantId:context.tenantId,mode:'certified',releases:await releases(client,context,this.family)}),true,this.timeout);
+  return tenantTransaction(this.pool,context.tenantId,async client=>({tenantId:context.tenantId,mode:'certified',releases:(await reviewPublication(client,context,this.family)).releases}),true,this.timeout);
  }
  async execute(query:AnalyticsQuery,context:AnalyticsContext,read?:AnalyticsReadOptions):Promise<AnalyticsResult> {
   validateQuery(query,context);
   return tenantTransaction(this.pool,context.tenantId,async client=>{
-   const published:PublishedAnalyticsCapabilities={tenantId:context.tenantId,mode:'certified',releases:await releases(client,context,this.family)};
+   const publication=await reviewPublication(client,context,this.family);
+   const revision=requireServingRevision(publication.revision,read?.revision);
+   const published:PublishedAnalyticsCapabilities={tenantId:context.tenantId,mode:'certified',releases:publication.releases};
    const checked={...query,filters:[...(query.filters??[]),...(context.enforcedFilters??[])]};
    if(publishedQueryIssues(checked,published).length)throw new Error('Unexposed review query');
    const release=published.releases.find(release=>!publishedQueryIssues(checked,{...published,releases:[release]}).length)!;
@@ -37,7 +38,7 @@ export class ReviewAnalyticsRepository {
    if(executed.rows.length>this.maxGroups)throw new AnalyticsResultLimitError(query.groupBy??'customer');
    const snapshot=snapshotQuery(query)?facts.map(fact=>fact.date).filter(date=>date<=range.to).sort().at(-1):undefined;
    const dimensionLabels=reviewLabels(result.rows.map(row=>row.payload),query,context);
-   return {...executed,metadata:{...executed.metadata,release,...analysisMetadata(query),...(Object.keys(dimensionLabels).length?{dimensionLabels}:{}),...(snapshot?{snapshotAsOf:snapshot}:{})}};
+   return {...executed,metadata:{...executed.metadata,servingRevision:revision,release,...analysisMetadata(query),...(Object.keys(dimensionLabels).length?{dimensionLabels}:{}),...(snapshot?{snapshotAsOf:snapshot}:{})}};
   },true,this.timeout);
  }
  async searchDimensionOptions(dimension:DimensionId,context:AnalyticsContext,request:import('@el-dabboos/domain').DimensionDiscoveryRequest){
@@ -45,7 +46,7 @@ export class ReviewAnalyticsRepository {
  }
  async dimensionOptions(dimension:DimensionId,context:AnalyticsContext):Promise<Array<{id:string;label?:string}>> {
   return tenantTransaction(this.pool,context.tenantId,async client=>{
-   const available=await releases(client,context,this.family),metrics=available.flatMap(release=>release.capabilities).filter(capability=>capability.dimensions.includes(dimension)).map(capability=>capability.metric);
+   const available=(await reviewPublication(client,context,this.family)).releases,metrics=available.flatMap(release=>release.capabilities).filter(capability=>capability.dimensions.includes(dimension)).map(capability=>capability.metric);
    if(!metrics.length)return [];
    const params:unknown[]=[context.tenantId,dimension,[...new Set(metrics.flatMap(requiredMeasures))],dimensionLabelField(dimension)];
    const filters=(context.enforcedFilters??[]).map(filter=>{params.push(filter.dimension,filter.values);return `fact.payload->'dimensions'->>$${params.length-1}=ANY($${params.length}::text[])`;});
@@ -57,18 +58,7 @@ export class ReviewAnalyticsRepository {
   },true,this.timeout);
  }
 }
-async function releases(client:PoolClient,context:AnalyticsContext,family:'review'|'business'):Promise<PublishedAnalyticsRelease[]> {
- const rows=(await client.query(`SELECT part.capabilities,extraction.definition_version FROM ${members}
- WHERE trusted.tenant_id=$1 AND member.family='${family}' ORDER BY member.month`,[context.tenantId])).rows;
- const exposed=rows.flatMap(row=>{
-  if(row.definition_version!==(family==='business'?businessDefinitionVersion:reviewDefinitionVersion)())throw new Error('Explicit review definition migration required');
-  return (row.capabilities as PublishedAnalyticsCapabilities).releases.map(release=>({...release,capabilities:release.capabilities.filter(capability=>(context.enforcedFilters??[]).every(filter=>capability.dimensions.includes(filter.dimension)))}));
- });
- return family==='business'?[...exposed,...businessEventWindows(exposed)]:exposed;
-}
-export function reviewQuery(query:AnalyticsQuery,context:AnalyticsContext) {
- return reviewMetrics.includes(query.metric)||productReviewMetrics.includes(query.metric)&&[query.groupBy,...(query.filters??[]).map(filter=>filter.dimension),...(context.enforcedFilters??[]).map(filter=>filter.dimension)].some(dimension=>dimension==='product'||dimension==='product_category');
-}
+export {reviewQuery} from './publication.ts';
 
 function reviewLabels(facts:readonly ReviewReadFact[],query:AnalyticsQuery,context:AnalyticsContext){
  const dimension=query.groupBy,field=dimensionLabelField(dimension);if(!dimension||!field)return {};

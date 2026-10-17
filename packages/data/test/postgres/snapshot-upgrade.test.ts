@@ -8,7 +8,7 @@ import {deploy,mapping} from './fixtures.ts';
 import {fixture} from './business-fixture.ts';
 import {bootstrapOperationalServing} from '../../src/operational/baseline.ts';
 import {exposeReviewMonth} from '../../src/review/exposure.ts';
-import {migratePostgres,migrationDirectory} from '../../src/postgres/migrations.ts';
+import {migratePostgres,migrationDirectory,loadPostgresMigrations} from '../../src/postgres/migrations.ts';
 import {TrustedAnalyticsRepository} from '../../src/operational/repository.ts';
 
 async function preservedState(pool:Pool){
@@ -23,9 +23,8 @@ for(const version of [49,50,51])test(`populated schema-${version} upgrade covers
  const db=await database(false),directory=await mkdtemp('/tmp/dabboos-snapshot-upgrade-'),manifest=pathToFileURL(directory+'/');
  try{
   await cp(migrationDirectory,manifest,{recursive:true});
-  if(version===49)await rm(new URL('050_review_snapshot_identity.sql',manifest));
-  if(version<51)await rm(new URL('051_review_typed_cover.sql',manifest));
-  await rm(new URL('052_review_amount_cover.sql',manifest));
+  const pending=(await loadPostgresMigrations()).filter(migration=>migration.version>version);
+  for(const migration of pending)await rm(new URL(migration.name,manifest));
   await migratePostgres(db.migrator,manifest);
   await deploy(db.migrator,mapping());await bootstrapOperationalServing(db.migrator,'a');
   await exposeReviewMonth(db.ingestor,fixture('2026-09',false,'review'));
@@ -47,7 +46,7 @@ for(const version of [49,50,51])test(`populated schema-${version} upgrade covers
    assert.equal((await db.admin.query("SELECT to_regclass('mart.review_facts_amount_cover') duplicate")).rows[0].duplicate,null);
    assert.equal((await db.admin.query('SELECT max(version) version FROM mart_admin.mart_schema_migrations')).rows[0].version,51);
   }
-  assert.deepEqual(await migratePostgres(db.migrator),version===49?[50,51,52]:version===50?[51,52]:[52]);
+  assert.deepEqual(await migratePostgres(db.migrator),pending.map(migration=>migration.version));
   assert.deepEqual(await preservedState(db.admin),before);
   assert.deepEqual(await migratePostgres(db.migrator),[]);
   const index=(await db.admin.query("SELECT indisvalid,indisunique FROM pg_index WHERE indexrelid='mart.review_facts_snapshot_identity'::regclass")).rows[0];
