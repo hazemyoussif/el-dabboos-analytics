@@ -1,3 +1,5 @@
+import {windowedPreparedSlots} from './reporting-window.ts';
+import type {DateRange} from '@el-dabboos/domain';
 import {coveredSlot} from '../operational/coverage.ts';
 import type {ServingCoverage} from '../operational/coverage.ts';
 import {preparedMetricBasis,requiredMeasures,selectPreparedGrain,timeDimensions} from '@el-dabboos/domain';
@@ -27,7 +29,8 @@ function segment(binding:PreparedBinding,query:AnalyticsQuery,context:AnalyticsC
  return {key,data_id:binding.data_id,grain_id:grain.id,time_grain:timeGrain,from,to};
 }
 
-export function governedPreparedSlots(query:AnalyticsQuery,slots:readonly QuerySlot[],coverage?:ServingCoverage):QuerySlot[]{
+export function governedPreparedSlots(query:AnalyticsQuery,slots:readonly QuerySlot[],coverage?:ServingCoverage,reportingWindow?:DateRange):QuerySlot[]{
+ slots=windowedPreparedSlots(slots,reportingWindow);
  if(!coverage||preparedMetricBasis(query.metric)==='snapshot')return [...slots];
  return slots.flatMap(slot=>{const eligible=coveredSlot(slot,coverage);return eligible?[eligible]:[];});
 }

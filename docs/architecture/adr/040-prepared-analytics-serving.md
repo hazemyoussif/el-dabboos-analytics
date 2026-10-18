@@ -107,3 +107,36 @@ selection evidence, not full preparation or a serving SLA. The reviewed next gat
 is the failed Business cutoff's full rollback rehearsal after separately approved
 normal deployment. Full-history bootstrap and activation remain excluded. See
 [the exact evidence and boundaries](../../qa/prepared-complete-snapshot-selection-2026-10-18.md).
+
+## Explicit reporting window candidate — 18 October 2026
+
+The user narrowed company reporting to calendar years2025–2026, retaining2025
+for later2026year-over-year comparisons. Forward060registers a tenant-scoped,
+immutable month-aligned reporting window before any prepared revision is sealed
+or serving activated. Unsealed checkpoints can already exist and are retained;
+registration does not rewrite their contents or native publication membership.
+The protected registration operation holds the established tenant writer lock
+before starting a READ COMMITTED transaction. The database requires that isolation
+level, checks the current input revision and rejects registration after any seal
+or activation, including stale repeatable-read lifecycle requests.
+
+Chunk discovery uses only accepted metadata. It excludes out-of-window event
+chunks, but retains each family's latest earlier snapshot as an opening anchor.
+Runtime capability periods, explicit query ranges, dimension discovery and
+comparison slots obey the same reporting window. Earlier opening snapshots can
+still supply balances for an eligible2025cutoff without exposing2024report slots.
+An opening-only latest-snapshot release retains its original source authority;
+it is not silently replaced by Facts. A2026comparison can read prepared2025
+operands; a comparison reaching2024remains unavailable. Certified source analysis
+capabilities are not widened by this registration.
+
+This candidate does not delete native source rows/history, fabricate opening
+balances, activate serving or implement remaining source freshness schedules.
+Deletion of the seven approved unused2024Business-event prepared datasets was a
+separate scoped maintenance operation; all77new checkpoints were preserved.
+Company registration/deployment and full prepared report acceptance remain open.
+
+The completed local candidate passed all935regular tests and345PostgreSQL tests
+(nine new scope tests), zero failures/skips, plus frozen install, lint,
+architecture/quality/types, API/web build and diff gates. This is local synthetic
+acceptance, not company registration, source freshness or serving activation.

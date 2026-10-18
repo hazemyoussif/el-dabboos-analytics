@@ -7,10 +7,12 @@ import {financeCapabilities,financeMetric} from '../operational/finance-capabili
 import {reviewPublication,reviewQuery} from '../review/publication.ts';
 import {productReviewMetrics} from '../review/definitions.ts';
 import {readServingRevision} from '../postgres/serving-revision.ts';
+import {readPreparedReportingWindow,requirePreparedReportingRange,windowedPreparedCapabilities} from './reporting-window.ts';
+import type {DateRange} from '@el-dabboos/domain';
 import type {PreparedFamily} from './contracts.ts';
 export interface PreparedPublication {
  revision:string;currency:string;sourceCutoff:string;cutoffDay:string;
- families:Record<PreparedFamily,PublishedAnalyticsCapabilities>;
+ families:Record<PreparedFamily,PublishedAnalyticsCapabilities>;reportingWindow?:DateRange;
 }
 /** Metadata projection reuses existing certified definitions. It cannot reconstruct data. */
 export async function preparedPublication(client:PoolClient,context:AnalyticsContext,expectedRevision?:string):Promise<PreparedPublication>{
@@ -23,18 +25,20 @@ export async function preparedPublication(client:PoolClient,context:AnalyticsCon
  JOIN mart.analytics_serving_revisions revision USING(tenant_id,revision_id) LEFT JOIN mart.analytics_source_cursors cursor USING(tenant_id)
  WHERE baseline.tenant_id=$1`,[context.tenantId])).rows[0];
  if(!baseline||!compatibleOperationalDefinition(baseline.definition_version))throw new Error('Compatible trusted baseline required');
+ const reportingWindow=await readPreparedReportingWindow(client,context.tenantId);
  const empty:PublishedAnalyticsCapabilities={tenantId:context.tenantId,mode:'certified',releases:[]};
  const facts=await trustedFactCapabilities(client,context.tenantId,baseline.current_through),receivables=await financeCapabilities(client,context);
  const review={...empty,releases:(await reviewPublication(client,context,'review')).releases};
  const business={...empty,releases:(await reviewPublication(client,context,'business')).releases};
- return {revision,currency:baseline.reporting_currency,sourceCutoff:baseline.cutoff.toISOString(),cutoffDay:baseline.cutoff_day,families:{facts,receivables:receivables??empty,review,business}};
+ return {revision,currency:baseline.reporting_currency,sourceCutoff:baseline.cutoff.toISOString(),cutoffDay:baseline.cutoff_day,...(reportingWindow?{reportingWindow}:{}),families:{facts:windowedPreparedCapabilities(facts,reportingWindow),receivables:windowedPreparedCapabilities(receivables??empty,reportingWindow),review:windowedPreparedCapabilities(review,reportingWindow),business:windowedPreparedCapabilities(business,reportingWindow)}};
 }
 /** Resolve semantic source priority once, before prepared-cell selection. Missing cells never change it. */
 export function preparedQueryRelease(query:AnalyticsQuery,context:AnalyticsContext,publication:PreparedPublication){
+ requirePreparedReportingRange(query.dateRange,publication.reportingWindow);
  let family:PreparedFamily=businessMetricIds.includes(query.metric as BusinessMetricId)?'business':reviewQuery(query,context)?'review':financeMetric(query.metric)&&publication.families.receivables.releases.length?'receivables':'facts';
  const checked={...query,filters:[...(query.filters??[]),...(context.enforcedFilters??[])]};
  if(family==='facts'&&productReviewMetrics.includes(query.metric)&&publishedQueryIssues(checked,publication.families.facts).length)family='review';
- const published=publication.families[family],release=published.releases.find(release=>!publishedQueryIssues(checked,{...published,releases:[release]}).length);
+ const published=publication.families[family],release=published.releases.find(release=>!publishedQueryIssues(release.period?{...checked,dateRange:checked.dateRange??release.period}:checked,{...published,releases:[release]}).length);
  if(!release?.period)throw new Error('Uncertified prepared query');
  return {family,release};
 }

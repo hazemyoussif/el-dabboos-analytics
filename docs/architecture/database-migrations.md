@@ -86,3 +86,15 @@ retain configuration/signature, exact content, row-statistics and immutability
 checks; snapshot identity failures still reject snapshot bindings. It changes no
 existing cells, input membership, activation, roles or preparation deadlines.
 Applied migrations 053–056 remain unchanged. Company application is pending.
+
+### Pending prepared reporting window (060)
+
+The local060candidate adds forced-RLS `mart.prepared_reporting_windows` and
+metadata-only scoped chunk discovery. Registration is explicit, protected by the
+existing tenant lock, current revision, READ COMMITTED and pre-seal/pre-activation
+lifecycle checks. Existing unsealed prepared checkpoints are preserved. Earlier
+snapshot anchors remain preparation dependencies while runtime reporting and
+comparison periods obey the configured month-aligned window. Unconfigured
+coverage remains unchanged. No native data deletion or automatic activation.
+This records a candidate; company staging is still on059until separately approved
+deployment. Original053–059files/checksums remain unchanged.
