@@ -64,3 +64,26 @@ until the transaction commits; only the existing committed-chunk callback is a
 durable checkpoint. No company cutover or throughput claim follows from this
 local correction. Grains, snapshot population semantics, security boundaries and
 all-family freshness work are unchanged.
+
+
+## Event membership selection candidate — 18 October 2026
+
+Forward migration 058 pushes the event date range into Review/Business monthly
+membership selection before reading fact operands. Accepted partitions already
+require each fact's business date to belong to its partition month. The exact
+business-day predicate remains for partial edges. The original canonical input
+reader remains the independent validation source; Facts and Finance populations
+and all snapshot-history selection retain their existing path. No grains, stored
+cells, signatures, deadlines or activation settings change.
+
+Local targeted PostgreSQL verification passed 19 tests; the complete required
+release suite subsequently passed 335 PostgreSQL tests and 935 regular tests.
+Coverage includes 492 synthetic
+metric/grouping comparisons across four families, independent exact proof,
+complete/delta/empty snapshots, resume, tenant isolation and controlled workspace
+security. The new source-selection test compares exact multisets for full and
+partial event periods and historical snapshot cutoffs over old/new publications.
+This establishes local correctness, not company preparation throughput. Company
+May input comparison and population-stage timing remain required before claiming
+that this candidate improves the measured 109-second population stage. No full
+company preparation or activation follows from these local checks.
