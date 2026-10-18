@@ -1,4 +1,5 @@
 import {createMartPool} from '@el-dabboos/data';
+import type {PreparedStepEvent} from '../../../packages/data/src/prepared/contracts.ts';
 import {activatePreparedRevision,preparePublishedRevision} from '../../../packages/data/src/prepared/operator.ts';
 import {assertHostedMartUrl} from './hosted-mart-url.ts';
 /** Explicit protected operator action. It never migrates schemas or opens an Odoo connection. */
@@ -6,7 +7,7 @@ export async function executeAnalyticsPreparation(command:'prepare'|'activate-pr
  const options=parsePreparationOptions(extra);
  const connection=assertHostedMartUrl(command==='prepare'?environment.MART_INGESTOR_URL:environment.MART_MIGRATOR_URL,environment,'Protected preparation identity required');
  if(decodeURIComponent(new URL(connection).pathname)!=='/'+options.database)throw new Error('Intended preparation database mismatch');
- const pool=createMartPool(connection,1),scope={tenantId,...options};
+ const pool=createMartPool(connection,1),scope={tenantId,...options,observeStep:(event:PreparedStepEvent)=>process.stdout.write(JSON.stringify({stage:'preparation step',...event})+'\n')};
  try{return command==='prepare'?await preparePublishedRevision(pool,scope,chunk=>process.stdout.write(JSON.stringify({stage:'prepared chunk',...chunk})+'\n')):await activatePreparedRevision(pool,scope);}
  finally{await pool.end();}
 }
