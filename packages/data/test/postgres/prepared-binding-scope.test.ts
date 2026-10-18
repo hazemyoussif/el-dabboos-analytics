@@ -21,10 +21,12 @@ for(const fault of ['missing','duplicate'] as const)test(`event proof excludes u
   const publication=await exposeReviewMonth(db.ingestor,source,'business');
   // Isolated synthetic corruption after acceptance: event rows stay valid; snapshot amounts and controls stay unchanged.
   // The event must not validate unrelated snapshot identities; an actual snapshot binding must still fail closed.
-  const definition=(await db.admin.query("SELECT pg_get_functiondef('mart.prepared_input_rows(text,text,text)'::regprocedure) definition")).rows[0].definition as string;
-  const expression=fault==='missing'?'NULL::text':"'SYNTHETIC DUPLICATE'::text";
-  assert.ok(definition.includes('fact.entity_id,fact.amount'));
-  await db.admin.query(definition.replace('fact.entity_id,fact.amount',expression+',fact.amount'));
+  // Corrupt the shared synthetic source, so canonical and optimized readers see the same invalid identities.
+  // The ordinary immutable trigger remains enabled outside this isolated fixture setup.
+  await db.admin.query('ALTER TABLE mart.review_facts DISABLE TRIGGER immutable_history');
+  try{
+   await db.admin.query("UPDATE mart.review_facts SET payload=jsonb_set(payload,'{entityId}',$1::jsonb) WHERE tenant_id='a' AND payload->>'kind'='snapshot'",[JSON.stringify(fault==='missing'?null:'SYNTHETIC DUPLICATE')]);
+  }finally{await db.admin.query('ALTER TABLE mart.review_facts ENABLE TRIGGER immutable_history');}
   const events:PreparedStepEvent[]=[],scope={tenantId:'a',revisionId:publication.revisionId,observeStep:(event:PreparedStepEvent)=>events.push(event)},bounds={maxCellsPerChunk:50000,maxChunks:100};
   const chunks=await tenantTransaction(db.ingestor,'a',client=>requiredPreparedChunks(client,scope,bounds),true);
   const eventChunk=chunks.find(chunk=>chunk.family==='business'&&chunk.kind==='event')!;

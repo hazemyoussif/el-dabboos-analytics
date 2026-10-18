@@ -87,3 +87,23 @@ This establishes local correctness, not company preparation throughput. Company
 May input comparison and population-stage timing remain required before claiming
 that this candidate improves the measured 109-second population stage. No full
 company preparation or activation follows from these local checks.
+
+
+## Complete snapshot observation selection candidate — 18 October 2026
+
+Forward migration 059 selects each complete Review/Business snapshot measure's
+latest accepted observation before reading its certified monthly partition and
+exact day. It retains duplicate operands, per-measure observation dates and the
+existing independently controlled empty markers. Missing observations remain
+unavailable. Facts delta carry-forward, Finance, event preparation, original
+canonical readers and independent proofs are unchanged; no new grain, index,
+source contract, deadline or activation behavior is introduced.
+
+The protected company read-only proof compared every column and duplicate against
+the canonical population across all 30 accepted observations on one pinned
+publication: 122404 rows, zero differences including the empty marker. The candidate
+full population SELECT measured 1.584 seconds after that comparison. This is source
+selection evidence, not full preparation or a serving SLA. The reviewed next gate
+is the failed Business cutoff's full rollback rehearsal after separately approved
+normal deployment. Full-history bootstrap and activation remain excluded. See
+[the exact evidence and boundaries](../../qa/prepared-complete-snapshot-selection-2026-10-18.md).
