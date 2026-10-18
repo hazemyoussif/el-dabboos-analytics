@@ -80,3 +80,9 @@ ledger row atomically; a schema-51 failure after the old-index drop restores the
 original index OID/file/definition and data state. Older migration bytes remain
 unchanged. Company index-only rehearsal restored Collections below its deadline;
 acceptance of the combined history query remains pending.
+
+Migration 057 scopes snapshot identity validation to snapshot bindings. Event bindings
+retain configuration/signature, exact content, row-statistics and immutability
+checks; snapshot identity failures still reject snapshot bindings. It changes no
+existing cells, input membership, activation, roles or preparation deadlines.
+Applied migrations 053–056 remain unchanged. Company application is pending.

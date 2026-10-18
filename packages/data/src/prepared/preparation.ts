@@ -1,3 +1,4 @@
+import {measurePreparedStep} from './diagnostics.ts';
 import type {PoolClient} from 'pg';
 import type {PreparedBuildBounds,PreparedBuildScope,PreparedChunk,PreparedChunkResult,PreparedConfiguration} from './contracts.ts';
 import {buildPreparedWorkspace} from './workspace.ts';
@@ -18,18 +19,18 @@ export async function prepareChunk(client:PoolClient,scope:PreparedBuildScope,ch
  validateBounds(bounds);
  const existing=(await client.query<{data_id:string;statistics:Record<string,number>}>('SELECT data_id,statistics FROM mart.prepared_bindings WHERE tenant_id=$1 AND revision_id=$2 AND family=$3 AND kind=$4 AND period=$5',[scope.tenantId,scope.revisionId,chunk.family,chunk.kind,chunk.period])).rows[0];
  if(existing)return result(chunk,existing.data_id,existing.statistics,true);
- const config=(await client.query<{config:PreparedConfiguration}>('SELECT mart.prepared_configuration($1,$2,$3,$4,$5,$6) config',[scope.tenantId,scope.revisionId,chunk.family,chunk.kind,chunk.period,chunk.through])).rows[0]?.config;
+ const config=(await measurePreparedStep(scope,{step:'configuration'},()=>client.query<{config:PreparedConfiguration}>('SELECT mart.prepared_configuration($1,$2,$3,$4,$5,$6) config',[scope.tenantId,scope.revisionId,chunk.family,chunk.kind,chunk.period,chunk.through]))).rows[0]?.config;
  if(!config)throw new Error('Governed prepared configuration missing');
- const signature=(await client.query<{fingerprint:string;source_cutoff:Date}>('SELECT * FROM mart.prepared_input_signature($1,$2,$3)',[scope.tenantId,scope.revisionId,JSON.stringify(config)])).rows[0];
+ const signature=(await measurePreparedStep(scope,{step:'signature'},()=>client.query<{fingerprint:string;source_cutoff:Date}>('SELECT * FROM mart.prepared_input_signature($1,$2,$3)',[scope.tenantId,scope.revisionId,JSON.stringify(config)]))).rows[0];
  if(!signature)throw new Error('Prepared source signature missing');
- const reused=(await client.query<{data_id:string;statistics:Record<string,number>}>(`SELECT binding.data_id,binding.statistics FROM mart.prepared_bindings binding
-  JOIN mart.prepared_revision_seals seal USING(tenant_id,revision_id) WHERE binding.tenant_id=$1 AND binding.input_fingerprint=$2 LIMIT 1`,[scope.tenantId,signature.fingerprint])).rows[0];
+ const reused=(await measurePreparedStep(scope,{step:'reuse'},()=>client.query<{data_id:string;statistics:Record<string,number>}>(`SELECT binding.data_id,binding.statistics FROM mart.prepared_bindings binding
+  JOIN mart.prepared_revision_seals seal USING(tenant_id,revision_id) WHERE binding.tenant_id=$1 AND binding.input_fingerprint=$2 LIMIT 1`,[scope.tenantId,signature.fingerprint]))).rows[0];
  if(!reused)await buildPreparedWorkspace(client,scope,config,bounds);
- const materialized=reused?{dataId:reused.data_id,statistics:reused.statistics,rows:Object.values(reused.statistics).reduce((sum,count)=>sum+count,0)}:await fingerprintPreparedCells(client,scope,config,bounds.maxCellsPerChunk);
+ const materialized=reused?{dataId:reused.data_id,statistics:reused.statistics,rows:Object.values(reused.statistics).reduce((sum,count)=>sum+count,0)}:await measurePreparedStep(scope,{step:'fingerprint'},()=>fingerprintPreparedCells(client,scope,config,bounds.maxCellsPerChunk));
  if(materialized.rows>bounds.maxCellsPerChunk)throw new Error('Prepared cell storage bound exceeded');
  const found=(await client.query('SELECT 1 FROM mart.prepared_datasets WHERE tenant_id=$1 AND data_id=$2',[scope.tenantId,materialized.dataId])).rowCount;
- if(!found)await persistPreparedCells(client,scope,config,materialized);
- await client.query('INSERT INTO mart.prepared_bindings VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)',[scope.tenantId,scope.revisionId,chunk.family,chunk.kind,chunk.period,materialized.dataId,signature.fingerprint,signature.source_cutoff,JSON.stringify(materialized.statistics)]);
+ if(!found)await measurePreparedStep(scope,{step:'persistence'},()=>persistPreparedCells(client,scope,config,materialized));
+ await measurePreparedStep(scope,{step:'binding'},()=>client.query('INSERT INTO mart.prepared_bindings VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)',[scope.tenantId,scope.revisionId,chunk.family,chunk.kind,chunk.period,materialized.dataId,signature.fingerprint,signature.source_cutoff,JSON.stringify(materialized.statistics)]));
  return {...chunk,dataId:materialized.dataId,rows:materialized.rows,reused:Boolean(found)};
 }
 function result(chunk:PreparedChunk,dataId:string,statistics:Record<string,number>,reused:boolean):PreparedChunkResult{return {...chunk,dataId,rows:Object.values(statistics).reduce((sum,count)=>sum+count,0),reused};}

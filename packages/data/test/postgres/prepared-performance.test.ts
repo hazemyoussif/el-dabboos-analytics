@@ -7,6 +7,7 @@ import {bootstrapOperationalServing} from '../../src/operational/baseline.ts';
 import {exposeReviewMonth} from '../../src/review/exposure.ts';
 import {tenantTransaction} from '../../src/postgres/session.ts';
 import {prepareRevision} from '../../src/prepared/preparation.ts';
+import type {PreparedStepEvent} from '../../src/prepared/contracts.ts';
 import {PreparedAnalyticsRepository} from '../../src/prepared/repository.ts';
 
 test('prepared snapshot serving reduces 100000 source items in the background and reads customer rollups interactively',{skip:!enabled,timeout:180000},async testContext=>{
@@ -15,10 +16,10 @@ test('prepared snapshot serving reduces 100000 source items in the background an
   const inputs=Array.from({length:100000},(_,index)=>({measure:'receivables_due_for_collection' as const,entity:'item:'+index,customer:String(index%1000).padStart(4,'0'),value:'1.000000'}));
   await exposeReviewMonth(db.ingestor,await snapshotSource('2026-09','review',inputs),'review');
   const revisionId=(await db.admin.query("SELECT revision_id FROM mart.analytics_trusted_serving WHERE tenant_id='a'")).rows[0].revision_id;
-  const preparationStart=performance.now();
+  const steps:PreparedStepEvent[]=[],preparationStart=performance.now();
   await tenantTransaction(db.ingestor,'a',async client=>{
    await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',['analytics:a']);
-   await prepareRevision(client,{tenantId:'a',revisionId},{maxCellsPerChunk:50000,maxChunks:100});
+   await prepareRevision(client,{tenantId:'a',revisionId,observeStep:event=>steps.push(event)},{maxCellsPerChunk:50000,maxChunks:100});
   },'repeatable-write',120000);
   const preparationMs=performance.now()-preparationStart;
   const repository=new PreparedAnalyticsRepository(db.runtime,{reportingCurrencies:{a:'IQD'},statementTimeoutMs:15000,maxGroups:4000});
@@ -34,6 +35,6 @@ test('prepared snapshot serving reduces 100000 source items in the background an
    AND cell.time_grain='cutoff' AND cell.grain_id='["customer"]'`,[revisionId])).rows[0].count;
   assert.equal(rows,1000,'interactive customer population must be prepared rollups, not source items');
   const storage=(await db.admin.query("SELECT pg_total_relation_size('mart.review_facts')::text source_bytes,pg_total_relation_size('mart.prepared_cells')::text prepared_bytes")).rows[0];
-  testContext.diagnostic(JSON.stringify({diagnostic:'synthetic local scale sample; not a company dashboard SLA',sourceItems:100000,preparedCustomerRows:rows,preparationMs,queryMs:elapsed,...storage}));
+  testContext.diagnostic(JSON.stringify({diagnostic:'synthetic local scale sample; not a company dashboard SLA',sourceItems:100000,preparedCustomerRows:rows,preparationMs,stageTimings:steps.filter(step=>step.status!=='started'),queryMs:elapsed,...storage}));
  }finally{await db.close();}
 });

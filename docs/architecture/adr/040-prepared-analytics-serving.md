@@ -44,3 +44,23 @@ Migration 055 freezes each chunk in controlled transaction-private tables, analy
 All 43 local chunks completed and the revision was sealed and explicitly activated under the user's instruction to deliver a working local staging. All 27 available reports executed successfully; 22 were bit-exact against legacy values and five differed only by legacy floating-point summary accumulation. All 11 affected metric/cutoff combinations matched independent accepted source controls exactly, without a tolerance. Existing metadata, original record counts and manifest membership were preserved. Activated local backend execution measured 23–1,098 ms, not a company SLA. See [the completed local evidence](../../qa/local-prepared-serving-2026-10-17.md).
 
 The existing timer follows deployed code and verifies schema/roles but refreshes only operational facts/reconciliation/sweep. Preparing a changed mart publication does not refresh the source evidence for exact Finance, review or business. Per-family automated freshness, unchanged-population reuse and historical correction dependency coverage remain separate release work. Do not claim all-dataset freshness or install repeated monthly exposure as a shortcut. Obtain [company storage/coverage/timer preflight](../../qa/company-prepared-release-preflight-2026-10-17.md) before planning that environment's initial preparation/cutover.
+
+## Scoped binding correction under local verification — 18 October 2026
+
+Company bootstrap stopped after eleven Business-event chunks. Existing PostgreSQL
+logs place the 120-second statement timeout at the final binding statistics check;
+all preceding trigger work shares that INSERT deadline. A committed April
+comparison measured the count at 1.583 seconds and the input signature at 0.003
+seconds, while the unrelated snapshot-history uniqueness check exceeded its
+15-second diagnostic bound. These are not measurements of the failed transaction's
+fresh cells or its exact-cell proof.
+
+Forward migration 057 limits snapshot identity validation to actual snapshot
+bindings and retains event exact-content/count validation. Optional preparation
+step observations expose start/completion/failure, duration, declared grain and
+safe SQLSTATE classifications through the protected CLI. They omit SQL, argument
+values, raw errors and customer data. A completed binding step remains provisional
+until the transaction commits; only the existing committed-chunk callback is a
+durable checkpoint. No company cutover or throughput claim follows from this
+local correction. Grains, snapshot population semantics, security boundaries and
+all-family freshness work are unchanged.

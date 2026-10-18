@@ -1,7 +1,7 @@
 import type {Pool,PoolClient} from 'pg';
-import type {PreparedBuildBounds,PreparedChunkResult} from './contracts.ts';
+import type {PreparedBuildBounds,PreparedBuildScope,PreparedChunkResult} from './contracts.ts';
 import {requiredPreparedChunks,prepareChunk} from './preparation.ts';
-export interface PreparedOperatorScope {tenantId:string;database:string;revisionId:string;bounds:PreparedBuildBounds}
+export interface PreparedOperatorScope extends PreparedBuildScope {database:string;bounds:PreparedBuildBounds}
 /** Bounded transactions persist completed chunks; a session lock shares the established tenant writer key. */
 export async function preparePublishedRevision(pool:Pool,scope:PreparedOperatorScope,observe:(chunk:PreparedChunkResult)=>void=()=>{}){
  const client=await pool.connect();let locked=false;
@@ -11,7 +11,10 @@ export async function preparePublishedRevision(pool:Pool,scope:PreparedOperatorS
   if(!locked)throw new Error('Tenant analytics operation already running');
   const chunks=await transaction(client,scope,()=>requiredPreparedChunks(client,scope,scope.bounds));
   const results:PreparedChunkResult[]=[];
-  for(const chunk of chunks){const result=await transaction(client,scope,()=>prepareChunk(client,scope,chunk,scope.bounds));results.push(result);observe(result);}
+  for(const chunk of chunks){
+   const buildScope:PreparedBuildScope={...scope,...(scope.observeStep?{observeStep:event=>scope.observeStep!({...event,chunk})}:{})};
+   const result=await transaction(client,scope,()=>prepareChunk(client,buildScope,chunk,scope.bounds));results.push(result);observe(result);
+  }
   await transaction(client,scope,async()=>{await client.query("INSERT INTO mart.prepared_revision_seals VALUES($1,$2,'prepared-v1') ON CONFLICT DO NOTHING",[scope.tenantId,scope.revisionId]);});
   return {revisionId:scope.revisionId,chunks:results.length,reused:results.filter(chunk=>chunk.reused).length,rows:results.reduce((total,chunk)=>total+chunk.rows,0)};
  }finally{
