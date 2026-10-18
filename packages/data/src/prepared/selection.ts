@@ -11,14 +11,16 @@ import type {QuerySlot} from '../postgres/slot-plan.ts';
 import {analyzeRows,compareValues} from '../postgres/query-analysis.ts';
 import {numericOutput} from '../postgres/sql.ts';
 import {sourceDisplayLabel} from '../postgres/display-labels.ts';
+import {governedPreparedRead} from './reporting-window.ts';
 import {planPreparedRead,governedPreparedSlots} from './read-plan.ts';
 import type {PreparedBinding} from './read-plan.ts';
 import {preparedReduction} from './read-sql.ts';
 import type {PreparedFamily} from './contracts.ts';
-export interface PreparedReadScope {query:AnalyticsQuery;context:AnalyticsContext;range:DateRange;family:PreparedFamily;maxGroups:number;coverage?:ServingCoverage;timeBuckets:'observed'|'complete'|'closed-months';emptySnapshotValue?:0;read?:AnalyticsReadOptions}
+export interface PreparedReadScope {query:AnalyticsQuery;context:AnalyticsContext;range:DateRange;family:PreparedFamily;maxGroups:number;coverage?:ServingCoverage;timeBuckets:'observed'|'complete'|'closed-months';emptySnapshotValue?:0;read?:AnalyticsReadOptions;reportingWindow?:DateRange}
 export interface PreparedSelection extends Pick<AnalyticsResult['metadata'],'coverage'|'availability'> {rows:AnalyticsRow[];labels:Record<string,string>;dataThrough:string|null;preparedThrough:string|null;window?:AnalyticsResultWindow;revision:string;sourceAsOf?:string;currency:string|undefined;definitionVersion:string|undefined}
 /** Runs inside the owning read-only tenant transaction. Source reconstruction is unavailable here. */
 export async function readPreparedSelection(client:PoolClient,scope:PreparedReadScope):Promise<PreparedSelection>{
+ scope=await governedPreparedRead(client,scope);
  const {query,context,range,family,maxGroups,read}=scope;
  const revision=await readServingRevision(client,context.tenantId,read?.revision),kind=preparedMetricBasis(query.metric);
  const sealed=(await client.query('SELECT 1 FROM mart.prepared_revision_seals WHERE tenant_id=$1 AND revision_id=$2',[context.tenantId,revision])).rowCount;
@@ -85,7 +87,7 @@ function preparedCoverage(scope:PreparedReadScope,slots:QuerySlot[],dataThrough:
 
 function scopeSegments(scope:PreparedReadScope,bindings:PreparedBinding[],slots:QuerySlot[]){
  const selection=scope.timeBuckets==='closed-months'&&scope.query.groupBy==='month'?'exact':'latest';
- return planPreparedRead(bindings,scope.query,scope.context,governedPreparedSlots(scope.query,slots,scope.coverage),selection);
+ return planPreparedRead(bindings,scope.query,scope.context,governedPreparedSlots(scope.query,slots,scope.coverage,scope.reportingWindow),selection);
 }
 function outputSlots(scope:PreparedReadScope,slots:QuerySlot[],segments:ReturnType<typeof planPreparedRead>,rows:Map<string|null,unknown>){
  if(scope.timeBuckets==='closed-months'&&scope.query.groupBy==='month')return slots.filter(slot=>segments.some(segment=>segment.key===slot.key));
