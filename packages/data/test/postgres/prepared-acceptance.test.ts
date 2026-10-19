@@ -294,3 +294,49 @@ test('prepared repository disables JIT only in its read transaction and restores
   await restored();assert.equal(cellReads,6,'failed or foreign tenant reads must not reach cells');
  }finally{await db.close();}
 });
+
+test('parallel prepared series share only needed publication families and immutable bindings inside one scope',{skip:!enabled},async()=>{
+ const db=await database(),runtime=new Pool({...db.runtime.options,max:8});try{
+  await deploy(db.migrator,mapping());await bootstrapOperationalServing(db.migrator,'a');
+  await exposeReviewMonth(db.ingestor,fixture('2026-09',true),'business');await prepare(db.ingestor);
+  const direct=new PreparedAnalyticsRepository(db.runtime,options),queries=[
+   {metric:'period_net_sales' as const,dateRange},
+   {metric:'period_net_sales' as const,groupBy:'customer' as const,dateRange},
+   {metric:'review_customer_balance' as const,dateRange},
+   {metric:'review_customer_balance' as const,groupBy:'customer' as const,dateRange}
+  ];
+  const expected=await Promise.all(queries.map(query=>direct.execute(query,context)));
+  let publications=0,bindings=0,financeReads=0,revisionChecks=0;
+  runtime.on('connect',client=>{
+   const original=client.query.bind(client);
+   client.query=((...args:unknown[])=>{
+    const sql=typeof args[0]==='string'?args[0]:'';
+    if(sql.includes('FROM mart.analytics_baselines baseline')){
+     publications++;
+     return original('SHOW jit').then(result=>{
+      assert.equal(result.rows[0].jit,'off','lazy capability discovery must also run inside the JIT-off transaction');
+      return Reflect.apply(original,client,args);
+     });
+    }
+    if(sql.includes('SELECT binding.data_id,binding.period::text'))bindings++;
+    if(sql.includes('finance_snapshot_evidence'))financeReads++;
+    if(sql==='SELECT revision_id FROM mart.analytics_trusted_serving WHERE tenant_id=$1')revisionChecks++;
+    return Reflect.apply(original,client,args);
+   }) as PoolClient['query'];
+  });
+  const repository=new PreparedAnalyticsRepository(runtime,options),scope=await repository.createExecutionScope(context);
+  assert.equal(publications,0,'scope creation must not discover unrelated source capabilities');
+  const results=await Promise.all(queries.map(query=>scope.execute(query,context)));
+  results.forEach((result,index)=>assert.deepEqual(stableResult(result),stableResult(expected[index]!)));
+  assert.equal(publications,1,'parallel Business queries share one certified projection');
+  assert.equal(bindings,2,'event and snapshot bindings each load once');
+  assert.equal(financeReads,0,'Business reports must not discover Finance evidence');
+  assert.ok(revisionChecks>=queries.length+1,'each read retains its transaction-local revision check');
+  await scope.verifyExecution!();
+  const fresh=await repository.createExecutionScope(context);await fresh.execute(queries[0]!,context);
+  assert.equal(publications,2,'another execution owns fresh metadata');assert.equal(bindings,3);
+  await exposeReviewMonth(db.ingestor,fixture('2026-10',true),'business');
+  await assert.rejects(scope.execute(queries[0]!,context),AnalyticsPublicationChangedError);
+  await assert.rejects(scope.verifyExecution!(),AnalyticsPublicationChangedError);
+ }finally{await runtime.end();await db.close();}
+});

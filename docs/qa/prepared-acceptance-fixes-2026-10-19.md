@@ -341,3 +341,49 @@ The three real PostgreSQL reporting-window checks passed after the tooling chang
 product runtime source retains the completed 353-test full PostgreSQL result.
 The release package is pinned by a local reviewable commit reported in chat.
 No publication, merge, deployment or activation has been performed.
+
+## Company enablement receipt and scoped-read follow-up
+
+Candidate `154dd6937e6f204f511e0f36d8bfb6cd911929f3` is deployed. Preparation
+completed for current revision `bd9d281d-a865-4819-945a-59fe10d401f9`; the
+27-report run stopped before activation. All boundary/policy checks passed and
+prepared execution attempted zero history reads. Two report comparisons failed
+only the previously agreed strict no-regression gate; both had exact results and
+stable repeats:
+
+| Report | Prepared first / repeat ms | Native ms |
+| --- | --- | --- |
+| confirmed-order-margin | 256.075 / 180.626 | 132.755 |
+| product-brand-positive-sales-pareto | 1926.110 / 333.933 | 1181.475 |
+
+The follow-up loads only the capability families needed for a query, retaining
+Finance-to-Facts and product Facts-to-Review source priority. One authorized
+execution shares in-flight immutable sealed binding loads by revision, family
+and event/snapshot kind. Direct queries own fresh loaders; there is no cross-request
+cache. Selection still checks the live revision, seal and reporting window in its
+own read-only transaction before cells are read. The scope still pins the actor
+and final revision. Lazy capability discovery now also runs inside the prepared read transaction after
+JIT is disabled, instead of during scope creation beforehand. The setting remains
+transaction-local and is restored on commit or rollback.
+No values, date eligibility, policy rules, numeric comparisons or latency gates
+change. No migration or data re-preparation is needed for this reader follow-up;
+if scheduled work advances the publication, the retry must prepare that current
+revision through the existing governed operator rather than reuse a stale pin.
+
+The concurrent PostgreSQL regression proves a Business execution loads one
+publication projection and two binding sets (event and snapshot), reads no Finance
+evidence, returns exact direct-query results, creates fresh metadata for the next
+execution and rejects an advanced publication. Company timing against this
+follow-up remains to be measured; local SQL-count reduction is not company latency
+acceptance.
+
+Follow-up release verification: frozen install, lint, architecture, baseline-aware
+quality, typecheck, **949 regular tests**, API/web builds and diff checks pass.
+The final complete PostgreSQL suite passed **354 tests**, zero failures/skips
+(662106 ms), on disposable PostgreSQL 18.6. This includes the concurrent metadata
+and binding reuse regression and its JIT-off capability-discovery assertion.
+The one-job enablement retry separately passed nine guard/lifecycle checks,
+including real synthetic preparation, refusal after failed acceptance, reuse of a
+complete current seal, governed activation and normal-reader JIT verification.
+Company activation and company timing of this follow-up remain unconfirmed until
+the retry produces its passing receipt.

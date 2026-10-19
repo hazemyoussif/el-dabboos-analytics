@@ -1,8 +1,10 @@
 # Prepared report correction rollout — 19 October 2026
 
-Status: concrete local release candidate awaiting authorization to publish/deploy.
-The user's priority is working actual company reports. No new preparation, source
-extract, cleanup, index, migration or architecture change is needed for this fix.
+Status: `154dd69` deployed; current revision prepared; activation blocked by two strict performance regressions. Reader follow-up under verification.
+The user's priority is enabling prepared serving for actual company reports. The
+current publication was prepared by the authorized enablement job. Its exact
+27-report comparison stopped before activation on two performance regressions;
+the follow-up reuses those outputs if the publication remains current.
 No company shell is authenticated in this chat; the user runs company commands.
 No deployment or activation is implied by this document.
 
@@ -98,8 +100,9 @@ difference or timing to repair it; do not relax gates or exclude provenance.
 
 ## Activation and actual user reports
 
-Activation needs explicit approval after the passing full-catalog receipt is
-available. Verify the same image/revision/window and zero history attempts again
+The user explicitly authorized enabling prepared serving on 19 October. The
+enablement job may activate automatically only after the strict full-catalog
+receipt passes for that same current revision and deployed reader. Verify the same image/revision/window and zero history attempts again
 under the shared maintenance lock. Use the existing `activate-prepared` operator
 command, not manual SQL or another preparation run. Existing finite bounds from
 company preparation are max cells 1000000 and max chunks 256. The activation
