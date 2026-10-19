@@ -140,3 +140,101 @@ The completed local candidate passed all935regular tests and345PostgreSQL tests
 (nine new scope tests), zero failures/skips, plus frozen install, lint,
 architecture/quality/types, API/web build and diff gates. This is local synthetic
 acceptance, not company registration, source freshness or serving activation.
+
+## Acceptance correction candidate — 19 October 2026
+
+Company acceptance failed: 6 of 27 supported reports passed, with returned-row
+and metadata differences as well as regressions. Serving remains inactive in the
+recorded evidence. Local fixes do not supersede that failed company acceptance.
+
+The request adapter now builds one immutable publication projection per execution
+scope. Every cell selection still verifies the pinned live revision in its own
+read-only tenant transaction, and the executor verifies publication again at the
+end. The scope binds the complete actor context; fresh requests and different
+policies receive fresh projections. Returned release metadata is cloned so result
+mutation cannot change another series' authorization or provenance.
+
+Synthetic reconciliation demonstrated two defects in the original Review/Business
+snapshot reader: categorical reads carried settled identities across complete
+observations, and summary reads added decimal balances using binary floating point.
+The candidate selects the latest accepted complete observation per required measure
+before applying filters, including explicitly controlled empty observations. Summary
+operands aggregate as exact SQL decimals before bounded numeric conversion and
+ratio calculation. The summary and categorical paths share population selection.
+Facts delta semantics and Finance snapshot selection remain unchanged. No stored
+prepared cells, registry, migration, source recipe or business formula changes.
+
+The user selected a strict release gate: prepared first and repeat executor times
+must each be no slower than the same-report baseline, in addition to the existing
+5-second first / 3-second repeat limits, exact result equality and stable repetition.
+This gate is implemented in both the bounded diagnostic and the updated full-report
+acceptance helper. Previously emitted company commands retain their historical gates. No coverage or release metadata is
+excluded from equality. Reporting-window provenance differences still require
+paired company evidence and an explicit expected contract.
+
+See [local investigation and remaining acceptance gates](../../qa/prepared-acceptance-fixes-2026-10-19.md).
+
+Before the diagnostic and JIT follow-ups, the local candidate passed 938 regular
+and 351 disposable PostgreSQL tests,
+zero failures/skips, frozen install, lint, architecture, quality, types, API/web
+build and diff checks. The purpose-report fixture supports 17 reports; company
+acceptance of 27 reports, its strict latency gate and freshness remain open.
+No CI, push, merge, company deployment, preparation or activation was performed.
+
+
+### Prepared runtime JIT overhead — company plan evidence
+
+The bounded company on/off/on probe demonstrates disproportionate JIT overhead
+for indexed product-detail, customer-debt-detail and scalar debt reads: cached
+native execution took 1090.000 / 1114.884 / 876.503 ms, versus 5.300 / 12.213 /
+0.894 ms with JIT off in the same transaction. Access structure and actual cell
+counts remain unchanged; native plans compile 108 / 108 / 91 functions.
+PostgreSQL enables JIT from estimated plan costs, which here are high despite
+small selected populations. These are individual SQL measurements, not report SLA
+or full-catalog acceptance.
+
+Prepared repository execution now disables JIT with transaction-local
+`set_config('jit','off',true)` inside its existing read-only tenant transaction.
+The database restores the prior connection setting on commit/rollback. This
+policy applies to bounded prepared result execution through both direct and
+request-scoped calls. RLS, tenant/revision guards, timeouts and exact calculations
+retain their existing behavior. Native source preparation, baseline execution and
+other runtime transactions retain their prior JIT configuration. The low-level
+selection helper has no global setting policy, so controlled plan probes remain
+possible. Larger future prepared workloads should remeasure this scoped policy
+before relying on different JIT behavior.
+
+The PostgreSQL regression forces an enabled session with zero JIT cost threshold,
+checks zero compiled functions at actual prepared cell statements, compares full
+results, verifies pooled-setting restoration after success/failure, and exercises
+foreign-tenant refusal. Company report-level remeasurement and release acceptance
+remain open; no deployment or activation follows from these SQL timings.
+
+
+A subsequent two-report company experiment disabled JIT only on dedicated
+read-only diagnostic prepared connections, retaining JIT on for the installed
+baseline. Debt first/repeat fell to 1334.371 / 1146.844 ms (baseline 19249.347 ms);
+product first/repeat fell to 900.176 / 829.578 ms (baseline 977.670 ms). Both pass
+the strict timing gates in that run; product results match exactly. Independent
+controls again validate all five checked prepared debt measures, while the old
+uncorrected baseline still differs. This experiment uses the old installed image
+and does not deploy the candidate, accept all 27 reports, or establish timing
+against the corrected debt baseline. See the QA evidence for settings scope and
+remaining release gates.
+
+
+Final local JIT-candidate verification passed 353 PostgreSQL tests (zero failures
+or skips), the 944-test full regular suite, ten focused diagnostic tests, frozen
+install, lint, architecture, baseline-aware quality, types, API/web build and diff
+gates. The diagnostic guard added after the regular run is covered by the focused
+tests. This remains a local candidate with manual company diagnostic evidence, not
+deployed release acceptance.
+
+
+Full-catalog acceptance now derives only reporting eligibility dates from the
+registered window and retains the complete native diff separately. Source cutoff,
+opening snapshot, source/certification authority, labels and every data field
+remain exact. Four focused tooling tests and three real PostgreSQL window checks
+passed; the final release-packaging regular suite passed 949 tests. Product source
+is unchanged from the full 353-test PostgreSQL run. See the [rollout plan](../../qa/prepared-reports-rollout-2026-10-19.md)
+for the exact deployment, acceptance and separately approved activation sequence.

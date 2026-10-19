@@ -63,5 +63,5 @@ function labelMetadata(scope:PreparedResultScope):Pick<AnalyticsResult['metadata
 function preparedProvenance(scope:PreparedResultScope):Pick<AnalyticsResult['metadata'],'sourceId'|'sourceAsOf'|'release'|'coverage'|'availability'>{
  const {family,publication,selected,release}=scope;
  if(family==='facts')return {sourceId:'postgres',sourceAsOf:publication.sourceCutoff,release:factRelease(scope),...(selected.coverage?{coverage:selected.coverage}:{}),...(selected.availability?{availability:selected.availability}:{})};
- return {sourceId:family==='receivables'?'postgres':'postgres-review',sourceAsOf:selected.sourceAsOf??publication.sourceCutoff,release};
+ return {sourceId:family==='receivables'?'postgres':'postgres-review',sourceAsOf:selected.sourceAsOf??publication.sourceCutoff,release:structuredClone(release)};
 }

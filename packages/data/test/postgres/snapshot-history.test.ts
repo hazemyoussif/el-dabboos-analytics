@@ -18,7 +18,7 @@ function inputs(measure:FactMeasureId,month:'august'|'september',denominator=fal
  const values: Array<[string,string,number]>=month==='august'?[['move','a',100],['zero','a',50],['carry','a',30]]:[['move','b',10],['zero','a',0],['new','a',7],['extra','b',2],['no-sales','z',5]];
  return values.map(([entity,customer,amount])=>({measure,entity,customer,value:`${denominator?(entity==='no-sales'?0:amount*2):amount}.000000`}));
 }
-for(const family of ['review','business'] as const)test(`${family} snapshot history preserves latest attribution, zero, absent entities, superseded partitions and scoped windows`,{skip:!enabled},async()=>{
+for(const family of ['review','business'] as const)test(`${family} snapshot history replaces complete populations while preserving attribution, zero, superseded partitions and scoped windows`,{skip:!enabled},async()=>{
  const db=await database();
  try{
   await deploy(db.migrator,mapping());await bootstrapOperationalServing(db.migrator,'a');
@@ -31,10 +31,10 @@ for(const family of ['review','business'] as const)test(`${family} snapshot hist
   const repository=new TrustedAnalyticsRepository(db.runtime,{reportingCurrencies:{a:'IQD'}});
   const query:AnalyticsQuery={metric:measure,groupBy:'customer',dateRange:range};
   const result=await repository.execute(query,context);
-  assert.deepEqual(result.rows,[{key:'fixture:a',value:37},{key:'fixture:b',value:12},{key:'fixture:z',value:5}]);
+  assert.deepEqual(result.rows,[{key:'fixture:a',value:7},{key:'fixture:b',value:12},{key:'fixture:z',value:5}]);
   assert.equal(result.metadata.snapshotAsOf,'2026-09-30');assert.equal(result.metadata.dimensionLabels?.['fixture:a'],'Synthetic a');
-  assert.equal((await repository.execute(query,{...context,enforcedFilters:[{dimension:'customer',values:['fixture:a']}]})).rows[0]?.value,37);
-  assert.deepEqual((await repository.execute({...query,analysis:{topN:{limit:2,direction:'top'}}},context)).rows.map(row=>row.value),[37,12]);
+  assert.equal((await repository.execute(query,{...context,enforcedFilters:[{dimension:'customer',values:['fixture:a']}]})).rows[0]?.value,7);
+  assert.deepEqual((await repository.execute({...query,analysis:{topN:{limit:2,direction:'top'}}},context)).rows.map(row=>row.value),[12,7]);
   await assert.rejects(repository.execute({...query,analysis:{percentageContribution:true}},context),/Percentage contribution requires grouped additive metric/);
   if(family==='business'){
    const ratio=await repository.execute({...query,metric:'customer_balance_sales_percentage'},context);
@@ -75,6 +75,7 @@ test('snapshot history reads identities from the covering index before fetching 
    const statement=statements.at(-1)!;
    const explain=(await client.query('EXPLAIN (ANALYZE,BUFFERS,TIMING OFF,FORMAT JSON) '+statement.text,statement.params)).rows[0]['QUERY PLAN'][0];
    const covered=nodes(explain.Plan).filter(node=>node['Node Type']==='Index Only Scan'&&['review_facts_snapshot_identity','review_facts_typed_access'].includes(node['Index Name']??''));
+   if(!covered.length)console.info('snapshot-access-plan',JSON.stringify(nodes(explain.Plan).map(node=>({type:node['Node Type'],index:node['Index Name']}))));
    assert.ok(covered.length>0,'history selection must use the identity index without carrying historical payloads');
    assert.ok(covered.every(node=>node['Heap Fetches']===0),'visible history must not fetch source envelopes for old rows');
    return {syntheticSnapshots:records*6,executionMs:explain['Execution Time'],indexOnlyHeapFetches:covered.map(node=>node['Heap Fetches'])};

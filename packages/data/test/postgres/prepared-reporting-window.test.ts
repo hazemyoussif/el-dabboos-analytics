@@ -14,6 +14,7 @@ import {requiredPreparedChunks} from '../../src/prepared/preparation.ts';
 import {registerPreparedReportingWindow,preparePublishedRevision,activatePreparedRevision} from '../../src/prepared/operator.ts';
 import {readPreparedSelection} from '../../src/prepared/selection.ts';
 import {PreparedAnalyticsRepository} from '../../src/prepared/repository.ts';
+import {TrustedAnalyticsRepository} from '../../src/operational/repository.ts';
 import {receivableMeasures} from '../../src/receivable-aging.ts';
 import {publishFinanceSnapshot} from '../../src/operational/finance-publication.ts';
 
@@ -45,6 +46,17 @@ for(const family of ['review','business'] as const)test(`${family} reporting win
   const early={metric,dateRange:{from:'2025-01-01',to:'2025-01-10'}};
   assert.deepEqual((await repo.execute(early,context)).rows,[{key:null,value:125}]);
   assert.equal((await repo.execute(early,context)).metadata.snapshotAsOf,'2024-12-31');
+  const {referenceAnalyticsResultForWindow}=await import(new URL('../../../../docs/qa/maintenance/prepared-report-reference-2026-10-19.mjs',import.meta.url).href);
+  const native=await new TrustedAnalyticsRepository(db.runtime,{reportingCurrencies:{a:'IQD'}}).execute(early,context);
+  const result=await repo.execute(early,context),stable=(value:unknown)=>JSON.parse(JSON.stringify(value,(key,item)=>key==='executedAt'?undefined:item));
+  assert.notDeepEqual(stable(native),stable(result),'native source reporting dates must remain unmodified');
+  const openingReference=referenceAnalyticsResultForWindow(native,window);
+  assert.equal(openingReference.metadata.sourceAsOf,native.metadata.sourceAsOf,'date projection must not alter source cutoff to match a result');
+  assert.notEqual(openingReference.metadata.sourceAsOf,result.metadata.sourceAsOf,'the native publication cutoff and selected opening-source cutoff remain an exact comparison difference');
+  const currentQuery={...early,dateRange:{from:'2025-01-01',to:'2025-01-31'}};
+  const currentNative=await new TrustedAnalyticsRepository(db.runtime,{reportingCurrencies:{a:'IQD'}}).execute(currentQuery,context);
+  const currentPrepared=await repo.execute(currentQuery,context);
+  assert.deepEqual(stable(referenceAnalyticsResultForWindow(currentNative,window)),stable(currentPrepared),'window reference matches real current-snapshot results with the same source cutoff');
   assert.deepEqual((await repo.execute({...early,groupBy:'customer'}, {...context,enforcedFilters:[{dimension:'customer',values:['fixture:a']}]})).rows,[{key:'fixture:a',value:125}]);
   await assert.rejects(repo.execute({metric,dateRange:{from:'2024-12-01',to:'2024-12-31'}},context),/outside prepared reporting coverage/);
   assert.ok((await repo.searchDimensionOptions('customer',context,{metric,dateRange:early.dateRange,limit:10})).values.some(option=>option.id==='fixture:a'));
@@ -141,6 +153,10 @@ test('an opening-only Finance release remains authoritative inside the reporting
   const repo=new PreparedAnalyticsRepository(db.runtime,{reportingCurrencies:{a:'IQD'}});
   const query={metric:'net_aged_receivable' as const,dateRange:{from:'2025-01-01',to:'2025-01-10'}};
   const result=await repo.execute(query,context);assert.deepEqual(result.rows,[{key:null,value:100}]);assert.equal(result.metadata.snapshotAsOf,'2024-12-31');
+  const {referenceAnalyticsResultForWindow}=await import(new URL('../../../../docs/qa/maintenance/prepared-report-reference-2026-10-19.mjs',import.meta.url).href);
+  const native=await new TrustedAnalyticsRepository(db.runtime,{reportingCurrencies:{a:'IQD'}}).execute(query,context);
+  const stable=(value:unknown)=>JSON.parse(JSON.stringify(value,(key,item)=>key==='executedAt'?undefined:item));
+  assert.deepEqual(stable(referenceAnalyticsResultForWindow(native,window)),stable(result),'registered-window reference must match the real prepared opening result without dropping provenance');
   assert.ok((await repo.getPublishedCapabilities(context)).releases.some(release=>release.mappingId==='trusted-receivables'&&release.period?.from==='2025-01-01'));
   assert.deepEqual((await repo.execute({metric:'net_aged_receivable'},context)).rows,[{key:null,value:100}]);
  }finally{await db.close();}
