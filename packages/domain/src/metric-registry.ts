@@ -9,6 +9,7 @@ export type ProductMetric =
 const domainFor = (id: MetricId): MetricDomain => {
   const business=businessDomain(id);if(business)return business;
   if (['opportunity_count', 'pipeline_value', 'weighted_pipeline', 'win_rate'].includes(id)) return 'crm';
+  if(id.startsWith('command_')&&!id.startsWith('command_order')&&!id.startsWith('command_cancel')&&id!=='command_customers')return 'finance';
   if (id.startsWith('aged_') || ['net_aged_receivable','total_overdue_receivable','overdue_receivable_percentage','gross_open_receivable_components','credit_balances'].includes(id)) return 'finance';
   if (['customer_cash_collected','cash_applied_to_invoices','unallocated_customer_receipts','customer_collection_ratio','weighted_collection_days','receivables_due_for_collection'].includes(id)) return 'finance';
   if (['invoiced_amount', 'collected_amount', 'outstanding_amount', 'overdue_amount'].includes(id)) return 'finance';

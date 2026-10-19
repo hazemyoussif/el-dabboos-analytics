@@ -16,7 +16,7 @@ export async function preparedResult(client:PoolClient,scope:PreparedResultScope
  const metadata:AnalyticsResult['metadata']={...preparedProvenance(scope),executedAt:scope.executedAt,
  servingRevision:publication.revision,...presentation(query),semantics:metric.semantics.kind,
  ...labelMetadata(scope),
- ...(selected.dataThrough?{dataThrough:selected.dataThrough}:{}),...(snapshot&&selected.dataThrough?{snapshotAsOf:selected.dataThrough}:{}),
+ ...(selected.dataThrough?{dataThrough:selected.dataThrough}:{}),...(snapshot&&(selected.dataThrough||selected.coverage?.status==='complete')?{snapshotAsOf:selected.dataThrough??selected.preparedThrough!}:{}),
  ...(selected.window?{window:selected.window}:{}),...(query.analysis?{analysis:query.analysis}:{})};
  Object.assign(metadata,finance);
  return {metric:query.metric,groupBy:query.groupBy??null,rows:selected.rows,metadata};
@@ -63,5 +63,6 @@ function labelMetadata(scope:PreparedResultScope):Pick<AnalyticsResult['metadata
 function preparedProvenance(scope:PreparedResultScope):Pick<AnalyticsResult['metadata'],'sourceId'|'sourceAsOf'|'release'|'coverage'|'availability'>{
  const {family,publication,selected,release}=scope;
  if(family==='facts')return {sourceId:'postgres',sourceAsOf:publication.sourceCutoff,release:factRelease(scope),...(selected.coverage?{coverage:selected.coverage}:{}),...(selected.availability?{availability:selected.availability}:{})};
- return {sourceId:family==='receivables'?'postgres':'postgres-review',sourceAsOf:selected.sourceAsOf??publication.sourceCutoff,release:structuredClone(release)};
+ const sourceAsOf=selected.sourceAsOf??(scope.query.metric.startsWith('command_')?undefined:publication.sourceCutoff);
+ return {sourceId:family==='receivables'?'postgres':'postgres-review',...(sourceAsOf?{sourceAsOf}:{}),release:structuredClone(release),...(selected.coverage?{coverage:selected.coverage}:{}),...(selected.availability?{availability:selected.availability}:{})};
 }

@@ -6,6 +6,7 @@
 @import './styles/builder.css';
 @import './styles/library.css';
 @import './styles/analyst.css';
+@import './styles/sales-command-center.css';
 
 .metric-info { position: relative; display: inline-flex; vertical-align: middle; margin-inline-start: .25rem; }
 .metric-info-button { display: inline-flex; align-items: center; justify-content: center; min-width: 36px; min-height: 36px; padding: .4rem; background: transparent; border: 0; }

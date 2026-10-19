@@ -1,3 +1,4 @@
+import {nativeSalesCommandCoverage} from '../business/sales-command-coverage.ts';
 import {reviewPublication} from './publication.ts';
 import {snapshotReviewResult} from './snapshot-result.ts';
 import {groupedReviewResult} from './grouped-result.ts';
@@ -30,8 +31,8 @@ export class ReviewAnalyticsRepository {
    if(publishedQueryIssues(checked,published).length)throw new Error('Unexposed review query');
    const release=published.releases.find(release=>!publishedQueryIssues(checked,{...published,releases:[release]}).length)!;
    const range=query.dateRange??release.period!;
-   if(query.groupBy&&categoricalDimensions.includes(query.groupBy))return groupedReviewResult(client,{query,context,range,family:this.family,release,maxGroups:this.maxGroups,...(read?{read}:{})});
-   if(snapshotQuery(query))return snapshotReviewResult(client,{query,context,range,family:this.family,release,revision,maxGroups:this.maxGroups});
+   if(query.groupBy&&categoricalDimensions.includes(query.groupBy))return this.withCommandCoverage(client,{query,context,range},await groupedReviewResult(client,{query,context,range,family:this.family,release,maxGroups:this.maxGroups,...(read?{read}:{})}));
+   if(snapshotQuery(query))return this.withCommandCoverage(client,{query,context,range},await snapshotReviewResult(client,{query,context,range,family:this.family,release,revision,maxGroups:this.maxGroups}));
    const result=await readReviewFacts(client,{query,context,range,family:this.family});
    if(result.rows.length>250000)throw new Error('Review fact query exceeds bounded execution');
    const facts=result.rows.map(row=>{const fact=row.payload;return {tenantId:fact.tenantId,measureId:fact.measureId,date:fact.businessDate,value:numericOutput(fact.value)!,dimensions:fact.dimensions,...fact.entityId?{entityId:fact.entityId}:{}};});
@@ -39,8 +40,13 @@ export class ReviewAnalyticsRepository {
    const executed=executeFacts(facts,{...query,dateRange:range},context,{sourceId:'postgres-review',executedAt:new Date().toISOString(),...(cutoff?{sourceAsOf:cutoff}:{})});
    if(executed.rows.length>this.maxGroups)throw new AnalyticsResultLimitError(query.groupBy??'customer');
    const dimensionLabels=reviewLabels(result.rows.map(row=>row.payload),query,context);
-   return {...executed,metadata:{...executed.metadata,servingRevision:revision,release,...analysisMetadata(query),...(Object.keys(dimensionLabels).length?{dimensionLabels}:{})}};
+   return this.withCommandCoverage(client,{query,context,range},{...executed,metadata:{...executed.metadata,servingRevision:revision,release,...analysisMetadata(query),...(Object.keys(dimensionLabels).length?{dimensionLabels}:{})}});
   },true,this.timeout);
+ }
+ private async withCommandCoverage(client:import('pg').PoolClient,scope:{query:AnalyticsQuery;context:AnalyticsContext;range:NonNullable<AnalyticsQuery['dateRange']>},result:AnalyticsResult):Promise<AnalyticsResult>{
+  if(!scope.query.metric.startsWith('command_'))return result;
+  const revision=result.metadata.servingRevision;if(!revision)throw new Error('Command coverage requires a serving revision');
+  return {...result,metadata:{...result.metadata,...await nativeSalesCommandCoverage(client,{...scope,revision})}};
  }
  async searchDimensionOptions(dimension:DimensionId,context:AnalyticsContext,request:import('@el-dabboos/domain').DimensionDiscoveryRequest){
   return discoverReviewDimensions(this.pool,{dimension,context,request,capabilities:await this.capabilities(context),timeout:this.timeout,family:this.family});

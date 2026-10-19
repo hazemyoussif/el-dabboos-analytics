@@ -10,7 +10,7 @@ closed. No accepted SQL or checksum is changed by milestone finalization.
 
 | Store | Current head | Registration / readiness | Explicit execution |
 | --- | --- | --- | --- |
-| PostgreSQL analytics mart | 052 `review_amount_cover` | [Manifest/runner](../../packages/data/src/postgres/migrations.ts), [runtime readiness](../../packages/data/src/postgres/readiness.ts) | `pnpm mart:migrate`; staging uses `pnpm staging migrate` |
+| PostgreSQL analytics mart | 061 `sales_command_measures` | [Manifest/runner](../../packages/data/src/postgres/migrations.ts), [runtime readiness](../../packages/data/src/postgres/readiness.ts) | `pnpm mart:migrate`; staging uses `pnpm staging migrate` |
 | PostgreSQL control | 009 `workspace_ai_settings` | [Manifest/runner/readiness](../../packages/data/src/control/migrations.ts) | `pnpm control migrate`; staging uses `pnpm staging migrate` |
 | SQLite governed metadata | 006 `workspace-ai-settings` | [Explicit registry/readiness](../../packages/data/src/metadata/migrations.ts) | `pnpm metadata:migrate <metadata-db-path>` against approved metadata storage |
 
@@ -98,3 +98,5 @@ comparison periods obey the configured month-aligned window. Unconfigured
 coverage remains unchanged. No native data deletion or automatic activation.
 This records a candidate; company staging is still on059until separately approved
 deployment. Original053–059files/checksums remain unchanged.
+
+Migration 061 adds Sales Command Center operands and state columns, extends the canonical view without changing its security properties, and admits the explicitly versioned command mapping under the existing exact Business controls. It performs no extraction, preparation, activation or source writes. Prepared-serving migrations 053–060 remain unchanged.

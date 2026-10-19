@@ -48,3 +48,5 @@ export * from './analyst-conversations.ts';
 export * from './analyst-answer.ts';
 
 export {supportedPurposeTemplate} from './purpose-charts.ts';
+export * from './sales-command-center.ts';
+export * from './sales-command-center-definition.ts';

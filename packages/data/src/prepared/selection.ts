@@ -1,3 +1,4 @@
+import {salesCommandCoverage} from '../business/sales-command-coverage.ts';
 import {coverageMetadata,coveredSlot} from '../operational/coverage.ts';
 import type {ServingCoverage} from '../operational/coverage.ts';
 import type {PoolClient} from 'pg';
@@ -33,13 +34,21 @@ export async function readPreparedSelection(client:PoolClient,scope:PreparedRead
  const keys=scope.timeBuckets==='closed-months'&&query.groupBy==='month'?periods.filter(key=>monthEnd(key!)<=range.to):periods;
  if(keys.length>maxGroups)throw new AnalyticsResultLimitError(query.groupBy!);
  const slots=querySlots(effective,keys),segments=scopeSegments(scope,eligible,[...slots.current,...slots.prior]);
- const used=eligible.filter(binding=>segments.some(segment=>segment.data_id===binding.data_id));
+ const provenance=preparedReadProvenance(scope,eligible,slots);
+ const selected=categorical?await readGroupedSql(client,{query:effective,context,input:preparedReduction(effective,context,segments,true),revision,maxGroups,...(read?{read}:{})}):await readTimeRows(client,populationScope(scope,eligible),eligible,slots);
+ return {...selected,...preparedCoverage(scope,slots.current,selected.dataThrough,categorical),...provenance,revision,labels:Object.fromEntries(Object.entries(selected.labels).map(([key,label])=>[key,sourceDisplayLabel(label,context.locale)]))};
+
+}
+/** Validate basis/currency before reduction and project provenance from the actual selected bindings. */
+function preparedReadProvenance(scope:PreparedReadScope,bindings:PreparedBinding[],slots:ReturnType<typeof querySlots>){
+ const segments=scopeSegments(scope,bindings,[...slots.current,...slots.prior]);
+ const used=bindings.filter(binding=>segments.some(segment=>segment.data_id===binding.data_id));
  const definitions=new Set(used.map(binding=>binding.configuration.definitionVersion)),currencies=new Set(used.map(binding=>binding.configuration.currency));
  if(definitions.size>1||currencies.size>1)throw new Error('Prepared definition or currency mismatch');
- const selected=categorical?await readGroupedSql(client,{query:effective,context,input:preparedReduction(effective,context,segments,true),revision,maxGroups,...(read?{read}:{})}):await readTimeRows(client,populationScope(scope,eligible),eligible,slots);
- const sourceAsOf=used.map(binding=>binding.source_cutoff.toISOString()).sort().at(-1);
- const preparedThrough=scopeSegments(scope,eligible,slots.current).map(segment=>segment.to).sort().at(-1)??null;
- return {...selected,preparedThrough,...preparedCoverage(scope,slots.current,selected.dataThrough,categorical),revision,...(sourceAsOf?{sourceAsOf}:{}),currency:[...currencies][0],definitionVersion:[...definitions][0],labels:Object.fromEntries(Object.entries(selected.labels).map(([key,label])=>[key,sourceDisplayLabel(label,context.locale)]))};
+ const current=scopeSegments(scope,bindings,slots.current),sourceAsOf=used.map(binding=>binding.source_cutoff.toISOString()).sort().at(-1);
+ const preparedThrough=current.map(segment=>segment.to).sort().at(-1)??null;
+ const command=scope.query.metric.startsWith('command_')?salesCommandCoverage(scope.query,scope.range,current.map(segment=>({from:segment.from,to:segment.to,cutoff:bindings.find(binding=>binding.data_id===segment.data_id)!.source_cutoff.toISOString()}))):{};
+ return {preparedThrough,...(sourceAsOf?{sourceAsOf}:{}),...command,currency:[...currencies][0],definitionVersion:[...definitions][0]};
 }
 async function readTimeRows(client:PoolClient,scope:PreparedReadScope,bindings:PreparedBinding[],slots:ReturnType<typeof querySlots>){
  if(scope.read?.window||scope.read?.outputKeys)throw new Error('Categorical output selection required');
@@ -89,6 +98,7 @@ function scopeSegments(scope:PreparedReadScope,bindings:PreparedBinding[],slots:
 }
 function outputSlots(scope:PreparedReadScope,slots:QuerySlot[],segments:ReturnType<typeof planPreparedRead>,rows:Map<string|null,unknown>){
  if(scope.timeBuckets==='closed-months'&&scope.query.groupBy==='month')return slots.filter(slot=>segments.some(segment=>segment.key===slot.key));
+ if(scope.query.groupBy==='week')return slots;
  return scope.timeBuckets==='observed'&&scope.query.groupBy?slots.filter(slot=>rows.has(slot.key)):slots;
 }
 

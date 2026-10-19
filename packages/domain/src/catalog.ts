@@ -1,15 +1,16 @@
+import {salesCommandCatalog} from './sales-command-catalog.ts';
 import {businessCatalog} from './business-catalog.ts';
 import { metricHelp } from './metric-help.ts';
 import type { DimensionId, FactMeasureId, MetricId, MetricSemantics, SemanticMetric } from './contracts.ts';
 
 export const dimensions: readonly DimensionId[] = [
-  'date', 'month', 'quarter', 'year', 'customer', 'branch', 'region',
+  'date', 'week', 'month', 'quarter', 'year', 'customer', 'branch', 'region','invoice_document_state','invoice_payment_state','receipt_state','order_state',
   'salesperson', 'product', 'product_category', 'warehouse', 'equipment',
   'equipment_category', 'technician', 'business_line', 'city', 'state', 'brand','customer_segment','customer_class','uom','journal','supplier',
 ];
-export const timeDimensions: readonly DimensionId[] = ['date', 'month', 'quarter', 'year'];
+export const timeDimensions: readonly DimensionId[] = ['date', 'week', 'month', 'quarter', 'year'];
 export const categoricalDimensions: readonly DimensionId[] = dimensions.filter(dimension => !timeDimensions.includes(dimension));
-const time: DimensionId[] = [...timeDimensions];
+const time: DimensionId[] = timeDimensions.filter(dimension=>dimension!=='week');
 const sales: DimensionId[] = [...time, 'customer', 'branch', 'region', 'salesperson', 'product', 'product_category','business_line','city','state'];
 const crm: DimensionId[] = [...time, 'customer', 'branch', 'region', 'salesperson'];
 const finance: DimensionId[] = [...time, 'customer', 'branch', 'region'];
@@ -18,7 +19,7 @@ const transactions: DimensionId[] = [...time,'customer','salesperson','business_
 const maintenance: DimensionId[] = [...time, 'equipment', 'equipment_category', 'technician', 'branch'];
 
 /** These recipes use canonical measures only; source adapters map physical data to them. */
-const semantics: Record<Exclude<MetricId,import('./contracts.ts').BusinessMetricId>, MetricSemantics> = {
+const semantics: Record<Exclude<MetricId,import('./contracts.ts').BusinessMetricId|import('./contracts.ts').SalesCommandMetricId>, MetricSemantics> = {
   customer_cash_collected: {kind:'additive',measure:'customer_cash_collected'},
   cash_applied_to_invoices: {kind:'additive',measure:'cash_applied_to_invoices'},
   unallocated_customer_receipts: {kind:'additive',measure:'unallocated_customer_receipts'},
@@ -135,7 +136,7 @@ const dialectSynonyms: Partial<Record<MetricId, { iq?: readonly string[]; eg?: r
   order_count: { iq: ['عدد الطلبيات'], eg: ['عدد الأوردرات'] },
   collected_amount: { iq: ['المبالغ المقبوضة'], eg: ['الفلوس المتحصلة'] },
 };
-export const semanticCatalog: Readonly<Record<MetricId, SemanticMetric>> = {...businessCatalog,...Object.fromEntries(
+export const semanticCatalog: Readonly<Record<MetricId, SemanticMetric>> = {...businessCatalog,...salesCommandCatalog,...Object.fromEntries(
   definitions.map(([id, en, ar, type, supportedDimensions, enSynonyms, arSynonyms]) => [id, {
     id, labels: { en, ar }, descriptions: metricHelp(id, {en, ar}, semantics[id as keyof typeof semantics]).shortDefinition,
     synonyms: { en: enSynonyms, ar: arSynonyms },
@@ -149,7 +150,7 @@ export const semanticCatalog: Readonly<Record<MetricId, SemanticMetric>> = {...b
 const factIds = new Set<FactMeasureId>([
   ...Object.values(semanticCatalog).map(metric=>metric.semantics).flatMap(semantics => semantics.kind === 'additive' || semantics.kind === 'snapshot' || semantics.kind === 'distinct_count' ? [semantics.measure] : []),
   'won_opportunity_count', 'closed_opportunity_count', 'operating_hours', 'repair_hours', 'completed_repair_count',
-  'collection_amount_days','collection_applied_amount','order_untaxed_value','period_collection_sales',
+  'command_decided_orders','collection_amount_days','collection_applied_amount','order_untaxed_value','period_collection_sales',
 ]);
 export const factMeasureIds: readonly FactMeasureId[] = [...factIds];
 export function isMetricId(id: string): id is MetricId { return Object.hasOwn(semanticCatalog, id); }

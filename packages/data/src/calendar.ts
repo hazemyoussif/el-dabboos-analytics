@@ -31,6 +31,7 @@ export function shiftRange(range: DateRange, period: ComparisonPeriod): DateRang
 }
 export function timeKey(value: string, dimension: DimensionId): string {
   if (dimension === 'date') return value;
+  if(dimension==='week')return addDays(value,-((date(value).getUTCDay()+1)%7));
   if (dimension === 'month') return value.slice(0, 7);
   if (dimension === 'year') return value.slice(0, 4);
   if (dimension === 'quarter') return `${value.slice(0, 4)}-Q${Math.floor((Number(value.slice(5, 7)) - 1) / 3) + 1}`;
@@ -38,6 +39,7 @@ export function timeKey(value: string, dimension: DimensionId): string {
 }
 export function periodRange(key: string, dimension: DimensionId): DateRange {
   if (dimension === 'date') return { from: key, to: key };
+  if(dimension==='week')return {from:key,to:addDays(key,6)};
   if (dimension === 'month') {
     const from = `${key}-01`;
     const d = date(from);
@@ -55,6 +57,7 @@ export function periodRange(key: string, dimension: DimensionId): DateRange {
   throw new Error('Not a time dimension');
 }
 export function previousTimeKey(key: string, dimension: DimensionId, comparison: ComparisonPeriod): string {
+  if(dimension==='week')return timeKey(comparison==='previous_period'?addDays(key,-7):shiftMonths(key,comparison==='month_over_month'?-1:-12),'week');
   if (dimension === 'date') return comparison === 'previous_period' ? addDays(key, -1) : shiftMonths(key, comparison === 'month_over_month' ? -1 : -12);
   if (dimension === 'month') return shiftMonths(`${key}-01`, comparison === 'year_over_year' ? -12 : -1).slice(0, 7);
   if (dimension === 'quarter') {
@@ -73,7 +76,7 @@ export function periodKeys(range: DateRange, dimension: DimensionId): string[] {
   while (cursor <= range.to) {
     if (keys.length >= 5000) throw new Error('Too many time periods');
     keys.push(timeKey(cursor, dimension));
-    cursor = dimension === 'date' ? addDays(cursor, 1) : shiftMonths(cursor, dimension === 'month' ? 1 : dimension === 'quarter' ? 3 : 12);
+    cursor = dimension === 'week'?addDays(cursor,7):dimension === 'date' ? addDays(cursor, 1) : shiftMonths(cursor, dimension === 'month' ? 1 : dimension === 'quarter' ? 3 : 12);
   }
   return keys;
 }

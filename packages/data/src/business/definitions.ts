@@ -1,9 +1,11 @@
+import {salesCommandSourceObject} from './sales-command-mapping.ts';
 import {createHash} from 'node:crypto';
-import {businessCatalog,businessMetricIds,compatibleQuantityMetrics,requiredMeasures,validateSourceMapping,timeDimensions} from '@el-dabboos/domain';
+import {businessCatalog,businessMetricIds,semanticCatalog,compatibleQuantityMetrics,requiredMeasures,validateSourceMapping,timeDimensions} from '@el-dabboos/domain';
 import type {BusinessMetricId,SourceMapping,PublishedAnalyticsCapabilities,FactMeasureId} from '@el-dabboos/domain';
 export const currentBusinessMetrics:readonly BusinessMetricId[]=['supplier_payable_next_month','receivables_due_next_month','internal_stock_quantity','expired_stock_quantity','near_expiry_stock_quantity','unknown_expiry_stock_quantity','negative_stock_positions','delivered_unbilled_quantity','received_unbilled_quantity','order_age_exceptions','book_cash_balance','supplier_payable_due','supplier_payable_unknown_due','supplier_advance_balance'];
 export function businessDefinitionVersion(){return createHash('sha256').update(JSON.stringify(businessCatalog)).digest('hex');}
 export function businessSourceObject(measure:FactMeasureId){
+ const command=salesCommandSourceObject(measure);if(command)return command;
  if(measure==='invoiced_product_quantity')return 'business_invoice_quantity';
  if(measure.startsWith('period_cash'))return 'business_cash';
  if(measure.startsWith('period_'))return 'business_invoice';
@@ -29,7 +31,7 @@ export function businessMapping(scope:{tenantId:string;sourceId:string;currency:
 export function businessCapabilities(mapping:SourceMapping,scope:{month:string;cutoff:string;reference:string}):PublishedAnalyticsCapabilities {
  const monthEnd=new Date(Date.UTC(Number(scope.month.slice(0,4)),Number(scope.month.slice(5)),0)).toISOString().slice(0,10);
  const cutoff=new Intl.DateTimeFormat('en-CA',{timeZone:mapping.measures[0]!.timeZone,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(scope.cutoff));
- return {tenantId:mapping.tenantId,mode:'certified',releases:[{datasetId:mapping.datasetId,sourceId:mapping.sourceId,mappingId:mapping.mappingId,mappingVersion:mapping.mappingVersion,certificationReference:scope.reference,financeReview:'pending',period:{from:scope.month+'-01',to:cutoff<monthEnd?cutoff:monthEnd},capabilities:mapping.capabilities.map(capability=>({...capability,summary:!compatibleQuantityMetrics.includes(capability.metric as BusinessMetricId),analyses:businessCatalog[capability.metric as BusinessMetricId].type==='date'||compatibleQuantityMetrics.includes(capability.metric as BusinessMetricId)?[]:['ranking','topN',...(businessCatalog[capability.metric as BusinessMetricId].semantics.kind==='additive'?['percentageContribution' as const,'pareto' as const]:[])]}))}]};
+ return {tenantId:mapping.tenantId,mode:'certified',releases:[{datasetId:mapping.datasetId,sourceId:mapping.sourceId,mappingId:mapping.mappingId,mappingVersion:mapping.mappingVersion,certificationReference:scope.reference,financeReview:'pending',period:{from:scope.month+'-01',to:cutoff<monthEnd?cutoff:monthEnd},capabilities:mapping.capabilities.map(capability=>({...capability,summary:!compatibleQuantityMetrics.includes(capability.metric as BusinessMetricId),analyses:semanticCatalog[capability.metric].type==='date'||compatibleQuantityMetrics.includes(capability.metric as BusinessMetricId)?[]:['ranking','topN',...(semanticCatalog[capability.metric].semantics.kind==='additive'?['percentageContribution' as const,'pareto' as const]:[])]}))}]};
 }
 
 function businessDimensionRule(dimension:string,object:string){

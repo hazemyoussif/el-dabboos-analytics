@@ -1,5 +1,6 @@
+import {calendarValueSql} from '../postgres/calendar-sql.ts';
 import type {PoolClient} from 'pg';
-import {requiredMeasures,semanticCatalog,compatibleQuantityMetrics} from '@el-dabboos/domain';
+import {requiredMeasures,semanticCatalog,timeDimensions,compatibleQuantityMetrics} from '@el-dabboos/domain';
 import type {AnalyticsQuery,AnalyticsContext,AnalyticsReadOptions,DateRange} from '@el-dabboos/domain';
 import {bind} from '../postgres/sql.ts';
 import {dimensionLabelField,sourceDisplayLabel} from '../postgres/query-labels.ts';
@@ -15,7 +16,7 @@ export async function groupedReviewRows(client:PoolClient,scope:ReviewGroupedSco
  const definitionVersion=(family==='business'?businessDefinitionVersion:reviewDefinitionVersion)();
  const semantics=semanticCatalog[query.metric].semantics,snapshot=semantics.kind==='snapshot'||semantics.kind==='ratio'&&semantics.basis==='snapshot';
  const params:unknown[]=[context.tenantId,requiredMeasures(query.metric),range.to,...(snapshot?[family,definitionVersion]:[])];
- const filters=[...(query.filters??[]),...(context.enforcedFilters??[])].map(filter=>`base.dimensions->>${bind(params,filter.dimension)}=ANY(${bind(params,filter.values)}::text[])`);
+ const filters=[...(query.filters??[]),...(context.enforcedFilters??[])].map(filter=>`${timeDimensions.includes(filter.dimension)?calendarValueSql(filter.dimension,'base.business_date::date'):`base.dimensions->>${bind(params,filter.dimension)}`}=ANY(${bind(params,filter.values)}::text[])`);
  const group=bind(params,query.groupBy),label=bind(params,dimensionLabelField(query.groupBy));
  const unsafe=groupedUnsafeExpression(query,params),value=groupedValueExpression(query,params),quantities=compatibleQuantityMetrics.includes(query.metric as import('@el-dabboos/domain').BusinessMetricId)&&query.groupBy!=='uom';
  const invalid=quantities?`min(base.uom) IS DISTINCT FROM max(base.uom) OR bool_or(coalesce(base.uom,'unassigned')='unassigned')`:'false';

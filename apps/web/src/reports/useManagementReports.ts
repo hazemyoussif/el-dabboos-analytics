@@ -6,7 +6,7 @@ import type { WorkspaceController } from '../hooks/useWorkspace.ts';
 import type { useDashboardProductFlow } from '../hooks/useDashboardProductFlow.ts';
 import type { ManagementPage } from './ManagementReports.tsx';
 export function useManagementReports(workspace:WorkspaceController,flow:ReturnType<typeof useDashboardProductFlow>,onNavigate:()=>void) {
- const page:ManagementPage|null=workspace.route.kind==='report'?(workspace.route.id==='data-status'?'data-status':workspace.route.id==='finance-control'?'finance-control':workspace.route.id==='customer-performance'&&!workspace.templates.some(item=>item.id==='customer-performance'&&item.availability==='available')?'customer-unavailable':null):null;
+ const page:ManagementPage|null=workspace.route.kind==='report'?(workspace.route.id==='sales-command-center'?'sales-command-center':workspace.route.id==='data-status'?'data-status':workspace.route.id==='finance-control'?'finance-control':workspace.route.id==='customer-performance'&&!workspace.templates.some(item=>item.id==='customer-performance'&&item.availability==='available')?'customer-unavailable':null):null;
  const [review,setReview]=useState<ManagementControlReview|null>(null);
  const [loading,setLoading]=useState(false);
  const [error,setError]=useState(false);
@@ -24,7 +24,7 @@ export function useManagementReports(workspace:WorkspaceController,flow:ReturnTy
  };
  const select=(id:string)=>{
   if(!workspace.profile)return;
-  if(id==='finance-control'||id==='data-status') {
+  if(id==='finance-control'||id==='data-status'||id==='sales-command-center') {
    if(!workspace.confirmAbandon())return;
    workspace.beginRequest();workspace.setLoading(false);onNavigate();flow.close();navigateWorkspace({kind:'report',id});return;
   }

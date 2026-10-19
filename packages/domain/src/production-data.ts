@@ -79,7 +79,7 @@ export interface ProductionFact {
   currency?: CurrencyLineage;
   transaction?: TransactionEvidence;
   /** Display evidence only; stable dimensions remain the identity and authorization boundary. */
-  displayLabels?: Partial<Record<'customer' | 'salesperson' | 'businessLine' | 'product' | 'product_category' | 'brand' | 'customer_segment' | 'customer_class' | 'uom' | 'journal' | 'supplier' | 'warehouse' | 'state', string>>;
+  displayLabels?: Partial<Record<'invoice_document_state'|'invoice_payment_state'|'receipt_state'|'order_state'|'customer' | 'salesperson' | 'businessLine' | 'product' | 'product_category' | 'brand' | 'customer_segment' | 'customer_class' | 'uom' | 'journal' | 'supplier' | 'warehouse' | 'state', string>>;
 }
 export interface IngestionBatch extends SourceScope {
   batchId: string; datasetId: string; mappingId: string; mappingVersion: string; adapterVersion: string;
@@ -272,5 +272,5 @@ export function validateFactBatch(value: unknown, facts: readonly ProductionFact
 
 function validateDisplayLabels(labels: unknown): void {
   if (labels === undefined) return;
-  if (!object(labels) || Object.entries(labels).some(([key,value]) => !['customer','salesperson','businessLine','product','product_category','brand','customer_segment','customer_class','uom','journal','supplier','warehouse','state'].includes(key) || typeof value !== 'string' || !value.trim() || value.length > 500)) fail('display_labels');
+  if (!object(labels) || Object.entries(labels).some(([key,value]) => !['invoice_document_state','invoice_payment_state','receipt_state','order_state','customer','salesperson','businessLine','product','product_category','brand','customer_segment','customer_class','uom','journal','supplier','warehouse','state'].includes(key) || typeof value !== 'string' || !value.trim() || value.length > 500)) fail('display_labels');
 }

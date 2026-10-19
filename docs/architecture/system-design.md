@@ -1,5 +1,11 @@
 # System design — primary architecture entry
 
+The application-owned [Sales Command Center](../integration/sales-command-center.md)
+coordinates named multi-period report sections through one consistent execution.
+It preserves portable DashboardSpec v2 and explicit Save, validates/authorizes every
+query and retains per-metric provenance. The local implementation includes source-backed operational measures and prepared
+coverage checks; company deployment and release acceptance remain pending.
+
 ## Status and responsibilities
 
 **Unified serving core:** the runtime now uses one trusted revision per tenant for monthly fact partitions and exact receivables snapshots. Migration 040 adopts certified mart history without Odoo access. Historical bindings and Finance publications remain migration/rollback evidence. See [core lifecycle and migration](../integration/unified-serving-core.md). Explicit certified monthly history imports extend the trusted manifest without moving the operational cursor; incremental discovery no longer implicitly backfills absent older months.
