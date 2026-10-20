@@ -7,9 +7,12 @@ import type { OperationalBaseline } from './contracts.ts';
 export function operationalFactKey(fact:ProductionFact) {
  return JSON.stringify([fact.tenantId,fact.sourceId,fact.sourceObject,fact.sourceRecordId,fact.componentId,fact.measureId,...(fact.kind==='snapshot'?[fact.entityId,fact.businessDate]:[])]);
 }
+/** Source observation metadata does not change business content. Stored provenance
+ * remains attached to the last content change; the job cursor tracks discovery.
+ */
 function content(fact:ProductionFact) {
- const {batchId,sourceAsOf,frozenRevision,...business}=fact;void batchId;void sourceAsOf;void frozenRevision;
- if(fact.kind==='snapshot'){const {sourceRevision,sourceVersion,sourceUpdatedAt,...snapshot}=business;void sourceRevision;void sourceVersion;void sourceUpdatedAt;return stableContent(snapshot);}
+ const {batchId,sourceAsOf,frozenRevision,sourceRevision,sourceVersion,sourceUpdatedAt,...business}=fact;
+ void batchId;void sourceAsOf;void frozenRevision;void sourceRevision;void sourceVersion;void sourceUpdatedAt;
  return stableContent(business);
 }
 
@@ -30,8 +33,8 @@ export async function persistOperationalFacts(client:PoolClient,baseline:Operati
  const changes:FactRevisionChange[]=[];
  for(const {key,next} of prepared) {
   const previous=current.get(key);
-  if(previous && content(previous)===content(next))continue;
   if(previous && BigInt(next.sourceRevision)<BigInt(previous.sourceRevision))throw new Error('Stale operational source revision');
+  if(previous && content(previous)===content(next))continue;
   if(previous && next.sourceRevision===previous.sourceRevision && next.status!=='tombstone')throw new Error('Conflicting operational source revision');
   const revision=createHash('sha256').update(JSON.stringify(next)).digest('hex');
   revisions.push({key,revision,payload:next});heads.set(key,revision);
