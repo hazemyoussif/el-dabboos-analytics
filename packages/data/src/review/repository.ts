@@ -1,4 +1,5 @@
 import {reviewPublication} from './publication.ts';
+import {snapshotReviewResult} from './snapshot-result.ts';
 import {groupedReviewResult} from './grouped-result.ts';
 import {categoricalDimensions} from '@el-dabboos/domain';
 import type {AnalyticsReadOptions} from '@el-dabboos/domain';
@@ -30,15 +31,15 @@ export class ReviewAnalyticsRepository {
    const release=published.releases.find(release=>!publishedQueryIssues(checked,{...published,releases:[release]}).length)!;
    const range=query.dateRange??release.period!;
    if(query.groupBy&&categoricalDimensions.includes(query.groupBy))return groupedReviewResult(client,{query,context,range,family:this.family,release,maxGroups:this.maxGroups,...(read?{read}:{})});
+   if(snapshotQuery(query))return snapshotReviewResult(client,{query,context,range,family:this.family,release,revision,maxGroups:this.maxGroups});
    const result=await readReviewFacts(client,{query,context,range,family:this.family});
    if(result.rows.length>250000)throw new Error('Review fact query exceeds bounded execution');
    const facts=result.rows.map(row=>{const fact=row.payload;return {tenantId:fact.tenantId,measureId:fact.measureId,date:fact.businessDate,value:numericOutput(fact.value)!,dimensions:fact.dimensions,...fact.entityId?{entityId:fact.entityId}:{}};});
    const cutoff=reviewSourceCutoff(result);
    const executed=executeFacts(facts,{...query,dateRange:range},context,{sourceId:'postgres-review',executedAt:new Date().toISOString(),...(cutoff?{sourceAsOf:cutoff}:{})});
    if(executed.rows.length>this.maxGroups)throw new AnalyticsResultLimitError(query.groupBy??'customer');
-   const snapshot=snapshotQuery(query)?facts.map(fact=>fact.date).filter(date=>date<=range.to).sort().at(-1):undefined;
    const dimensionLabels=reviewLabels(result.rows.map(row=>row.payload),query,context);
-   return {...executed,metadata:{...executed.metadata,servingRevision:revision,release,...analysisMetadata(query),...(Object.keys(dimensionLabels).length?{dimensionLabels}:{}),...(snapshot?{snapshotAsOf:snapshot}:{})}};
+   return {...executed,metadata:{...executed.metadata,servingRevision:revision,release,...analysisMetadata(query),...(Object.keys(dimensionLabels).length?{dimensionLabels}:{})}};
   },true,this.timeout);
  }
  async searchDimensionOptions(dimension:DimensionId,context:AnalyticsContext,request:import('@el-dabboos/domain').DimensionDiscoveryRequest){

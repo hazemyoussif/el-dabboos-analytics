@@ -19,15 +19,13 @@ import type {PreparedFamily} from './contracts.ts';
 export interface PreparedReadScope {query:AnalyticsQuery;context:AnalyticsContext;range:DateRange;family:PreparedFamily;maxGroups:number;coverage?:ServingCoverage;timeBuckets:'observed'|'complete'|'closed-months';emptySnapshotValue?:0;read?:AnalyticsReadOptions;reportingWindow?:DateRange}
 export interface PreparedSelection extends Pick<AnalyticsResult['metadata'],'coverage'|'availability'> {rows:AnalyticsRow[];labels:Record<string,string>;dataThrough:string|null;preparedThrough:string|null;window?:AnalyticsResultWindow;revision:string;sourceAsOf?:string;currency:string|undefined;definitionVersion:string|undefined}
 /** Runs inside the owning read-only tenant transaction. Source reconstruction is unavailable here. */
-export async function readPreparedSelection(client:PoolClient,scope:PreparedReadScope):Promise<PreparedSelection>{
+export async function readPreparedSelection(client:PoolClient,scope:PreparedReadScope,readBindings=readPreparedBindings):Promise<PreparedSelection>{
  scope=await governedPreparedRead(client,scope);
  const {query,context,range,family,maxGroups,read}=scope;
  const revision=await readServingRevision(client,context.tenantId,read?.revision),kind=preparedMetricBasis(query.metric);
  const sealed=(await client.query('SELECT 1 FROM mart.prepared_revision_seals WHERE tenant_id=$1 AND revision_id=$2',[context.tenantId,revision])).rowCount;
  if(!sealed)throw new Error('Prepared publication not ready');
- const bindings=(await client.query<PreparedBinding>(`SELECT binding.data_id,binding.period::text,binding.statistics,binding.source_cutoff,dataset.configuration
- FROM mart.prepared_bindings binding JOIN mart.prepared_datasets dataset USING(tenant_id,data_id)
- WHERE binding.tenant_id=$1 AND binding.revision_id=$2 AND binding.family=$3 AND binding.kind=$4 ORDER BY binding.period`,[context.tenantId,revision,family,kind])).rows;
+ const bindings=await readBindings(client,context.tenantId,revision,family,kind);
  const eligible=bindings.filter(binding=>requiredMeasures(query.metric).every(measure=>binding.configuration.measures.includes(measure)));
  if(!eligible.length)throw new Error('Prepared metric coverage unavailable');
  const categorical=Boolean(query.groupBy&&categoricalDimensions.includes(query.groupBy)),effective={...query,dateRange:range};
@@ -96,4 +94,11 @@ function outputSlots(scope:PreparedReadScope,slots:QuerySlot[],segments:ReturnTy
 
 function populationScope(scope:PreparedReadScope,bindings:PreparedBinding[]):PreparedReadScope{
  return bindings.every(binding=>binding.configuration.snapshotPopulation==='complete')?{...scope,emptySnapshotValue:0}:scope;
+}
+
+/** Sealed bindings are immutable; execution-local reuse never replaces the live revision guard. */
+export async function readPreparedBindings(client:PoolClient,tenantId:string,revision:string,family:PreparedFamily,kind:'event'|'snapshot'):Promise<PreparedBinding[]>{
+ return (await client.query<PreparedBinding>(`SELECT binding.data_id,binding.period::text,binding.statistics,binding.source_cutoff,dataset.configuration
+ FROM mart.prepared_bindings binding JOIN mart.prepared_datasets dataset USING(tenant_id,data_id)
+ WHERE binding.tenant_id=$1 AND binding.revision_id=$2 AND binding.family=$3 AND binding.kind=$4 ORDER BY binding.period`,[tenantId,revision,family,kind])).rows;
 }
