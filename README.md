@@ -44,7 +44,7 @@ pnpm run build
 pnpm run check:diff
 ```
 
-CI runs frozen install and all listed gates, including disposable synthetic PostgreSQL coverage. It does not publish or deploy images. See the [testing guide](docs/developer/testing-guide.md) for database setup; tests do not use developer env files or live model/customer services.
+Run frozen install and all listed gates locally, including disposable synthetic PostgreSQL coverage. Automatic GitHub CI is removed at the owner's request; local verification remains required before pushing. See the [testing guide](docs/developer/testing-guide.md) for database setup; tests do not use developer env files or live model/customer services.
 
 ## Product model
 

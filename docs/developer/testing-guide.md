@@ -27,9 +27,13 @@ Use the smallest relevant files while debugging. Fake HTTP transport tests open 
 ```bash
 pnpm install --frozen-lockfile
 pnpm run lint
+pnpm run check:architecture
+pnpm run check:quality
 pnpm run typecheck
 pnpm test
+pnpm run test:postgres
 pnpm run build
+pnpm run check:diff
 ```
 
-Full verification catches cross-package schema/authorization/rendering drift and builds both API/web. CI runs the same gates on pull requests and pushes to `main`. Feature-branch pushes do not duplicate the pull-request run; newer runs cancel superseded runs for the same PR or branch. Finish local verification before one consolidated push, especially when CI usage is constrained. Also run [smoke tests](../qa/smoke-tests.md) and record manual evidence honestly: automated fake faults are not human browser fault coverage. Lightweight docs sanity is part of tests and checks local links, stable story/case fields and supported widget vocabulary.
+Full verification catches cross-package schema/authorization/rendering drift and builds both API/web. The owner uses local verification for this single-developer project. Automatic GitHub CI is removed; do not add, enable, dispatch or rerun GitHub Actions unless the owner explicitly requests it. Finish the local gates before pushing, and record the tested revision, commands and results in the handoff. Also run [smoke tests](../qa/smoke-tests.md) and record manual evidence honestly: automated fake faults are not human browser fault coverage. Lightweight docs sanity is part of tests and checks local links, stable story/case fields and supported widget vocabulary.

@@ -6,7 +6,7 @@ Copy and fill, retaining explicit unknowns:
 - User scope and preserved architecture constraints:
 - Code and owning documents changed:
 - Tests: targeted commands and results; full count; frozen install/lint/typecheck/API build/web build:
-- CI: exact final SHA, status and run link (pending is not passed):
+- Local verification: exact tested SHA, commands, results and any reused evidence; GitHub CI is disabled by owner request:
 - Manual: each requested flow pass/fail/blocked, synthetic fixture/mode/identity/tenant/locale/theme:
 - Security: membership, tenant/policy, full validators, post-output authorization and safe logging evidence:
 - Behavioral limits / known warnings / unimplemented work:

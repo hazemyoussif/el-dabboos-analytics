@@ -38,6 +38,8 @@ Green tests are necessary but not sufficient. Follow [engineering standards](doc
 
 ## Verification before push
 
+Verification runs locally. At the owner's request, automatic GitHub CI is removed; do not add, enable, dispatch or rerun GitHub Actions unless the owner explicitly requests it. Keep the local verification gates below and report their results for the tested revision.
+
 ```bash
 pnpm install --frozen-lockfile
 pnpm run lint
