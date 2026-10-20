@@ -1,9 +1,14 @@
 # Sales Command Center
 
-Status: the report and source extension are implemented locally. Company deployment,
-new-measure publication and company performance acceptance have not been performed.
+Status: the report and source extension are implemented and published in local
+staging. The user confirmed the current numbers are correct and authorized final
+deployment on 20 October 2026. The existing configured source remains unchanged;
+local prepared/native agreement is separate from cross-environment reference
+comparison. Company deployment, new-measure publication and company performance
+acceptance have not been performed by the agent.
 The [implementation receipt](../qa/sales-command-center-2026-10-20.md) separates
-source checks, synthetic prepared-reader evidence and the remaining release work.
+source checks, synthetic and real local prepared-reader evidence, user acceptance
+and the remaining company release work.
 
 ## Report boundary
 
@@ -173,5 +178,7 @@ off and zero raw fallback, compare source controls and measure first/repeat plus
 concurrent-user performance. Retain the previous accepted revision during preparation.
 A schema rollback is not promised; use verified backups or a reviewed forward fix.
 
-Deployment, source exposure/promotion, push and merge have not been performed by
-this implementation. Company Finance review remains visibly pending.
+Local deployment and September/October source exposure/promotion are complete.
+The user authorized repository merge; company deployment and publication are
+performed separately through the [company rollout](../qa/sales-command-center-company-rollout-2026-10-20.md).
+Company Finance review remains visibly pending.

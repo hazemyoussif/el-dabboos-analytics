@@ -361,7 +361,13 @@ test('Sales Command Center reads pinned prepared cells with JIT off and matches 
    }) as PoolClient['query'];
   });
   const prepared=new PreparedAnalyticsRepository(runtime,options),baseline=new TrustedAnalyticsRepository(db.runtime,options);
+  const sessionJit=(await runtime.query('SHOW jit')).rows[0].jit;
   const weekQuery={metric:'command_order_value' as const,dateRange:{from:'2026-01-01',to:'2026-02-28'},filters:[{dimension:'week' as const,values:['2026-02-14']}]};
+  for(const dimension of ['customer','salesperson'] as const){
+   const discovered=await prepared.searchDimensionOptions(dimension,context,{metric:'command_order_value',dateRange:weekQuery.dateRange,limit:1});
+   assert.ok(discovered.values.length>0);
+  }
+  assert.equal((await runtime.query('SHOW jit')).rows[0].jit,sessionJit,'discovery must not leak transaction-local JIT settings');
   assert.deepEqual((await prepared.execute(weekQuery,context)).rows,[{key:null,value:1}]);
   assert.deepEqual((await baseline.execute(weekQuery,context)).rows,[{key:null,value:1}]);
   const actor={...new DemoIdentityProvider().resolve('demo-iq-admin','demo-iq','en'),tenant:{tenantId:'a'}},profile={...tenantProfiles['demo-iq']!,id:'a'};

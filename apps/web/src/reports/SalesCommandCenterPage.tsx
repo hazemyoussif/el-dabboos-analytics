@@ -1,4 +1,4 @@
-import {governedDimensionLabel} from '@el-dabboos/domain';
+import {governedDimensionLabel,semanticCatalog} from '@el-dabboos/domain';
 import {useState} from 'react';
 import type {SalesCommandInput,SalesCommandResult,SalesCommandWidgetResult} from '@el-dabboos/application';
 import type {AnalyticsResult,DateRange,Locale,SemanticMetric,TenantProfile} from '@el-dabboos/domain';
@@ -45,12 +45,12 @@ export function SalesCommandCenterPage(props:Props){
  </section>;
 }
 export function SalesCommandSections({result,catalog,session,profile}:Props&{result:SalesCommandResult}){
- const locale=session.locale,text=salesCommandCopy[locale];
+ const locale=session.locale,text=salesCommandCopy[locale],readingCatalog={...semanticCatalog,...catalog};
  return <>{result.sections.map(section=>{
   const available=section.widgets.filter(entry=>entry.execution),unavailable=section.widgets.filter(entry=>!entry.execution);
   return <section className="sales-command-section" key={section.id} aria-labelledby={`sales-section-${section.id}`}><h2 id={`sales-section-${section.id}`}>{section.title[locale]}</h2>
-   <div className="sales-command-grid">{available.filter(entry=>entry.definition.widget?.type!=='table').map(entry=><SalesCommandReading key={entry.definition.id} {...{entry,catalog,locale,profile}}/>)}</div>
-   {available.some(entry=>entry.definition.widget?.type==='table')&&<details className="sales-command-tables" open={section.id==='follow-up'||section.id==='customers'}><summary>{locale==='ar'?'الجداول والتفاصيل':'Tables and details'}</summary><div className="sales-command-grid">{available.filter(entry=>entry.definition.widget?.type==='table').map(entry=><SalesCommandReading key={entry.definition.id} {...{entry,catalog,locale,profile}}/>)}</div></details>}
+   <div className="sales-command-grid">{available.filter(entry=>entry.definition.widget?.type!=='table').map(entry=><SalesCommandReading key={entry.definition.id} {...{entry,catalog:readingCatalog,locale,profile}}/>)}</div>
+   {available.some(entry=>entry.definition.widget?.type==='table')&&<details className="sales-command-tables" open={section.id==='follow-up'||section.id==='customers'}><summary>{locale==='ar'?'الجداول والتفاصيل':'Tables and details'}</summary><div className="sales-command-grid">{available.filter(entry=>entry.definition.widget?.type==='table').map(entry=><SalesCommandReading key={entry.definition.id} {...{entry,catalog:readingCatalog,locale,profile}}/>)}</div></details>}
    {!available.length&&<p>{text.empty}</p>}
    {unavailable.length>0&&<details className="sales-command-unavailable"><summary>{text.unavailable} ({unavailable.length})</summary><ul>{unavailable.map(entry=><li key={entry.definition.id}><strong>{entry.definition.title[locale]||catalog[entry.definition.widget?.series[0]?.metric??'']?.labels[locale]}</strong><p>{entry.issues.length?text.unsupported:salesCommandReason(entry.definition.reason,locale)}</p><SalesCommandPeriod {...{entry,locale,profile}}/>{entry.issues.length>0&&<details><summary>{text.details}</summary><ul>{entry.issues.map((issue,index)=><li key={`${issue}-${index}`}><bdi>{issue}</bdi></li>)}</ul></details>}</li>)}</ul></details>}
   </section>;

@@ -14,10 +14,12 @@ test('bilingual report renders section order, independent periods, unknown fresh
   for(const locale of ['en','ar'] as const){
    const actor=new DemoIdentityProvider().resolve('demo-iq-admin','demo-iq',locale),profile=tenantProfiles['demo-iq']!;
    const result=await service.execute({dateRange:{from:'2026-03-02',to:'2026-03-20'},filters:[{dimension:'salesperson',values:['synthetic-rep']}]},actor,profile);
-   const html=renderToStaticMarkup(createElement(SalesCommandSections,{result,catalog:semanticCatalog,locale,session:{userId:actor.principal.userId,tenantId:profile.id,locale},profile,options:{}}));
+   const html=renderToStaticMarkup(createElement(SalesCommandSections,{result,catalog:{},locale,session:{userId:actor.principal.userId,tenantId:profile.id,locale},profile,options:{}}));
    const sections=['today','month','follow-up','trends','customers'].map(id=>html.indexOf(`id="sales-section-${id}"`));
    assert.deepEqual([...sections].sort((left,right)=>left-right),sections);assert.ok(sections.every(index=>index>=0));
    for(const phrase of locale==='en'?['Unknown','Comparison unavailable','Same-day cash','Requested period','Balance cutoff precedes the requested day']:['غير معروف','المقارنة غير متاحة','اليوم نفسه','الفترة المطلوبة','تاريخ قطع الرصيد أقدم'])assert.ok(html.includes(phrase),phrase);
+   assert.ok(html.includes(semanticCatalog.command_overdue_balance.labels[locale]),'newly published measures retain canonical labels before the workspace catalog reloads');
+   assert.ok(!html.includes('>command overdue balance<'));
    assert.ok(!html.includes('next sync'));assert.ok(!html.includes('type="submit"'));assert.ok(!html.includes('Save dashboard'));
   }
  }finally{await server.close();}

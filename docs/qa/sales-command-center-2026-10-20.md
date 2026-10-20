@@ -1,9 +1,56 @@
 # Sales Command Center implementation receipt — 20 October 2026
 
-Status: dashboard and source extension implemented locally; company deployment,
-new-measure exposure and company-reader acceptance remain separate release steps.
-No source writes, company schema changes, company exposure/promotion, push or merge
-were performed. Disposable PostgreSQL migrations and synthetic preparation are QA.
+Status: implementation and local staging publication are complete. On 20 October,
+the user confirmed that the numbers are correct and explicitly authorized final
+deployment using the existing configured source. PR 46 (the prepared-reader
+prerequisite) was merged; PR 47 carries this release. The agent owns local Docker
+rehearsal and repository merge; the user executes company-host deployment commands.
+Company schema changes and company exposure/promotion have not been performed by
+the agent. No source writes were performed.
+
+## Source/reference investigation and user acceptance
+
+The user reported extra zeros in local staging. A fresh read-only source check on
+20 October at 09:01 UTC confirmed the local reader's October counts, while the
+reference dashboard at the same Baghdad date, October 1–20 range and unfiltered
+salesperson/customer scope displayed substantially different counts:
+
+| Cohort | Local configured source | Live reference |
+| --- | ---: | ---: |
+| Posted invoices today | 0 | 139 |
+| Posted invoices October to date | 745 | 1,796 |
+| Confirmed orders October to date | 827 | 1,800 |
+
+The existing tunnel reaches `127.0.0.1:5432`, database `accounting`. Its Odoo
+`web.base.url` is `http://stage.aldabboos.com`; this is an environment clue, not
+proof of which upstream the reference uses. Only `accounting` and the maintenance
+`postgres` database are listed on that PostgreSQL instance. Current-month invoice
+and order counts across all companies resolve to company 1. INV-prefixed
+receivable-line counts equal the invoice-header counts; there are no current-month
+orders with missing order dates rescued by creation-date fallback. Those cohort
+and scope differences do not explain the discrepancy. Latest invoice and payment
+creation timestamps are October 19, while orders include October 20 activity.
+
+September/October local exposures completed and the real prepared reader matched
+its native mart reader for all 34 widgets, comparisons, customer, salesperson,
+combined filters and an enforced customer policy. Observed first/repeat reads
+were 291/270 ms, with zero raw-history attempts. These checks establish internal
+reader agreement only; they **do not establish parity with the live reference**.
+The user-opened [invoice workflow](https://n8n.aldabboos.com/workflow/oTsR0CEei0DBpAxb)
+was inspected read-only: `Odoo New Invoices1` uses the `live-version` credential,
+site `https://accounting.aldabboos.com/`, database `accounting`. Its Journal Item
+reader includes all receivable accounts changed since Baghdad day-start minus
+two days. `Shape New Invoices1` maps journal-item ID to invoice ID, `move_name` to
+name, accounting `date` to invoice date, debit minus credit to total, parent state
+to state and the line's custom salesperson to attribution. A fresh 09:08 UTC source
+check using that exact INV-prefixed receivable/accounting-date cohort still found
+745 posted lines/headers in October, zero today and no header/line date differences.
+The workflow's live endpoint therefore differs from the staging identity reported
+by the configured source. The user subsequently confirmed the current numbers are correct and instructed
+the agent to finalize deployment. The existing source connection and scope are
+therefore retained; this does not assert equality between the two environments. No workflow, credential or sync was
+changed, saved or executed during inspection. No source scope, connection, metric
+formula or display values were changed to force agreement.
 
 ## Checkout and delivered scope
 
@@ -38,8 +85,8 @@ permissions, tunnel and persistent connection settings were unchanged.
 Aggregate/metadata evidence, not retained customer rows:
 
 1. On 20 October in Baghdad, the first today-only snapshot returned zero orders,
-   invoices and customer receipts for that date. This is an empty early-day cohort,
-   not a missing connection. The inspection took 1,795 ms after snapshot acquisition.
+   invoices and customer receipts for that date. This is an empty cohort in the configured source,
+   not a missing connection; it does not agree with the live reference (see above). The inspection took 1,795 ms after snapshot acquisition.
 2. October source states: orders `sale`, `draft`, `cancel`; invoice documents
    `posted`, `cancel`; invoice payment states `not_paid`, `paid`, `partial`,
    `reversed`; receipts `paid`, `in_process`, `canceled`. Other states remain supported
@@ -109,9 +156,15 @@ have not been certified. The concurrency budget is per execution, not process-wi
 
 ## Browser and quality-gate evidence
 
-Synthetic-only local fixture; Iraq Admin in the Iraq demo. Customer and salesperson
-identities and numbers are explicitly synthetic. Reference-site selections and
-company data were not changed.
+The original matrix used a synthetic local fixture and Iraq Admin in the Iraq
+demo. Its customer/salesperson identities and numbers are explicitly synthetic.
+The subsequent local HTTPS rehearsal used the existing authenticated tenant admin
+and accepted source publication: English/Arabic switching, a real salesperson
+selection plus Apply/reset, selected-range date Apply with Today unchanged,
+390px Arabic phone reflow, 1024px tablet navigation/theme controls and restoration
+of the original English/Light preferences were checked. Source freshness and
+unknown empty-cohort business dates remain visible. Reference-site selections
+and company data were not changed.
 
 - English/Arabic, Light/Dark checked at 390, 1024 and 1440 px: one/two/four KPI
   columns respectively, correct LTR/RTL, no page-level horizontal overflow.
@@ -143,6 +196,12 @@ AFTER findings fixed within scope:
 7. Cross-month history could be hidden by current-only residuals: stitch each
    compatible event capability independently; never stitch snapshots or obsolete
    command recipes.
+8. A workspace catalog loaded before publication could leave new table metric
+   headers unformatted: use canonical metric metadata as a presentation fallback.
+   Bilingual SSR regression covers an empty workspace catalog.
+9. Prepared dimension discovery could execute with session JIT enabled: disable
+   it transaction-locally, with prepared-cell guards and an assertion that session
+   settings are restored after discovery.
 
 Screenshots are saved in the task's local visualization folder, separate from
 company/source evidence. The local preview is synthetic and does not imply a
@@ -181,4 +240,5 @@ checks independent aggregates/exact controls, prepares and promotes atomically.
 It is not a diagnostic. Verify exact company widget/filter cases, prepared JIT-off
 reads with no raw fallback, first/repeat and concurrent-user timing, and retain
 previous accepted serving data during preparation. Finance review remains pending.
-No blanket source refresh schedule, company cutover or merge approval is inferred.
+No blanket source refresh schedule or company cutover is inferred. Repository
+merge and local deployment are explicitly authorized by the user.

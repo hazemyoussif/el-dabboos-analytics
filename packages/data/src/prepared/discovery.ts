@@ -12,6 +12,7 @@ import {preparedMetricBasis} from '@el-dabboos/domain';
 export async function discoverPreparedDimensions(pool:Pool,scope:{dimension:DimensionId;context:AnalyticsContext;request:DimensionDiscoveryRequest;capabilities:PublishedAnalyticsCapabilities;timeout:number}):Promise<DimensionDiscoveryPage>{
  const {dimension,context,request,capabilities,timeout}=scope,selection=dimensionDiscoveryScope(dimension,context,request,capabilities);
  return tenantTransaction(pool,context.tenantId,async client=>{
+  await client.query("SELECT set_config('jit','off',true)");
   const publication=await preparedPublication(client,context),query={metric:selection.metric,groupBy:dimension,...(selection.range?{dateRange:selection.range}:{})};
   const {family,release}=preparedQueryRelease(query,context,publication),range=selection.range??release.period!;
   const fingerprint=createHash('sha256').update(JSON.stringify([dimension,context,selection.search,selection.metric,range,publication.revision])).digest('hex');

@@ -11,6 +11,11 @@ free storage and sync/daily timer state. The older company receipts are not a
 substitute for this current evidence. Company source exposure/preparation and
 reader acceptance follow application deployment, using that actual state.
 
+The user confirmed the configured-source numbers are correct and authorized this
+release on 20 October. Preserve that source connection; do not switch to another
+Odoo environment as part of deployment. Reference/live-environment differences
+are documented in the [implementation receipt](sales-command-center-2026-10-20.md).
+
 ## Application deployment
 
 Set `SALES_COMMAND_RELEASE` to the exact merged SHA supplied with delivery. The
@@ -93,6 +98,22 @@ The backup checks establish readable archive inventories and checksums, not a ne
 restore rehearsal. Migration 061 is forward-only. Old images require a matching
 schema history; use a reviewed forward fix or coordinated recovery rather than
 starting old code against a newer ledger.
+
+After the deployment block releases its maintenance lock, verify the existing
+scheduler against the newly deployed image. This check does not ingest source
+records or change timer units:
+
+```bash
+(
+set -euo pipefail
+cd /opt/el-dabboos/analytics
+test "$(stat -c '%a:%U' /opt/el-dabboos/secrets/staging-jobs.env)" = 600:root
+set -a
+source /opt/el-dabboos/secrets/staging-jobs.env
+set +a
+bash infra/staging/analytics-job.sh check
+)
+```
 
 ## Measures and scheduled freshness
 
