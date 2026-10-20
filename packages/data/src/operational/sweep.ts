@@ -1,6 +1,6 @@
 import type { PoolClient } from 'pg';
 import type { FactRevisionChange,ProductionFact } from '@el-dabboos/domain';
-import { persistOperationalFacts } from './facts.ts';
+import { planOperationalFacts } from './facts.ts';
 import type { OperationalBaseline,OperationalSnapshot } from './contracts.ts';
 /** Bounded checks of distinct governed identities. Load payloads only for missing IDs. */
 export async function sweepOperationalFacts(client:PoolClient,baseline:OperationalBaseline,source:OperationalSnapshot) {
@@ -13,7 +13,7 @@ export async function sweepOperationalFacts(client:PoolClient,baseline:Operation
    const previous=row.payload as ProductionFact;
    return {...previous,status:'tombstone' as const,sourceRevision:String(BigInt(Date.parse(source.cutoff))*1000n),sourceVersion:`presence:${source.cutoff}`,sourceUpdatedAt:source.cutoff,sourceAsOf:source.cutoff,frozenRevision:source.revision,batchId:`sweep:${source.cutoff}`};
   });
-  changes.push(...await persistOperationalFacts(client,baseline,retired));
+  changes.push(...await planOperationalFacts(client,baseline,retired));
  }
  return changes;
 }

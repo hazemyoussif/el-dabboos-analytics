@@ -1,5 +1,6 @@
 import { loadPostgresMigrations } from '../../src/postgres/migrations.ts';
 import { persistOperationalFact } from '../../src/operational/facts.ts';
+import {persistExactCases} from '../../src/operational/reconciliation.ts';
 import { TrustedDrillThroughRepository } from '../../src/operational/drill-through.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -203,17 +204,23 @@ test('failed daily reconciliation persists failure evidence without a discovery 
   f.source.failControls=true;const run=await f.run('daily');assert.equal(run.status,'failed');assert.equal(run.servingRelease,before);assert.ok(run.caseCount>0);assert.equal(await januaryValue(f.repository),0);
  }finally{await f.db.close();}
 });
-test('reconciled source closes before offline refresh and expiry cannot reject the publication',{skip:!enabled},async()=>{
+test('reconciled source closes before candidate writes and expiry cannot reject the publication',{skip:!enabled},async()=>{
  const f=await setup();try {
   let closed=false,expired=false,offlineReached=false;
+  const controls=f.source.controls.bind(f.source);
+  f.source.controls=async(baseline,partitions)=>{
+   assert.equal(closed,false,'exact controls must use the live frozen source');
+   assert.equal((await f.db.admin.query('SELECT count(*)::int count FROM mart.analytics_fact_revisions')).rows[0].count,0,'candidate must remain unwritten during source capture');
+   return controls(baseline,partitions);
+  };
   const guarded=new WeakSet<PoolClient>();
   f.source.close=async()=>{if(closed)return;assert.equal(expired,false,'source must be live at handoff');closed=true;};
   f.db.ingestor.on('acquire',client=>{
    if(guarded.has(client))return;guarded.add(client);
    const query=client.query.bind(client) as (text:string,parameters?:unknown[])=>Promise<QueryResult>;
    client.query=(async(text:string,parameters?:unknown[])=>{
-    if(text.startsWith('INSERT INTO mart.analytics_serving_revisions')){
-     offlineReached=true;expired=true;assert.equal(closed,true,'offline publication must not retain the source lease');
+    if(text.startsWith('INSERT INTO mart.analytics_fact_revisions')){
+     offlineReached=true;expired=true;assert.equal(closed,true,'candidate writes must not retain the source lease');
     }
     return query(text,parameters);
    }) as PoolClient['query'];
@@ -705,3 +712,15 @@ function observeLabelReads(pool:Pool){
  }) as typeof pool.connect;
  return {count:()=>count};
 }
+
+
+test('chunked exact evidence retains every case and an exact mismatch beyond the first batch',{skip:!enabled},async()=>{
+ const f=await setup();try {
+  const cases=Array.from({length:1001},(_,index)=>({id:randomUUID(),control:{partition:{metric:'revenue' as const,month:'2026-01',dimension:null,identity:null,dependency:'base' as const},measure:'revenue' as const,value:'123.456789',count:'1'},actualValue:index===1000?'123.456788':'123.456789',actualCount:'1'}));
+  const evidence=await tenantTransaction(f.db.ingestor,'a',client=>persistExactCases(client,'a',f.source,cases));
+  assert.equal(evidence.caseCount,1001);assert.equal(evidence.mismatchCount,1);
+  assert.deepEqual(evidence.caseIds,cases.map(item=>item.id));assert.ok(evidence.evidenceHash);
+  const last=(await f.db.admin.query('SELECT expected_value::text,actual_value::text,expected_count::text,actual_count::text FROM mart.analytics_exact_cases WHERE tenant_id=$1 AND case_id=$2',['a',cases[1000]!.id])).rows[0];
+  assert.deepEqual(last,{expected_value:'123.456789',actual_value:'123.456788',expected_count:'1',actual_count:'1'});
+ }finally{await f.db.close();}
+});

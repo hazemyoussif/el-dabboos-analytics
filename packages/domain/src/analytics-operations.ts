@@ -29,9 +29,13 @@ export interface AnalyticsSourceSnapshot {
 export interface AnalyticsOperationalTransaction {
   cursor(): Promise<AnalyticsCursor | null>;
   trustedRelease(): Promise<string | null>;
+  /** Plan validated changes under the tenant lock; no candidate revision writes. */
   ingest(snapshot: AnalyticsSourceSnapshot, cursor: AnalyticsCursor | null): Promise<{ changes: readonly FactRevisionChange[]; cursor: AnalyticsCursor; recordsChanged: number }>;
   sweep(snapshot: AnalyticsSourceSnapshot): Promise<readonly FactRevisionChange[]>;
-  reconcile(snapshot: AnalyticsSourceSnapshot, partitions: readonly AnalyticsPartition[], kind: AnalyticsJobKind): Promise<OperationalReconciliation>;
+  /** Capture exact controls under the source snapshot, then await releaseSource
+   * before persisting the planned candidate and comparing it in this transaction.
+   */
+  reconcile(snapshot: AnalyticsSourceSnapshot, partitions: readonly AnalyticsPartition[], kind: AnalyticsJobKind, releaseSource:()=>Promise<void>): Promise<OperationalReconciliation>;
   refresh(partitions: readonly AnalyticsPartition[]): Promise<string>;
   promote(release: string, evidence: OperationalReconciliation): Promise<void>;
   commitCursor(cursor: AnalyticsCursor): Promise<void>;

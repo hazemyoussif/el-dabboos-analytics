@@ -1,5 +1,5 @@
 /** Fixed operation names and timings only; no source rows, identities or SQL. */
-export type OperationalStep='source_page'|'source_receivable_discovery'|'source_receivable_snapshot'|'mart_scope'|'mart_page'|'mart_heads'|'mart_revision_write'|'mart_head_write'|'mart_retirement';
+export type OperationalStep='source_page'|'source_receivable_discovery'|'source_receivable_snapshot'|'source_controls'|'mart_scope'|'mart_candidate'|'mart_page'|'mart_reconciliation'|'mart_heads'|'mart_revision_write'|'mart_head_write'|'mart_retirement';
 export interface OperationalProgress {
  step:OperationalStep;state:'started'|'completed'|'failed';durationMs?:number;
 }

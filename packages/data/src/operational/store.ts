@@ -5,7 +5,8 @@ import type { AnalyticsCursor,AnalyticsJobRequest,AnalyticsJobRun,AnalyticsOpera
 import { tenantTransaction } from '../postgres/session.ts';
 import { recordOperationalRun,writeOperationalCursor } from '../postgres/operational-evidence.ts';
 import type { OperationDetails,OperationalBaseline,OperationalSnapshot } from './contracts.ts';
-import { persistOperationalFact } from './facts.ts';
+import {planOperationalFacts,writeOperationalChanges} from './facts.ts';
+import {measureOperationalWork} from './progress.ts';
 import { affectedMonths,refreshOperationalMonths } from './aggregates.ts';
 import { compareCandidate,persistExactCases,completeReconciliationPartitions } from './reconciliation.ts';
 import type { PersistedExactCase } from './reconciliation.ts';
@@ -46,17 +47,22 @@ class OperationalTransaction implements AnalyticsOperationalTransaction {
  async sweep(snapshot:AnalyticsSourceSnapshot) {
   const source=this.requireSource(snapshot);
   const changes=await sweepOperationalFacts(this.client,this.baseline,source);
-  for await(const page of source.snapshots(this.baseline,await this.cursor(),true))for(const fact of page.facts){const change=await persistOperationalFact(this.client,this.baseline,fact);if(change)changes.push(change);}
+  for await(const page of source.snapshots(this.baseline,await this.cursor(),true))changes.push(...await planOperationalFacts(this.client,this.baseline,page.facts,{observeProgress:this.observeProgress}));
   this.details.canonicalRevisions=changes.length;this.details.updatedRows=new Set(changes.map(change=>JSON.stringify([change.next.sourceObject,change.next.sourceRecordId]))).size;
   this.changes=changes;return changes;
  }
- async reconcile(snapshot:AnalyticsSourceSnapshot,partitions:readonly AnalyticsPartition[],kind:AnalyticsJobRequest['kind']) {
+ async reconcile(snapshot:AnalyticsSourceSnapshot,partitions:readonly AnalyticsPartition[],kind:AnalyticsJobRequest['kind'],releaseSource:()=>Promise<void>) {
   const source=this.requireSource(snapshot),start=performance.now();
   const selected=partitions.length?partitions:await reconciliationScope(this.client,this.baseline,kind);
   const capabilities=this.baseline.capabilities.releases.flatMap(release=>release.capabilities);
   const governed=completeReconciliationPartitions(selected,capabilities);this.details.partitions=selected;
-  const controls=await source.controls(this.baseline,governed);
-  this.cases=await compareCandidate(this.client,this.baseline.tenantId,controls);
+  const controls=await measureOperationalWork(this.observeProgress,'source_controls',()=>source.controls(this.baseline,governed));
+  this.details.durations.sourceControlsMs=performance.now()-start;
+  await releaseSource();
+  const persistenceStart=performance.now();
+  await measureOperationalWork(this.observeProgress,'mart_page',()=>writeOperationalChanges(this.client,this.baseline.tenantId,this.changes,this.observeProgress));
+  this.details.durations.persistenceMs=performance.now()-persistenceStart;
+  this.cases=await measureOperationalWork(this.observeProgress,'mart_reconciliation',()=>compareCandidate(this.client,this.baseline.tenantId,controls));
   const evidence=await persistExactCases(this.client,this.baseline.tenantId,source,this.cases);
   this.details.durations.reconciliationMs=performance.now()-start;return evidence;
  }

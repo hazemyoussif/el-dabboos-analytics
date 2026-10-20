@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { PoolClient } from 'pg';
 import type { AnalyticsPartition,OperationalReconciliation } from '@el-dabboos/domain';
 import type { ExactControl,OperationalSnapshot } from './contracts.ts';
+const exactCaseWriteLimit=1000;
 export interface PersistedExactCase {id:string;control:ExactControl;actualValue:string;actualCount:string}
 export async function compareCandidate(client:PoolClient,tenantId:string,controls:readonly ExactControl[]):Promise<PersistedExactCase[]> {
  const groups=new Map<string,ExactControl[]>();
@@ -22,8 +23,11 @@ async function compareGroup(client:PoolClient,tenantId:string,controls:ExactCont
 }
 
 export async function persistExactCases(client:PoolClient,tenantId:string,source:OperationalSnapshot,cases:readonly PersistedExactCase[]):Promise<OperationalReconciliation> {
- for(const item of cases) {
-  await client.query(`INSERT INTO mart.analytics_exact_cases VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,[tenantId,item.id,source.cutoff,source.revision,source.mappingVersion,source.definitionVersion,JSON.stringify(item.control.partition),item.control.measure,item.control.value,item.actualValue,item.control.count,item.actualCount]);
+ for(let offset=0;offset<cases.length;offset+=exactCaseWriteLimit) {
+  const page=cases.slice(offset,offset+exactCaseWriteLimit).map(item=>({id:item.id,partition:item.control.partition,measure:item.control.measure,expectedValue:item.control.value,actualValue:item.actualValue,expectedCount:item.control.count,actualCount:item.actualCount}));
+  await client.query(`INSERT INTO mart.analytics_exact_cases(tenant_id,case_id,source_cutoff,source_revision,mapping_version,definition_version,partition,measure_id,expected_value,actual_value,expected_count,actual_count)
+   SELECT $1,record.id,$2::timestamptz,$3,$4,$5,record.partition,record.measure,record."expectedValue",record."actualValue",record."expectedCount",record."actualCount"
+   FROM jsonb_to_recordset($6::jsonb) record(id text,partition jsonb,measure text,"expectedValue" numeric,"actualValue" numeric,"expectedCount" bigint,"actualCount" bigint)`,[tenantId,source.cutoff,source.revision,source.mappingVersion,source.definitionVersion,JSON.stringify(page)]);
  }
  return exactCaseEvidence(client,tenantId,cases.map(item=>item.id));
 }

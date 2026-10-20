@@ -1,7 +1,7 @@
 import type { PoolClient } from 'pg';
 import type { AnalyticsCursor,FactRevisionChange,ProductionFact } from '@el-dabboos/domain';
 import type { OperationDetails,OperationalBaseline,OperationalSnapshot } from './contracts.ts';
-import { persistOperationalFacts,retiredOperationalFacts } from './facts.ts';
+import { planOperationalFacts,retiredOperationalFacts } from './facts.ts';
 import { coveredOperationalFacts } from './ingestion-scope.ts';
 import {measureOperationalWork} from './progress.ts';
 import type {OperationalProgressObserver} from './progress.ts';
@@ -26,6 +26,7 @@ export async function ingestOperationalCandidate(client:PoolClient,scope:{baseli
  return {changes:candidate.changes,cursor:details.newCursor,recordsChanged:candidate.identities.size};
 }
 class CandidateFacts {
+ private readonly pending=new Map<string,ProductionFact>();
  readonly changes:FactRevisionChange[]=[];readonly newMonths=new Set<string>();readonly identities=new Set<string>();
  constructor(private readonly client:PoolClient,private readonly baseline:OperationalBaseline,private readonly details:OperationDetails,private readonly knownMonths:ReadonlySet<string>,private readonly observeProgress?:OperationalProgressObserver){}
  async accept(facts:readonly ProductionFact[]) {
@@ -33,8 +34,8 @@ class CandidateFacts {
   const scoped=await measureOperationalWork(this.observeProgress,'mart_scope',()=>coveredOperationalFacts(this.client,this.baseline.tenantId,facts,months));
   this.details.outsideCoverageFacts=(this.details.outsideCoverageFacts??0)+facts.length-scoped.length;
   const start=performance.now();
-  const changes=await measureOperationalWork(this.observeProgress,'mart_page',()=>persistOperationalFacts(this.client,this.baseline,scoped,this.observeProgress));
-  this.details.durations.persistenceMs=(this.details.durations.persistenceMs??0)+performance.now()-start;
+  const changes=await measureOperationalWork(this.observeProgress,'mart_candidate',()=>planOperationalFacts(this.client,this.baseline,scoped,{observeProgress:this.observeProgress,pending:this.pending}));
+  this.details.durations.candidateReadMs=(this.details.durations.candidateReadMs??0)+performance.now()-start;
   for(const change of changes) {
    const fact=change.next;
    if(fact.status==='active'&&!this.knownMonths.has(fact.businessDate.slice(0,7)))this.newMonths.add(fact.businessDate.slice(0,7));

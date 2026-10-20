@@ -1,7 +1,7 @@
 import { resolveAnalyticsImpact } from '@el-dabboos/domain';
 import type { AnalyticsCursor, FactRevisionChange, AnalyticsJobRequest, AnalyticsJobRun, AnalyticsOperationsOptions, AnalyticsOperationalTransaction, AnalyticsSourceSnapshot, OperationalReconciliation } from '@el-dabboos/domain';
 
-export type AnalyticsOperationPhase='source_open'|'source_read'|'impact_calculation'|'source_reconciliation'|'source_handoff'|'offline_refresh'|'prepare_and_publish'|'audit'|'cursor'|'mart_commit';
+export type AnalyticsOperationPhase='source_open'|'source_read'|'impact_calculation'|'source_reconciliation'|'offline_reconciliation'|'source_handoff'|'offline_refresh'|'prepare_and_publish'|'audit'|'cursor'|'mart_commit';
 
 /** Scheduler and HTTP adapters invoke this named job; no planner or model port exists. */
 export class AnalyticsOperations {
@@ -32,11 +32,17 @@ export class AnalyticsOperations {
     this.observePhase?.('impact_calculation');
     const partitions=resolveAnalyticsImpact(changes,this.options.impact);
     const unchanged = (request.kind === 'sync' || request.kind === 'sweep') && recordsChanged === 0;
+    let sourceReleased=false;
+    const releaseSource=async()=>{
+      if(sourceReleased)return;
+      this.observePhase?.('source_handoff');
+      await completeSourceRead();sourceReleased=true;
+      if(!unchanged)this.observePhase?.('offline_reconciliation');
+    };
     this.observePhase?.('source_reconciliation');
-    const evidence = unchanged ? emptyEvidence() : await transaction.reconcile(source, partitions, request.kind);
+    const evidence = unchanged ? emptyEvidence() : await transaction.reconcile(source, partitions, request.kind,releaseSource);
     validateEvidence(evidence, unchanged);
-    this.observePhase?.('source_handoff');
-    await completeSourceRead();
+    await releaseSource();
     let servingRelease = previousRelease;
     const status = unchanged ? 'unchanged' : evidence.mismatchCount ? 'failed' : 'passed';
     if (status === 'failed') await transaction.discardCandidate();

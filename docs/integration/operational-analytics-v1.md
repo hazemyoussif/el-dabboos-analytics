@@ -74,12 +74,19 @@ new-month candidate. Existing months use incremental revision changes.
 The tenant transaction owns all mart writes. A candidate savepoint allows a failed
 exact reconciliation to roll back heads and serving changes while retaining the
 failed source/mart cases and audit. Technical failures roll back the transaction
-and record a separate failure. After discovery and exact source/mart reconciliation,
-source handles verify and close their owner lease before offline refresh and prepared
-publication. The handoff remains inside the same mart transaction: source loss or
-handoff failure prevents downstream work; refresh, preparation, audit or cursor
-failure rolls everything back after source close. Expiry during subsequent offline
-work cannot invalidate an already checked source observation. Retained handles can
+and record a separate failure. Discovery validates and plans changes against locked
+mart heads without inserting revisions or updating heads. Pending identity state
+preserves sequential decisions across incremental and complete-month pages. Exact
+source controls are captured under the same frozen snapshot, then the application
+verifies and releases its source handle before candidate persistence, mart comparison,
+refresh and prepared publication. Revision/head writes and exact-case inserts use
+bounded batches; large historical control sets use multiple bounded queries without
+truncation. The existing candidate change buffer is reused; no durable staging store
+or resumable source snapshot is introduced. The handoff stays inside the same mart
+transaction: source loss or handoff failure prevents candidate writes; later write,
+comparison, refresh, preparation, audit or cursor failure rolls everything back.
+Expiry during subsequent offline work cannot invalidate an already captured source
+observation. Retained handles can
 deliberately share one cutoff for a bounded replay; each closes independently and
 the final handle releases the owner.
 

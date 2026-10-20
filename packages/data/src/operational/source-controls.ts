@@ -4,6 +4,7 @@ import type { AnalyticsPartition,FactMeasureId } from '@el-dabboos/domain';
 import type { OdooSourceConfig } from '../odoo/config.ts';
 import type { OdooSnapshotLease } from '../odoo/snapshot.ts';
 import type { ExactControl,OperationalBaseline } from './contracts.ts';
+const sourceControlGroupLimit=5000;
 const measures:Partial<Record<FactMeasureId,{object:'sale_order'|'account_move';condition:string;value:string}>>={
  order_revenue:{object:'sale_order',condition:"record.state='sale'",value:'record.amount_total'},
  order_count:{object:'sale_order',condition:"record.state='sale'",value:'1'},cancelled_orders:{object:'sale_order',condition:"record.state='cancel'",value:'1'},
@@ -27,7 +28,7 @@ export async function readExactEventControls(pool:Pool,lease:OdooSnapshotLease,c
   await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');await lease.importInto(client);
   await client.query("SELECT set_config('statement_timeout',$1,true)",[String(config.statementTimeoutMs)]);
   const controls:ExactControl[]=[];
-  for(const group of requests.values())controls.push(...await readControlGroup(client,config,baseline,group));
+  for(const group of requests.values())for(let offset=0;offset<group.length;offset+=sourceControlGroupLimit)controls.push(...await readControlGroup(client,config,baseline,group.slice(offset,offset+sourceControlGroupLimit)));
   await lease.assertAlive();await client.query('COMMIT');return controls;
  }catch(error){await client.query('ROLLBACK');throw error;}finally{client.release();}
 }
@@ -43,7 +44,7 @@ function controlRequests(baseline:OperationalBaseline,partitions:readonly Analyt
  return groups;
 }
 async function readControlGroup(client:import('pg').PoolClient,config:OdooSourceConfig,baseline:OperationalBaseline,requests:ControlRequest[]) {
- if(requests.length>5000)throw new Error('Source control group bound');
+ if(requests.length>sourceControlGroupLimit)throw new Error('Source control group bound');
  const {partition,rule,timeZone}=requests[0]!,key=dimensionExpression(partition,rule.object);
  const date=rule.object==='sale_order'?"((record.date_order AT TIME ZONE 'UTC') AT TIME ZONE $6)::date":'record.invoice_date';
  const month=`to_char(${date},'YYYY-MM')`,months=requests.map(request=>request.partition.month).sort();
