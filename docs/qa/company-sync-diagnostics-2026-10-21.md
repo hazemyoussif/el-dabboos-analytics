@@ -1,7 +1,7 @@
 # Company sync diagnostics — 21 October 2026
 
-Status: diagnostic code and approved focused tests completed; not pushed, built
-or deployed for this change.
+Status: focused/full local verification and the local API rehearsal passed.
+Company deployment is pending; remote publication is reported with delivery.
 No source call, company retry, timer change or new measurement is authorized by
 this document. GitHub CI remains disabled. The unrelated performance fixture
 experiment remains excluded from this patch.
@@ -106,9 +106,100 @@ node --experimental-transform-types --disable-warning=ExperimentalWarning --test
   apps/api/test/analytics-job-observation.test.ts
 ```
 
-No full suite, production build or container rehearsal ran for this diagnostic
-patch. Repository pre-push gates remain outstanding; approval for these focused
-checks does not authorize running the full suites. No company retry follows
-automatically from focused verification. Review code,
-verification results, container state and capacity before any deployment or
-separately authorized source run.
+## Full local release verification — passed
+
+The owner subsequently authorized one full local verification pass and publication
+if it passes. Tested production code is pinned to
+`1bdf4ec3476f2582d3be37eadc981b3b510dff77`. Frozen install, full lint, full
+typecheck, architecture, quality, diff and API/web production builds passed. The
+web build retains its existing large-chunk warning. Both full suites ran once:
+**986 regular tests passed** in 57.518 seconds and **411 PostgreSQL tests passed**
+in 642.374 seconds, with zero failures, cancellations or skips. PostgreSQL used
+only the existing isolated synthetic `foundation_test` endpoint on port 55436.
+The unrelated performance fixture edit keeps its original default size and remains
+excluded from the released commit and the clean-archive Docker image.
+No company command, source run or GitHub CI has been executed.
+
+## Local container rehearsal — passed
+
+The diagnostic API image was built from a clean archive of code commit `1bdf4ec`.
+Operator role/schema verification passed with the existing schema 063; no migration
+ran. Local API now uses `el-dabboos-api:1bdf4ec3476f2582d3be37eadc981b3b510dff77`,
+with web `6caf30e` retained. The API container is healthy and HTTPS readiness returned
+`ready`, with persistence and analytics available. The first HTTPS request was
+interrupted immediately after proxy restart; after waiting for the proxy, the
+request succeeded. No source job, cache initialization, company command, timer
+change or browser QA was performed. Company-scale diagnostic overhead and sync
+performance remain unverified.
+
+## Company API-only rollout
+
+Do not run until delivery confirms the full local gates and remote publication.
+This deploys diagnostics; it does not fix or retry the initialization timeout.
+The company already applied migrations 062/063 under `2edef29`. This block refuses
+additional migration changes and runs verification only. Retain the prior
+`2edef29` API for same-schema recovery, the current web artifact and the existing
+coordinated backup. No source credentials are passed to a job; no source job,
+bootstrap, publication or timer activation is performed. The existing 2 GiB disk
+reserve is a deployment stop threshold, not a capacity guarantee for future sync.
+An active systemd job or outlived analytics container stops this rollout.
+
+```bash
+export SYNC_DIAGNOSTIC_RELEASE=1bdf4ec3476f2582d3be37eadc981b3b510dff77
+(
+set -euo pipefail
+cd /opt/el-dabboos/analytics
+: "${SYNC_DIAGNOSTIC_RELEASE:?Set the reviewed merged correction SHA}"
+[[ "$SYNC_DIAGNOSTIC_RELEASE" =~ ^[0-9a-f]{40}$ ]]
+test -z "$(git status --porcelain --untracked-files=all)"
+for unit in el-dabboos-analytics-sync.timer el-dabboos-analytics-daily.timer; do
+ test "$(systemctl show "$unit" -p ActiveState --value)" = inactive
+done
+for job in sync daily; do
+ state=$(systemctl show "el-dabboos-analytics@$job.service" -p ActiveState --value)
+ case "$state" in inactive|failed) ;; *) printf 'Analytics job is still running: %s\n' "$job" >&2; exit 1 ;; esac
+done
+active_jobs=$(docker ps -q --filter label=el-dabboos.staging.analytics-job=true)
+if [[ -n "$active_jobs" ]]; then
+ printf 'An analytics container is still running; inspect it before deployment.\n' >&2
+ exit 1
+fi
+for file in staging-runtime.env staging-operator.env; do
+ test "$(stat -c '%a:%U' "/opt/el-dabboos/secrets/$file")" = 600:root
+done
+check_root_reserve() {
+ local available
+ available=$(df --output=avail -B1 /var/lib/docker | tail -n 1 | tr -d ' ')
+ [[ "$available" =~ ^[0-9]+$ ]] && (( available >= 2147483648 ))
+}
+check_root_reserve
+git fetch origin main
+git merge --ff-only "$SYNC_DIAGNOSTIC_RELEASE"
+test "$(git rev-parse HEAD)" = "$SYNC_DIAGNOSTIC_RELEASE"
+# Stop if unrelated schema changes entered the selected release.
+test -z "$(git diff --name-only 2edef2993c90d69feec3a34a9270a5b30a59fe02 HEAD -- packages/data/migrations)"
+export STAGING_RUNTIME_ENV_FILE=/opt/el-dabboos/secrets/staging-runtime.env
+export STAGING_OPERATOR_ENV_FILE=/opt/el-dabboos/secrets/staging-operator.env
+export STAGING_DATABASE_NETWORK=dabboos-analytics-mart_default
+export STAGING_WEB_PORT=8088
+export STAGING_API_IMAGE="el-dabboos-api:$SYNC_DIAGNOSTIC_RELEASE"
+export STAGING_WEB_IMAGE=$(docker inspect --format '{{.Config.Image}}' el-dabboos-staging-web-1)
+[[ "$STAGING_WEB_IMAGE" =~ ^el-dabboos-web:[0-9a-f]{40}$ ]]
+compose() { docker compose -f infra/staging/compose.yml "$@"; }
+compose build api
+check_root_reserve
+source infra/staging/analytics-lock.sh
+acquire_analytics_lock wait 300
+compose run --rm --no-deps operator verify
+compose up -d --wait --no-deps api
+# Restart the existing proxy to resolve the recreated API container address.
+compose restart web
+curl --fail --silent --show-error --max-time 10 http://127.0.0.1:8088/health/ready
+printf '\nDiagnostic API deployed: %s; web retained: %s\n' "$SYNC_DIAGNOSTIC_RELEASE" "$STAGING_WEB_IMAGE"
+df -hT / /mnt/HC_Volume_107192875
+)
+```
+
+Stop after readiness and share the application deployment output. Any diagnostic
+source run remains separate and requires review of container state, capacity and
+explicit owner authorization. Do not retry the failed initial sync automatically.

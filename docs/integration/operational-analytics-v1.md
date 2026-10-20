@@ -214,7 +214,7 @@ lease stays 120 seconds. No optimizer setting is changed in the delivered path.
 
 ## Candidate change and refresh diagnostics
 
-The pending diagnostic patch adds operator-only observation; it does not change
+Diagnostic observation adds operator-only counts and timings; it does not change
 source discovery, candidate equality, exact acceptance, cursor advancement or
 publication. After source closure and before persistence, the existing in-memory
 candidate entries are summarized without additional SQL or source reads. HTTP
