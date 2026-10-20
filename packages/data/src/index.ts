@@ -53,6 +53,7 @@ export { TrustedAnalyticsRepository } from './operational/repository.ts';
 
 export { OdooOperationalSource } from './operational/source.ts';
 export { PostgresOperationalStore } from './operational/store.ts';
+export type {OperationalProgress,OperationalProgressObserver,OperationalStep} from './operational/progress.ts';
 export { readBaseline,bootstrapOperationalServing } from './operational/baseline.ts';
 
 export { verifyOdooSourceIdentity } from './odoo/identity.ts';

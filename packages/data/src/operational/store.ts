@@ -13,14 +13,15 @@ import { sweepOperationalFacts } from './sweep.ts';
 import { ingestOperationalCandidate } from './ingestion.ts';
 import { readBaseline } from './baseline.ts';
 import { snapshotMetric } from './receivables.ts';
+import type {OperationalProgressObserver} from './progress.ts';
 
 export class PostgresOperationalStore implements AnalyticsOperationalStore {
- constructor(private readonly pool:Pool,private readonly runId:string) {}
+ constructor(private readonly pool:Pool,private readonly runId:string,private readonly observeProgress?:OperationalProgressObserver) {}
  transaction<T>(tenantId:string,operation:(transaction:AnalyticsOperationalTransaction)=>Promise<T>) {
   return tenantTransaction(this.pool,tenantId,async client=>{
    if(!(await client.query('SELECT pg_try_advisory_xact_lock(hashtextextended($1,0)) locked',[`analytics:${tenantId}`])).rows[0].locked)throw new Error('Tenant analytics operation already running');
    await client.query('SAVEPOINT operational_candidate');
-   return operation(new OperationalTransaction(client,await readBaseline(client,tenantId),this.runId));
+   return operation(new OperationalTransaction(client,await readBaseline(client,tenantId),this.runId,this.observeProgress));
   });
  }
  recordFailure(request:AnalyticsJobRequest,runId:string,startedAt:string) {
@@ -31,7 +32,7 @@ class OperationalTransaction implements AnalyticsOperationalTransaction {
  private changes:readonly FactRevisionChange[]=[];
  private source:OperationalSnapshot|undefined;private cases:PersistedExactCase[]=[];private rejected=false;
  private readonly details:OperationDetails={rowsDiscovered:0,newRows:0,updatedRows:0,canonicalRevisions:0,partitions:[],previousCursor:null,newCursor:null,refreshedMonths:[],durations:{}};
- constructor(private readonly client:PoolClient,private readonly baseline:OperationalBaseline,private readonly runId:string) {}
+ constructor(private readonly client:PoolClient,private readonly baseline:OperationalBaseline,private readonly runId:string,private readonly observeProgress?:OperationalProgressObserver) {}
  async cursor():Promise<AnalyticsCursor|null> {
   const row=(await this.client.query('SELECT cutoff,object_cursors FROM mart.analytics_source_cursors WHERE tenant_id=$1',[this.baseline.tenantId])).rows[0];
   return row?{cutoff:row.cutoff.toISOString(),objects:row.object_cursors}:null;
@@ -39,7 +40,7 @@ class OperationalTransaction implements AnalyticsOperationalTransaction {
  async trustedRelease():Promise<string|null> {return (await this.client.query('SELECT revision_id FROM mart.analytics_trusted_serving WHERE tenant_id=$1',[this.baseline.tenantId])).rows[0]?.revision_id??null;}
  async ingest(snapshot:AnalyticsSourceSnapshot,cursor:AnalyticsCursor|null) {
   const source=this.requireSource(snapshot);
-  const candidate=await ingestOperationalCandidate(this.client,{baseline:this.baseline,source,cursor,details:this.details,parent:await this.trustedRelease()});
+  const candidate=await ingestOperationalCandidate(this.client,{baseline:this.baseline,source,cursor,details:this.details,parent:await this.trustedRelease(),observeProgress:this.observeProgress});
   this.changes=candidate.changes;return candidate;
  }
  async sweep(snapshot:AnalyticsSourceSnapshot) {

@@ -3,6 +3,8 @@ import type { PoolClient } from 'pg';
 import { validateProductionFact } from '@el-dabboos/domain';
 import type { ProductionFact,FactRevisionChange } from '@el-dabboos/domain';
 import type { OperationalBaseline } from './contracts.ts';
+import {measureOperationalWork} from './progress.ts';
+import type {OperationalProgressObserver} from './progress.ts';
 
 export function operationalFactKey(fact:ProductionFact) {
  return JSON.stringify([fact.tenantId,fact.sourceId,fact.sourceObject,fact.sourceRecordId,fact.componentId,fact.measureId,...(fact.kind==='snapshot'?[fact.entityId,fact.businessDate]:[])]);
@@ -17,7 +19,7 @@ function content(fact:ProductionFact) {
 }
 
 /** Persist one bounded source page with one locked head read and two set-based writes. */
-export async function persistOperationalFacts(client:PoolClient,baseline:OperationalBaseline,facts:readonly ProductionFact[]):Promise<FactRevisionChange[]> {
+export async function persistOperationalFacts(client:PoolClient,baseline:OperationalBaseline,facts:readonly ProductionFact[],observeProgress?:OperationalProgressObserver):Promise<FactRevisionChange[]> {
  if(!facts.length)return [];
  const prepared=facts.map(next=>{
   const mapping=baseline.mappings.find(mapping=>mapping.datasetId===next.datasetId);if(!mapping)throw new Error('Operational mapping scope conflict');
@@ -25,8 +27,8 @@ export async function persistOperationalFacts(client:PoolClient,baseline:Operati
   return {key:operationalFactKey(next),next};
  });
  const keys=[...new Set(prepared.map(record=>record.key))];
- const rows=(await client.query(`SELECT head.fact_key,revision.payload FROM mart.analytics_fact_heads head JOIN mart.analytics_fact_revisions revision USING(tenant_id,fact_key,revision_id)
-  WHERE head.tenant_id=$1 AND head.fact_key=ANY($2::text[]) FOR UPDATE OF head`,[baseline.tenantId,keys])).rows as {fact_key:string;payload:ProductionFact}[];
+ const rows=(await measureOperationalWork(observeProgress,'mart_heads',()=>client.query(`SELECT head.fact_key,revision.payload FROM mart.analytics_fact_heads head JOIN mart.analytics_fact_revisions revision USING(tenant_id,fact_key,revision_id)
+  WHERE head.tenant_id=$1 AND head.fact_key=ANY($2::text[]) FOR UPDATE OF head`,[baseline.tenantId,keys]))).rows as {fact_key:string;payload:ProductionFact}[];
  const current=new Map(rows.map(row=>[row.fact_key,row.payload]));
  const revisions:{key:string;revision:string;payload:ProductionFact}[]=[];
  const heads=new Map<string,string>();
@@ -41,11 +43,11 @@ export async function persistOperationalFacts(client:PoolClient,baseline:Operati
   changes.push({...previous?{previous}:{},next});current.set(key,next);
  }
  if(!changes.length)return [];
- await client.query(`INSERT INTO mart.analytics_fact_revisions(tenant_id,fact_key,revision_id,payload)
-  SELECT $1,record.key,record.revision,record.payload FROM jsonb_to_recordset($2::jsonb) record(key text,revision text,payload jsonb)`,[baseline.tenantId,JSON.stringify(revisions)]);
- await client.query(`INSERT INTO mart.analytics_fact_heads(tenant_id,fact_key,revision_id)
+ await measureOperationalWork(observeProgress,'mart_revision_write',()=>client.query(`INSERT INTO mart.analytics_fact_revisions(tenant_id,fact_key,revision_id,payload)
+  SELECT $1,record.key,record.revision,record.payload FROM jsonb_to_recordset($2::jsonb) record(key text,revision text,payload jsonb)`,[baseline.tenantId,JSON.stringify(revisions)]));
+ await measureOperationalWork(observeProgress,'mart_head_write',()=>client.query(`INSERT INTO mart.analytics_fact_heads(tenant_id,fact_key,revision_id)
   SELECT $1,record.key,record.revision FROM jsonb_to_recordset($2::jsonb) record(key text,revision text)
-  ON CONFLICT(tenant_id,fact_key) DO UPDATE SET revision_id=EXCLUDED.revision_id`,[baseline.tenantId,JSON.stringify([...heads].map(([key,revision])=>({key,revision})))]);
+  ON CONFLICT(tenant_id,fact_key) DO UPDATE SET revision_id=EXCLUDED.revision_id`,[baseline.tenantId,JSON.stringify([...heads].map(([key,revision])=>({key,revision})))]));
  return changes;
 }
 

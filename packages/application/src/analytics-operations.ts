@@ -1,7 +1,7 @@
 import { resolveAnalyticsImpact } from '@el-dabboos/domain';
 import type { AnalyticsCursor, FactRevisionChange, AnalyticsJobRequest, AnalyticsJobRun, AnalyticsOperationsOptions, AnalyticsOperationalTransaction, AnalyticsSourceSnapshot, OperationalReconciliation } from '@el-dabboos/domain';
 
-export type AnalyticsOperationPhase='source_open'|'source_read'|'source_reconciliation'|'source_handoff'|'offline_refresh'|'prepare_and_publish'|'audit'|'cursor'|'mart_commit';
+export type AnalyticsOperationPhase='source_open'|'source_read'|'impact_calculation'|'source_reconciliation'|'source_handoff'|'offline_refresh'|'prepare_and_publish'|'audit'|'cursor'|'mart_commit';
 
 /** Scheduler and HTTP adapters invoke this named job; no planner or model port exists. */
 export class AnalyticsOperations {
@@ -29,6 +29,7 @@ export class AnalyticsOperations {
     const previousRelease = await transaction.trustedRelease();
     this.observePhase?.('source_read');
     const {ingested,changes,recordsChanged}=await discoverCandidate(transaction,{request,source});
+    this.observePhase?.('impact_calculation');
     const partitions=resolveAnalyticsImpact(changes,this.options.impact);
     const unchanged = (request.kind === 'sync' || request.kind === 'sweep') && recordsChanged === 0;
     this.observePhase?.('source_reconciliation');

@@ -3,6 +3,10 @@ import type { Pool, PoolClient } from 'pg';
 import { verifyOdooSourceIdentity } from './identity.ts';
 import type { OdooCredentialPolicy } from './identity.ts';
 
+export class OdooSnapshotUnavailable extends Error {
+  constructor(){super('Source snapshot lease lost or expired');this.name='OdooSnapshotUnavailable';}
+}
+
 export interface OdooSnapshotEvidence {
   sourceAsOf: string; frozenRevision: string; freezeReference: string;
   descriptor: string;
@@ -48,7 +52,7 @@ export class OdooSnapshotLease {
     if (identity.tenantId!==this.identity.tenantId || identity.sourceId!==this.identity.sourceId || ['sourceAsOf','frozenRevision','freezeReference'].some(key => scope[key as keyof typeof scope]!==this.evidence[key as keyof typeof scope])) throw new Error('Source snapshot scope conflict');
   }
   private requireAlive(): void {
-    if (!this.alive || performance.now()>=this.deadline) throw new Error('Source snapshot lease lost or expired');
+    if (!this.alive || performance.now()>=this.deadline) throw new OdooSnapshotUnavailable();
   }
   /** Local deadline/error guard before a read; the result still requires a live-owner probe. */
   assertActive():void {this.requireAlive();}
@@ -58,7 +62,7 @@ export class OdooSnapshotLease {
       const row = (await this.owner.query('SELECT pg_current_snapshot()::text descriptor')).rows[0];
       if (row.descriptor!==this.evidence.descriptor) throw new Error('Source snapshot changed');
       this.requireAlive();
-    } catch { this.alive = false; throw new Error('Source snapshot lease lost or expired'); }
+    } catch { this.alive = false; throw new OdooSnapshotUnavailable(); }
   }
   /** Caller begins RR/RO first. Import is the first command before any source SELECT. */
   async importInto(client: PoolClient): Promise<void> {

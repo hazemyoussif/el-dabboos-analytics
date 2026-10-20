@@ -4,6 +4,8 @@ import { OdooSnapshotLease } from '../odoo/snapshot.ts';
 import { OdooPostgresSourceBatchReader } from '../odoo/reader.ts';
 import { mapOdooRecord } from '../odoo/mapper.ts';
 import { odooIncrementalWindow } from '../odoo/incremental-watermark.ts';
+import {measureOperationalWork} from './progress.ts';
+import type {OperationalProgressObserver} from './progress.ts';
 import type { OdooSourceConfig } from '../odoo/config.ts';
 import type { OperationalBaseline, OperationalSnapshot } from './contracts.ts';
 import { readExactEventControls } from './source-controls.ts';
@@ -11,18 +13,18 @@ import { receivableChangedFrom,readReceivableSnapshot,receivableControls,snapsho
 
 /** Dedicated owner and page pools keep the retained snapshot alive throughout the job. */
 export class OdooOperationalSource implements AnalyticsOperationalSource {
- constructor(private readonly owner:Pool,private readonly reader:Pool,private readonly config:OdooSourceConfig,private readonly versions:{mappingVersion:string;definitionVersion:string}) {}
+ constructor(private readonly owner:Pool,private readonly reader:Pool,private readonly config:OdooSourceConfig,private readonly versions:{mappingVersion:string;definitionVersion:string},private readonly observeProgress?:OperationalProgressObserver) {}
  async open(tenantId:string):Promise<OdooOperationalSnapshot> {
   if(tenantId!==this.config.tenantId)throw new Error('Unauthorized operational source');
   const lease=await OdooSnapshotLease.open(this.owner,this.config,this.config.snapshotMaxDurationMs,this.config.credentialPolicy);
-  return new OdooOperationalSnapshot(this.reader,this.config,lease,this.versions);
+  return new OdooOperationalSnapshot(this.reader,this.config,lease,this.versions,{count:1,observeProgress:this.observeProgress});
  }
 }
 export class OdooOperationalSnapshot implements OperationalSnapshot {
  private closing:Promise<void>|undefined;
  private readonly snapshotControls=new Map<string,Record<string,string>>();
  readonly cutoff:string;readonly revision:string;readonly mappingVersion:string;readonly definitionVersion:string;
- constructor(private readonly pool:Pool,private readonly config:OdooSourceConfig,private readonly lease:OdooSnapshotLease,versions:{mappingVersion:string;definitionVersion:string},private readonly references:{count:number}={count:1}) {
+ constructor(private readonly pool:Pool,private readonly config:OdooSourceConfig,private readonly lease:OdooSnapshotLease,versions:{mappingVersion:string;definitionVersion:string},private readonly references:{count:number;observeProgress:OperationalProgressObserver|undefined}={count:1,observeProgress:undefined}) {
   this.cutoff=lease.evidence.sourceAsOf;this.revision=lease.evidence.frozenRevision;this.mappingVersion=versions.mappingVersion;this.definitionVersion=versions.definitionVersion;
  }
  close(){return this.closing??=this.closeSource();}
@@ -37,7 +39,7 @@ export class OdooOperationalSnapshot implements OperationalSnapshot {
    const reader=new OdooPostgresSourceBatchReader(this.pool,this.config,scope,this.lease);
    let position:string|undefined;
    do {
-    const page=await reader.readBatch({...this.config,limit:this.config.batchSize,frozenRevision:this.revision,...(position?{cursor:position}:{})});
+    const page=await measureOperationalWork(this.references.observeProgress,'source_page',()=>reader.readBatch({...this.config,limit:this.config.batchSize,frozenRevision:this.revision,...(position?{cursor:position}:{})}));
     const batch=operationalBatch(mapping,this.config,this.lease);
     const retired=page.rows.filter(row=>row.object==='account_move'&&row.payload.state!=='posted'&&!row.payload.business_date);
     const facts=page.rows.filter(row=>!retired.includes(row)).flatMap(row=>mapOdooRecord(row,mapping,batch));
@@ -53,7 +55,7 @@ export class OdooOperationalSnapshot implements OperationalSnapshot {
    const reader=new OdooPostgresSourceBatchReader(this.pool,this.config,{object,from:`${month}-01`,to:monthEnd(month),timeZone:mapping.measures[0]!.timeZone,...this.lease.evidence},this.lease);
    let position:string|undefined;
    do {
-    const page=await reader.readBatch({...this.config,limit:this.config.batchSize,frozenRevision:this.revision,...(position?{cursor:position}:{})});
+    const page=await measureOperationalWork(this.references.observeProgress,'source_page',()=>reader.readBatch({...this.config,limit:this.config.batchSize,frozenRevision:this.revision,...(position?{cursor:position}:{})}));
     yield {object,facts:page.rows.flatMap(row=>mapOdooRecord(row,mapping,operationalBatch(mapping,this.config,this.lease))),rows:page.rows.length};
     position=page.nextCursor;
    }while(position);
@@ -61,14 +63,14 @@ export class OdooOperationalSnapshot implements OperationalSnapshot {
  }
  async *snapshots(baseline:OperationalBaseline,cursor:AnalyticsCursor|null,force=false) {
   if(!baseline.mappings.some(mapping=>mapping.measures.some(rule=>rule.measureId==='net_aged_receivable')))return;
-  const changed=force?baseline.from:await receivableChangedFrom(this.pool,this.lease,this.config,cursor);
+  const changed=force?baseline.from:await measureOperationalWork(this.references.observeProgress,'source_receivable_discovery',()=>receivableChangedFrom(this.pool,this.lease,this.config,cursor));
   if(!changed)return;
   // Phase-A summaries have no component-level previous-date ledger. Every published
   // cutoff is the smallest provably complete dependency set for a possible date move.
   const dependencyFrom=baseline.from;
   for(let month=baseline.from.slice(0,7);month<=baseline.to.slice(0,7);month=followingMonth(month)) {
    const cutoff=monthEnd(month);if(cutoff<dependencyFrom||(baseline.coveredMonths&&!baseline.coveredMonths.includes(month)))continue;
-   const result=await readReceivableSnapshot(this.pool,this.lease,this.config,baseline,cutoff);
+   const result=await measureOperationalWork(this.references.observeProgress,'source_receivable_snapshot',()=>readReceivableSnapshot(this.pool,this.lease,this.config,baseline,cutoff));
    this.snapshotControls.set(month,result.expected);
    yield {object:'receivable_cutoff',facts:result.facts,rows:1};
   }

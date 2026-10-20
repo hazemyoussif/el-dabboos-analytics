@@ -3,17 +3,19 @@ import type { AnalyticsCursor,FactRevisionChange,ProductionFact } from '@el-dabb
 import type { OperationDetails,OperationalBaseline,OperationalSnapshot } from './contracts.ts';
 import { persistOperationalFacts,retiredOperationalFacts } from './facts.ts';
 import { coveredOperationalFacts } from './ingestion-scope.ts';
+import {measureOperationalWork} from './progress.ts';
+import type {OperationalProgressObserver} from './progress.ts';
 /** New calendar partitions need a complete initial base; existing months use changed identities only. */
-export async function ingestOperationalCandidate(client:PoolClient,scope:{baseline:OperationalBaseline;source:OperationalSnapshot;cursor:AnalyticsCursor|null;details:OperationDetails;parent:string|null}) {
- const {baseline,source,cursor,details,parent}=scope;
+export async function ingestOperationalCandidate(client:PoolClient,scope:{baseline:OperationalBaseline;source:OperationalSnapshot;cursor:AnalyticsCursor|null;details:OperationDetails;parent:string|null;observeProgress?:OperationalProgressObserver|undefined}) {
+ const {baseline,source,cursor,details,parent,observeProgress}=scope;
  const start=performance.now(),objects={...cursor?.objects};details.previousCursor=cursor;
  const months=(await client.query("SELECT to_char(month,'YYYY-MM') AS period FROM mart.analytics_serving_members WHERE tenant_id=$1 AND revision_id=$2 AND family='facts'",[baseline.tenantId,parent])).rows.map(row=>String(row.period));
  const knownMonths=new Set(months);
- const candidate=new CandidateFacts(client,baseline,details,knownMonths);
+ const candidate=new CandidateFacts(client,baseline,details,knownMonths,observeProgress);
  for(const month of missingOperationalMonths(baseline,source.cutoff,knownMonths))candidate.newMonths.add(month);
  for await(const page of source.records(baseline,cursor)) {
   details.rowsDiscovered+=page.rows;if(page.cursor)objects[page.object]=page.cursor;
-  const facts=[...page.facts];for(const retired of page.retired??[])facts.push(...await retiredOperationalFacts(client,baseline.tenantId,retired,source));
+  const facts=[...page.facts];for(const retired of page.retired??[])facts.push(...await measureOperationalWork(observeProgress,'mart_retirement',()=>retiredOperationalFacts(client,baseline.tenantId,retired,source)));
   await candidate.accept(facts);
  }
  for(const month of candidate.newMonths)for await(const page of source.recordsMonth(baseline,month)) {
@@ -25,13 +27,13 @@ export async function ingestOperationalCandidate(client:PoolClient,scope:{baseli
 }
 class CandidateFacts {
  readonly changes:FactRevisionChange[]=[];readonly newMonths=new Set<string>();readonly identities=new Set<string>();
- constructor(private readonly client:PoolClient,private readonly baseline:OperationalBaseline,private readonly details:OperationDetails,private readonly knownMonths:ReadonlySet<string>){}
+ constructor(private readonly client:PoolClient,private readonly baseline:OperationalBaseline,private readonly details:OperationDetails,private readonly knownMonths:ReadonlySet<string>,private readonly observeProgress?:OperationalProgressObserver){}
  async accept(facts:readonly ProductionFact[]) {
   const months=new Set([...this.knownMonths,...this.newMonths]);
-  const scoped=await coveredOperationalFacts(this.client,this.baseline.tenantId,facts,months);
+  const scoped=await measureOperationalWork(this.observeProgress,'mart_scope',()=>coveredOperationalFacts(this.client,this.baseline.tenantId,facts,months));
   this.details.outsideCoverageFacts=(this.details.outsideCoverageFacts??0)+facts.length-scoped.length;
   const start=performance.now();
-  const changes=await persistOperationalFacts(this.client,this.baseline,scoped);
+  const changes=await measureOperationalWork(this.observeProgress,'mart_page',()=>persistOperationalFacts(this.client,this.baseline,scoped,this.observeProgress));
   this.details.durations.persistenceMs=(this.details.durations.persistenceMs??0)+performance.now()-start;
   for(const change of changes) {
    const fact=change.next;

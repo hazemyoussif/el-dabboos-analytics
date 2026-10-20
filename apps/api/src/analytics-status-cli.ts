@@ -4,7 +4,7 @@ import {assertAnalyticsScheduleReady} from './analytics-schedule-status.ts';
 import {exposeAnalyticsReview} from './analytics-review-exposure.ts';
 import type { AnalyticsPartition } from '@el-dabboos/domain';
 import { executeAnalyticsJob } from './analytics-jobs.ts';
-import { createMartPool, PostgresOperationalStatus, verifyMartRuntimeRole } from '@el-dabboos/data';
+import { createMartPool, PostgresOperationalStatus, verifyMartRuntimeRole, OdooSnapshotUnavailable } from '@el-dabboos/data';
 import { assertHostedMartUrl } from './hosted-mart-url.ts';
 
 async function main() {
@@ -48,6 +48,6 @@ function operatorResult(result:Awaited<ReturnType<typeof executeAnalyticsJob>>) 
   return {...result,details:{...details,affectedPartitionCount:scope.length,affectedMonths:[...new Set(scope.map(partition=>partition.month))].sort(),affectedMetrics:[...new Set(scope.map(partition=>partition.metric))].sort(),affectedDimensions:[...new Set(scope.flatMap(partition=>partition.dimension?[partition.dimension]:[]))].sort()}};
 }
 try {await main();}catch(error) {
-  process.stderr.write(error instanceof SalesCommandInspectionUnavailable?`${error.message}\n`:'Analytics operation unavailable. Check local runtime configuration and explicit mart migrations.\n');
+  process.stderr.write(error instanceof SalesCommandInspectionUnavailable||error instanceof OdooSnapshotUnavailable?`${error.message}\n`:'Analytics operation unavailable. Check local runtime configuration and explicit mart migrations.\n');
   process.exitCode=1;
 }
