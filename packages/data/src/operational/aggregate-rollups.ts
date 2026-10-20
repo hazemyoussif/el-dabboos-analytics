@@ -1,18 +1,21 @@
 import type {Pool,PoolClient} from 'pg';
 import {tenantTransaction} from '../postgres/session.ts';
 import {readBaseline} from './baseline.ts';
+import {measureOperationalWork} from './progress.ts';
+import type {OperationalProgressObserver} from './progress.ts';
 /** Append exact proof last: its database guard reconciles and freezes both grains. */
-export async function reconcileEventRollup(client:PoolClient,tenantId:string,partitionId:string) {
- const existing=await client.query('SELECT 1 FROM mart.analytics_aggregate_proofs WHERE tenant_id=$1 AND partition_id=$2',[tenantId,partitionId]);
+export async function reconcileEventRollup(client:PoolClient,tenantId:string,partitionId:string,observeProgress?:OperationalProgressObserver,month?:string) {
+ const context=month?{month}:{};
+ const existing=await measureOperationalWork(observeProgress,'refresh_rollup_lookup',()=>client.query('SELECT 1 FROM mart.analytics_aggregate_proofs WHERE tenant_id=$1 AND partition_id=$2',[tenantId,partitionId]),context);
  if(existing.rowCount)return 'already-proved';
- await client.query(`INSERT INTO mart.analytics_monthly_bases
+ await measureOperationalWork(observeProgress,'refresh_monthly_rollup',()=>client.query(`INSERT INTO mart.analytics_monthly_bases
  SELECT tenant_id,partition_id,measure_id,dimensions,sum(value),sum(fact_count),max(business_date)
- FROM mart.analytics_aggregate_bases WHERE tenant_id=$1 AND partition_id=$2 AND kind='event' GROUP BY 1,2,3,4`,[tenantId,partitionId]);
- await client.query(`INSERT INTO mart.analytics_aggregate_proofs(tenant_id,partition_id,definition_version,mapping_version,business_timezone,daily_rows,monthly_rows)
+ FROM mart.analytics_aggregate_bases WHERE tenant_id=$1 AND partition_id=$2 AND kind='event' GROUP BY 1,2,3,4`,[tenantId,partitionId]),context);
+ await measureOperationalWork(observeProgress,'refresh_aggregate_proof',()=>client.query(`INSERT INTO mart.analytics_aggregate_proofs(tenant_id,partition_id,definition_version,mapping_version,business_timezone,daily_rows,monthly_rows)
  SELECT tenant_id,$2,definition_version,mapping_version,specification->0->'measures'->0->>'timeZone',
  (SELECT count(*) FROM mart.analytics_aggregate_bases WHERE tenant_id=$1 AND partition_id=$2 AND kind='event'),
  (SELECT count(*) FROM mart.analytics_monthly_bases WHERE tenant_id=$1 AND partition_id=$2)
- FROM mart.analytics_baselines WHERE tenant_id=$1`,[tenantId,partitionId]);
+ FROM mart.analytics_baselines WHERE tenant_id=$1`,[tenantId,partitionId]),context);
  return 'proved';
 }
 /** Each month commits atomically. Retry proves or resumes the current manifest under its writer lock. */

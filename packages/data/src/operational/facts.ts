@@ -80,7 +80,7 @@ export async function activeOperationalFacts(client:PoolClient,tenantId:string,o
  WHERE head.tenant_id=$1 AND head.fact_key>$2 AND head.source_object=$3 AND head.status='active' ORDER BY head.fact_key LIMIT $4`,[tenantId,after,object,limit])).rows as {fact_key:string;payload:ProductionFact}[];
 }
 
-function stableContent(value:unknown):string {return JSON.stringify(value,(_key,item)=>item&&typeof item==='object'&&!Array.isArray(item)?Object.fromEntries(Object.keys(item).sort().map(key=>[key,item[key]])):item);}
+export function stableContent(value:unknown):string {return JSON.stringify(value,(_key,item)=>item&&typeof item==='object'&&!Array.isArray(item)?Object.fromEntries(Object.keys(item).sort().map(key=>[key,item[key]])):item);}
 
 /** Date-less ineligible headers retire their previous footprint; unseen drafts create no fact. */
 export async function retiredOperationalFacts(client:PoolClient,tenantId:string,record:{object:string;id:string;version:string;revision:string;updatedAt:string},source:{cutoff:string;revision:string}):Promise<ProductionFact[]> {

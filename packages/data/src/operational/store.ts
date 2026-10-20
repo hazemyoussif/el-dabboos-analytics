@@ -7,6 +7,7 @@ import { recordOperationalRun,writeOperationalCursor } from '../postgres/operati
 import type { OperationDetails,OperationalBaseline,OperationalSnapshot,ReceivableDependency,LookupDependencyUpdate } from './contracts.ts';
 import {planOperationalFacts,writeOperationalChanges} from './facts.ts';
 import {measureOperationalWork} from './progress.ts';
+import {summarizeCandidateChanges} from './candidate-change-summary.ts';
 import { affectedMonths,refreshOperationalMonths } from './aggregates.ts';
 import { compareCandidate,persistExactCases,completeReconciliationPartitions } from './reconciliation.ts';
 import type { PersistedExactCase } from './reconciliation.ts';
@@ -63,6 +64,7 @@ class OperationalTransaction implements AnalyticsOperationalTransaction {
   const controls=await measureOperationalWork(this.observeProgress,'source_controls',()=>source.controls(this.baseline,governed));
   this.details.durations.sourceControlsMs=performance.now()-start;
   await releaseSource();
+  this.observeChanges();
   const persistenceStart=performance.now();
   await measureOperationalWork(this.observeProgress,'mart_page',()=>writeOperationalChanges(this.client,this.baseline.tenantId,this.changes,this.observeProgress));
   this.details.durations.persistenceMs=performance.now()-persistenceStart;
@@ -72,7 +74,7 @@ class OperationalTransaction implements AnalyticsOperationalTransaction {
  }
  async refresh(partitions:readonly AnalyticsPartition[]) {
   const start=performance.now(),release=randomUUID();
-  this.details.refreshedMonths=await refreshOperationalMonths(this.client,{tenantId:this.baseline.tenantId,revisionId:release,parent:await this.trustedRelease(),runId:this.runId,cutoff:this.source!.cutoff,...(this.changes.length?{days:[...new Set(this.changes.flatMap(change=>[...(change.previous?[change.previous.businessDate]:[]),change.next.businessDate]))]}:{})},affectedMonths(partitions));
+  this.details.refreshedMonths=await refreshOperationalMonths(this.client,{tenantId:this.baseline.tenantId,revisionId:release,parent:await this.trustedRelease(),runId:this.runId,cutoff:this.source!.cutoff,observeProgress:this.observeProgress,...(this.changes.length?{days:[...new Set(this.changes.flatMap(change=>[...(change.previous?[change.previous.businessDate]:[]),change.next.businessDate]))]}:{})},affectedMonths(partitions));
   this.details.durations.refreshMs=performance.now()-start;return release;
  }
  async promote(release:string,_evidence:OperationalReconciliation) {
@@ -91,6 +93,11 @@ class OperationalTransaction implements AnalyticsOperationalTransaction {
   await this.client.query('INSERT INTO mart.analytics_run_details VALUES($1,$2,$3)',[this.baseline.tenantId,run.runId,JSON.stringify(this.details)]);
  }
  async discardCandidate(){await this.client.query('ROLLBACK TO SAVEPOINT operational_candidate');this.rejected=true;}
+ private observeChanges() {
+  if(!this.observeProgress)return;
+  const began=performance.now(),summary=summarizeCandidateChanges(this.changes);
+  this.observeProgress({step:'mart_candidate_changes',state:'completed',durationMs:performance.now()-began,summary});
+ }
  private requireSource(snapshot:AnalyticsSourceSnapshot):OperationalSnapshot {
   const source=snapshot as OperationalSnapshot;
   if(typeof source.records!=='function'||typeof source.recordsMonth!=='function'||typeof source.snapshots!=='function'||typeof source.controls!=='function'||typeof source.present!=='function'||typeof source.presence!=='function'||source.mappingVersion!==this.baseline.mappingVersion||source.definitionVersion!==this.baseline.definitionVersion)throw new Error('Versioned operational source required');

@@ -212,6 +212,42 @@ verified against the canonical component mapper's maturity boundaries, credits,
 settlements and company isolation. Statement timeout stays 15 seconds; source
 lease stays 120 seconds. No optimizer setting is changed in the delivered path.
 
+## Candidate change and refresh diagnostics
+
+The pending diagnostic patch adds operator-only observation; it does not change
+source discovery, candidate equality, exact acceptance, cursor advancement or
+publication. After source closure and before persistence, the existing in-memory
+candidate entries are summarized without additional SQL or source reads. HTTP
+composition without an observer does not perform classification.
+
+`analytics-candidate-changes` reports total entries, `withoutPrevious`,
+`withPrevious`, active/tombstone outcomes and `classificationMs`.
+`analytics-candidate-change-group` breaks the same counts down by closed source
+object bucket and the next fact's business month. These count candidate entries,
+not distinct source identities, distinct fact keys or committed changes. A pending
+replacement can provide the previous value for a later entry. Entries without a
+previous value have no changed-field comparison.
+
+Changed field names come from a closed schema selection, including nested
+transaction states, labels, amounts, location and lineage. The existing canonical
+content comparator is reused; observation timestamps/revisions remain excluded.
+Counts at parent and child paths overlap and must not be summed. Unrecognized
+source objects use `other`; no raw object names, customer values, identities,
+unknown field names, SQL, fingerprints or credentials enter these events. A change
+with no recognized field difference uses `unclassified_business_content`.
+
+Each `analytics-refresh` start/completion/failure is emitted immediately, with
+fixed substep names and the affected month where applicable. Enclosing
+`refresh_month` events include a one-based index and total affected months. The
+SQL text, parameters, ordering and exact proof guards remain unchanged. Each event
+has `candidateOnly: true`; month completion does not imply publication or commit.
+Nested timings overlap. A final completed or failed job result remains necessary.
+
+Classification adds synchronous CPU work and refresh boundaries add log output.
+Their company-scale overhead has not been measured. This patch is diagnostic,
+not a performance fix or proof of company runtime. See the
+[company failure evidence and pending verification](../qa/company-sync-diagnostics-2026-10-21.md).
+
 ## Trusted serving and current reports
 
 Immutable month partitions contain daily additive bases and complete categorical
