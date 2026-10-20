@@ -1,5 +1,10 @@
 # Company sync source handoff — 20 October 2026
 
+Historical code-only rollout instructions below apply through `0aaaa73`. The
+pending dependency release adds migrations 062 and 063 and must use the
+[migration-aware release handoff](operational-dependency-release-2026-10-20.md).
+Do not reuse this document’s no-migration block for that release.
+
 The company application deployed release
 `6caf30ec647801d36a303aae2acc9cf36ce37b81` successfully, including migration 061,
 verified roles and readiness 200. Its coordinated backup is on the existing mounted

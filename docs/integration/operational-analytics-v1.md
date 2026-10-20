@@ -65,6 +65,55 @@ old certifications remain intact. Equivalent overlap replays create no revision.
 Stored per-object positions and the successful cutoff advance only after audit,
 reconciliation, refresh and promotion succeed in one tenant transaction.
 
+Operational source extraction executes each object query once using a PostgreSQL
+`NO SCROLL` / `WITHOUT HOLD` cursor inside an imported `REPEATABLE READ READ ONLY`
+transaction. Bounded fetches retain the same composite ordering, overlap, cutoff,
+company filters and row mapping. This avoids rerunning the joined discovery query
+and its sort for every page. The source reader keeps at most one page plus a
+lookahead row in its page buffer; PostgreSQL still owns query execution and may
+need to sort the matching population. Early iterator exit or failure rolls back
+and releases its reader connection. The owner lease is checked before and after
+fetches, including after mart planning between pages. No cursor survives the job.
+The single-page reader remains available for explicit extraction checkpoints.
+This cursor change does not itself narrow lookup invalidation or replace monthly
+immutable refresh. Lookup and receivable dependency narrowing are separate
+candidates described below; no company runtime improvement is claimed without
+approved measurements.
+
+The candidate migration 063 tracks lookup fingerprints separately from document
+watermarks. Customer, salesperson, Business Line and State hashes include only
+fields consumed by the current mapper. Customer city uses the same canonical trim
+and unknown handling; optional area/location expressions are shared with the
+transaction projection. Source timestamps are excluded from hashes. Only lookups
+referenced by the authorized companies' order/invoice populations are read.
+After initialization, the existing overlap polls lookup changes separately; only
+new/different business fingerprints permit lookup-driven document extraction.
+Header changes remain discoverable independently. Composite source versions,
+upper cutoffs, exact controls and content equality rules remain unchanged.
+
+The first run or a changed/missing projection checkpoint reads all referenced
+lookups and catches up the mapped document history before committing fingerprints.
+Existing fact labels cannot prove that all lookup state is already current, so this
+cost is explicit and remains unmeasured. Checkpoints match the successful source
+cursor and source/definition/mapping namespace. Candidate hashes remain in memory
+until source release; bounded writes and checkpoint advancement share the existing
+publication/audit/cursor transaction. Failure leaves previous evidence in place.
+Runtime roles have no access to these caches. No raw labels or fingerprints enter
+default progress logs. This remains timestamp polling: hard lookup deletions and
+source changes without a reliable modification timestamp are not claimed to be
+discovered by this optimization. A source change-log or separately governed full
+catch-up is needed for those cases. Nine approved synthetic lookup tests pass:
+initialization and projection invalidation, timestamp-only skipping, all four
+lookup roles, independent header edits, tenant/runtime isolation and atomic failure
+rollback. Twelve approved cursor/receivable regression checks also pass with the
+shared guard. Existing Odoo test setup is reused through its extracted fixture;
+no developer env or customer service is used. Migration 063 is unapplied to both
+staging environments. Initial catch-up cost and company runtime remain unmeasured; no deployment
+acceptance is claimed. The approved rollback-only local refresh measurement
+completed 13 months and 178,249 active facts in 70.994 seconds; it does not cover
+source ingestion, dependency initialization or prepared publication. See the
+[measurement scope and stage costs](../qa/local-refresh-measurement-2026-10-20.md).
+
 Date-less ineligible invoice drafts retire an existing identity's old footprint;
 unseen drafts do not invent dated facts. Newly encountered business months are
 initialized with a bounded complete source-month read under the same snapshot.
@@ -118,12 +167,39 @@ The existing deeper release/certification workflow remains separate. Categorical
 changes receive exact affected-case controls during sync.
 
 Receivable dependencies poll receivable lines, partial reconciliations, moves and
-payments independently of invoice-header timestamps. The existing historical
-Phase-A baseline contains company summaries, without a previous component-date
-ledger. Therefore a changed receivable input requires rechecking all published
-month-end cutoffs: that is the complete provable dependency set for a possible
-accounting-date move. Only changed balances create revisions, impact and aggregate
-refresh. Event months are not rebuilt by this conservative snapshot check.
+payments independently of invoice-header timestamps. The candidate migration 062
+adds an ingestor-only identity/date ledger, scoped by tenant, source, mapping and
+definition. Dependency metadata uses the existing source snapshot and bounded
+read-only cursor fetches. Candidate metadata stays in memory until the source is
+released; bounded ledger writes and its checkpoint occur after successful audit
+and the guarded source cursor update, within the same mart transaction. A rejected
+candidate, technical failure or failed publication cannot advance this ledger.
+Dependency identities/dates are not included in default logs or runtime responses.
+
+Without a checkpoint matching the successful cursor, the next sync reads all
+current dependencies once and retains the all-published-cutoff check. It never
+assumes that existing Phase-A summaries contain previous component dates. This
+initialization has an additional source/mart cost and remains unrehearsed. Once
+initialized, changed identities consult their stored previous effective dates;
+only published month-end cutoffs at or after the earliest old/current date are
+rechecked. Line dates, both partial-reconciliation endpoints and move/payment line
+dates contribute conservatively. Changed nonreceivable lines are also discovered
+to retain a previously receivable footprint after an eligibility change. Unknown
+dates retain the complete check. Only changed balances create fact revisions,
+impact and aggregate refresh. Event months are not rebuilt by a snapshot check.
+
+This remains timestamp polling with the existing overlap and source transaction
+limitations, not log-based CDC. Hard deletions and changes not reflected by these
+four models still require the existing full snapshot/sweep controls. Forced sweeps
+continue to check all published cutoffs; they do not advance the sync dependency
+checkpoint. The ledger is not a substitute for exact source/mart reconciliation.
+Six approved focused synthetic PostgreSQL checks pass: complete initialization
+and exact cutoff totals, forward and backdated corrections, current-period
+narrowing, tenant/runtime isolation and successful-cursor guards, and operational
+sync failure rollback after source closure. Tests use isolated fixture databases;
+none load developer/source credentials. Migration 062 remains unapplied to local
+or company staging. Initialization cost and company performance remain unmeasured;
+no deployment acceptance is claimed.
 
 Full counterpart/state/company/date/current-residual quality is validated once
 for the complete published cutoff scope within the retained snapshot. Earlier
@@ -138,7 +214,11 @@ lease stays 120 seconds. No optimizer setting is changed in the delivered path.
 ## Trusted serving and current reports
 
 Immutable month partitions contain daily additive bases and complete categorical
-policy tuples. A new manifest reuses unaffected partition references. Deferred
+policy tuples. Partial-day refresh reuses a prior partition only when its stored
+immutable drill and aggregate proofs are both present; otherwise it rebuilds the
+month completely. New drill proof insertion retains the database's exactness guard,
+without an additional application-side scan immediately before that guarded insert.
+A new manifest reuses unaffected partition references. Deferred
 promotion guards require exact passed evidence, correct parent/version/cutoff,
 complete affected-month membership and unchanged unaffected references. Runtime
 RLS exposes only the current trusted manifest and its aggregates; candidate facts

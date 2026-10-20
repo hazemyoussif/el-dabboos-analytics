@@ -11,3 +11,11 @@ export function odooPartnerProjection(pool:Pool,client:PoolClient):Promise<reado
  }
  return projection;
 }
+
+/** Shared effective expressions keep transaction mapping and lookup hashes aligned. */
+export function odooPartnerPresentation(fields:readonly string[]) {
+ const optional=(name:string)=>fields.includes(name)?`partner.${name}::text`:'NULL::text';
+ return {area:optional('area'),latitude:`coalesce(${optional('latitude')},${optional('partner_latitude')})`,
+  longitude:`coalesce(${optional('longitude')},${optional('partner_longitude')})`,
+  shopGps:`coalesce(${optional('gps_shop_location')},${optional('shop_gps_location')})`};
+}

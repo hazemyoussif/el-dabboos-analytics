@@ -10,7 +10,7 @@ closed. No accepted SQL or checksum is changed by milestone finalization.
 
 | Store | Current head | Registration / readiness | Explicit execution |
 | --- | --- | --- | --- |
-| PostgreSQL analytics mart | 061 `sales_command_measures` | [Manifest/runner](../../packages/data/src/postgres/migrations.ts), [runtime readiness](../../packages/data/src/postgres/readiness.ts) | `pnpm mart:migrate`; staging uses `pnpm staging migrate` |
+| PostgreSQL analytics mart | 063 `lookup_dependencies` (candidate; not applied to staging) | [Manifest/runner](../../packages/data/src/postgres/migrations.ts), [runtime readiness](../../packages/data/src/postgres/readiness.ts) | `pnpm mart:migrate`; staging uses `pnpm staging migrate` |
 | PostgreSQL control | 009 `workspace_ai_settings` | [Manifest/runner/readiness](../../packages/data/src/control/migrations.ts) | `pnpm control migrate`; staging uses `pnpm staging migrate` |
 | SQLite governed metadata | 006 `workspace-ai-settings` | [Explicit registry/readiness](../../packages/data/src/metadata/migrations.ts) | `pnpm metadata:migrate <metadata-db-path>` against approved metadata storage |
 
@@ -100,3 +100,25 @@ This records a candidate; company staging is still on059until separately approve
 deployment. Original053–059files/checksums remain unchanged.
 
 Migration 061 adds Sales Command Center operands and state columns, extends the canonical view without changing its security properties, and admits the explicitly versioned command mapping under the existing exact Business controls. It performs no extraction, preparation, activation or source writes. Prepared-serving migrations 053–060 remain unchanged.
+
+Migration 062 is a candidate for source dependency metadata with focused
+synthetic PostgreSQL evidence; staging application remains pending. It adds
+forced-RLS receivable identity/date heads and a checkpoint scoped by tenant,
+source, definition and mapping. Only the ingestor can read or update them; the
+runtime has no access. Writes require the successful matching sync audit and
+source cursor. A missing/mismatched checkpoint requires a complete initialization
+and the existing all-cutoff check. It performs no source access, data population,
+preparation or publication. Existing migration bytes are unchanged. The six approved focused PostgreSQL checks passed for initialization, forward
+and backdated corrections, current-period narrowing, isolation and rollback. This
+does not establish real-data initialization cost or company performance.
+
+Migration 063 is a lookup dependency candidate with focused synthetic evidence. It adds ingestor-only,
+forced-RLS business fingerprints and a projection-aware checkpoint. It shares the
+statement-level successful audit/cursor/version guard introduced by 062, retaining
+the existing function identity and receivable triggers. Identity columns cannot be
+updated by the ingestor. It performs no source extraction or initialization and
+changes no published facts or labels. Missing/stale projection evidence requires a
+complete lookup/document catch-up before enabling timestamp-only skips. First-run
+cost and company performance remain unmeasured. Nine approved lookup tests and
+twelve cursor/receivable regression tests passed in disposable PostgreSQL
+databases. Neither staging has applied this migration.

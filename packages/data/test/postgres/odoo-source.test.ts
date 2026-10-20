@@ -1,8 +1,10 @@
+import {sourceFixture} from './odoo-source-fixture.ts';
 import {readHistoricalSourceInventory} from '../../src/odoo/history-inventory.ts';
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import {randomUUID} from 'node:crypto';
 import { Pool } from 'pg';
-import { randomUUID } from 'node:crypto';
+import type {PoolClient,QueryResult} from 'pg';
 import { database,enabled } from './support.ts';
 import { OdooPostgresSourceBatchReader } from '../../src/odoo/reader.ts';
 import {createOdooSourcePool,odooSourceConfig} from '../../src/odoo/config.ts';
@@ -19,50 +21,6 @@ import { PostgresMartWriter } from '../../src/postgres/writer.ts';
 import { clock } from './fixtures.ts';
 import type { ExtractionRun, ReconciliationCase } from '@el-dabboos/domain';
 
-async function sourceFixture() {
-  const db = await database();
-  const username = `source_${randomUUID().replaceAll('-','')}`;
-  const url = new URL(process.env.PG_TEST_ADMIN_URL!);
-  url.pathname=(await db.admin.query('SELECT current_database() name')).rows[0].name;
-  const setup = `
- CREATE TABLE public.res_currency(id int primary key,name text);
- CREATE TABLE public.res_partner(id int primary key,name text,city text,state_id int,area text,is_company boolean,write_date timestamp);
- CREATE TABLE public.res_country_state(id int primary key,name text,write_date timestamp);
- CREATE TABLE public.res_users(id int primary key,partner_id int,write_date timestamp);
- CREATE TABLE public.business_line(id int primary key,name text,write_date timestamp);
- CREATE TABLE public.sale_order(id int primary key,company_id int,write_date timestamp,date_order timestamp,state text,currency_id int,user_id int,create_uid int,partner_id int,business_line_id int,amount_untaxed numeric,amount_tax numeric,amount_total numeric);
- CREATE TABLE public.account_move(id int primary key,company_id int,write_date timestamp,invoice_date date,state text,currency_id int,invoice_user_id int,partner_id int,business_line_id int,amount_untaxed_signed numeric,amount_tax_signed numeric,amount_total_signed numeric,move_type text,payment_state text);
- CREATE TABLE public.sale_order_line(id int primary key,order_id int);
- CREATE TABLE public.account_move_line(id int primary key,move_id int);
- CREATE TABLE public.sale_order_line_invoice_rel(order_line_id int,invoice_line_id int);
- INSERT INTO public.res_currency VALUES (87,'IQD');
- INSERT INTO public.res_partner VALUES (20,'Synthetic Outlet',NULL,NULL,NULL,false,'2026-09-01'),(70,'Synthetic Rep',NULL,NULL,NULL,false,'2026-09-01');
- INSERT INTO public.res_users VALUES (7,70,'2026-09-01');
- INSERT INTO public.business_line VALUES (1,'General','2026-09-01'),(2,'No Sugar','2026-10-01');
- INSERT INTO public.sale_order
- SELECT id,1,'2026-10-01 10:00:00.123456','2026-09-15','sale',87,7,999,20,1,
- CASE WHEN id=2893 THEN 14597500 ELSE 500000 END,0,CASE WHEN id=2893 THEN 14597500 ELSE 500000 END FROM generate_series(1,2893) id;
- INSERT INTO public.sale_order VALUES (4000,2,'2026-10-01','2026-09-15','sale',87,7,999,20,1,999,0,999);
- INSERT INTO public.account_move VALUES
- (1,1,'2026-10-01 10:00:00.123456','2026-09-15','posted',87,7,20,1,1465712000,0,1465712000,'out_invoice','not_paid'),
- (2,1,'2026-10-01 10:00:00.123456','2026-09-20','posted',87,NULL,20,1,-18545500,0,-18545500,'out_refund','not_paid'),
- (3,1,'2026-10-01 10:00:00.123456','2026-10-01','posted',87,7,20,2,-100,0,-100,'out_refund','not_paid');
- INSERT INTO public.sale_order_line VALUES (11,1),(12,1);
- INSERT INTO public.account_move_line VALUES (21,1),(22,1);
- INSERT INTO public.sale_order_line_invoice_rel VALUES (11,21),(12,22);
- `;
-  try {
-    await db.admin.query(setup);
-    await db.admin.query('ALTER TABLE public.res_users ADD COLUMN state text');
-    await db.admin.query(`CREATE ROLE ${username} LOGIN PASSWORD 'SYNTHETIC_SOURCE_ONLY' NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS`);
-    await db.admin.query(`GRANT USAGE ON SCHEMA public TO ${username}; GRANT SELECT ON ALL TABLES IN SCHEMA public TO ${username}`);
-    url.username=username;url.password='SYNTHETIC_SOURCE_ONLY';
-    const source = new Pool({ connectionString: url.toString(),max: 1 });
-    const ownerPool = new Pool({ connectionString: url.toString(),max: 1 });
-    const snapshots: OdooSnapshotLease[] = [];
-    return { db,source,async openSnapshot(durationMs=600000) { const snapshot = await OdooSnapshotLease.open(ownerPool,{ tenantId: 'el-dabboos-iq',sourceId: 'el-dabboos-odoo18-pg' },durationMs); snapshots.push(snapshot); return snapshot; },async close() { for (const snapshot of snapshots) await snapshot.close(); await ownerPool.end(); await source.end(); await db.close(); const admin = new Pool({ connectionString: process.env.PG_TEST_ADMIN_URL }); try { await admin.query(`DROP ROLE ${username}`); } finally { await admin.end(); } } };
-  } catch (error) { await db.close(); throw error; }
-}
 const mapping = odooComparisonCandidate({ tenantId: 'el-dabboos-iq',sourceId: 'el-dabboos-odoo18-pg',datasetId: 'pilot-candidate',mappingId: 'odoo18',mappingVersion: '1',businessOwner: 'SYNTHETIC TEST ONLY',reportingCurrency: 'IQD',timeZone: 'Asia/Baghdad' });
 const baseScope = { object: 'sale_order' as const,from: '2026-09-01',to: '2026-09-30',timeZone: 'Asia/Baghdad',sourceAsOf: '2026-10-01T10:00:00.000Z',frozenRevision: 'synthetic-freeze',freezeReference: 'IMMUTABLE SYNTHETIC SOURCE ONLY' };
 const config = { credentialPolicy: 'least_privilege' as const,connection: {},tenantId: mapping.tenantId,sourceId: mapping.sourceId,companyIds: ['1'],batchSize: 1000,statementTimeoutMs: 15000,snapshotMaxDurationMs: 600000 };
@@ -338,5 +296,128 @@ test('history inventory discovers earliest company-1 history in business timezon
   const april=result.months.find(row=>row.month==='2024-04');assert.equal(april?.eligible_headers,'0');
   const june=result.months.find(row=>row.month==='2024-06');assert.equal(june?.first_date,'2024-06-01');assert.equal(june?.eligible_headers,'1');
   assert.ok(!result.months.some(row=>row.month==='2020-01'));
+ }finally{await fixture.close();}
+});
+
+
+function observeCursorQueries(pool:Pool) {
+ const statements:string[]=[];
+ pool.on('connect',client=>{
+  const query=client.query.bind(client) as (text:string,parameters?:unknown[])=>Promise<QueryResult>;
+  client.query=(async(text:string,parameters?:unknown[])=>{
+   statements.push(text);
+   if(text.startsWith('FETCH FORWARD')) {
+    const state=(await query("SELECT current_setting('transaction_read_only') read_only,current_setting('transaction_isolation') isolation")).rows[0];
+    assert.deepEqual(state,{read_only:'on',isolation:'repeatable read'});
+   }
+   return query(text,parameters);
+  }) as PoolClient['query'];
+ });
+ return statements;
+}
+async function assertCursorReleased(pool:Pool) {
+ assert.equal(pool.waitingCount,0);assert.equal(pool.idleCount,1);
+ const client=await pool.connect();
+ try {
+  const state=(await client.query("SELECT (SELECT count(*)::int FROM pg_cursors) cursors,current_setting('transaction_isolation') isolation")).rows[0];
+  assert.deepEqual(state,{cursors:0,isolation:'read committed'});
+ }finally{client.release();}
+}
+
+test('Odoo cursor stream: bounded ties match keyset pages, one declaration, invoice and empty boundaries',{skip:!enabled,timeout:15000},async()=>{
+ const fixture=await sourceFixture();
+ try {
+  const statements=observeCursorQueries(fixture.source),snapshot=await fixture.openSnapshot();
+  const scope={...baseScope,...snapshot.evidence},request={...baseRequest,frozenRevision:snapshot.evidence.frozenRevision};
+  const reader=new OdooPostgresSourceBatchReader(fixture.source,config,scope,snapshot);
+  const pages=[];for await(const page of reader.readBatches(request))pages.push(page);
+  assert.deepEqual(pages.map(page=>page.rows.length),[1000,1000,893]);
+  assert.deepEqual(pages.flatMap(page=>page.rows.map(row=>row.recordId)),Array.from({length:2893},(_,index)=>String(index+1)));
+  assert.equal(statements.filter(sql=>sql.startsWith('DECLARE ')).length,1);
+  assert.equal(statements.filter(sql=>sql.startsWith('FETCH FORWARD')).length,3);
+  for(let index=0;index<pages.length;index++) {
+   const expected=await reader.readBatch({...request,...(index?{cursor:pages[index-1]!.nextCursor!}:{})});
+   assert.deepEqual(pages[index],expected);
+  }
+  const invoices=[];
+  for await(const page of new OdooPostgresSourceBatchReader(fixture.source,config,{...scope,object:'account_move'},snapshot).readBatches({...request,limit:1}))invoices.push(page);
+  assert.deepEqual(invoices.map(page=>page.rows.map(row=>row.recordId)),[['1'],['2']]);
+  assert.equal(invoices.at(-1)!.nextCursor,undefined);assert.ok(invoices.at(-1)!.watermarkEnd);
+  if(invoices[0]!.rows[0]!.payload.object==='account_move')assert.equal(invoices[0]!.rows[0]!.payload.order_lineage.length,2);
+  const empty=[];
+  for await(const page of new OdooPostgresSourceBatchReader(fixture.source,config,{...scope,from:'2020-01-01',to:'2020-01-31'},snapshot).readBatches(request))empty.push(page);
+  assert.equal(empty.length,1);assert.deepEqual(empty[0]!.rows,[]);assert.equal(empty[0]!.nextCursor,undefined);
+  for(const invalid of [{companyIds:['2']},{tenantId:'other'},{limit:1001},{cursor:'["bad","1"]'},{frozenRevision:'different'}]) {
+   await assert.rejects(async()=>{for await(const page of reader.readBatches({...request,...invalid}))void page;});
+  }
+  await assertCursorReleased(fixture.source);
+ }finally{await fixture.close();}
+});
+
+test('Odoo cursor stream: retained snapshot excludes concurrent edits, new rows, other companies and upper-cutoff violations',{skip:!enabled,timeout:15000},async()=>{
+ const fixture=await sourceFixture();
+ try {
+  await fixture.db.admin.query("DELETE FROM sale_order WHERE company_id=1 AND id>4; UPDATE sale_order SET write_date=clock_timestamp()+interval '1 day' WHERE id=4");
+  const snapshot=await fixture.openSnapshot(),request={...baseRequest,limit:1,frozenRevision:snapshot.evidence.frozenRevision};
+  const reader=new OdooPostgresSourceBatchReader(fixture.source,config,{...baseScope,...snapshot.evidence,mode:'incremental'},snapshot);
+  const pages=reader.readBatches(request);
+  try {
+   assert.equal((await pages.next()).value!.rows[0]!.recordId,'1');
+   await fixture.db.admin.query("UPDATE sale_order SET amount_total=999,write_date=clock_timestamp() WHERE id IN (2,3); UPDATE res_partner SET name='Concurrent label',write_date=clock_timestamp() WHERE id=20; INSERT INTO sale_order SELECT 5,company_id,write_date,date_order,state,currency_id,user_id,create_uid,partner_id,business_line_id,amount_untaxed,amount_tax,amount_total FROM sale_order WHERE id=3");
+   for(const id of ['2','3']) {
+    const page=(await pages.next()).value!;
+    assert.equal(page.completeness,'incremental');assert.equal(page.rows.length,1);
+    assert.equal(page.rows[0]!.recordId,id);assert.equal(page.rows[0]!.payload.amount_total,'500000');
+    assert.equal(page.rows[0]!.payload.partner_name,'Synthetic Outlet');
+   }
+   assert.equal((await pages.next()).done,true);
+  }finally{await pages.return(undefined);}
+  await assertCursorReleased(fixture.source);
+ }finally{await fixture.close();}
+});
+
+test('Odoo cursor stream: consumer failure closes the transaction and returns the sole reader connection',{skip:!enabled,timeout:15000},async()=>{
+ const fixture=await sourceFixture();
+ try {
+  const snapshot=await fixture.openSnapshot();
+  const reader=new OdooPostgresSourceBatchReader(fixture.source,config,{...baseScope,...snapshot.evidence},snapshot);
+  const failure=new Error('Synthetic downstream failure');
+  await assert.rejects(async()=>{
+   for await(const page of reader.readBatches({...baseRequest,limit:1,frozenRevision:snapshot.evidence.frozenRevision})) {
+    assert.equal(page.rows[0]!.recordId,'1');throw failure;
+   }
+  },error=>error===failure);
+  await assertCursorReleased(fixture.source);
+  await snapshot.assertAlive();
+ }finally{await fixture.close();}
+});
+
+test('Odoo cursor stream: expired lease rejects buffered rows and rolls back the reader',{skip:!enabled,timeout:15000},async()=>{
+ const fixture=await sourceFixture();
+ try {
+  const snapshot=await fixture.openSnapshot(500);
+  const reader=new OdooPostgresSourceBatchReader(fixture.source,config,{...baseScope,...snapshot.evidence},snapshot);
+  const pages=reader.readBatches({...baseRequest,limit:1,frozenRevision:snapshot.evidence.frozenRevision});
+  try {
+   assert.equal((await pages.next()).value!.rows[0]!.recordId,'1');
+   await new Promise(resolve=>setTimeout(resolve,550));
+   await assert.rejects(pages.next(),{name:'OdooSnapshotUnavailable'});
+  }finally{await pages.return(undefined);}
+  await assertCursorReleased(fixture.source);
+  assert.equal((await fixture.db.admin.query("SELECT count(*)::int count FROM pg_stat_activity WHERE datname=current_database() AND state='idle in transaction'")).rows[0].count,0);
+ }finally{await fixture.close();}
+});
+
+test('Odoo cursor stream: database fetch failure preserves the error and releases the reader',{skip:!enabled,timeout:15000},async()=>{
+ const fixture=await sourceFixture();
+ try {
+  fixture.source.on('connect',client=>{
+   const query=client.query.bind(client) as (text:string,parameters?:unknown[])=>Promise<QueryResult>;
+   client.query=((text:string,parameters?:unknown[])=>query(text.startsWith('FETCH FORWARD')?'SELECT 1/0':text,parameters)) as PoolClient['query'];
+  });
+  const snapshot=await fixture.openSnapshot();
+  const reader=new OdooPostgresSourceBatchReader(fixture.source,config,{...baseScope,...snapshot.evidence},snapshot);
+  await assert.rejects(async()=>{for await(const page of reader.readBatches({...baseRequest,frozenRevision:snapshot.evidence.frozenRevision}))void page;},{code:'22012'});
+  await assertCursorReleased(fixture.source);
  }finally{await fixture.close();}
 });

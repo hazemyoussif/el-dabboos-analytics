@@ -724,3 +724,66 @@ test('chunked exact evidence retains every case and an exact mismatch beyond the
   assert.deepEqual(last,{expected_value:'123.456789',actual_value:'123.456788',expected_count:'1',actual_count:'1'});
  }finally{await f.db.close();}
 });
+
+
+test('aggregate refresh reuses both immutable prior proofs without direct exactness scans',{skip:!enabled},async()=>{
+ const f=await setup();try {
+  f.source.rows=[januaryFact(),januaryFact({sourceRecordId:'unchanged-day',businessDate:'2026-01-20',value:'50.000000'})];
+  await f.run();let copiedUntouchedDays=false;
+  const guarded=new WeakSet<PoolClient>();
+  f.db.ingestor.on('acquire',client=>{
+   if(guarded.has(client))return;guarded.add(client);
+   const query=client.query.bind(client) as (text:string,parameters?:unknown[])=>Promise<QueryResult>;
+   client.query=(async(text:string,parameters?:unknown[])=>{
+    assert.ok(!text.startsWith('SELECT mart.drill_partition_exact'),'application must reuse accepted proof rather than rescan immutable contents');
+    if(text.startsWith('INSERT INTO mart.analytics_aggregate_bases SELECT tenant_id'))copiedUntouchedDays=true;
+    return query(text,parameters);
+   }) as PoolClient['query'];
+  });
+  f.source.rows[0]=januaryFact({value:'200.000000',sourceRevision:'3',sourceVersion:'changed'});
+  const result=await f.run();assert.equal(result.status,'passed');assert.equal(result.mismatchCount,0);
+  assert.equal(copiedUntouchedDays,true);assert.equal(await januaryValue(f.repository),250);
+ }finally{await f.db.close();}
+});
+
+for(const relation of ['analytics_drill_partitions','analytics_aggregate_proofs'])test(`aggregate refresh fully rebuilds when prior ${relation} proof is absent`,{skip:!enabled},async()=>{
+ const f=await setup();try {
+  f.source.rows=[januaryFact(),januaryFact({sourceRecordId:'unchanged-day',businessDate:'2026-01-20',value:'50.000000'})];
+  await f.run();
+  // Isolated fixture setup emulates legacy metadata with a missing accepted proof.
+  await f.db.admin.query(`ALTER TABLE mart.${relation} DISABLE TRIGGER immutable_history`);
+  await f.db.admin.query(`DELETE FROM mart.${relation} WHERE tenant_id=$1 AND partition_id IN(SELECT member.partition_id FROM mart.analytics_trusted_serving trusted JOIN mart.analytics_serving_members member USING(tenant_id,revision_id) WHERE trusted.tenant_id=$1 AND member.family='facts' AND member.month='2026-01-01')`,['a']);
+  await f.db.admin.query(`ALTER TABLE mart.${relation} ENABLE TRIGGER immutable_history`);
+  let rebuiltWholeMonth=false;
+  const guarded=new WeakSet<PoolClient>();
+  f.db.ingestor.on('acquire',client=>{
+   if(guarded.has(client))return;guarded.add(client);
+   const query=client.query.bind(client) as (text:string,parameters?:unknown[])=>Promise<QueryResult>;
+   client.query=(async(text:string,parameters?:unknown[])=>{
+    if(text.startsWith('INSERT INTO mart.analytics_aggregate_bases\n SELECT head.tenant_id')){rebuiltWholeMonth=true;assert.equal(parameters?.[3],null,'missing proof must disable partial-day copying');}
+    return query(text,parameters);
+   }) as PoolClient['query'];
+  });
+  f.source.rows[0]=januaryFact({value:'200.000000',sourceRevision:'3',sourceVersion:'changed'});
+  const result=await f.run();assert.equal(result.status,'passed');assert.equal(result.mismatchCount,0);
+  assert.equal(rebuiltWholeMonth,true);assert.equal(await januaryValue(f.repository),250);
+ }finally{await f.db.close();}
+});
+
+test('aggregate refresh database guard rejects incorrect new membership and rolls back publication',{skip:!enabled},async()=>{
+ const f=await setup();try {
+  const before=(await f.db.admin.query('SELECT revision_id FROM mart.analytics_trusted_serving')).rows[0].revision_id;
+  const cursor=(await f.db.admin.query('SELECT cutoff FROM mart.analytics_source_cursors')).rows[0].cutoff.toISOString();
+  const guarded=new WeakSet<PoolClient>();
+  f.db.ingestor.on('acquire',client=>{
+   if(guarded.has(client))return;guarded.add(client);
+   const query=client.query.bind(client) as (text:string,parameters?:unknown[])=>Promise<QueryResult>;
+   client.query=((text:string,parameters?:unknown[])=>query(text.startsWith('INSERT INTO mart.analytics_partition_facts SELECT tenant_id')?text+' AND false':text,parameters)) as PoolClient['query'];
+  });
+  f.source.rows=[januaryFact()];
+  await assert.rejects(f.run(),/Exact drill partition evidence required/);
+  assert.equal((await f.db.admin.query('SELECT revision_id FROM mart.analytics_trusted_serving')).rows[0].revision_id,before);
+  assert.equal((await f.db.admin.query('SELECT cutoff FROM mart.analytics_source_cursors')).rows[0].cutoff.toISOString(),cursor);
+  assert.equal((await f.db.admin.query('SELECT count(*)::int count FROM mart.analytics_fact_revisions')).rows[0].count,0);
+ }finally{await f.db.close();}
+});

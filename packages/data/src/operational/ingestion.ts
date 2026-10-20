@@ -1,7 +1,10 @@
+import {OperationalDependencyCandidate} from './dependency-candidate.ts';
+import {readLookupDependencyContext} from './lookup-dependency-store.ts';
 import type { PoolClient } from 'pg';
 import type { AnalyticsCursor,FactRevisionChange,ProductionFact } from '@el-dabboos/domain';
 import type { OperationDetails,OperationalBaseline,OperationalSnapshot } from './contracts.ts';
 import { planOperationalFacts,retiredOperationalFacts } from './facts.ts';
+import {readReceivableDependencyContext} from './receivable-dependency-store.ts';
 import { coveredOperationalFacts } from './ingestion-scope.ts';
 import {measureOperationalWork} from './progress.ts';
 import type {OperationalProgressObserver} from './progress.ts';
@@ -12,8 +15,12 @@ export async function ingestOperationalCandidate(client:PoolClient,scope:{baseli
  const months=(await client.query("SELECT to_char(month,'YYYY-MM') AS period FROM mart.analytics_serving_members WHERE tenant_id=$1 AND revision_id=$2 AND family='facts'",[baseline.tenantId,parent])).rows.map(row=>String(row.period));
  const knownMonths=new Set(months);
  const candidate=new CandidateFacts(client,baseline,details,knownMonths,observeProgress);
+ const dependencyContext=await readReceivableDependencyContext(client,baseline,cursor);
+ const dependencies=new OperationalDependencyCandidate();
+ const lookupContext=await readLookupDependencyContext(client,baseline,cursor);
  for(const month of missingOperationalMonths(baseline,source.cutoff,knownMonths))candidate.newMonths.add(month);
- for await(const page of source.records(baseline,cursor)) {
+ for await(const page of source.records(baseline,cursor,dependencyContext,lookupContext)) {
+  dependencies.accept(page);
   details.rowsDiscovered+=page.rows;if(page.cursor)objects[page.object]=page.cursor;
   const facts=[...page.facts];for(const retired of page.retired??[])facts.push(...await measureOperationalWork(observeProgress,'mart_retirement',()=>retiredOperationalFacts(client,baseline.tenantId,retired,source)));
   await candidate.accept(facts);
@@ -23,7 +30,8 @@ export async function ingestOperationalCandidate(client:PoolClient,scope:{baseli
  }
  details.canonicalRevisions=candidate.changes.length;details.durations.ingestionMs=performance.now()-start;
  details.newCursor={cutoff:source.cutoff,objects};
- return {changes:candidate.changes,cursor:details.newCursor,recordsChanged:candidate.identities.size};
+ return {changes:candidate.changes,cursor:details.newCursor,recordsChanged:candidate.identities.size,
+  ...dependencies.complete(details,dependencyContext?.initialized??false)};
 }
 class CandidateFacts {
  private readonly pending=new Map<string,ProductionFact>();

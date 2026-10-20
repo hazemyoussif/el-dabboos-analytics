@@ -4,7 +4,7 @@ import type { Pool,PoolClient } from 'pg';
 import type { AnalyticsCursor,AnalyticsJobRequest,AnalyticsJobRun,AnalyticsOperationalStore,AnalyticsOperationalTransaction,AnalyticsPartition,AnalyticsSourceSnapshot,OperationalReconciliation,FactRevisionChange } from '@el-dabboos/domain';
 import { tenantTransaction } from '../postgres/session.ts';
 import { recordOperationalRun,writeOperationalCursor } from '../postgres/operational-evidence.ts';
-import type { OperationDetails,OperationalBaseline,OperationalSnapshot } from './contracts.ts';
+import type { OperationDetails,OperationalBaseline,OperationalSnapshot,ReceivableDependency,LookupDependencyUpdate } from './contracts.ts';
 import {planOperationalFacts,writeOperationalChanges} from './facts.ts';
 import {measureOperationalWork} from './progress.ts';
 import { affectedMonths,refreshOperationalMonths } from './aggregates.ts';
@@ -14,6 +14,8 @@ import { sweepOperationalFacts } from './sweep.ts';
 import { ingestOperationalCandidate } from './ingestion.ts';
 import { readBaseline } from './baseline.ts';
 import { snapshotMetric } from './receivables.ts';
+import {writeReceivableDependencies} from './receivable-dependency-store.ts';
+import {writeLookupDependencies} from './lookup-dependency-store.ts';
 import type {OperationalProgressObserver} from './progress.ts';
 
 export class PostgresOperationalStore implements AnalyticsOperationalStore {
@@ -31,6 +33,8 @@ export class PostgresOperationalStore implements AnalyticsOperationalStore {
 }
 class OperationalTransaction implements AnalyticsOperationalTransaction {
  private changes:readonly FactRevisionChange[]=[];
+ private receivableDependencies:readonly ReceivableDependency[]|undefined;
+ private lookupDependencies:LookupDependencyUpdate|undefined;
  private source:OperationalSnapshot|undefined;private cases:PersistedExactCase[]=[];private rejected=false;
  private readonly details:OperationDetails={rowsDiscovered:0,newRows:0,updatedRows:0,canonicalRevisions:0,partitions:[],previousCursor:null,newCursor:null,refreshedMonths:[],durations:{}};
  constructor(private readonly client:PoolClient,private readonly baseline:OperationalBaseline,private readonly runId:string,private readonly observeProgress?:OperationalProgressObserver) {}
@@ -42,7 +46,7 @@ class OperationalTransaction implements AnalyticsOperationalTransaction {
  async ingest(snapshot:AnalyticsSourceSnapshot,cursor:AnalyticsCursor|null) {
   const source=this.requireSource(snapshot);
   const candidate=await ingestOperationalCandidate(this.client,{baseline:this.baseline,source,cursor,details:this.details,parent:await this.trustedRelease(),observeProgress:this.observeProgress});
-  this.changes=candidate.changes;return candidate;
+  this.changes=candidate.changes;this.receivableDependencies=candidate.receivableDependencies;this.lookupDependencies=candidate.lookupDependencies;return candidate;
  }
  async sweep(snapshot:AnalyticsSourceSnapshot) {
   const source=this.requireSource(snapshot);
@@ -76,7 +80,11 @@ class OperationalTransaction implements AnalyticsOperationalTransaction {
   await prepareActivatedPublication(this.client,{tenantId:this.baseline.tenantId,revisionId:release});
   await this.client.query('UPDATE mart.analytics_trusted_serving SET revision_id=$2 WHERE tenant_id=$1',[this.baseline.tenantId,release]);
  }
- commitCursor(cursor:AnalyticsCursor){return writeOperationalCursor(this.client,{tenantId:this.baseline.tenantId,runId:this.runId,cursor});}
+ async commitCursor(cursor:AnalyticsCursor){
+  await writeOperationalCursor(this.client,{tenantId:this.baseline.tenantId,runId:this.runId,cursor});
+  if(this.receivableDependencies)await writeReceivableDependencies(this.client,{baseline:this.baseline,runId:this.runId,cutoff:cursor.cutoff},this.receivableDependencies);
+  if(this.lookupDependencies)await writeLookupDependencies(this.client,{baseline:this.baseline,runId:this.runId,cutoff:cursor.cutoff},this.lookupDependencies);
+ }
  async record(run:AnalyticsJobRun,caseIds:readonly string[]) {
   if(this.rejected)await persistExactCases(this.client,this.baseline.tenantId,this.source!,this.cases);
   await recordOperationalRun(this.client,run,caseIds);

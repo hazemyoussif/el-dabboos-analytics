@@ -1,5 +1,5 @@
 import type { Pool } from 'pg';
-import type { AnalyticsCursor, AnalyticsPartition, AnalyticsOperationalSource, IngestionBatch } from '@el-dabboos/domain';
+import type { AnalyticsCursor, AnalyticsPartition, AnalyticsOperationalSource, IngestionBatch, SourceReadRequest } from '@el-dabboos/domain';
 import { OdooSnapshotLease } from '../odoo/snapshot.ts';
 import { OdooPostgresSourceBatchReader } from '../odoo/reader.ts';
 import { mapOdooRecord } from '../odoo/mapper.ts';
@@ -7,8 +7,10 @@ import { odooIncrementalWindow } from '../odoo/incremental-watermark.ts';
 import {measureOperationalWork} from './progress.ts';
 import type {OperationalProgressObserver} from './progress.ts';
 import type { OdooSourceConfig } from '../odoo/config.ts';
-import type { OperationalBaseline, OperationalSnapshot } from './contracts.ts';
+import type { OperationalBaseline, OperationalSnapshot, OperationalPage, ReceivableDependencyContext, LookupDependencyContext } from './contracts.ts';
 import { readExactEventControls } from './source-controls.ts';
+import {readReceivableDependencies} from './receivable-dependency-source.ts';
+import {discoverLookupChanges} from './lookup-discovery.ts';
 import { receivableChangedFrom,readReceivableSnapshot,receivableControls,snapshotMetric,monthEnd } from './receivables.ts';
 
 /** Dedicated owner and page pools keep the retained snapshot alive throughout the job. */
@@ -30,50 +32,63 @@ export class OdooOperationalSnapshot implements OperationalSnapshot {
  close(){return this.closing??=this.closeSource();}
  retain(){if(this.closing)throw new Error('Closed operational snapshot');this.references.count++;return new OdooOperationalSnapshot(this.pool,this.config,this.lease,this,this.references);}
  private async closeSource(){try{await this.lease.assertAlive();}finally{if(--this.references.count===0)await this.lease.close();}}
- async *records(baseline:OperationalBaseline,cursor:AnalyticsCursor|null) {
-  const window=odooIncrementalWindow(cursor,this.cutoff);
+ async *records(baseline:OperationalBaseline,cursor:AnalyticsCursor|null,dependencies?:ReceivableDependencyContext,lookups?:LookupDependencyContext) {
+  const observation=yield* discoverLookupChanges({pool:this.pool,lease:this.lease,config:this.config,observe:this.references.observeProgress},cursor,lookups);
+  // Establish current lookup content across history before allowing metadata-only skips.
+  const window=odooIncrementalWindow(observation?.initialize?null:cursor,this.cutoff);
   for(const object of ['sale_order','account_move'] as const) {
    const mapping=baseline.mappings.find(mapping=>mapping.measures.some(rule=>rule.sourceObject===object));
    if(!mapping)throw new Error('Approved operational object mapping required');
-   const scope={object,from:baseline.from,to:baseline.to,timeZone:mapping.measures[0]!.timeZone,...this.lease.evidence,mode:'incremental' as const,modificationFrom:window.modificationFrom};
+   const scope={object,from:baseline.from,to:baseline.to,timeZone:mapping.measures[0]!.timeZone,...this.lease.evidence,mode:'incremental' as const,modificationFrom:window.modificationFrom,...(observation?{lookupChanges:observation.changes}:{})};
    const reader=new OdooPostgresSourceBatchReader(this.pool,this.config,scope,this.lease);
-   let position:string|undefined;
-   do {
-    const page=await measureOperationalWork(this.references.observeProgress,'source_page',()=>reader.readBatch({...this.config,limit:this.config.batchSize,frozenRevision:this.revision,...(position?{cursor:position}:{})}));
+   for await(const page of operationalPages(reader,{...this.config,limit:this.config.batchSize,frozenRevision:this.revision},this.references.observeProgress)) {
     const batch=operationalBatch(mapping,this.config,this.lease);
     const retired=page.rows.filter(row=>row.object==='account_move'&&row.payload.state!=='posted'&&!row.payload.business_date);
     const facts=page.rows.filter(row=>!retired.includes(row)).flatMap(row=>mapOdooRecord(row,mapping,batch));
-    yield {object,cursor:page.nextCursor??page.watermarkEnd??position,facts,rows:page.rows.length,retired:retired.map(row=>({object:row.object,id:row.recordId,version:row.version,revision:row.revision,updatedAt:row.sourceUpdatedAt!}))};
-    position=page.nextCursor;
-   }while(position);
+    yield {object,cursor:page.nextCursor??page.watermarkEnd,facts,rows:page.rows.length,retired:retired.map(row=>({object:row.object,id:row.recordId,version:row.version,revision:row.revision,updatedAt:row.sourceUpdatedAt!}))};
+   }
   }
-  yield* this.snapshots(baseline,cursor);
+  yield* this.snapshots(baseline,cursor,false,dependencies);
  }
  async *recordsMonth(baseline:OperationalBaseline,month:string) {
   for(const object of ['sale_order','account_move'] as const) {
    const mapping=baseline.mappings.find(mapping=>mapping.measures.some(rule=>rule.sourceObject===object));if(!mapping)throw new Error('Approved partition mapping required');
    const reader=new OdooPostgresSourceBatchReader(this.pool,this.config,{object,from:`${month}-01`,to:monthEnd(month),timeZone:mapping.measures[0]!.timeZone,...this.lease.evidence},this.lease);
-   let position:string|undefined;
-   do {
-    const page=await measureOperationalWork(this.references.observeProgress,'source_page',()=>reader.readBatch({...this.config,limit:this.config.batchSize,frozenRevision:this.revision,...(position?{cursor:position}:{})}));
+   for await(const page of operationalPages(reader,{...this.config,limit:this.config.batchSize,frozenRevision:this.revision},this.references.observeProgress)) {
     yield {object,facts:page.rows.flatMap(row=>mapOdooRecord(row,mapping,operationalBatch(mapping,this.config,this.lease))),rows:page.rows.length};
-    position=page.nextCursor;
-   }while(position);
+   }
   }
  }
- async *snapshots(baseline:OperationalBaseline,cursor:AnalyticsCursor|null,force=false) {
+ async *snapshots(baseline:OperationalBaseline,cursor:AnalyticsCursor|null,force=false,dependencies?:ReceivableDependencyContext):AsyncGenerator<OperationalPage> {
   if(!baseline.mappings.some(mapping=>mapping.measures.some(rule=>rule.measureId==='net_aged_receivable')))return;
-  const changed=force?baseline.from:await measureOperationalWork(this.references.observeProgress,'source_receivable_discovery',()=>receivableChangedFrom(this.pool,this.lease,this.config,cursor));
-  if(!changed)return;
-  // Phase-A summaries have no component-level previous-date ledger. Every published
-  // cutoff is the smallest provably complete dependency set for a possible date move.
-  const dependencyFrom=baseline.from;
+  const dependencyFrom=force?baseline.from:(yield* this.receivableDependencyChanges(baseline,cursor,dependencies));
+  if(!dependencyFrom)return;
   for(let month=baseline.from.slice(0,7);month<=baseline.to.slice(0,7);month=followingMonth(month)) {
    const cutoff=monthEnd(month);if(cutoff<dependencyFrom||(baseline.coveredMonths&&!baseline.coveredMonths.includes(month)))continue;
    const result=await measureOperationalWork(this.references.observeProgress,'source_receivable_snapshot',()=>readReceivableSnapshot(this.pool,this.lease,this.config,baseline,cutoff));
    this.snapshotControls.set(month,result.expected);
    yield {object:'receivable_cutoff',facts:result.facts,rows:1};
   }
+ }
+ private async *receivableDependencyChanges(baseline:OperationalBaseline,cursor:AnalyticsCursor|null,context:ReceivableDependencyContext|undefined):AsyncGenerator<OperationalPage,string|null> {
+  if(!context) {
+   const changed=await measureOperationalWork(this.references.observeProgress,'source_receivable_discovery',()=>receivableChangedFrom(this.pool,this.lease,this.config,cursor));
+   return changed?baseline.from:null;
+  }
+  let from=context.initialized?null:baseline.from;
+  const pages=readReceivableDependencies(this.pool,this.lease,this.config,{cursor,initialize:!context.initialized});
+  try {
+   while(true) {
+    const page=await measureOperationalWork(this.references.observeProgress,'source_receivable_discovery',()=>pages.next());
+    if(page.done)break;
+    const previous=context.initialized?await context.previousFrom(page.value):null;
+    for(const dependency of page.value)from=earliestDependencyDate(from,dependency.from??baseline.from);
+    from=earliestDependencyDate(from,previous);
+    yield {object:'receivable_dependency',facts:[],rows:0,receivableDependencies:page.value};
+   }
+  }finally{await pages.return(undefined);}
+  yield {object:'receivable_dependency',facts:[],rows:0,receivableDependenciesComplete:true};
+  return from;
  }
  async controls(baseline:OperationalBaseline,partitions:readonly AnalyticsPartition[]) {
   const eventControls=await readExactEventControls(this.pool,this.lease,this.config,baseline,partitions.filter(partition=>!snapshotMetric(partition.metric)));
@@ -112,3 +127,20 @@ function operationalBatch(mapping:OperationalBaseline['mappings'][number],config
 }
 
 function followingMonth(month:string){const date=new Date(`${month}-01T00:00:00Z`);date.setUTCMonth(date.getUTCMonth()+1);return date.toISOString().slice(0,7);}
+
+/** Preserve source-page timing while always closing a cancelled read iterator. */
+async function* operationalPages(reader:OdooPostgresSourceBatchReader,request:SourceReadRequest,observe:OperationalProgressObserver|undefined) {
+ const pages=reader.readBatches(request);
+ try {
+  while(true) {
+   const page=await measureOperationalWork(observe,'source_page',()=>pages.next());
+   if(page.done)return;
+   yield page.value;
+  }
+ }finally{await pages.return(undefined);}
+}
+
+function earliestDependencyDate(current:string|null,next:string|null):string|null {
+ if(!current)return next;
+ return next&&next<current?next:current;
+}

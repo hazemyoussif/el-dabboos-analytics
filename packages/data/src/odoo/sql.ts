@@ -1,13 +1,12 @@
+import {odooPartnerPresentation} from './partner-projection.ts';
 // Governed Odoo modification columns: avoid serializing whole lookup rows for every
 // cursor predicate/sort evaluation; optional presentation fields below retain compatibility.
 const updated = "greatest(transaction.write_date,partner.write_date,rep.write_date,rep_partner.write_date,business.write_date,state.write_date)";
 const dimensions = (fields:readonly string[]) => {
- const optional=(name:string)=>fields.includes(name)?`partner.${name}::text`:'NULL::text';
+ const presentation=odooPartnerPresentation(fields);
  return `partner.id::text partner_id,partner.name partner_name,rep.id::text salesperson_id,rep_partner.name salesperson_name,
- business.id::text business_line_id,business.name::text business_line_name,partner.city,state.id::text state_id,state.name state_name,${optional('area')} area,
- coalesce(${optional('latitude')},${optional('partner_latitude')}) latitude,
- coalesce(${optional('longitude')},${optional('partner_longitude')}) longitude,
- coalesce(${optional('gps_shop_location')},${optional('shop_gps_location')}) shop_gps`;
+ business.id::text business_line_id,business.name::text business_line_name,partner.city,state.id::text state_id,state.name state_name,
+ ${presentation.area} area,${presentation.latitude} latitude,${presentation.longitude} longitude,${presentation.shopGps} shop_gps`;
 };
 const joins = (salesperson: string) => `LEFT JOIN res_partner partner ON partner.id=transaction.partner_id
  LEFT JOIN res_users rep ON rep.id=transaction.${salesperson} LEFT JOIN res_partner rep_partner ON rep_partner.id=rep.partner_id
@@ -18,20 +17,34 @@ const lineage = `coalesce((SELECT jsonb_agg(DISTINCT jsonb_build_object('order_i
  JOIN sale_order_line order_line ON order_line.id=bridge.order_line_id JOIN sale_order linked_order ON linked_order.id=order_line.order_id
  WHERE invoice_line.move_id=transaction.id AND linked_order.company_id=transaction.company_id),'[]'::jsonb) order_lineage`;
 /** Closed source object vocabulary, parameterized scope/date/cursor/limit; no report view or creator attribution. */
-export function odooTransactionSql(object: 'sale_order'|'account_move',partnerFields:readonly string[]=[]): string {
-  const date = object==='sale_order' ? "((transaction.date_order AT TIME ZONE 'UTC') AT TIME ZONE $7)::date" : 'transaction.invoice_date';
+export function odooTransactionSql(object: 'sale_order'|'account_move',partnerFields:readonly string[]=[],mode:'page'|'stream'='page',lookupScoped=false): string {
+  const parameters=mode==='page'
+    ?{timeZone:'$7',incremental:'$8',cutoff:'$9',limit:' LIMIT $6'}
+    :{timeZone:'$6',incremental:'$7',cutoff:'$8',limit:''};
+  const lookupPredicate=lookupScoped?changedLookupPredicate(object,mode==='page'?10:9):'';
+  const date = object==='sale_order' ? `((transaction.date_order AT TIME ZONE 'UTC') AT TIME ZONE ${parameters.timeZone})::date` : 'transaction.invoice_date';
   const amounts = object==='sale_order'
     ? 'transaction.amount_untaxed::text amount_untaxed,transaction.amount_tax::text amount_tax,transaction.amount_total::text amount_total'
     : 'transaction.amount_untaxed_signed::text amount_untaxed,transaction.amount_tax_signed::text amount_tax,transaction.amount_total_signed::text amount_total';
   const accounting = object==='account_move' ? `,transaction.move_type,transaction.payment_state,${lineage}` : '';
-  const accountingScope = object==='account_move' ? "AND transaction.move_type IN ('out_invoice','out_refund') AND ($8::boolean OR transaction.state='posted')" : '';
+  const accountingScope = object==='account_move' ? `AND transaction.move_type IN ('out_invoice','out_refund') AND (${parameters.incremental}::boolean OR transaction.state='posted')` : '';
   return `SELECT transaction.id::text id,transaction.company_id::text company_id,
  to_char(${updated},'YYYY-MM-DD HH24:MI:SS.US') write_date,${date}::date::text business_date,
  transaction.state,currency.name currency,transaction.currency_id::text currency_id,${amounts},${dimensions(partnerFields)}${accounting}
  FROM ${object} transaction ${joins(object==='sale_order' ? 'user_id' : 'invoice_user_id')}
- WHERE $7::text IS NOT NULL AND transaction.company_id=ANY($1::int[]) AND ($8::boolean OR (${date}>=$2::date AND ${date}<$3::date+INTERVAL '1 day'))
+ WHERE ${parameters.timeZone}::text IS NOT NULL AND transaction.company_id=ANY($1::int[]) AND (${parameters.incremental}::boolean OR (${date}>=$2::date AND ${date}<$3::date+INTERVAL '1 day'))
  ${accountingScope}
+ ${lookupPredicate}
  AND (${updated},transaction.id)>($4::timestamp,$5::bigint)
- AND ${updated}<=$9::timestamptz AT TIME ZONE 'UTC'
- ORDER BY ${updated},transaction.id LIMIT $6`;
+ AND ${updated}<=${parameters.cutoff}::timestamptz AT TIME ZONE 'UTC'
+ ORDER BY ${updated},transaction.id${parameters.limit}`;
+}
+
+function changedLookupPredicate(object:'sale_order'|'account_move',position:number) {
+ const salesperson=object==='sale_order'?'user_id':'invoice_user_id';
+ return `AND (transaction.write_date>=$4::timestamp
+  OR transaction.partner_id=ANY($${position}::bigint[])
+  OR transaction.${salesperson}=ANY($${position+1}::bigint[])
+  OR transaction.business_line_id=ANY($${position+2}::bigint[])
+  OR partner.state_id=ANY($${position+3}::bigint[]))`;
 }
