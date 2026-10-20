@@ -1,3 +1,4 @@
+import {calendarValueSql} from '../postgres/calendar-sql.ts';
 import {compatibleQuantityMetrics,semanticCatalog,requiredMeasures,timeDimensions} from '@el-dabboos/domain';
 import type {AnalyticsContext,AnalyticsQuery,BusinessMetricId} from '@el-dabboos/domain';
 import {groupedValueExpression,groupedUnsafeExpression} from '../postgres/grouped-value.ts';
@@ -30,8 +31,7 @@ export function preparedReduction(query:AnalyticsQuery,context:AnalyticsContext,
 }
 function filterValue(dimension:import('@el-dabboos/domain').DimensionId,params:unknown[]){
  if(!timeDimensions.includes(dimension))return `cell.dimensions->>${bind(params,dimension)}`;
- const formats={date:'YYYY-MM-DD',month:'YYYY-MM',quarter:'YYYY-"Q"Q',year:'YYYY'};
- return `to_char(cell.business_date,${bind(params,formats[dimension as keyof typeof formats])})`;
+ return calendarValueSql(dimension,'cell.business_date');
 }
 
 function ratioComponents(query:AnalyticsQuery,params:unknown[],categorical:boolean){

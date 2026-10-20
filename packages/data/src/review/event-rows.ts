@@ -1,5 +1,6 @@
+import {calendarValueSql} from '../postgres/calendar-sql.ts';
 import {dimensionLabelField} from '../postgres/query-labels.ts';
-import {compatibleQuantityMetrics,requiredMeasures} from '@el-dabboos/domain';
+import {compatibleQuantityMetrics,requiredMeasures,semanticCatalog,timeDimensions} from '@el-dabboos/domain';
 import type {AnalyticsQuery,AnalyticsContext,ProductionFact,DateRange} from '@el-dabboos/domain';
 import type {PoolClient} from 'pg';
 import {businessDefinitionVersion} from '../business/definitions.ts';
@@ -11,12 +12,14 @@ export type ReviewReadFact=Pick<ProductionFact,'tenantId'|'measureId'|'businessD
 export async function reviewEventRows(client:PoolClient,scope:{query:AnalyticsQuery;context:AnalyticsContext;range:DateRange;family:'review'|'business'}){
  const {query,context,range,family}=scope,filters=[...(query.filters??[]),...(context.enforcedFilters??[])];
  const quantities=compatibleQuantityMetrics.includes(query.metric as import('@el-dabboos/domain').BusinessMetricId);
- const dimensions=[...new Set([...(quantities?['uom' as const]:[]),query.groupBy,...filters.map(filter=>filter.dimension)].filter(dimension=>dimension&&!['date','month','quarter','year'].includes(dimension)))];
+ const semantics=semanticCatalog[query.metric].semantics;
+ const distinct=semantics.kind==='distinct_count'?[semantics.dimension]:[];
+ const dimensions=[...new Set([...distinct,...(quantities?['uom' as const]:[]),query.groupBy,...filters.map(filter=>filter.dimension)].filter(dimension=>dimension&&!timeDimensions.includes(dimension)))];
  const params:unknown[]=[context.tenantId,requiredMeasures(query.metric),range.from,range.to,(family==='business'?businessDefinitionVersion:reviewDefinitionVersion)()];
  const familyParam=bind(params,family),field=dimensionLabelField(query.groupBy),labelParam=field?bind(params,field):null;
  const dimensionParams=dimensions.map(dimension=>bind(params,dimension));
  const projection=dimensionParams.length?`jsonb_strip_nulls(jsonb_build_object(${dimensionParams.map(parameter=>`${parameter}::text,fact.dimensions->${parameter}::text`).join(',')}))`:"'{}'::jsonb";
- const predicates=filters.map(filter=>`fact.dimensions->>${bind(params,filter.dimension)}=ANY(${bind(params,filter.values)}::text[])`);
+ const predicates=filters.map(filter=>`${timeDimensions.includes(filter.dimension)?calendarValueSql(filter.dimension,'fact.business_day::date'):`fact.dimensions->>${bind(params,filter.dimension)}`}=ANY(${bind(params,filter.values)}::text[])`);
  const period=eventPeriod(query);
  const label=labelParam?`CASE WHEN count(DISTINCT display_labels->>${labelParam})=1 THEN min(display_labels->>${labelParam}) END`:'NULL::text';
  const rows=(await client.query(`WITH published_partitions AS MATERIALIZED (
@@ -36,6 +39,7 @@ export async function reviewEventRows(client:PoolClient,scope:{query:AnalyticsQu
 }
 
 function eventPeriod(query:AnalyticsQuery){
+ if(query.groupBy==='week')return `to_char(business_day::date-((extract(dow from business_day::date)::int+1)%7),'YYYY-MM-DD')`;
  if(query.groupBy==='date')return 'business_day';
  if(query.groupBy==='month')return 'left(business_day,7)';
  if(query.groupBy==='year')return 'left(business_day,4)';

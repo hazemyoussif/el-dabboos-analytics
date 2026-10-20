@@ -70,7 +70,7 @@ export function formatKey(key: string | null, dimension: DimensionId | undefined
   if (key==='unassigned')return locale==='ar'?'غير مسند':'Unassigned';
   if (dimension === 'branch' && profile.branchLabels[key]) return profile.branchLabels[key][locale];
   if (dimension === 'month' && /^\d{4}-\d{2}$/.test(key)) return new Intl.DateTimeFormat(localeTag(locale, profile), { month: 'short', year: 'numeric', timeZone: profile.timeZone }).format(new Date(`${key}-01T12:00:00Z`));
-  if (dimension === 'date' && /^\d{4}-\d{2}-\d{2}$/.test(key)) return formatDate(key, locale, profile);
+  if ((dimension === 'date'||dimension==='week') && /^\d{4}-\d{2}-\d{2}$/.test(key)) return formatDate(key, locale, profile);
   const match = key.match(/^(customer|product|equipment|salesperson|technician)_(\d+)$/);
   if (match) return `${copy[locale].dimensions[match[1] as DimensionId]} ${numberFormatter(localeTag(locale, profile), { useGrouping: false }).format(Number(match[2]))}`;
   return key.replaceAll('_', ' ');

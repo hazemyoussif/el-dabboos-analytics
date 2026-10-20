@@ -1,0 +1,36 @@
+.sales-command-center { min-width: 0; }
+.sales-command-center > header { max-width: 64rem; margin-block-end: var(--space-4); }
+.sales-command-center > form { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: end; }
+.sales-command-center > form label { display: grid; gap: var(--space-1); min-width: 0; }
+.sales-command-center > form input { width: 100%; min-width: 0; }
+.sales-command-center > form button, .sales-command-center > form input { min-height: 44px; }
+.sales-command-section { margin-block: var(--space-6); border-block-start: 1px solid var(--border-default); padding-block-start: var(--space-4); }
+.sales-command-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); }
+.sales-command-reading { min-width: 0; }
+.sales-command-table { grid-column: 1 / -1; }
+.sales-command-period, .sales-command-basis, .sales-command-provenance { font-size: .85rem; overflow-wrap: anywhere; }
+.sales-command-period { color: var(--text-secondary); }
+.sales-command-basis { margin-block: var(--space-2); }
+.sales-command-provenance { padding-block: var(--space-2); }
+.sales-command-unavailable { margin-block-start: var(--space-4); overflow-wrap: anywhere; }
+.sales-command-unavailable summary { cursor: pointer; padding-block: var(--space-2); }
+.sales-command-unavailable li { margin-block: var(--space-3); }
+@media (max-width: 1280px) { .sales-command-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .sales-command-grid { grid-template-columns: minmax(0, 1fr); } }
+
+.sales-command-line, .sales-command-bar { grid-column: 1 / -1; }
+.sales-command-tables { margin-block-start: var(--space-4); }
+.sales-command-tables > summary { cursor: pointer; min-height: 44px; padding-block: var(--space-3); font-weight: 600; }
+.sales-command-comparison { margin-block: var(--space-2); font-size: .85rem; }
+.sales-command-insight { font-size: 1.1rem; }
+
+.sales-command-owners dl > div { display: flex; flex-wrap: wrap; gap: var(--space-2); padding-block: var(--space-1); }
+.sales-command-owners dt { font-weight: 600; }
+.sales-command-owners dd { margin: 0; }
+
+.sales-command-center > header h1 { margin-block: 0 var(--space-2); line-height: 1.25; }
+.sales-command-center > header p { margin-block: var(--space-2); }
+.sales-command-kpi .widget-heading { min-height: 3rem; }
+
+.sales-command-help { margin-block: var(--space-2); }
+.sales-command-help > summary { cursor: pointer; min-height: 44px; padding-block: var(--space-2); }

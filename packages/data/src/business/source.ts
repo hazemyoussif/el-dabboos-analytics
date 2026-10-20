@@ -1,6 +1,8 @@
+import {assertSalesCommandHeaders} from './sales-command-controls.ts';
+import {commandInvoiceRecipe,commandReceiptRecipe,commandOrderRecipe,commandDebtRecipe,commandSameDayRecipe} from './sales-command-recipes.ts';
 import {BusinessSourceLabels} from './labels.ts';
 import type {Pool,PoolClient} from 'pg';
-import {requiredMeasures,semanticCatalog,validateProductionFact} from '@el-dabboos/domain';
+import {currentSalesCommandMetrics,requiredMeasures,semanticCatalog,validateProductionFact} from '@el-dabboos/domain';
 import type {ProductionFact,SourceMapping,DimensionId,FactMeasureId} from '@el-dabboos/domain';
 import type {OdooSourceConfig} from '../odoo/config.ts';
 import type {OdooSnapshotLease} from '../odoo/snapshot.ts';
@@ -12,7 +14,7 @@ import {stockRecipe,movementRecipe,unbilledRecipe,cashLedgerRecipe,payableRecipe
 import {businessSourceObject,currentBusinessMetrics} from './definitions.ts';
 interface SourceVector {id:string;business_date:string;company_id:number;currency:string;invalid:boolean;dimensions:Partial<Record<DimensionId,string|null>>;values:Partial<Record<FactMeasureId,string>>}
 interface SourceRow {id:string;business_date:string;company_id:number;currency:string;measure_id:FactMeasureId;value:string;invalid:boolean;dimensions:Partial<Record<DimensionId,string|null>>;labels?:ProductionFact['displayLabels']}
-const recipes=[['business_invoice_quantity',invoiceQuantityRecipe],['business_invoice',invoiceRecipe],['business_cash',cashRecipe],['business_customer',customerRecipe],['business_receivable',receivableRecipe],['business_stock',stockRecipe],['business_movement',movementRecipe],['business_sale_exception',unbilledRecipe(false)],['business_purchase_exception',unbilledRecipe(true)],['business_cash_ledger',cashLedgerRecipe],['business_payable',payableRecipe]] as const;
+const recipes=[['command_invoice',commandInvoiceRecipe],['command_receipt',commandReceiptRecipe],['command_order',commandOrderRecipe],['command_receivable',commandDebtRecipe],['command_allocation',commandSameDayRecipe],['business_invoice_quantity',invoiceQuantityRecipe],['business_invoice',invoiceRecipe],['business_cash',cashRecipe],['business_customer',customerRecipe],['business_receivable',receivableRecipe],['business_stock',stockRecipe],['business_movement',movementRecipe],['business_sale_exception',unbilledRecipe(false)],['business_purchase_exception',unbilledRecipe(true)],['business_cash_ledger',cashLedgerRecipe],['business_payable',payableRecipe]] as const;
 /** One exported, bounded read-only source snapshot; independent aggregate controls precede promotion. */
 export class OdooBusinessReader {
  private readonly end:string;
@@ -25,7 +27,7 @@ export class OdooBusinessReader {
   if(scope.mapping.tenantId!==config.tenantId||scope.mapping.sourceId!==config.sourceId)throw new Error('Business source identity conflict');
   this.day=reviewBusinessDate(lease.evidence.sourceAsOf,scope.mapping.measures[0]!.timeZone);
   if(scope.month>this.day.slice(0,7))throw new Error('Future business period unavailable');
-  if(scope.month!==this.day.slice(0,7)&&scope.mapping.capabilities.some(capability=>currentBusinessMetrics.includes(capability.metric as import('@el-dabboos/domain').BusinessMetricId)))throw new Error('Current snapshots cannot load into past months');
+  if(scope.month!==this.day.slice(0,7)&&scope.mapping.capabilities.some(capability=>(currentBusinessMetrics.includes(capability.metric as import('@el-dabboos/domain').BusinessMetricId)||currentSalesCommandMetrics.includes(capability.metric as import('@el-dabboos/domain').SalesCommandMetricId))))throw new Error('Current snapshots cannot load into past months');
   const end=new Date(Date.UTC(Number(scope.month.slice(0,4)),Number(scope.month.slice(5)),0)).toISOString().slice(0,10);
   this.end=end<this.day?end:this.day;
  }
@@ -65,6 +67,7 @@ export class OdooBusinessReader {
    }finally{try{await client.query('ROLLBACK');}catch{broken=true;}client.removeListener('error',onError);client.release(broken);}
   }
   await this.assertInvoiceHeaders(controls);
+  await this.assertCommandHeaders(controls);
   for(const rule of this.scope.mapping.measures)if(!controls.some(control=>control.measure===rule.measureId&&control.dimensions===null))controls.push({measure:rule.measureId,dimensions:null,value:'0.000000',count:'0'});
   return controls;
  }
@@ -92,7 +95,14 @@ export class OdooBusinessReader {
   validateProductionFact(fact,mapping);return fact;
  }
  private async begin(client:PoolClient){await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');await this.lease.importInto(client);await client.query("SELECT set_config('statement_timeout',$1,true),set_config('TimeZone','UTC',true)",[String(this.config.statementTimeoutMs)]);}
+ private async assertCommandHeaders(controls:ReviewControl[]){
+  if(!this.scope.mapping.measures.some(rule=>rule.measureId.startsWith('command_')))return;
+  const client=await this.pool.connect();let broken=false;const onError=()=>{broken=true;};client.on('error',onError);
+  try{await this.begin(client);await assertSalesCommandHeaders(client,controls,{companyId:Number(this.config.companyIds[0]),from:this.scope.month+'-01',to:this.end,timeZone:this.scope.mapping.measures[0]!.timeZone,measures:this.scope.mapping.measures.map(rule=>rule.measureId)});await this.lease.assertAlive();}
+  finally{try{await client.query('ROLLBACK');}catch{broken=true;}client.removeListener('error',onError);client.release(broken);}
+ }
  private async assertInvoiceHeaders(controls:ReviewControl[]){
+  if(!this.scope.mapping.measures.some(rule=>rule.sourceObject==='business_invoice'))return;
   const client=await this.pool.connect();let broken=false;const onError=()=>{broken=true;};client.on('error',onError);
   try{
    await this.begin(client);

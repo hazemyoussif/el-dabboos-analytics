@@ -18,6 +18,14 @@ Snapshot preparation applies the versioned source contract in the background: co
 
 Prepared membership references the existing immutable input revision. Initial coverage is built and verified before activation. Once activated, a source publication cannot become trusted before its required prepared coverage is validated. Failed preparation leaves the previous trusted release available. Backdated edits invalidate affected event dates and dependent snapshot preparation signatures. A later complete observation remains its accepted whole population until that source cutoff is revalidated; rebuilding old mart data does not prove fresh later source observations. Current-only observations do not fabricate past inventory.
 
+A Review/Business exposure retains its RR/RO source snapshot through extraction,
+independent controls and the exact source/mart comparison. A checked source-read
+handoff then closes that lease before offline preparation. Preparation consumes
+only the reconciled facts and controls inside the same publication transaction;
+it does not reread Odoo or relabel its source cutoff. Source loss before handoff,
+failed handoff, failed preparation or parent conflict rolls back the publication.
+The source lease deadline bounds source observation, not subsequent mart work.
+
 Unchanged data members are reused. New validation evidence records the observed source cutoff separately from the original data extraction watermark. No-change detection must compare complete canonical populations and exact states, not summary totals alone. Preparation is bounded and resumable; it does not insert a full new copy merely because a lease timestamp changed.
 
 The implementation will use additive PostgreSQL tables with forced tenant RLS and immutable contents, through existing role and publication boundaries. No source write, permission expansion, new external database/cache, or existing-table rewrite is part of this design. Storage and write amplification must be measured before company application.

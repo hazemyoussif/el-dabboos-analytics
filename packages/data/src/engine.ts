@@ -98,6 +98,7 @@ function currentKeys(facts: readonly AnalyticsFact[], query: AnalyticsQuery, con
     : facts.filter(fact => inRange(fact, query.dateRange));
   const keys = new Set(source.filter(fact => filtered(fact, query, context) && (snapshot || inRange(fact, query.dateRange)))
     .map(fact => dimension(fact, groupBy)).filter((key): key is string => key !== undefined));
+  if(groupBy==='week'&&query.dateRange)return periodKeys(query.dateRange,groupBy);
   if (snapshot && isTime(groupBy)) {
     if (query.dateRange) return periodKeys(query.dateRange, groupBy);
     return [...new Set(facts.filter(fact => requiredMeasures(query.metric).includes(fact.measureId) && filtered(fact, query, context))
@@ -187,14 +188,12 @@ export function executeFacts(facts: readonly AnalyticsFact[], query: AnalyticsQu
   if (query.analysis?.topN) {
     rows = [...rows].sort((a, b) => numericOrder(a, b, query.analysis!.topN!.direction)).slice(0, query.analysis.topN.limit);
   }
-  const percentage = percentageAnalysis(query.analysis);
-  return { metric: query.metric, groupBy: query.groupBy ?? null, rows,
-    metadata: { sourceId: execution.sourceId, executedAt: execution.executedAt,
-      ...(dataThrough ? { dataThrough } : {}),
-      ...(execution.sourceAsOf ? { sourceAsOf: execution.sourceAsOf } : {}),
-      metricType: percentage ? 'percentage' : metric.type,
-      ...(percentage ? { unit: '%' } : metric.presentation.unit ? { unit: metric.presentation.unit } : {}),
-      semantics: metric.semantics.kind } };
+  return {metric:query.metric,groupBy:query.groupBy??null,rows,metadata:factResultMetadata(query,execution,dataThrough)};
+}
+/** Projection owns executed-analysis provenance and the resulting display unit together. */
+function factResultMetadata(query:AnalyticsQuery,execution:ExecutionMetadata,dataThrough:string|undefined):AnalyticsResult['metadata'] {
+ const metric=semanticCatalog[query.metric],percentage=percentageAnalysis(query.analysis);
+ return {sourceId:execution.sourceId,executedAt:execution.executedAt,...(dataThrough?{dataThrough}:{}),...(execution.sourceAsOf?{sourceAsOf:execution.sourceAsOf}:{}),metricType:percentage?'percentage':metric.type,...(percentage?{unit:'%'}:metric.presentation.unit?{unit:metric.presentation.unit}:{}),semantics:metric.semantics.kind,...(query.analysis?{analysis:query.analysis}:{})};
 }
 
 /** Positive net contributions only; nonpositive customers have no positive-sales Pareto share. */

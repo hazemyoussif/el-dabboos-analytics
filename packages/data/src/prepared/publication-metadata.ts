@@ -1,5 +1,5 @@
 import type {PoolClient} from 'pg';
-import {businessMetricIds,publishedQueryIssues} from '@el-dabboos/domain';
+import {businessFamilyMetricIds,publishedQueryIssues} from '@el-dabboos/domain';
 import type {AnalyticsContext,AnalyticsQuery,BusinessMetricId,PublishedAnalyticsCapabilities} from '@el-dabboos/domain';
 import {compatibleOperationalDefinition} from '../operational/definition-version.ts';
 import {trustedFactCapabilities} from '../operational/trusted-capabilities.ts';
@@ -36,7 +36,7 @@ export async function preparedPublication(client:PoolClient,context:AnalyticsCon
 /** Resolve semantic source priority once, before prepared-cell selection. Missing cells never change it. */
 export function preparedQueryRelease(query:AnalyticsQuery,context:AnalyticsContext,publication:PreparedPublication){
  requirePreparedReportingRange(query.dateRange,publication.reportingWindow);
- let family:PreparedFamily=businessMetricIds.includes(query.metric as BusinessMetricId)?'business':reviewQuery(query,context)?'review':financeMetric(query.metric)&&publication.families.receivables.releases.length?'receivables':'facts';
+ let family:PreparedFamily=businessFamilyMetricIds.includes(query.metric as BusinessMetricId)?'business':reviewQuery(query,context)?'review':financeMetric(query.metric)&&publication.families.receivables.releases.length?'receivables':'facts';
  const checked={...query,filters:[...(query.filters??[]),...(context.enforcedFilters??[])]};
  if(family==='facts'&&productReviewMetrics.includes(query.metric)&&publishedQueryIssues(checked,publication.families.facts).length)family='review';
  const published=publication.families[family],release=published.releases.find(release=>!publishedQueryIssues(release.period?{...checked,dateRange:checked.dateRange??release.period}:checked,{...published,releases:[release]}).length);
@@ -49,7 +49,7 @@ export function preparedCapabilities(context:AnalyticsContext,publication:Prepar
 
 /** Include every family needed to preserve source priority and certified fallbacks. */
 export function preparedQueryFamilies(query:AnalyticsQuery,context:AnalyticsContext):readonly PreparedFamily[]{
- if(businessMetricIds.includes(query.metric as BusinessMetricId))return ['business'];
+ if(businessFamilyMetricIds.includes(query.metric as BusinessMetricId))return ['business'];
  if(reviewQuery(query,context))return ['review'];
  if(financeMetric(query.metric))return ['receivables','facts'];
  return productReviewMetrics.includes(query.metric)?['facts','review']:['facts'];

@@ -1,0 +1,4258 @@
+{
+  "schemaVersion": 1,
+  "reference": {
+    "repository": "https://github.com/hazemyoussif/sales-analytics-dashboard-local",
+    "localCommit": "e3eb17c808474db755cb5624d8f9ce9a4d749ef2",
+    "overviewBlob": "64ef141ae85847ddf8687f3c11ad696e86b43c15",
+    "evidence": "Repository logic plus authenticated read-only date/salesperson/customer control inspection on 2026-10-19; original selections restored; no retained customer rows"
+  },
+  "currentCompanyEvidence": {
+    "status": "pending",
+    "required": "Current company publication/capability and prepared-binding evidence remain pending; host source inspection succeeded through the existing SSH tunnel using the explicitly selected staging_read_only adapter mode. Selected fields and foreign keys verified; October states/fields verified; six headline source aggregates exact; 279 same-day allocations passed source quality checks; invoice attribution follows the reference receivable-line field after 59 header-owner mismatches were detected. Company publication/prepared activation remains pending",
+    "priorReceipt": "Plan cites revision 3a345b4f-e4c2-413d-b893-3dcc51f53780 and 27 report cases; neither proves these new cases"
+  },
+  "sections": [
+    {
+      "id": "today",
+      "title": {
+        "en": "Today",
+        "ar": "اليوم"
+      }
+    },
+    {
+      "id": "month",
+      "title": {
+        "en": "Month to date",
+        "ar": "الشهر حتى اليوم"
+      }
+    },
+    {
+      "id": "follow-up",
+      "title": {
+        "en": "Customers to follow up",
+        "ar": "عملاء للمتابعة"
+      }
+    },
+    {
+      "id": "trends",
+      "title": {
+        "en": "Order trends",
+        "ar": "اتجاهات الطلبات"
+      }
+    },
+    {
+      "id": "customers",
+      "title": {
+        "en": "Top customers",
+        "ar": "أبرز العملاء"
+      }
+    }
+  ],
+  "widgets": [
+    {
+      "id": "today-invoices",
+      "section": "today",
+      "title": {
+        "en": "Posted invoices incl. tax",
+        "ar": "الفواتير المرحلة شاملة الضريبة"
+      },
+      "periodRule": "Tenant-local wall-clock today; unaffected by selected date range",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "Posted customer invoice header totals including tax, once per invoice; company currency only.",
+      "comparison": null,
+      "insight": null,
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "index.html:render/invStats/drawWeekly/drawTopCustomers; assets/js/common.js:buildInvoicesToday/buildInvoicesMonth",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_invoice_total"
+          },
+          "measures": [
+            "command_invoice_total"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_invoice_total"
+          },
+          "metricType": "currency",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    },
+    {
+      "id": "today-invoice-count",
+      "section": "today",
+      "title": {
+        "en": "Posted invoice count",
+        "ar": "عدد الفواتير المرحلة"
+      },
+      "periodRule": "Tenant-local wall-clock today; unaffected by selected date range",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "Count of posted customer invoice headers, once per stable invoice identity.",
+      "comparison": null,
+      "insight": null,
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "index.html:render/invStats/drawWeekly/drawTopCustomers; assets/js/common.js:buildInvoicesToday/buildInvoicesMonth",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_invoice_count"
+          },
+          "measures": [
+            "command_invoice_count"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_invoice_count"
+          },
+          "metricType": "number",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    },
+    {
+      "id": "today-cash",
+      "section": "today",
+      "title": {
+        "en": "Net customer cash receipts",
+        "ar": "صافي نقد العملاء المحصل"
+      },
+      "periodRule": "Tenant-local wall-clock today; unaffected by selected date range",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "Signed customer payments in paid/in_process: inbound positive, outbound negative; payment date and payment salesperson. Cancelled, rejected and unknown states excluded from cash, retained in status counts.",
+      "comparison": "four_weekdays",
+      "insight": null,
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "index.html:render/invStats/drawWeekly/drawTopCustomers; assets/js/common.js:buildInvoicesToday/buildInvoicesMonth",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_cash_received"
+          },
+          "measures": [
+            "command_cash_received"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_cash_received"
+          },
+          "metricType": "currency",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    },
+    {
+      "id": "today-orders",
+      "section": "today",
+      "title": {
+        "en": "Confirmed order count",
+        "ar": "عدد الطلبات المؤكدة"
+      },
+      "periodRule": "Tenant-local wall-clock today; unaffected by selected date range",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "Sale/done order headers, once per order, on tenant-local order date.",
+      "comparison": null,
+      "insight": null,
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "index.html:render/invStats/drawWeekly/drawTopCustomers; assets/js/common.js:buildInvoicesToday/buildInvoicesMonth",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_order_count"
+          },
+          "measures": [
+            "command_order_count"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_order_count"
+          },
+          "metricType": "number",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    },
+    {
+      "id": "today-invoice-status",
+      "section": "today",
+      "title": {
+        "en": "Invoice document states",
+        "ar": "حالات مستندات الفواتير"
+      },
+      "periodRule": "Tenant-local wall-clock today; unaffected by selected date range",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "One customer invoice header in every source document/payment state, including unknown states; refunds excluded. | Tax-inclusive header amount across document states; cancelled/draft documents are not posted sales.",
+      "comparison": null,
+      "insight": null,
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "index.html:render/invStats/drawWeekly/drawTopCustomers; assets/js/common.js:buildInvoicesToday/buildInvoicesMonth",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_document_count",
+            "groupBy": "invoice_document_state"
+          },
+          "measures": [
+            "command_document_count"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_document_count"
+          },
+          "metricType": "number",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "invoice_document_state"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "invoice_document_state"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "invoice_document_state",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "invoice_document_state",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        },
+        {
+          "query": {
+            "metric": "command_document_value",
+            "groupBy": "invoice_document_state"
+          },
+          "measures": [
+            "command_document_value"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_document_value"
+          },
+          "metricType": "currency",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "invoice_document_state"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "invoice_document_state"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "invoice_document_state",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "invoice_document_state",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    },
+    {
+      "id": "today-invoice-payment-status",
+      "section": "today",
+      "title": {
+        "en": "Posted invoice payment states",
+        "ar": "حالات سداد الفواتير المرحلة"
+      },
+      "periodRule": "Tenant-local wall-clock today; unaffected by selected date range",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "Count of posted customer invoice headers, once per stable invoice identity. | Posted customer invoice header totals including tax, once per invoice; company currency only. | Current header residual of posted invoices in the issue-date cohort at source extraction; not cash received in that period.",
+      "comparison": null,
+      "insight": null,
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "index.html:render/invStats/drawWeekly/drawTopCustomers; assets/js/common.js:buildInvoicesToday/buildInvoicesMonth",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_invoice_count",
+            "groupBy": "invoice_payment_state"
+          },
+          "measures": [
+            "command_invoice_count"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_invoice_count"
+          },
+          "metricType": "number",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "invoice_payment_state"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "invoice_payment_state"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "invoice_payment_state",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "invoice_payment_state",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        },
+        {
+          "query": {
+            "metric": "command_invoice_total",
+            "groupBy": "invoice_payment_state"
+          },
+          "measures": [
+            "command_invoice_total"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_invoice_total"
+          },
+          "metricType": "currency",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "invoice_payment_state"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "invoice_payment_state"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "invoice_payment_state",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "invoice_payment_state",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        },
+        {
+          "query": {
+            "metric": "command_invoice_residual",
+            "groupBy": "invoice_payment_state"
+          },
+          "measures": [
+            "command_invoice_residual"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_invoice_residual"
+          },
+          "metricType": "currency",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "invoice_payment_state"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "invoice_payment_state"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "invoice_payment_state",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "invoice_payment_state",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    },
+    {
+      "id": "today-payment-status",
+      "section": "today",
+      "title": {
+        "en": "Receipt states — document value and eligible cash",
+        "ar": "حالات القبض — قيمة المستند والنقد المؤهل"
+      },
+      "periodRule": "Tenant-local wall-clock today; unaffected by selected date range",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "Payment headers in every source state. Partnerless zero documents retained; partnerless nonzero transfers excluded. | Signed header amount in every payment state; cancelled/rejected document values are not cash received. | Signed customer payments in paid/in_process: inbound positive, outbound negative; payment date and payment salesperson. Cancelled, rejected and unknown states excluded from cash, retained in status counts.",
+      "comparison": null,
+      "insight": null,
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "index.html:render/invStats/drawWeekly/drawTopCustomers; assets/js/common.js:buildInvoicesToday/buildInvoicesMonth",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_receipt_count",
+            "groupBy": "receipt_state"
+          },
+          "measures": [
+            "command_receipt_count"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_receipt_count"
+          },
+          "metricType": "number",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "receipt_state"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "receipt_state"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "receipt_state",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "receipt_state",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        },
+        {
+          "query": {
+            "metric": "command_receipt_value",
+            "groupBy": "receipt_state"
+          },
+          "measures": [
+            "command_receipt_value"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_receipt_value"
+          },
+          "metricType": "currency",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "receipt_state"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "receipt_state"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "receipt_state",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "receipt_state",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        },
+        {
+          "query": {
+            "metric": "command_cash_received",
+            "groupBy": "receipt_state"
+          },
+          "measures": [
+            "command_cash_received"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_cash_received"
+          },
+          "metricType": "currency",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "receipt_state"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "receipt_state"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "receipt_state",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "receipt_state",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    },
+    {
+      "id": "today-invoice-reps",
+      "section": "today",
+      "title": {
+        "en": "Invoices by salesperson",
+        "ar": "الفواتير حسب المندوب"
+      },
+      "periodRule": "Tenant-local wall-clock today; unaffected by selected date range",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "Posted customer invoice header totals including tax, once per invoice; company currency only. | Count of posted customer invoice headers, once per stable invoice identity. | Current header residual of posted invoices in the issue-date cohort at source extraction; not cash received in that period. | Posted invoice total minus current residual at extraction. Includes noncash credit offsets; not same-day cash.",
+      "comparison": null,
+      "insight": null,
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "index.html:render/invStats/drawWeekly/drawTopCustomers; assets/js/common.js:buildInvoicesToday/buildInvoicesMonth",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_invoice_total",
+            "groupBy": "salesperson"
+          },
+          "measures": [
+            "command_invoice_total"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_invoice_total"
+          },
+          "metricType": "currency",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        },
+        {
+          "query": {
+            "metric": "command_invoice_count",
+            "groupBy": "salesperson"
+          },
+          "measures": [
+            "command_invoice_count"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_invoice_count"
+          },
+          "metricType": "number",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        },
+        {
+          "query": {
+            "metric": "command_invoice_residual",
+            "groupBy": "salesperson"
+          },
+          "measures": [
+            "command_invoice_residual"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_invoice_residual"
+          },
+          "metricType": "currency",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        },
+        {
+          "query": {
+            "metric": "command_invoice_settled",
+            "groupBy": "salesperson"
+          },
+          "measures": [
+            "command_invoice_settled"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_invoice_settled"
+          },
+          "metricType": "currency",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    },
+    {
+      "id": "today-payment-reps",
+      "section": "today",
+      "title": {
+        "en": "Receipts by payment salesperson",
+        "ar": "المقبوضات حسب مندوب الدفعة"
+      },
+      "periodRule": "Tenant-local wall-clock today; unaffected by selected date range",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "Signed customer payments in paid/in_process: inbound positive, outbound negative; payment date and payment salesperson. Cancelled, rejected and unknown states excluded from cash, retained in status counts. | Payment headers in every source state. Partnerless zero documents retained; partnerless nonzero transfers excluded.",
+      "comparison": null,
+      "insight": null,
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "index.html:render/invStats/drawWeekly/drawTopCustomers; assets/js/common.js:buildInvoicesToday/buildInvoicesMonth",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_cash_received",
+            "groupBy": "salesperson"
+          },
+          "measures": [
+            "command_cash_received"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_cash_received"
+          },
+          "metricType": "currency",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        },
+        {
+          "query": {
+            "metric": "command_receipt_count",
+            "groupBy": "salesperson"
+          },
+          "measures": [
+            "command_receipt_count"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_receipt_count"
+          },
+          "metricType": "number",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    },
+    {
+      "id": "today-order-status",
+      "section": "today",
+      "title": {
+        "en": "Today’s orders and quotations",
+        "ar": "طلبات اليوم وعروض الأسعار"
+      },
+      "periodRule": "Tenant-local wall-clock today; unaffected by selected date range",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "One order header in every source state, including quotations and unknown states. | Tax-inclusive order header amount in every source state; quotations are not confirmed sales.",
+      "comparison": null,
+      "insight": null,
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "index.html:render/invStats/drawWeekly/drawTopCustomers; assets/js/common.js:buildInvoicesToday/buildInvoicesMonth",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_order_status_count",
+            "groupBy": "order_state"
+          },
+          "measures": [
+            "command_order_status_count"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_order_status_count"
+          },
+          "metricType": "number",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "order_state"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "order_state"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "order_state",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "order_state",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        },
+        {
+          "query": {
+            "metric": "command_order_status_value",
+            "groupBy": "order_state"
+          },
+          "measures": [
+            "command_order_status_value"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_order_status_value"
+          },
+          "metricType": "currency",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "order_state"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "order_state"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "order_state",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "order_state",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    },
+    {
+      "id": "today-same-day",
+      "section": "today",
+      "title": {
+        "en": "Cash allocated on invoice issue day",
+        "ar": "نقد مخصص في يوم إصدار الفاتورة"
+      },
+      "periodRule": "Tenant-local wall-clock today; unaffected by selected date range",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "Positive customer cash allocations to posted invoices where payment date, allocation accounting date, tenant-local reconciliation creation day and invoice issue date coincide. Credit-note offsets excluded; cutoff is the retained source snapshot.",
+      "comparison": null,
+      "insight": null,
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "index.html:render/invStats/drawWeekly/drawTopCustomers; assets/js/common.js:buildInvoicesToday/buildInvoicesMonth",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_same_day_cash"
+          },
+          "measures": [
+            "command_same_day_cash"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_same_day_cash"
+          },
+          "metricType": "currency",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    },
+    {
+      "id": "today-same-day-rate",
+      "section": "today",
+      "title": {
+        "en": "Same-day cash / invoice value",
+        "ar": "نسبة نقد اليوم نفسه إلى الفواتير"
+      },
+      "periodRule": "Tenant-local wall-clock today; unaffected by selected date range",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "Verified same-day cash allocations / tax-inclusive posted invoice cohort value × 100. Zero denominator remains null.",
+      "comparison": null,
+      "insight": null,
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "index.html:render/invStats/drawWeekly/drawTopCustomers; assets/js/common.js:buildInvoicesToday/buildInvoicesMonth",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_same_day_rate"
+          },
+          "measures": [
+            "command_same_day_cash",
+            "command_invoice_total"
+          ],
+          "semantics": {
+            "kind": "ratio",
+            "numerator": "command_same_day_cash",
+            "denominator": "command_invoice_total",
+            "scale": 100
+          },
+          "metricType": "percentage",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    },
+    {
+      "id": "month-invoices",
+      "section": "month",
+      "title": {
+        "en": "Posted invoices incl. tax",
+        "ar": "الفواتير المرحلة شاملة الضريبة"
+      },
+      "periodRule": "Tenant-local first day of current month through today; unaffected by selected date range",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "Posted customer invoice header totals including tax, once per invoice; company currency only.",
+      "comparison": "previous_month_elapsed",
+      "insight": null,
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "index.html:render/invStats/drawWeekly/drawTopCustomers; assets/js/common.js:buildInvoicesToday/buildInvoicesMonth",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_invoice_total"
+          },
+          "measures": [
+            "command_invoice_total"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_invoice_total"
+          },
+          "metricType": "currency",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    },
+    {
+      "id": "month-invoice-count",
+      "section": "month",
+      "title": {
+        "en": "Posted invoice count",
+        "ar": "عدد الفواتير المرحلة"
+      },
+      "periodRule": "Tenant-local first day of current month through today; unaffected by selected date range",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "Count of posted customer invoice headers, once per stable invoice identity.",
+      "comparison": null,
+      "insight": null,
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "index.html:render/invStats/drawWeekly/drawTopCustomers; assets/js/common.js:buildInvoicesToday/buildInvoicesMonth",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_invoice_count"
+          },
+          "measures": [
+            "command_invoice_count"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_invoice_count"
+          },
+          "metricType": "number",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    },
+    {
+      "id": "month-refunds",
+      "section": "month",
+      "title": {
+        "en": "Posted refunds incl. tax",
+        "ar": "الإشعارات الدائنة المرحلة شاملة الضريبة"
+      },
+      "periodRule": "Tenant-local first day of current month through today; unaffected by selected date range",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "Positive tax-inclusive posted customer credit-note magnitude on its invoice date.",
+      "comparison": null,
+      "insight": null,
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "index.html:render/invStats/drawWeekly/drawTopCustomers; assets/js/common.js:buildInvoicesToday/buildInvoicesMonth",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_invoice_refunds"
+          },
+          "measures": [
+            "command_invoice_refunds"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_invoice_refunds"
+          },
+          "metricType": "currency",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    },
+    {
+      "id": "month-net-invoices",
+      "section": "month",
+      "title": {
+        "en": "Net posted invoices incl. tax",
+        "ar": "صافي الفواتير المرحلة شاملة الضريبة"
+      },
+      "periodRule": "Tenant-local first day of current month through today; unaffected by selected date range",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "Posted customer invoice totals minus posted customer credit-note totals, including tax.",
+      "comparison": null,
+      "insight": null,
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "index.html:render/invStats/drawWeekly/drawTopCustomers; assets/js/common.js:buildInvoicesToday/buildInvoicesMonth",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_net_invoices"
+          },
+          "measures": [
+            "command_net_invoices"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_net_invoices"
+          },
+          "metricType": "currency",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    },
+    {
+      "id": "month-cash",
+      "section": "month",
+      "title": {
+        "en": "Net customer cash receipts",
+        "ar": "صافي نقد العملاء المحصل"
+      },
+      "periodRule": "Tenant-local first day of current month through today; unaffected by selected date range",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "Signed customer payments in paid/in_process: inbound positive, outbound negative; payment date and payment salesperson. Cancelled, rejected and unknown states excluded from cash, retained in status counts.",
+      "comparison": null,
+      "insight": null,
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "index.html:render/invStats/drawWeekly/drawTopCustomers; assets/js/common.js:buildInvoicesToday/buildInvoicesMonth",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_cash_received"
+          },
+          "measures": [
+            "command_cash_received"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_cash_received"
+          },
+          "metricType": "currency",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    },
+    {
+      "id": "month-payment-status",
+      "section": "month",
+      "title": {
+        "en": "Monthly receipt states",
+        "ar": "حالات المقبوضات الشهرية"
+      },
+      "periodRule": "Tenant-local first day of current month through today; unaffected by selected date range",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "Payment headers in every source state. Partnerless zero documents retained; partnerless nonzero transfers excluded. | Signed header amount in every payment state; cancelled/rejected document values are not cash received. | Signed customer payments in paid/in_process: inbound positive, outbound negative; payment date and payment salesperson. Cancelled, rejected and unknown states excluded from cash, retained in status counts.",
+      "comparison": null,
+      "insight": null,
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "index.html:render/invStats/drawWeekly/drawTopCustomers; assets/js/common.js:buildInvoicesToday/buildInvoicesMonth",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_receipt_count",
+            "groupBy": "receipt_state"
+          },
+          "measures": [
+            "command_receipt_count"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_receipt_count"
+          },
+          "metricType": "number",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "receipt_state"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "receipt_state"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "receipt_state",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "receipt_state",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        },
+        {
+          "query": {
+            "metric": "command_receipt_value",
+            "groupBy": "receipt_state"
+          },
+          "measures": [
+            "command_receipt_value"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_receipt_value"
+          },
+          "metricType": "currency",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "receipt_state"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "receipt_state"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "receipt_state",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "receipt_state",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        },
+        {
+          "query": {
+            "metric": "command_cash_received",
+            "groupBy": "receipt_state"
+          },
+          "measures": [
+            "command_cash_received"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_cash_received"
+          },
+          "metricType": "currency",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "receipt_state"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "receipt_state"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "receipt_state",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "receipt_state",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    },
+    {
+      "id": "range-orders",
+      "section": "month",
+      "title": {
+        "en": "Confirmed order count",
+        "ar": "عدد الطلبات المؤكدة"
+      },
+      "periodRule": "Explicit selected inclusive dates; defaults to tenant-local month-to-date",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "Sale/done order headers, once per order, on tenant-local order date.",
+      "comparison": null,
+      "insight": null,
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "index.html:render/invStats/drawWeekly/drawTopCustomers; assets/js/common.js:buildInvoicesToday/buildInvoicesMonth",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_order_count"
+          },
+          "measures": [
+            "command_order_count"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_order_count"
+          },
+          "metricType": "number",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    },
+    {
+      "id": "range-order-value",
+      "section": "month",
+      "title": {
+        "en": "Confirmed order value incl. tax",
+        "ar": "قيمة الطلبات المؤكدة شاملة الضريبة"
+      },
+      "periodRule": "Explicit selected inclusive dates; defaults to tenant-local month-to-date",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "Tax-inclusive order header amount in sale/done, on tenant-local order date.",
+      "comparison": null,
+      "insight": null,
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "index.html:render/invStats/drawWeekly/drawTopCustomers; assets/js/common.js:buildInvoicesToday/buildInvoicesMonth",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_order_value"
+          },
+          "measures": [
+            "command_order_value"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_order_value"
+          },
+          "metricType": "currency",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    },
+    {
+      "id": "range-cancelled",
+      "section": "month",
+      "title": {
+        "en": "Cancelled order count",
+        "ar": "عدد الطلبات الملغاة"
+      },
+      "periodRule": "Explicit selected inclusive dates; defaults to tenant-local month-to-date",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "Order headers in source state cancel; quotations excluded.",
+      "comparison": null,
+      "insight": null,
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "index.html:render/invStats/drawWeekly/drawTopCustomers; assets/js/common.js:buildInvoicesToday/buildInvoicesMonth",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_cancelled_count"
+          },
+          "measures": [
+            "command_cancelled_count"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_cancelled_count"
+          },
+          "metricType": "number",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    },
+    {
+      "id": "range-cancelled-value",
+      "section": "month",
+      "title": {
+        "en": "Cancelled order value",
+        "ar": "قيمة الطلبات الملغاة"
+      },
+      "periodRule": "Explicit selected inclusive dates; defaults to tenant-local month-to-date",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "Tax-inclusive order header amount in source state cancel.",
+      "comparison": null,
+      "insight": null,
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "index.html:render/invStats/drawWeekly/drawTopCustomers; assets/js/common.js:buildInvoicesToday/buildInvoicesMonth",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_cancelled_value"
+          },
+          "measures": [
+            "command_cancelled_value"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_cancelled_value"
+          },
+          "metricType": "currency",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    },
+    {
+      "id": "range-cancel-rate",
+      "section": "month",
+      "title": {
+        "en": "Order cancellation rate",
+        "ar": "نسبة إلغاء الطلبات"
+      },
+      "periodRule": "Explicit selected inclusive dates; defaults to tenant-local month-to-date",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "Cancelled / (sale + done + cancelled) header counts × 100. Quotations excluded; zero denominator remains null.",
+      "comparison": null,
+      "insight": null,
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "index.html:render/invStats/drawWeekly/drawTopCustomers; assets/js/common.js:buildInvoicesToday/buildInvoicesMonth",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_cancellation_rate"
+          },
+          "measures": [
+            "command_cancelled_count",
+            "command_decided_orders"
+          ],
+          "semantics": {
+            "kind": "ratio",
+            "numerator": "command_cancelled_count",
+            "denominator": "command_decided_orders",
+            "scale": 100
+          },
+          "metricType": "percentage",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    },
+    {
+      "id": "range-customers",
+      "section": "month",
+      "title": {
+        "en": "Customers with confirmed orders",
+        "ar": "عملاء الطلبات المؤكدة"
+      },
+      "periodRule": "Explicit selected inclusive dates; defaults to tenant-local month-to-date",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "Distinct stable customer IDs with sale/done orders in the whole requested period; unassigned excluded. Never sum daily customer counts.",
+      "comparison": null,
+      "insight": null,
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "index.html:render/invStats/drawWeekly/drawTopCustomers; assets/js/common.js:buildInvoicesToday/buildInvoicesMonth",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_customers"
+          },
+          "measures": [
+            "command_order_count"
+          ],
+          "semantics": {
+            "kind": "distinct_count",
+            "measure": "command_order_count",
+            "dimension": "customer"
+          },
+          "metricType": "number",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    },
+    {
+      "id": "month-invoice-reps",
+      "section": "month",
+      "title": {
+        "en": "Monthly invoices by salesperson",
+        "ar": "الفواتير الشهرية حسب المندوب"
+      },
+      "periodRule": "Tenant-local first day of current month through today; unaffected by selected date range",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "Posted customer invoice header totals including tax, once per invoice; company currency only. | Count of posted customer invoice headers, once per stable invoice identity. | Current header residual of posted invoices in the issue-date cohort at source extraction; not cash received in that period. | Posted invoice total minus current residual at extraction. Includes noncash credit offsets; not same-day cash.",
+      "comparison": null,
+      "insight": null,
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "index.html:render/invStats/drawWeekly/drawTopCustomers; assets/js/common.js:buildInvoicesToday/buildInvoicesMonth",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_invoice_total",
+            "groupBy": "salesperson"
+          },
+          "measures": [
+            "command_invoice_total"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_invoice_total"
+          },
+          "metricType": "currency",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        },
+        {
+          "query": {
+            "metric": "command_invoice_count",
+            "groupBy": "salesperson"
+          },
+          "measures": [
+            "command_invoice_count"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_invoice_count"
+          },
+          "metricType": "number",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        },
+        {
+          "query": {
+            "metric": "command_invoice_residual",
+            "groupBy": "salesperson"
+          },
+          "measures": [
+            "command_invoice_residual"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_invoice_residual"
+          },
+          "metricType": "currency",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        },
+        {
+          "query": {
+            "metric": "command_invoice_settled",
+            "groupBy": "salesperson"
+          },
+          "measures": [
+            "command_invoice_settled"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_invoice_settled"
+          },
+          "metricType": "currency",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    },
+    {
+      "id": "month-payment-reps",
+      "section": "month",
+      "title": {
+        "en": "Monthly receipts by payment salesperson",
+        "ar": "المقبوضات الشهرية حسب مندوب الدفعة"
+      },
+      "periodRule": "Tenant-local first day of current month through today; unaffected by selected date range",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "Signed customer payments in paid/in_process: inbound positive, outbound negative; payment date and payment salesperson. Cancelled, rejected and unknown states excluded from cash, retained in status counts. | Payment headers in every source state. Partnerless zero documents retained; partnerless nonzero transfers excluded.",
+      "comparison": null,
+      "insight": null,
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "index.html:render/invStats/drawWeekly/drawTopCustomers; assets/js/common.js:buildInvoicesToday/buildInvoicesMonth",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_cash_received",
+            "groupBy": "salesperson"
+          },
+          "measures": [
+            "command_cash_received"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_cash_received"
+          },
+          "metricType": "currency",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        },
+        {
+          "query": {
+            "metric": "command_receipt_count",
+            "groupBy": "salesperson"
+          },
+          "measures": [
+            "command_receipt_count"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_receipt_count"
+          },
+          "metricType": "number",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    },
+    {
+      "id": "range-governorates",
+      "section": "month",
+      "title": {
+        "en": "Leading governorate — share of all confirmed orders",
+        "ar": "المحافظة الأولى — حصتها من كل الطلبات المؤكدة"
+      },
+      "periodRule": "Explicit selected inclusive dates; defaults to tenant-local month-to-date",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "Tax-inclusive order header amount in sale/done, on tenant-local order date.",
+      "comparison": null,
+      "insight": "leading_state",
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "index.html:render/invStats/drawWeekly/drawTopCustomers; assets/js/common.js:buildInvoicesToday/buildInvoicesMonth",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_order_value",
+            "groupBy": "state",
+            "analysis": {
+              "percentageContribution": true,
+              "ranking": true
+            }
+          },
+          "measures": [
+            "command_order_value"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_order_value"
+          },
+          "metricType": "currency",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "state"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "state"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson",
+                "state"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson",
+                "state"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    },
+    {
+      "id": "overdue-customers",
+      "section": "follow-up",
+      "title": {
+        "en": "Top 10 overdue customers — signed balances and oldest debit days",
+        "ar": "أبرز ١٠ عملاء متأخرين — الأرصدة الموقعة وأيام أقدم استحقاق مدين"
+      },
+      "periodRule": "Tenant-local wall-clock today; unaffected by selected date range",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "Signed open receivable residual with known maturity strictly before cutoff. Credits retain their sign. | Signed open receivable residual with maturity on or after cutoff; unknown maturity kept separately. | Signed open posted receivable journal items at the effective cutoff; current customer owner, then line salesperson. | Signed open residual whose source maturity is null; no age is invented. | Maximum calendar days since known maturity among positive open debits strictly overdue at cutoff. No qualifying maturity returns null, not zero.",
+      "comparison": null,
+      "insight": null,
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "assets/js/common.js:debtorsFromInvoices/buildCollections; index.html:renderDebtors",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_overdue_balance",
+            "groupBy": "customer",
+            "analysis": {
+              "topN": {
+                "direction": "top",
+                "limit": 10
+              }
+            }
+          },
+          "measures": [
+            "command_overdue_balance"
+          ],
+          "semantics": {
+            "kind": "snapshot",
+            "measure": "command_overdue_balance"
+          },
+          "metricType": "currency",
+          "dateGrain": "cutoff",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        },
+        {
+          "query": {
+            "metric": "command_future_balance",
+            "groupBy": "customer"
+          },
+          "measures": [
+            "command_future_balance"
+          ],
+          "semantics": {
+            "kind": "snapshot",
+            "measure": "command_future_balance"
+          },
+          "metricType": "currency",
+          "dateGrain": "cutoff",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        },
+        {
+          "query": {
+            "metric": "command_customer_balance",
+            "groupBy": "customer"
+          },
+          "measures": [
+            "command_customer_balance"
+          ],
+          "semantics": {
+            "kind": "snapshot",
+            "measure": "command_customer_balance"
+          },
+          "metricType": "currency",
+          "dateGrain": "cutoff",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        },
+        {
+          "query": {
+            "metric": "command_unknown_maturity",
+            "groupBy": "customer"
+          },
+          "measures": [
+            "command_unknown_maturity"
+          ],
+          "semantics": {
+            "kind": "snapshot",
+            "measure": "command_unknown_maturity"
+          },
+          "metricType": "currency",
+          "dateGrain": "cutoff",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        },
+        {
+          "query": {
+            "metric": "command_overdue_days",
+            "groupBy": "customer"
+          },
+          "measures": [
+            "command_overdue_days"
+          ],
+          "semantics": {
+            "kind": "snapshot",
+            "measure": "command_overdue_days",
+            "aggregation": "max"
+          },
+          "metricType": "duration",
+          "dateGrain": "cutoff",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    },
+    {
+      "id": "debt-reps",
+      "section": "follow-up",
+      "title": {
+        "en": "Receivable account owners — current customer owner, then line salesperson",
+        "ar": "مسؤولو الذمم — مسؤول العميل الحالي ثم مندوب البند"
+      },
+      "periodRule": "Tenant-local wall-clock today; unaffected by selected date range",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "Signed open receivable residual with known maturity strictly before cutoff. Credits retain their sign. | Signed open posted receivable journal items at the effective cutoff; current customer owner, then line salesperson. | Maximum calendar days since known maturity among positive open debits strictly overdue at cutoff. No qualifying maturity returns null, not zero.",
+      "comparison": null,
+      "insight": null,
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "assets/js/common.js:debtorsFromInvoices/buildCollections; index.html:renderDebtors",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_overdue_balance",
+            "groupBy": "salesperson"
+          },
+          "measures": [
+            "command_overdue_balance"
+          ],
+          "semantics": {
+            "kind": "snapshot",
+            "measure": "command_overdue_balance"
+          },
+          "metricType": "currency",
+          "dateGrain": "cutoff",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        },
+        {
+          "query": {
+            "metric": "command_customer_balance",
+            "groupBy": "salesperson"
+          },
+          "measures": [
+            "command_customer_balance"
+          ],
+          "semantics": {
+            "kind": "snapshot",
+            "measure": "command_customer_balance"
+          },
+          "metricType": "currency",
+          "dateGrain": "cutoff",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        },
+        {
+          "query": {
+            "metric": "command_overdue_days",
+            "groupBy": "salesperson"
+          },
+          "measures": [
+            "command_overdue_days"
+          ],
+          "semantics": {
+            "kind": "snapshot",
+            "measure": "command_overdue_days",
+            "aggregation": "max"
+          },
+          "metricType": "duration",
+          "dateGrain": "cutoff",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    },
+    {
+      "id": "daily-orders",
+      "section": "trends",
+      "title": {
+        "en": "Daily confirmed orders incl. tax",
+        "ar": "الطلبات المؤكدة اليومية شاملة الضريبة"
+      },
+      "periodRule": "Explicit selected inclusive dates; defaults to tenant-local month-to-date",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "Tax-inclusive order header amount in sale/done, on tenant-local order date.",
+      "comparison": null,
+      "insight": null,
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "index.html:render/invStats/drawWeekly/drawTopCustomers; assets/js/common.js:buildInvoicesToday/buildInvoicesMonth",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_order_value",
+            "groupBy": "date"
+          },
+          "measures": [
+            "command_order_value"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_order_value"
+          },
+          "metricType": "currency",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    },
+    {
+      "id": "daily-order-table",
+      "section": "trends",
+      "title": {
+        "en": "Daily order details",
+        "ar": "تفاصيل الطلبات اليومية"
+      },
+      "periodRule": "Explicit selected inclusive dates; defaults to tenant-local month-to-date",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "Sale/done order headers, once per order, on tenant-local order date. | Tax-inclusive order header amount in sale/done, on tenant-local order date. | Order headers in source state cancel; quotations excluded. | Tax-inclusive order header amount in source state cancel.",
+      "comparison": null,
+      "insight": null,
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "index.html:render/invStats/drawWeekly/drawTopCustomers; assets/js/common.js:buildInvoicesToday/buildInvoicesMonth",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_order_count",
+            "groupBy": "date"
+          },
+          "measures": [
+            "command_order_count"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_order_count"
+          },
+          "metricType": "number",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        },
+        {
+          "query": {
+            "metric": "command_order_value",
+            "groupBy": "date"
+          },
+          "measures": [
+            "command_order_value"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_order_value"
+          },
+          "metricType": "currency",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        },
+        {
+          "query": {
+            "metric": "command_cancelled_count",
+            "groupBy": "date"
+          },
+          "measures": [
+            "command_cancelled_count"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_cancelled_count"
+          },
+          "metricType": "number",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        },
+        {
+          "query": {
+            "metric": "command_cancelled_value",
+            "groupBy": "date"
+          },
+          "measures": [
+            "command_cancelled_value"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_cancelled_value"
+          },
+          "metricType": "currency",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    },
+    {
+      "id": "weekly-orders",
+      "section": "trends",
+      "title": {
+        "en": "Six consecutive weeks — Saturday start; current week partial",
+        "ar": "ستة أسابيع متتالية — تبدأ السبت والأسبوع الحالي جزئي"
+      },
+      "periodRule": "Six consecutive Saturday-start weeks ending tenant-local today; current week explicitly partial",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "Tax-inclusive order header amount in sale/done, on tenant-local order date.",
+      "comparison": null,
+      "insight": null,
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "index.html:render/invStats/drawWeekly/drawTopCustomers; assets/js/common.js:buildInvoicesToday/buildInvoicesMonth",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_order_value",
+            "groupBy": "week"
+          },
+          "measures": [
+            "command_order_value"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_order_value"
+          },
+          "metricType": "currency",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    },
+    {
+      "id": "top-customers",
+      "section": "customers",
+      "title": {
+        "en": "Top 10 customers — selected confirmed-order period",
+        "ar": "أبرز ١٠ عملاء — فترة الطلبات المؤكدة المختارة"
+      },
+      "periodRule": "Explicit selected inclusive dates; defaults to tenant-local month-to-date",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "Tax-inclusive order header amount in sale/done, on tenant-local order date. | Sale/done order headers, once per order, on tenant-local order date.",
+      "comparison": null,
+      "insight": null,
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "index.html:render/invStats/drawWeekly/drawTopCustomers; assets/js/common.js:buildInvoicesToday/buildInvoicesMonth",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_order_value",
+            "groupBy": "customer",
+            "analysis": {
+              "topN": {
+                "direction": "top",
+                "limit": 10
+              }
+            }
+          },
+          "measures": [
+            "command_order_value"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_order_value"
+          },
+          "metricType": "currency",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        },
+        {
+          "query": {
+            "metric": "command_order_count",
+            "groupBy": "customer"
+          },
+          "measures": [
+            "command_order_count"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_order_count"
+          },
+          "metricType": "number",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    },
+    {
+      "id": "range-shares",
+      "section": "customers",
+      "title": {
+        "en": "Top 10 customers — individual shares of all confirmed orders",
+        "ar": "أبرز ١٠ عملاء — حصة كل منهم من كل الطلبات المؤكدة"
+      },
+      "periodRule": "Explicit selected inclusive dates; defaults to tenant-local month-to-date",
+      "referenceEquivalence": "requires_reconciliation",
+      "referenceDefinition": "Tax-inclusive order header amount in sale/done, on tenant-local order date.",
+      "comparison": null,
+      "insight": "top_customer_share",
+      "sourceRecipes": "packages/data/src/business/sales-command-recipes.ts; sales-command-mapping.ts; sales-command-controls.ts",
+      "referenceCode": "index.html:render/invStats/drawWeekly/drawTopCustomers; assets/js/common.js:buildInvoicesToday/buildInvoicesMonth",
+      "disposition": "implemented_unproven",
+      "currency": "Authenticated tenant reporting currency; compatible immutable source currency required",
+      "cutoff": "Returned per metric by governed reader; never inferred from eligible reporting window or execution time",
+      "attribution": "Customer stable identity where published; salesperson only on a capability that proves its mapping; enforced filters are never removed",
+      "queryRequirements": [
+        {
+          "query": {
+            "metric": "command_order_value",
+            "groupBy": "customer",
+            "analysis": {
+              "percentageContribution": true,
+              "topN": {
+                "direction": "top",
+                "limit": 10
+              }
+            }
+          },
+          "measures": [
+            "command_order_value"
+          ],
+          "semantics": {
+            "kind": "additive",
+            "measure": "command_order_value"
+          },
+          "metricType": "currency",
+          "dateGrain": "daily edges and monthly interiors",
+          "filterCases": [
+            {
+              "dimensions": [],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer"
+              ],
+              "preparedDimensions": [
+                "customer"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            },
+            {
+              "dimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "preparedDimensions": [
+                "customer",
+                "salesperson"
+              ],
+              "publication": "Unproven until publishedQueryIssues passes on current authenticated capabilities",
+              "prepared": "Unproven until selectPreparedGrain and real prepared cell reads succeed with enforced policy dimensions"
+            }
+          ]
+        }
+      ],
+      "evidenceStatus": "Company reconciliation and prepared performance pending"
+    }
+  ]
+}

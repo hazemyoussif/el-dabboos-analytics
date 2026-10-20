@@ -1,3 +1,4 @@
+import {sourceStateLabel} from '@el-dabboos/domain';
 import type {PoolClient} from 'pg';
 import type {ProductionFact,DimensionId} from '@el-dabboos/domain';
 const labelDimensions=['customer','supplier','salesperson','product','product_category','brand','warehouse','state','uom','journal'] as const;
@@ -35,6 +36,7 @@ export class BusinessSourceLabels {
   const segment=this.raw(dimensions.customer_segment),classification=this.raw(dimensions.customer_class);
   if(segment)labels.customer_segment=segments[segment]??segments.unknown!;
   if(classification)labels.customer_class=classification==='unassigned'||classification==='unknown'?'{"en":"Unknown class","ar":"تصنيف غير معروف"}':classification;
+  for(const dimension of ['invoice_document_state','invoice_payment_state','receipt_state','order_state'] as const){const state=this.raw(dimensions[dimension]);if(state&&state!=='unassigned')labels[dimension]=JSON.stringify(sourceStateLabel(state,dimension));}
   return labels;
  }
 }

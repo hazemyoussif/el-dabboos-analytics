@@ -1,11 +1,11 @@
+import {calendarValueSql} from './calendar-sql.ts';
 import { categoricalDimensions, timeDimensions } from '@el-dabboos/domain';
 import type { AnalyticsFilter, DimensionId } from '@el-dabboos/domain';
 /** Identifiers and functions come exclusively from the governed closed vocabulary. */
 export function dimensionSql(d: DimensionId, alias = 'f'): string {
   if (categoricalDimensions.includes(d)) return `${alias}.${d}`;
-  const formats = { date: 'YYYY-MM-DD', month: 'YYYY-MM', quarter: 'YYYY-"Q"Q', year: 'YYYY' };
   if (!timeDimensions.includes(d)) throw new Error('Unsupported SQL dimension');
-  return `to_char(${alias}.business_date,'${formats[d as keyof typeof formats]}')`;
+  return calendarValueSql(d,`${alias}.business_date`);
 }
 export function bind(values: unknown[], value: unknown): string { values.push(value); return `$${values.length}`; }
 export function filterSql(filters: readonly AnalyticsFilter[], values: unknown[], certified: readonly DimensionId[], alias = 'f'): string {

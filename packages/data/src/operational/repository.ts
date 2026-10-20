@@ -1,4 +1,4 @@
-import {businessMetricIds} from '@el-dabboos/domain';
+import {businessFamilyMetricIds} from '@el-dabboos/domain';
 import {productReviewMetrics} from '../review/definitions.ts';
 import {ReviewAnalyticsRepository,reviewQuery} from '../review/repository.ts';
 import { trustedDimensionOptions } from './dimension-options.ts';
@@ -65,7 +65,7 @@ export class TrustedAnalyticsRepository implements AnalyticsRepository,Dimension
  async searchDimensionOptions(dimension:DimensionId,context:AnalyticsContext,request:import('@el-dabboos/domain').DimensionDiscoveryRequest){
   const published=await this.getPublishedCapabilities(context);
   const selected=dimensionDiscoveryScope(dimension,context,request,published),scoped={...request,metric:selected.metric,...(selected.range?{dateRange:selected.range}:{})};
-  if(businessMetricIds.includes(selected.metric as import('@el-dabboos/domain').BusinessMetricId))return this.business.searchDimensionOptions(dimension,context,scoped);
+  if(businessFamilyMetricIds.includes(selected.metric as import('@el-dabboos/domain').BusinessMetricId))return this.business.searchDimensionOptions(dimension,context,scoped);
   if(reviewQuery({metric:selected.metric,groupBy:dimension},context))return this.review.searchDimensionOptions(dimension,context,scoped);
   return discoverTrustedDimensions(this.pool,{dimension,context,request:scoped,capabilities:published,timeout:this.options.statementTimeoutMs??15000});
  }
@@ -86,7 +86,7 @@ export class TrustedAnalyticsRepository implements AnalyticsRepository,Dimension
   },true,this.options.statementTimeoutMs??15000);
  }
  private reviewReader(query:AnalyticsQuery,context:AnalyticsContext){
-  if(businessMetricIds.includes(query.metric as import('@el-dabboos/domain').BusinessMetricId))return this.business;
+  if(businessFamilyMetricIds.includes(query.metric as import('@el-dabboos/domain').BusinessMetricId))return this.business;
   return reviewQuery(query,context)?this.review:null;
  }
  private async baseline(client:PoolClient,tenantId:string){

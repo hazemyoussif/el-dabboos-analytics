@@ -142,7 +142,7 @@ test('all locally supported purpose reports retain complete result equality afte
  }finally{await db.close();}
 });
 
-async function reportFixture(db:Awaited<ReturnType<typeof database>>){
+async function reportFixture(db:Awaited<ReturnType<typeof database>>,salesCommand=false){
  const spec=mapping(),comparison=odooComparisonCandidate({tenantId:'a',sourceId:'fixture',datasetId:'release',mappingId:'synthetic',mappingVersion:'1',businessOwner:'synthetic',reportingCurrency:'IQD',timeZone:'Asia/Baghdad'});
  spec.measures=[...spec.measures.filter(rule=>!comparison.measures.some(peer=>peer.measureId===rule.measureId)),...comparison.measures];
  spec.capabilities=[...spec.capabilities.filter(capability=>!comparison.capabilities.some(peer=>peer.metric===capability.metric)),...comparison.capabilities].map(capability=>({...capability,dimensions:capability.dimensions.filter(dimension=>timeDimensions.includes(dimension)||requiredMeasures(capability.metric).every(measure=>Object.hasOwn(spec.measures.find(rule=>rule.measureId===measure)!.dimensionMappings,dimension)))}));
@@ -150,9 +150,9 @@ async function reportFixture(db:Awaited<ReturnType<typeof database>>){
  spec.capabilities=[...spec.capabilities,...[...receivableMeasures,'overdue_receivable_percentage' as const].map(metric=>({metric,dimensions:['customer' as const,'month' as const]}))];
  await deploy(db.migrator,spec);await bootstrapOperationalServing(db.migrator,'a');
  await exposeReviewMonth(db.ingestor,fixture('2026-01',false,'review'),'review');
- await exposeReviewMonth(db.ingestor,fixture('2026-01',true),'business');
+ await exposeReviewMonth(db.ingestor,fixture('2026-01',!salesCommand,'business',salesCommand),'business');
  await exposeReviewMonth(db.ingestor,fixture('2026-02',false,'review'),'review');
- await exposeReviewMonth(db.ingestor,fixture('2026-02',true),'business');
+ await exposeReviewMonth(db.ingestor,fixture('2026-02',true,'business',salesCommand),'business');
  await tenantTransaction(db.migrator,'a',async client=>{
   const parent=(await client.query("SELECT revision_id FROM mart.analytics_trusted_serving WHERE tenant_id='a'")).rows[0].revision_id,next=randomUUID();
   await refreshOperationalMonths(client,{tenantId:'a',revisionId:next,parent,runId:null,cutoff:'2026-11-02T09:00:00.000Z',purpose:'adoption'},['2026-02']);
@@ -338,5 +338,53 @@ test('parallel prepared series share only needed publication families and immuta
   await exposeReviewMonth(db.ingestor,fixture('2026-10',true),'business');
   await assert.rejects(scope.execute(queries[0]!,context),AnalyticsPublicationChangedError);
   await assert.rejects(scope.verifyExecution!(),AnalyticsPublicationChangedError);
+ }finally{await runtime.end();await db.close();}
+});
+
+test('Sales Command Center reads pinned prepared cells with JIT off and matches native canonical results',{skip:!enabled},async testContext=>{
+ const {SalesCommandCenter,DemoIdentityProvider,DefaultAuthorizationPolicy}=await import('../../../application/src/index.ts');
+ const {tenantProfiles}=await import('@el-dabboos/domain');
+ const {profilePool}=await import(new URL('../../../../docs/qa/maintenance/prepared-acceptance-diagnosis-2026-10-19.mjs',import.meta.url).href);
+ const db=await database(),runtime=new Pool({...db.runtime.options,max:4});
+ try{
+  await reportFixture(db,true);
+  const guarded=profilePool(runtime,true);
+  let cellReads=0;
+  runtime.on('connect',client=>{
+   const original=client.query.bind(client);
+   client.query=((...args:unknown[])=>{
+    const sql=typeof args[0]==='string'?args[0]:'';
+    if(sql.includes('mart.prepared_cells'))return original('SHOW jit').then(result=>{
+     assert.equal(result.rows[0].jit,'off');cellReads++;return Reflect.apply(original,client,args);
+    });
+    return Reflect.apply(original,client,args);
+   }) as PoolClient['query'];
+  });
+  const prepared=new PreparedAnalyticsRepository(runtime,options),baseline=new TrustedAnalyticsRepository(db.runtime,options);
+  const sessionJit=(await runtime.query('SHOW jit')).rows[0].jit;
+  const weekQuery={metric:'command_order_value' as const,dateRange:{from:'2026-01-01',to:'2026-02-28'},filters:[{dimension:'week' as const,values:['2026-02-14']}]};
+  for(const dimension of ['customer','salesperson'] as const){
+   const discovered=await prepared.searchDimensionOptions(dimension,context,{metric:'command_order_value',dateRange:weekQuery.dateRange,limit:1});
+   assert.ok(discovered.values.length>0);
+  }
+  assert.equal((await runtime.query('SHOW jit')).rows[0].jit,sessionJit,'discovery must not leak transaction-local JIT settings');
+  assert.deepEqual((await prepared.execute(weekQuery,context)).rows,[{key:null,value:1}]);
+  assert.deepEqual((await baseline.execute(weekQuery,context)).rows,[{key:null,value:1}]);
+  const actor={...new DemoIdentityProvider().resolve('demo-iq-admin','demo-iq','en'),tenant:{tenantId:'a'}},profile={...tenantProfiles['demo-iq']!,id:'a'};
+  const common={policy:new DefaultAuthorizationPolicy(),published:()=>prepared.getPublishedCapabilities(context),clock:()=>new Date('2026-02-28T12:00:00Z'),options:{maxConcurrency:2}};
+  const report=new SalesCommandCenter({...common,repository:prepared}),timings:number[]=[];
+  const begin=performance.now(),first=await report.execute({},actor,profile);timings.push(performance.now()-begin);
+  const repeatedAt=performance.now(),repeated=await report.execute({},actor,profile);timings.push(performance.now()-repeatedAt);
+  const expected=await new SalesCommandCenter({...common,repository:baseline}).execute({},actor,profile);
+  const stable=(value:unknown)=>JSON.parse(JSON.stringify(value,(key,entry)=>key==='executedAt'?undefined:entry));
+  assert.deepEqual(stable(first),stable(repeated));assert.deepEqual(stable(first),stable(expected));
+  assert.equal(first.sections.length,5);assert.ok(first.metadata.servingRevision);assert.ok(cellReads>0);
+  assert.equal(guarded.snapshot().historyAttempts,0);
+  const entries=first.sections.flatMap(section=>section.widgets).filter(entry=>entry.execution);
+  assert.equal(entries.length,34);assert.ok(entries.every(entry=>entry.disposition==='usable_now'),'command coverage is proved from accepted observations/prepared segments, not publication eligibility');
+  assert.ok(entries.find(entry=>entry.definition.id==='range-shares')!.insight);
+  assert.ok(entries.find(entry=>entry.definition.id==='overdue-customers')!.customerOwners?.every(customer=>customer.complete));
+  for(const entry of entries)for(const widget of Object.values(entry.execution!.widgetResults))for(const series of Object.values(widget.seriesResults))if(series.status==='success')assert.equal(series.result.metadata.servingRevision,first.metadata.servingRevision);
+  testContext.diagnostic(JSON.stringify({syntheticOnly:true,report:'sales-command-center',executorMs:timings,cellReads,executedWidgets:entries.length,historyAttempts:guarded.snapshot().historyAttempts}));
  }finally{await runtime.end();await db.close();}
 });

@@ -1,3 +1,4 @@
+import {SalesCommandCenterView} from './reports/SalesCommandCenterPage.tsx';
 import { BuildVersion } from './shell/BuildVersion.tsx';
 import { AnalystArea, AnalystBreadcrumb, AnalystNavigation } from './analyst/AnalystWorkspace.tsx';
 import { navigateWorkspace } from './workspace-route.ts';
@@ -10,7 +11,7 @@ import {discoverDimension} from './api/client.ts';
 import {workspaceDestinationTitle,workspaceDisplayTitle} from './workspace-bootstrap.ts';
 import { MetricCurrencyContext, MetricPublicationContext } from './metrics/MetricDefinition.tsx';
 import { useManagementReports } from './reports/useManagementReports.ts';
-import { ManagementArea,ManagementNavigation,ReportStatus,managementTitle,workspaceDataMode } from './reports/ManagementReports.tsx';
+import { ManagementArea,ManagementNavigation,ReportStatus,managementTitle,managementBreadcrumb,workspaceDataMode } from './reports/ManagementReports.tsx';
 import type { AuthUser } from './auth/client.ts';
 import { AccountControls,AuthenticationNotice } from './auth/AccountControls.tsx';
 import { WorkspaceContent, WorkspaceAdministrationNavigation, workspaceNavigationPermissions, initialAdministrationPage } from './admin/WorkspaceAdministration.tsx';
@@ -64,8 +65,8 @@ export default function App({ authenticatedUser,onLogout,authenticationError }: 
   const isCreating = showCreationPanel(flow.panel);
   const statusText = flow.status === 'template' ? t.templateBadge : flow.status === 'saved' ? t.savedDashboard
     : flow.status === 'modified' ? t.modified : t.unsaved;
-  const breadcrumb = flow.status === 'template' ? t.library : flow.status === 'saved' || flow.status === 'modified' && dashboardDocument?.kind === 'saved'
-    ? t.savedDashboards : t.newDashboard;
+  const breadcrumb = managementBreadcrumb(management.page,locale,flow.status === 'template' ? t.library : flow.status === 'saved' || flow.status === 'modified' && dashboardDocument?.kind === 'saved'
+    ? t.savedDashboards : t.newDashboard);
   useEffect(() => { document.documentElement.lang = locale; document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr'; }, [locale]);
   const metadata = useMemo(() => {
     if (!execution) return null;
@@ -91,7 +92,7 @@ export default function App({ authenticatedUser,onLogout,authenticationError }: 
       <div className="page-content">
         <WorkspaceContent page={adminPage} workspace={workspace}><>
         <AnalystArea workspace={workspace} onDashboard={(spec,result)=>{builder.reset();planner.reset();flow.close();workspace.openGenerated(spec,result);}}>
-        <ManagementArea statusView={<OperationalStatusPage operations={operations} locale={locale} profile={profile}/>} page={management.page} locale={locale} profile={profile} published={published} metadata={metadata} review={management.review} reviewLoading={management.loading} reviewError={management.error} onRetry={()=>void management.reload()}>
+        <ManagementArea salesCommandView={<SalesCommandCenterView workspace={workspace} active={management.page==='sales-command-center'}/>} statusView={<OperationalStatusPage operations={operations} locale={locale} profile={profile}/>} page={management.page} locale={locale} profile={profile} published={published} metadata={metadata} review={management.review} reviewLoading={management.loading} reviewError={management.error} onRetry={()=>void management.reload()}>
         <DashboardCreationPanel panel={flow.panel} locale={locale} profile={profile} templates={templates} prompt={planner.prompt} onPrompt={planner.setPrompt}
           activity={planner} loading={loading} canGenerate={permissions.includes('ai:generate')} onChooseAi={() => flow.enterCreation('create-ai')}
           onBlank={flow.blank} onChooseTemplate={() => flow.enterCreation('choose-template')} onTemplate={id => profile && flow.openTemplate(id, profile, locale)}

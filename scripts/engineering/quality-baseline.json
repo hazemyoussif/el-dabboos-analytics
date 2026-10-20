@@ -633,12 +633,6 @@
     },
     {
       "file": "packages/data/src/engine.ts",
-      "symbol": "executeFacts",
-      "metric": "complexity",
-      "ceiling": 16
-    },
-    {
-      "file": "packages/data/src/engine.ts",
       "symbol": "executeFacts/facts.filter:callback0/binding:f",
       "metric": "shortNames",
       "ceiling": 1
