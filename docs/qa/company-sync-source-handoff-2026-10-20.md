@@ -41,6 +41,17 @@ queries, source/customer rows or business values. HTTP composition has no observ
 unless explicitly supplied. This improves diagnosis of the controlled company
 retry; it does not prove that every company timeout has the same cause.
 
+## Controlled company retry outcome
+
+The company API upgrade to `f01fa523f5662790134106f0a0508f98cb127f36`
+passed role/schema verification and readiness. Web remains `6caf30e`; root had
+4.3 GiB free after the build. The controlled sync then failed after approximately
+ten minutes in `source_read`, before reconciliation or the corrected source
+handoff. That run does not establish current source freshness or timer readiness.
+Use the [bounded direct-source diagnostic](company-source-read-diagnostic-2026-10-20.md)
+to locate the earlier ingestion cost. Keep both timers paused; no repeated sync or
+timeout increase is approved by this evidence.
+
 ## API-only rollout
 
 This correction has no schema migration, new metric or source exposure. Keep the
