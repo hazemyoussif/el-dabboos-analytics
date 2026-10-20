@@ -107,9 +107,10 @@ initialization and projection invalidation, timestamp-only skipping, all four
 lookup roles, independent header edits, tenant/runtime isolation and atomic failure
 rollback. Twelve approved cursor/receivable regression checks also pass with the
 shared guard. Existing Odoo test setup is reused through its extracted fixture;
-no developer env or customer service is used. Migration 063 is unapplied to both
-staging environments. Initial catch-up cost and company runtime remain unmeasured; no deployment
-acceptance is claimed. The approved rollback-only local refresh measurement
+no developer env or customer service is used. Migration 063 is applied to local
+staging with verified roles and healthy API `2edef29`; company application is
+pending. Initial catch-up cost and company runtime remain unmeasured; no company
+deployment acceptance is claimed. The approved rollback-only local refresh measurement
 completed 13 months and 178,249 active facts in 70.994 seconds; it does not cover
 source ingestion, dependency initialization or prepared publication. See the
 [measurement scope and stage costs](../qa/local-refresh-measurement-2026-10-20.md).
@@ -197,9 +198,9 @@ Six approved focused synthetic PostgreSQL checks pass: complete initialization
 and exact cutoff totals, forward and backdated corrections, current-period
 narrowing, tenant/runtime isolation and successful-cursor guards, and operational
 sync failure rollback after source closure. Tests use isolated fixture databases;
-none load developer/source credentials. Migration 062 remains unapplied to local
-or company staging. Initialization cost and company performance remain unmeasured;
-no deployment acceptance is claimed.
+none load developer/source credentials. Migration 062 is applied to local staging;
+company application is pending. Initialization cost and company performance remain
+unmeasured; no company deployment acceptance is claimed.
 
 Full counterpart/state/company/date/current-residual quality is validated once
 for the complete published cutoff scope within the retained snapshot. Earlier

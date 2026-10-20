@@ -102,7 +102,7 @@ deployment. Original053–059files/checksums remain unchanged.
 Migration 061 adds Sales Command Center operands and state columns, extends the canonical view without changing its security properties, and admits the explicitly versioned command mapping under the existing exact Business controls. It performs no extraction, preparation, activation or source writes. Prepared-serving migrations 053–060 remain unchanged.
 
 Migration 062 is a candidate for source dependency metadata with focused
-synthetic PostgreSQL evidence; staging application remains pending. It adds
+synthetic PostgreSQL evidence; company application remains pending. It adds
 forced-RLS receivable identity/date heads and a checkpoint scoped by tenant,
 source, definition and mapping. Only the ingestor can read or update them; the
 runtime has no access. Writes require the successful matching sync audit and
@@ -121,4 +121,7 @@ changes no published facts or labels. Missing/stale projection evidence requires
 complete lookup/document catch-up before enabling timestamp-only skips. First-run
 cost and company performance remain unmeasured. Nine approved lookup tests and
 twelve cursor/receivable regression tests passed in disposable PostgreSQL
-databases. Neither staging has applied this migration.
+databases. Local staging applied 062/063 successfully with tested API `2edef29`;
+operator role/schema verification and HTTPS readiness passed. Company application
+is pending.
+No cache initialization or source sync ran during this rehearsal.
