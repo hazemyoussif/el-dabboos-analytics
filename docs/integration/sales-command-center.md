@@ -109,6 +109,14 @@ trusted clock for comparisons and the six-week window; do not hard-code a report
 month in application code. Current residual/ownership observations are not fabricated
 for historical months.
 
+The source lease covers reads, independent controls and the exact source/mart
+comparison. The checked source-read handoff closes it before offline preparation;
+no source access occurs afterwards. Reconciled facts, controls, preparation and
+promotion remain one atomic mart transaction. Source loss before handoff or failed
+preparation leaves the accepted publication unchanged. This avoids retaining an
+unused source snapshot during longer preparation without relaxing source checks
+or raising the maximum lease duration.
+
 Prepared history serves report reads. New source observations must complete the
 accepted preparation lifecycle before becoming current; incomplete work cannot be
 stitched into a report. No route or browser queries Odoo directly. Source refresh
@@ -126,6 +134,34 @@ The host SSH tunnel and supplied credentials work. The existing staging read-onl
 mode was explicitly selected for the user-authorized bounded source inspections;
 no source grants, persistent connection settings or default privilege guards changed.
 Production least-privilege acceptance is separate from this staging evidence.
+
+## Deployment ownership and scheduled freshness
+
+The agreed workflow on 20 October 2026 is local Docker rehearsal first, repository
+merge second, then company-host commands executed by the user. Local and company
+staging are separate installations with separate serving revisions and prepared
+coverage. A successful local rehearsal does not certify the company publication.
+
+The existing sync/daily services resolve the healthy deployed commit-pinned API
+image on every invocation. An application update does not require changing an
+image pin in the timer configuration. Deployment and jobs already share the host
+maintenance lock.
+
+Their workload remains operational facts sync, daily reconciliation and presence
+sweep. They do not refresh the Business source observations used by the new command
+metrics. Report refresh only rereads accepted prepared data. Therefore automatic
+freshness for this overview remains unfinished even after the application deploys.
+
+[ADR 040](../architecture/adr/040-prepared-analytics-serving.md) requires complete
+population equality/reuse and correction/dependency coverage before recurring
+Business exposure. Do not attach repeated full-month extraction to the five-minute
+timer. The remaining refresh work must cover changed and deleted documents,
+allocations created later or backdated, customer/salesperson reassignment, current
+balance observations, month rollover and affected historical event periods; then
+reuse unchanged prepared populations, publish atomically, and measure source,
+preparation and storage cost. Each family must retain its own truthful freshness.
+The existing timer units can continue their existing workload while this is built;
+they must not be presented as keeping the entire report current.
 
 ## Release and recovery
 

@@ -9,7 +9,7 @@ import {reviewCapabilities,reviewDefinitionVersion} from './definitions.ts';
 import type {ReviewControl} from './source.ts';
 export interface ReviewExtraction {
  tenantId:string;month:string;mapping:SourceMapping;cutoff:string;revision:string;
- facts:AsyncIterable<readonly ProductionFact[]>;controls:()=>Promise<readonly ReviewControl[]>;assertAlive:()=>Promise<void>;
+ facts:AsyncIterable<readonly ProductionFact[]>;controls:()=>Promise<readonly ReviewControl[]>;assertAlive:()=>Promise<void>;completeSourceRead:()=>Promise<void>;
 }
 /** Atomic complete-month exposure; Finance approval is deliberately absent. */
 export async function exposeReviewMonth(pool:Pool,source:ReviewExtraction,family:'review'|'business'='review') {
@@ -30,13 +30,15 @@ export async function exposeReviewMonth(pool:Pool,source:ReviewExtraction,family
   await persistReviewControls(client,source.tenantId,partitionId,controls,family);
   await source.assertAlive();
   if(!(await client.query(`SELECT mart.${family==='business'?'business':'review'}_partition_exact($1,$2) exact`,[source.tenantId,partitionId])).rows[0].exact)throw new Error('Review source/mart controls do not match');
+  // Source evidence is complete and exact; offline preparation must not retain its lease.
+  await source.completeSourceRead();
   await client.query("INSERT INTO mart.analytics_serving_revisions(tenant_id,revision_id,parent_revision,cutoff,affected_months,purpose) VALUES($1,$2,$3,$4,$5,$6)",[source.tenantId,revisionId,parent,source.cutoff,[source.month+'-01'],family]);
   await client.query("INSERT INTO mart.analytics_serving_members SELECT tenant_id,$2,month,partition_id,family FROM mart.analytics_serving_members WHERE tenant_id=$1 AND revision_id=$3 AND NOT(family=$5 AND month=$4)",[source.tenantId,revisionId,parent,source.month+'-01',family]);
   await client.query("INSERT INTO mart.analytics_serving_members(tenant_id,revision_id,month,partition_id,family) VALUES($1,$2,$3,$4,$5)",[source.tenantId,revisionId,source.month+'-01',partitionId,family]);
   await prepareActivatedPublication(client,{tenantId:source.tenantId,revisionId});
   const promoted=await client.query('UPDATE mart.analytics_trusted_serving SET revision_id=$2 WHERE tenant_id=$1 AND revision_id=$3',[source.tenantId,revisionId,parent]);
   if(promoted.rowCount!==1)throw new Error('Review trusted parent conflict');
-  await source.assertAlive();return {revisionId,partitionId,month:source.month,facts:rows,controls:controls.length,financeReview:'pending' as const};
+  return {revisionId,partitionId,month:source.month,facts:rows,controls:controls.length,financeReview:'pending' as const};
  },false,120000);
 }
 async function persistReviewFacts(client:PoolClient,partitionId:string,source:ReviewExtraction,family:'review'|'business') {

@@ -83,13 +83,13 @@ prepared-cell acceptance, Finance approval or every possible filter case.
 - API/report checks cover authentication, tenant/profile ownership, strict bodies,
   enforced policies, shared filters, one clock, one revision, deduplication,
   bounded concurrency, full retry after publication changes and null/partial states.
-- Complete PostgreSQL suite: **383 passed, zero failures/skips**. An earlier
+- Complete PostgreSQL suite after the source-read handoff correction: **385 passed, zero failures/skips**. An earlier
   compatibility run exposed missing physical state columns and missing legacy
   analysis provenance; both were corrected. Final scoped provenance hardening
   additionally passed the native/prepared dashboard acceptance check.
 - Lint, typecheck, architecture, baseline-aware quality and build pass. The resolved
   `executeFacts` complexity allowance was removed; no debt allowance grew.
-- Existing Vite large-chunk warning remains. CI is not run; no push/merge occurred.
+- Existing Vite large-chunk warning remains. Implementation commit `732cc6c0d62a45d430f4742f9e0c21b82606cacc` passed [CI](https://github.com/hazemyoussif/el-dabboos-analytics/actions/runs/39391093208). Follow-up revision status is recorded with delivery.
 
 ## Prepared-reader proof and measured limits
 
@@ -150,10 +150,29 @@ company deployment.
 
 ## Concrete release boundary
 
-The intended company revision in the plan is distinct from local staging revision
-`3b5f517c-a1a4-4eda-9da3-45c975d3b03e`. Local staging was behind the selected
-baseline (`mart.prepared_reporting_windows` absent). No migration was run there to
-hide the discrepancy; source access was independently verified through the host.
+The intended company revision in the plan is distinct from the original local
+staging revision `3b5f517c-a1a4-4eda-9da3-45c975d3b03e`. Before the authorized local
+rehearsal, local staging was behind the selected baseline
+(`mart.prepared_reporting_windows` absent). The rehearsal backed up both local
+staging databases, built commit-pinned images, applied forward migrations through
+061, verified runtime roles and reached API readiness 200. Protected TLS/source
+relay configuration and the old accepted publication were retained.
+
+The source rehearsal exposed an existing lifecycle defect: a source lease was
+retained during offline preparation after all source reads and exact reconciliation
+were complete. The first short lease rolled back; an expired longer attempt was
+cancelled before publication. The corrected protocol requires a successful
+source-read handoff after exact reconciliation, closes the RR/RO source lease, and
+prepares only from the reconciled mart facts/controls within the same atomic
+publication transaction. Tests prove source loss/handoff failure still rolls back,
+preparation bounds still reject work after source close, and only sealed revisions
+promote. No source guard, statement bound or maximum lease duration was removed.
+
+Local real-data publication/reader acceptance is recorded separately from the
+synthetic/browser evidence above. The user executes the [company rollout
+commands](sales-command-center-company-rollout-2026-10-20.md); local success does
+not certify the company revision. The agreed workflow and outstanding timer
+refresh work are preserved in the owning integration document.
 
 After deployment authorization, use the documented normal backup/deploy/migrate/
 verify workflow, then the explicit `expose-business --sales-command` write operation

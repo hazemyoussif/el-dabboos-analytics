@@ -5,6 +5,7 @@ import {deploy,mapping} from './fixtures.ts';
 import {bootstrapOperationalServing} from '../../src/operational/baseline.ts';
 import {tenantTransaction} from '../../src/postgres/session.ts';
 import {exposeReviewMonth} from '../../src/review/exposure.ts';
+import {prepareRevision} from '../../src/prepared/preparation.ts';
 import {reviewMapping} from '../../src/review/definitions.ts';
 import {mapReviewRow} from '../../src/review/mapper.ts';
 import {TrustedAnalyticsRepository} from '../../src/operational/repository.ts';
@@ -18,7 +19,7 @@ function fixture(legacy?:'1'|'2'){
  const source={cutoff:'2026-10-13T09:00:00.000Z',revision:'SYNTHETIC REVIEW ONLY',companyIds:['1']};
  const facts=specification.measures.map(rule=>mapReviewRow({source_record_id:'10',source_object:rule.sourceObject,component_id:'whole',business_date:rule.measureId==='receivables_due_for_collection'?'2026-09-30':'2026-09-15',company_id:'1',currency:'IQD',measure_id:rule.measureId,value:values[rule.measureId]!,invalid:false,customer:'20',salesperson:'30',business_line:'40',product:'50',product_category:'60'},specification,source));
  const controls:ReviewControl[]=facts.flatMap(fact=>[{measure:fact.measureId,dimensions:fact.dimensions,value:fact.value,count:'1'},{measure:fact.measureId,dimensions:null,value:fact.value,count:'1'}]);
- return {tenantId:'a',month:'2026-09',mapping:specification,...source,facts:pages(facts),controls:async()=>controls,assertAlive:async()=>{}};
+ return {tenantId:'a',month:'2026-09',mapping:specification,...source,facts:pages(facts),controls:async()=>controls,assertAlive:async()=>{},completeSourceRead:async()=>{}};
 }
 async function* pages(facts:ProductionFact[]){for(let offset=0;offset<facts.length;offset+=1000)yield facts.slice(offset,offset+1000);}
 async function setup(){const db=await database();await deploy(db.migrator,mapping());await bootstrapOperationalServing(db.migrator,'a');return db;}
@@ -59,6 +60,7 @@ test('mismatched, incomplete and interrupted extractions roll back facts, contro
   await assert.rejects(exposeReviewMonth(db.ingestor,{...fixture(),controls:async()=>controls.map(control=>control.measure==='customer_cash_collected'&&control.dimensions!==null?{...control,count:'2'}:control)}),/do not match/);
   await assert.rejects(exposeReviewMonth(db.ingestor,{...fixture(),controls:async()=>controls.filter(control=>control.measure!=='cash_applied_to_invoices')}),/do not match/);
   await assert.rejects(exposeReviewMonth(db.ingestor,{...fixture(),assertAlive:async()=>{throw new Error('Source lease lost');}}),/lease lost/);
+  await assert.rejects(exposeReviewMonth(db.ingestor,{...fixture(),completeSourceRead:async()=>{throw new Error('Source lease lost before handoff');}}),/lease lost before handoff/);
   assert.equal((await db.admin.query("SELECT revision_id FROM mart.analytics_trusted_serving WHERE tenant_id='a'")).rows[0].revision_id,before);
   assert.equal((await db.admin.query('SELECT count(*) FROM mart.review_facts')).rows[0].count,'0');
  }finally{await db.close();}
@@ -113,3 +115,27 @@ function observeReviewRead(pool:Pool){
  }) as typeof pool.connect;
  return {report(){return {calls,rows,bytes};}};
 }
+
+for(const limited of [false,true])test(`source handoff closes the lease before offline preparation; ${limited?'bounded failure preserves the prior publication':'complete preparation promotes atomically'}`,{skip:!enabled},async()=>{
+ const db=await setup();
+ try{
+  const before=(await db.admin.query("SELECT revision_id FROM mart.analytics_trusted_serving WHERE tenant_id='a'")).rows[0].revision_id;
+  await tenantTransaction(db.ingestor,'a',client=>prepareRevision(client,{tenantId:'a',revisionId:before},{maxCellsPerChunk:50000,maxChunks:100}),'repeatable-write',120000);
+  const chunks=Number((await db.admin.query("SELECT count(*) FROM mart.prepared_required_chunks('a',$1)",[before])).rows[0].count);
+  await tenantTransaction(db.migrator,'a',client=>client.query('INSERT INTO mart.prepared_activation VALUES($1,$2,$3,$4)',['a',before,50000,limited?chunks:100]));
+  let closed=false,probes=0;
+  const assertAlive=async()=>{assert.equal(closed,false,'source must never be consulted after the completed read handoff');probes++;};
+  const operation=exposeReviewMonth(db.ingestor,{...fixture(),assertAlive,completeSourceRead:async()=>{await assertAlive();closed=true;}});
+  if(limited){
+   await assert.rejects(operation,/chunk bound/);
+   assert.equal((await db.admin.query("SELECT revision_id FROM mart.analytics_trusted_serving WHERE tenant_id='a'")).rows[0].revision_id,before);
+   assert.equal((await db.admin.query('SELECT count(*) FROM mart.review_facts')).rows[0].count,'0');
+   assert.equal((await db.admin.query('SELECT count(*) FROM mart.review_controls')).rows[0].count,'0');
+  }else{
+   const result=await operation;
+   assert.equal((await db.admin.query("SELECT revision_id FROM mart.analytics_trusted_serving WHERE tenant_id='a'")).rows[0].revision_id,result.revisionId);
+   assert.equal((await db.admin.query("SELECT count(*) FROM mart.prepared_revision_seals WHERE tenant_id='a' AND revision_id=$1",[result.revisionId])).rows[0].count,'1');
+  }
+  assert.equal(closed,true);assert.equal(probes,2);
+ }finally{await db.close();}
+});

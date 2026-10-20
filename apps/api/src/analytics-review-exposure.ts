@@ -16,7 +16,7 @@ export async function exposeAnalyticsReview(tenantId:string,month:string,environ
     const baseMapping=(family==='business'?businessMapping:reviewMapping)({tenantId,sourceId:baseline.sourceId,currency:baseline.reportingCurrency,timeZone:baseline.mappings[0]!.measures[0]!.timeZone,datasetId:`${family}:${month}:${randomUUID()}`,current:month===new Intl.DateTimeFormat('en-CA',{timeZone:baseline.mappings[0]!.measures[0]!.timeZone,year:'numeric',month:'2-digit'}).format(new Date(lease.evidence.sourceAsOf)).slice(0,7)});
     const mapping=salesCommand?withSalesCommandMapping(baseMapping,month===new Intl.DateTimeFormat('en-CA',{timeZone:baseline.mappings[0]!.measures[0]!.timeZone,year:'numeric',month:'2-digit'}).format(new Date(lease.evidence.sourceAsOf)).slice(0,7)):baseMapping;
     const source=new (family==='business'?OdooBusinessReader:OdooReviewReader)(reader,config,lease,{month,mapping});
-    return await exposeReviewMonth(mart,{tenantId,month,mapping,cutoff:lease.evidence.sourceAsOf,revision:lease.evidence.frozenRevision,facts:source.facts(),controls:()=>source.controls(),assertAlive:()=>lease.assertAlive()},family);
+    return await exposeReviewMonth(mart,{tenantId,month,mapping,cutoff:lease.evidence.sourceAsOf,revision:lease.evidence.frozenRevision,facts:source.facts(),controls:()=>source.controls(),assertAlive:()=>lease.assertAlive(),completeSourceRead:async()=>{await lease.assertAlive();await lease.close();}},family);
    }finally{await lease.close();}
   }finally{await Promise.all([owner.end(),reader.end()]);}
  }finally{await mart.end();}

@@ -17,6 +17,6 @@ export function fixture(month='2026-09',current=false,family:'review'|'business'
   validateProductionFact(fact,mapping);return fact;
  });
  const controls:ReviewControl[]=facts.flatMap(fact=>[{measure:fact.measureId,dimensions:fact.dimensions,value:fact.value,count:'1'},{measure:fact.measureId,dimensions:null,value:fact.value,count:'1'}]);
- return {tenantId:'a',month,mapping,cutoff,revision:'SYNTHETIC ONLY',facts:pages(facts),controls:async()=>controls,assertAlive:async()=>{}};
+ return {tenantId:'a',month,mapping,cutoff,revision:'SYNTHETIC ONLY',facts:pages(facts),controls:async()=>controls,assertAlive:async()=>{},completeSourceRead:async()=>{}};
 }
 export async function* pages(facts:ProductionFact[]){for(let offset=0;offset<facts.length;offset+=1000)yield facts.slice(offset,offset+1000);}
