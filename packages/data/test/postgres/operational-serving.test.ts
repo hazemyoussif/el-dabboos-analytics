@@ -4,7 +4,7 @@ import { TrustedDrillThroughRepository } from '../../src/operational/drill-throu
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import type {Pool} from 'pg';
+import type {Pool,PoolClient,QueryResult} from 'pg';
 import type { AnalyticsCursor,AnalyticsPartition,ProductionFact,DimensionId } from '@el-dabboos/domain';
 import { requiredMeasures } from '@el-dabboos/domain';
 import { AnalyticsOperations } from '../../../application/src/analytics-operations.ts';
@@ -201,6 +201,27 @@ test('failed daily reconciliation persists failure evidence without a discovery 
  const f=await setup();try {
   const before=(await f.db.admin.query('SELECT revision_id FROM mart.analytics_trusted_serving')).rows[0].revision_id;
   f.source.failControls=true;const run=await f.run('daily');assert.equal(run.status,'failed');assert.equal(run.servingRelease,before);assert.ok(run.caseCount>0);assert.equal(await januaryValue(f.repository),0);
+ }finally{await f.db.close();}
+});
+test('reconciled source closes before offline refresh and expiry cannot reject the publication',{skip:!enabled},async()=>{
+ const f=await setup();try {
+  let closed=false,expired=false,offlineReached=false;
+  const guarded=new WeakSet<PoolClient>();
+  f.source.close=async()=>{if(closed)return;assert.equal(expired,false,'source must be live at handoff');closed=true;};
+  f.db.ingestor.on('acquire',client=>{
+   if(guarded.has(client))return;guarded.add(client);
+   const query=client.query.bind(client) as (text:string,parameters?:unknown[])=>Promise<QueryResult>;
+   client.query=(async(text:string,parameters?:unknown[])=>{
+    if(text.startsWith('INSERT INTO mart.analytics_serving_revisions')){
+     offlineReached=true;expired=true;assert.equal(closed,true,'offline publication must not retain the source lease');
+    }
+    return query(text,parameters);
+   }) as PoolClient['query'];
+  });
+  f.source.rows=[januaryFact()];const run=await f.run();
+  assert.equal(run.status,'passed');assert.equal(offlineReached,true);assert.equal(closed,true);
+  assert.equal(await januaryValue(f.repository),100);
+  assert.equal((await f.db.admin.query('SELECT count(*)::int count FROM mart.analytics_source_cursors')).rows[0].count,1);
  }finally{await f.db.close();}
 });
 test('source closure failure occurs before mart commit and preserves the trusted release',{skip:!enabled},async()=>{

@@ -74,9 +74,20 @@ new-month candidate. Existing months use incremental revision changes.
 The tenant transaction owns all mart writes. A candidate savepoint allows a failed
 exact reconciliation to roll back heads and serving changes while retaining the
 failed source/mart cases and audit. Technical failures roll back the transaction
-and record a separate failure. Source handles verify their owner lease before mart
-commit. Retained handles can deliberately share one cutoff for a bounded replay;
-each closes independently and the final handle releases the owner.
+and record a separate failure. After discovery and exact source/mart reconciliation,
+source handles verify and close their owner lease before offline refresh and prepared
+publication. The handoff remains inside the same mart transaction: source loss or
+handoff failure prevents downstream work; refresh, preparation, audit or cursor
+failure rolls everything back after source close. Expiry during subsequent offline
+work cannot invalidate an already checked source observation. Retained handles can
+deliberately share one cutoff for a bounded replay; each closes independently and
+the final handle releases the owner.
+
+The protected operator CLI prints phase names and elapsed milliseconds for source
+observation, handoff, offline refresh/preparation, audit and commit. These progress
+events contain no credentials, queries, source/customer rows or business values.
+HTTP composition remains silent unless its caller explicitly supplies an observer.
+Existing source lease, statement and systemd deadlines are unchanged.
 
 A fixed overlap cannot prove discovery of arbitrarily long source transactions
 whose write timestamps predate the overlap. Presence sweeps detect deletion, not
