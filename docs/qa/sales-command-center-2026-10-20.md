@@ -136,7 +136,13 @@ prepared-cell acceptance, Finance approval or every possible filter case.
   additionally passed the native/prepared dashboard acceptance check.
 - Lint, typecheck, architecture, baseline-aware quality and build pass. The resolved
   `executeFacts` complexity allowance was removed; no debt allowance grew.
-- Existing Vite large-chunk warning remains. Implementation commit `732cc6c0d62a45d430f4742f9e0c21b82606cacc` passed [CI](https://github.com/hazemyoussif/el-dabboos-analytics/actions/runs/39391093208). Follow-up revision status is recorded with delivery.
+- Existing Vite large-chunk warning remains. Implementation commit `732cc6c0d62a45d430f4742f9e0c21b82606cacc` passed [CI](https://github.com/hazemyoussif/el-dabboos-analytics/actions/runs/39391093208). Final application-code commit
+  `b3c74f5f66114537bc483bc015a18ac70476d2e1` also passed
+  [CI](https://github.com/hazemyoussif/el-dabboos-analytics/actions/runs/39404653092).
+  The subsequent company-storage adjustment changes documentation only: it uses
+  the verified existing backup mount, retains the root reserve, and preserves
+  tagged images and database volumes. All three company Bash blocks pass syntax
+  validation and the diff gate; application/test sources are unchanged after CI.
 
 ## Prepared-reader proof and measured limits
 

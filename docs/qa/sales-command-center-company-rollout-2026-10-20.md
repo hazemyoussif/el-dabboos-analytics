@@ -16,6 +16,32 @@ release on 20 October. Preserve that source connection; do not switch to another
 Odoo environment as part of deployment. Reference/live-environment differences
 are documented in the [implementation receipt](sales-command-center-2026-10-20.md).
 
+## Company storage preflight
+
+The 20 October company preflight reported a roughly 58.5 GB analytics database,
+root storage at 98–99% usage, and an existing ext4 40 GiB disk mounted at
+`/mnt/HC_Volume_107192875` with about 38 GiB available. The backup belongs on that
+existing mounted disk, not the nearly full root filesystem. Do not format it,
+move the database or delete immutable analytics/prepared history for this release.
+
+Rebuildable cache cleanup, if still needed, preserves tagged images and volumes:
+
+```bash
+docker builder prune --force
+docker image prune --force
+df -hT / /mnt/HC_Volume_107192875
+```
+
+The image command deliberately omits `--all`; do not substitute volume or system
+pruning. Keep the existing accepted images available for coordinated recovery.
+Set `SALES_COMMAND_BACKUP_ROOT=/mnt/HC_Volume_107192875` for this company host after
+confirming it remains mounted. The deployment block requires a mounted backup
+filesystem distinct from root and checks available storage before the build,
+after the build and throughout backup. Its 2 GiB reserve is a stop threshold,
+not evidence of sufficient capacity for new source exposure. Company Business
+publication needs a separate free-space/preparation-bounds decision; the local
+43-chunk installation does not determine the company's 114-member publication.
+
 ## Application deployment
 
 Set `SALES_COMMAND_RELEASE` to the exact merged SHA supplied with delivery. The
@@ -30,6 +56,12 @@ recovery/restore readiness under the existing shared-staging runbook first.
 set -euo pipefail
 cd /opt/el-dabboos/analytics
 : "${SALES_COMMAND_RELEASE:?Set the exact reviewed merged SHA from delivery}"
+: "${SALES_COMMAND_BACKUP_ROOT:?Set the verified existing backup mount point}"
+[[ "$SALES_COMMAND_BACKUP_ROOT" = /* ]]
+mountpoint -q "$SALES_COMMAND_BACKUP_ROOT"
+root_device=$(findmnt -n -o MAJ:MIN --target /)
+backup_device=$(findmnt -n -o MAJ:MIN --target "$SALES_COMMAND_BACKUP_ROOT")
+test "$backup_device" != "$root_device"
 [[ "$SALES_COMMAND_RELEASE" =~ ^[0-9a-f]{40}$ ]]
 test -z "$(git status --porcelain --untracked-files=all)"
 for file in staging-runtime.env staging-operator.env; do
@@ -38,7 +70,7 @@ done
 reserve_bytes=2147483648
 check_reserve() {
  local available location
- for location in /var/lib/docker /opt/el-dabboos/state; do
+ for location in /var/lib/docker /opt/el-dabboos/state "$SALES_COMMAND_BACKUP_ROOT"; do
   available=$(df --output=avail -B1 "$location" | tail -n 1 | tr -d ' ')
   [[ "$available" =~ ^[0-9]+$ ]] && (( available >= reserve_bytes )) || return 1
  done
@@ -60,7 +92,7 @@ check_reserve
 source infra/staging/analytics-lock.sh
 acquire_analytics_lock wait 300
 umask 077
-backup_dir="/opt/el-dabboos/state/backups/sales-command-$(date -u +%Y%m%dT%H%M%SZ)"
+backup_dir="$SALES_COMMAND_BACKUP_ROOT/el-dabboos-backups/sales-command-$(date -u +%Y%m%dT%H%M%SZ)"
 mkdir -p "$backup_dir"
 docker inspect --format '{{.Config.Image}} {{.Image}}' el-dabboos-staging-api-1 el-dabboos-staging-web-1 > "$backup_dir/previous-images.txt"
 backup_identity=$(docker exec dabboos-analytics-mart-postgres-1 sh -c 'psql -X -At -U "$POSTGRES_USER" -d postgres -c "SELECT rolsuper OR rolbypassrls FROM pg_roles WHERE rolname=current_user"')
