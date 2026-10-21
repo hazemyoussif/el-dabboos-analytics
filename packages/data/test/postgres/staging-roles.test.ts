@@ -30,7 +30,11 @@ test('staging roles isolate developer DBs, reject escalation and retain pending-
             const client = await pools[identity.startsWith('control') ? 'controlMigrator' : 'martMigrator'].connect();
             try { await grantStagingPrivileges(client,identity); } finally { client.release(); }
         }
-        assert.equal((await pools.martMigrator.query("SELECT count(*)::int count FROM pg_policy WHERE NOT polpermissive AND (SELECT oid FROM pg_roles WHERE rolname='staging_mart_runtime_login')=ANY(polroles)")).rows[0].count,24);
+        const restrictivePolicies = async (role:string) => (await pools.martMigrator.query(
+            'SELECT polrelid::regclass::text relation,polname FROM pg_policy WHERE NOT polpermissive AND $1::regrole=ANY(polroles) ORDER BY polrelid,polname',[role])).rows;
+        const migrationPolicies = await restrictivePolicies('dabboos_runtime');
+        assert.ok(migrationPolicies.length>0);
+        assert.deepEqual(await restrictivePolicies('staging_mart_runtime_login'),migrationPolicies);
         await assertControlReady(pools.controlApp); await verifyControlAppRole(pools.controlApp); await assertMartRuntimeReady(pools.martRuntime);
         for (const identity of Object.keys(pools) as StagingIdentity[]) {
             const url = new URL(endpoint); url.pathname=`/${developerDatabase}`; url.username=stagingIdentities[identity].login; url.password=passwords[identity];
