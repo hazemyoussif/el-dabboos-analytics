@@ -1,7 +1,8 @@
 # ADR 042 — Checkpointed operational sync
 
-Status: implementation approved by the owner on 21 October 2026. Implemented in
-the working tree; release and company performance verification remain pending.
+Status: implementation approved by the owner on 21 October 2026 and released in
+`8d449b9df9fca8ae7f94c16541c96718e805daa1`. Local staging migration rehearsal
+passed; company deployment and company performance verification remain pending.
 Extends ADR 029 and ADR 040 for operational `sync` only.
 
 ## Problem and decision

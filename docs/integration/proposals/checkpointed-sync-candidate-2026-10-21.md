@@ -2,7 +2,8 @@
 
 Status: the owner approved the schema/security change and subsequently approved
 focused synthetic tests. Capture, resume, migration 064 and API composition are
-implemented in the working tree. Company rollout is not performed. The earlier
+implemented in release `8d449b9df9fca8ae7f94c16541c96718e805daa1`. Company rollout
+is not performed. The earlier
 automatic-review rejection was resolved through explicit approval and focused
 patches. [ADR 042](../../architecture/adr/042-checkpointed-operational-sync.md)
 owns the lifecycle decision.
@@ -77,8 +78,9 @@ status projection exposes the pending candidate ID only. Staging provisioning mu
 copy the policies to its non-inheriting runtime login before restart.
 
 These are lifecycle/security changes requiring migration and role provisioning;
-the old API-only deployment block is insufficient. Migration 064 has run only in
-disposable synthetic databases, not local staging or company databases.
+the old API-only deployment block is insufficient. Migration 064 passed in
+disposable synthetic databases and the local staging rehearsal; it has not run in
+company databases.
 
 ## Owning implementation
 
@@ -114,10 +116,10 @@ with no skips. They apply all migrations in disposable databases and cover:
   acceptance-flag misuse, concurrent writer exclusion and lineage conflicts.
 
 Eight existing refresh/diagnostic tests and nine mocked staging-runner tests also
-passed: **26 focused tests in total**, with no skips. Full lint, root/web TypeScript,
-architecture, baseline-aware quality, diff and shell syntax checks passed. These
-results cover the uncommitted working tree based on `a6c715b`; they are not evidence
-for a published release. The initial fixture failures
+passed: **26 focused tests in total**, with no skips. The focused results were first
+obtained on the working tree based on `a6c715b`.
+Final release verification and local rehearsal are recorded in the
+[release handoff](../../qa/checkpointed-sync-release-2026-10-21.md). The initial fixture failures
 were an invalid synthetic projection version and an unquoted test SQL alias; both
 were corrected without weakening production constraints. Interruption tests inject
 exceptions at commit boundaries; they do not measure a company process kill or
@@ -132,7 +134,8 @@ node --experimental-transform-types --disable-warning=ExperimentalWarning --test
 ```
 
 The command receives only the disposable `PG_TEST_ADMIN_URL`; it does not load
-developer env files. No commit, push or merge has been performed for this change.
+developer env files. Release branch and company handoff are tracked in the
+[release handoff](../../qa/checkpointed-sync-release-2026-10-21.md).
 
 ## Remaining release conditions
 
