@@ -2,8 +2,11 @@
 
 Status: the owner approved the schema/security change and subsequently approved
 focused synthetic tests. Capture, resume, migration 064 and API composition are
-implemented in release `8d449b9df9fca8ae7f94c16541c96718e805daa1`. Company rollout
-is not performed. The earlier
+implemented in release `8d449b9df9fca8ae7f94c16541c96718e805daa1`. Company application
+deployment passed, but the first sync failed with heap exhaustion before a committed
+capture. The subsequent [memory correction](../../qa/sync-capture-memory-correction-2026-10-21.md)
+passed its approved focused checks and local API rehearsal; successful company
+catch-up remains unverified. The earlier
 automatic-review rejection was resolved through explicit approval and focused
 patches. [ADR 042](../../architecture/adr/042-checkpointed-operational-sync.md)
 owns the lifecycle decision.

@@ -6,9 +6,10 @@ exhaustion before reporting a committed capture. Follow the
 [memory correction](sync-capture-memory-correction-2026-10-21.md) for the subsequent
 code-only release; do not repeat this migration deployment for that correction.
 
-Status: release merged to `main` as `8db0181`. Local staging rehearsal passed.
-Company deployment and source catch-up have not run. GitHub CI remains
-disabled. Do not start company sync while capacity remains unresolved.
+Status: release merged to `main` as `8db0181`. Local staging and company application
+deployment passed. The first company source run failed before capture with heap
+exhaustion; follow the memory correction linked above. GitHub CI remains disabled.
+Successful company catch-up and sufficient working capacity remain unverified.
 
 ## Release scope
 
