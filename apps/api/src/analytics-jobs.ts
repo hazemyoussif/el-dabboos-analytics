@@ -1,10 +1,10 @@
 import { randomUUID } from 'node:crypto';
-import { AnalyticsOperations } from '@el-dabboos/application';
+import { AnalyticsOperations,CheckpointedAnalyticsSync } from '@el-dabboos/application';
 import type { AnalyticsOperationPhase } from '@el-dabboos/application';
-import { createMartPool,createOdooSourcePool,tenantTransaction,OdooOperationalSource,PostgresOperationalStore,readBaseline,bootstrapOperationalServing } from '@el-dabboos/data';
+import { createMartPool,createOdooSourcePool,tenantTransaction,OdooOperationalSource,PostgresOperationalStore,PostgresCheckpointedSyncStore,readBaseline,bootstrapOperationalServing } from '@el-dabboos/data';
 import type {OperationalProgressObserver} from '@el-dabboos/data';
 import {analyticsJobObservation} from './analytics-job-observation.ts';
-import type { AnalyticsJobRequest } from '@el-dabboos/domain';
+import type { AnalyticsJobRequest,AnalyticsOperationalSource } from '@el-dabboos/domain';
 import { resolveOdooSourceConfig } from './source-connections.ts';
 import { assertHostedMartUrl } from './hosted-mart-url.ts';
 
@@ -29,22 +29,29 @@ function jobKind(command:string,mode:string|undefined):AnalyticsJobRequest['kind
 /** Shared CLI/HTTP composition; the application lifecycle owns every pipeline step and durable audit. */
 export async function runConfiguredAnalyticsJob(mart:ReturnType<typeof createMartPool>,request:AnalyticsJobRequest,environment:NodeJS.ProcessEnv,observePhase?:(phase:AnalyticsOperationPhase)=>void,observeProgress?:OperationalProgressObserver) {
  const runId=randomUUID(),startedAt=new Date().toISOString(),store=new PostgresOperationalStore(mart,runId,observeProgress);
+ const sourcePools:ReturnType<typeof createOdooSourcePool>[]=[];
  let lifecycleStarted=false;
  try {
   const baseline=await tenantTransaction(mart,request.tenantId,client=>readBaseline(client,request.tenantId),true);
-  const config=await resolveOdooSourceConfig(environment,{tenantId:request.tenantId,sourceId:baseline.sourceId});
-  const owner=createOdooSourcePool(config),reader=createOdooSourcePool(config);
-  try {
-   const operations=new AnalyticsOperations({store,source:new OdooOperationalSource(owner,reader,config,baseline,observeProgress),runId:()=>runId,clock:()=>new Date(),impact:{through:baseline.to,movingAverageWindows:[],runningTotals:false,yearOverYear:false,contribution:false,snapshotDependencies:()=>[]}},observePhase);
-   lifecycleStarted=true;
-   const run=await operations.run(request);
-   const details=await tenantTransaction(mart,request.tenantId,async client=>(await client.query('SELECT details FROM mart.analytics_run_details WHERE tenant_id=$1 AND run_id=$2',[request.tenantId,run.runId])).rows[0].details,true);
-   return {run,details};
-  }finally{await Promise.all([owner.end(),reader.end()]);}
+  // A sealed candidate resumes offline, without resolving source credentials.
+  const source:AnalyticsOperationalSource={open:async tenantId=>{
+   const config=await resolveOdooSourceConfig(environment,{tenantId,sourceId:baseline.sourceId});
+   const owner=createOdooSourcePool(config);sourcePools.push(owner);
+   const reader=createOdooSourcePool(config);sourcePools.push(reader);
+   return new OdooOperationalSource(owner,reader,config,baseline,observeProgress).open(tenantId);
+  }};
+  const options={source,runId:()=>runId,clock:()=>new Date(),impact:{through:baseline.to,movingAverageWindows:[],runningTotals:false,yearOverYear:false,contribution:false,snapshotDependencies:()=>[]}};
+  const operations=request.kind==='sync'
+   ?new CheckpointedAnalyticsSync({...options,store:new PostgresCheckpointedSyncStore(mart,observeProgress)},observePhase)
+   :new AnalyticsOperations({...options,store},observePhase);
+  lifecycleStarted=true;
+  const run=await operations.run(request);
+  const details=await tenantTransaction(mart,request.tenantId,async client=>(await client.query('SELECT details FROM mart.analytics_run_details WHERE tenant_id=$1 AND run_id=$2',[request.tenantId,run.runId])).rows[0].details,true);
+  return {run,details};
  }catch(error){
   if(!lifecycleStarted)await store.recordFailure(request,runId,startedAt);
   throw error;
- }
+ }finally{await Promise.all(sourcePools.map(pool=>pool.end()));}
 }
 
 /** Scheduled invocations retain their origin in the existing durable job audit. */

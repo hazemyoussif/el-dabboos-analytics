@@ -4,25 +4,25 @@ import type { AnalyticsPartition,OperationalReconciliation } from '@el-dabboos/d
 import type { ExactControl,OperationalSnapshot } from './contracts.ts';
 const exactCaseWriteLimit=1000;
 export interface PersistedExactCase {id:string;control:ExactControl;actualValue:string;actualCount:string}
-export async function compareCandidate(client:PoolClient,tenantId:string,controls:readonly ExactControl[]):Promise<PersistedExactCase[]> {
+export async function compareCandidate(client:PoolClient,tenantId:string,controls:readonly ExactControl[],candidate=false):Promise<PersistedExactCase[]> {
  const groups=new Map<string,ExactControl[]>();
  for(const control of controls){const key=JSON.stringify([control.partition.month,control.partition.dimension,control.measure]);const group=groups.get(key)??[];group.push(control);groups.set(key,group);}
  const cases:PersistedExactCase[]=[];
- for(const group of groups.values())cases.push(...await compareGroup(client,tenantId,group));
+ for(const group of groups.values())cases.push(...await compareGroup(client,tenantId,group,candidate));
  return cases;
 }
-async function compareGroup(client:PoolClient,tenantId:string,controls:ExactControl[]):Promise<PersistedExactCase[]> {
+async function compareGroup(client:PoolClient,tenantId:string,controls:ExactControl[],candidate:boolean):Promise<PersistedExactCase[]> {
  const {partition,measure}=controls[0]!;
  const grouping=partition.dimension?'payload->\'dimensions\'->>$4':'NULL::text';
  const group=partition.dimension?`AND ${grouping}=ANY($5::text[]) GROUP BY ${grouping}`:'AND $4::text IS NULL AND $5::text[] IS NULL';
  const rows=(await client.query(`SELECT ${grouping} key,coalesce(sum((payload->>'value')::numeric),0)::numeric(30,6)::text value,count(*)::text count
- FROM mart.analytics_fact_heads head JOIN mart.analytics_fact_revisions revision USING(tenant_id,fact_key,revision_id)
+ FROM mart.${candidate?'analytics_working_heads':'analytics_fact_heads'} head JOIN mart.analytics_fact_revisions revision USING(tenant_id,fact_key,revision_id)
  WHERE head.tenant_id=$1 AND head.status='active' AND head.measure_id=$2 AND head.business_month=$3 ${group}`,[tenantId,measure,partition.month,partition.dimension,partition.dimension?controls.map(control=>control.partition.identity):null])).rows;
  const values=new Map(rows.map(row=>[row.key,row]));
  return controls.map(control=>({id:randomUUID(),control,actualValue:values.get(control.partition.identity)?.value??'0.000000',actualCount:values.get(control.partition.identity)?.count??'0'}));
 }
 
-export async function persistExactCases(client:PoolClient,tenantId:string,source:OperationalSnapshot,cases:readonly PersistedExactCase[]):Promise<OperationalReconciliation> {
+export async function persistExactCases(client:PoolClient,tenantId:string,source:Pick<OperationalSnapshot,'cutoff'|'revision'|'mappingVersion'|'definitionVersion'>,cases:readonly PersistedExactCase[]):Promise<OperationalReconciliation> {
  for(let offset=0;offset<cases.length;offset+=exactCaseWriteLimit) {
   const page=cases.slice(offset,offset+exactCaseWriteLimit).map(item=>({id:item.id,partition:item.control.partition,measure:item.control.measure,expectedValue:item.control.value,actualValue:item.actualValue,expectedCount:item.control.count,actualCount:item.actualCount}));
   await client.query(`INSERT INTO mart.analytics_exact_cases(tenant_id,case_id,source_cutoff,source_revision,mapping_version,definition_version,partition,measure_id,expected_value,actual_value,expected_count,actual_count)

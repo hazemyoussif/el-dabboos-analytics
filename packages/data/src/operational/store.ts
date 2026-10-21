@@ -104,7 +104,7 @@ class OperationalTransaction implements AnalyticsOperationalTransaction {
   this.source=source;return source;
  }
 }
-async function reconciliationScope(client:PoolClient,baseline:OperationalBaseline,kind:AnalyticsJobRequest['kind']):Promise<AnalyticsPartition[]> {
+export async function reconciliationScope(client:PoolClient,baseline:OperationalBaseline,kind:AnalyticsJobRequest['kind']):Promise<AnalyticsPartition[]> {
  if(kind==='affected')return (await client.query('SELECT details FROM mart.analytics_run_details JOIN mart.analytics_operation_runs USING(tenant_id,run_id) WHERE tenant_id=$1 AND partitions_affected>0 ORDER BY completed_at DESC,run_id DESC LIMIT 1',[baseline.tenantId])).rows[0]?.details.partitions??[];
  const months=(await client.query("SELECT to_char(member.month,'YYYY-MM') AS period FROM mart.analytics_trusted_serving trusted JOIN mart.analytics_serving_members member USING(tenant_id,revision_id) WHERE trusted.tenant_id=$1 AND member.family='facts' ORDER BY member.month",[baseline.tenantId])).rows;
  return months.flatMap(row=>baseline.capabilities.releases.flatMap(release=>release.capabilities).filter(capability=>!snapshotMetric(capability.metric)||row.period<=baseline.to.slice(0,7)).map(capability=>({metric:capability.metric,month:row.period,dimension:null,identity:null,dependency:'base' as const})));

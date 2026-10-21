@@ -7,6 +7,14 @@ aggregate refresh and a pinned trusted manifest. Dashboard reads use that stored
 manifest and capability projection. No model, source connection, synchronization
 or certification reconstruction runs on the bootstrapped tenant's normal reads.
 
+The 21 October checkpointed sync implementation requires migration 064 and role
+provisioning. A complete private capture can resume exact reconciliation, affected
+months and prepared chunks without reopening the source. Accepted state changes
+only at final atomic acceptance. Other job kinds retain their existing transaction
+path. See [ADR 042](../architecture/adr/042-checkpointed-operational-sync.md) and
+the [verification record](proposals/checkpointed-sync-candidate-2026-10-21.md).
+Company rollout and performance are not established by the focused synthetic tests.
+
 ## Operator setup and commands
 
 Apply migrations through the existing local staging migration command and grants

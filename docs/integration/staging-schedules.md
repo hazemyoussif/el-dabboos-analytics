@@ -4,6 +4,15 @@ The host runs the existing analytics CLI in the healthy deployed API image. The 
 
 ## Scope and integrity
 
+With migration 064 and the checkpointed sync release, the same sync invocation
+resumes a sealed private candidate before opening the source. Committed month and
+prepared-chunk progress survives worker interruption. `analytics-sync-checkpoint`
+events mark durable progress; a substep completion alone does not. Freshness still
+uses the last successful accepted cutoff. No timer interval or deadline changes.
+The runner now waits on a background Docker child so signal cleanup can remove
+that worker promptly. This code change and its synthetic runner checks do not
+establish company rollout; follow the migration-aware release handoff first.
+
 The sync timer runs five minutes after activation and five minutes after the previous invocation finishes. Daily reconciliation followed by the presence sweep runs at 00:00 UTC / 03:00 Baghdad. Reconciliation failure stops the sweep. All jobs retain the existing tenant writer lock, independent source controls, candidate rollback, immutable serving publication and successful cursor rules. Source access stays read-only through the existing adapter. Nothing marks Finance approval.
 
 These two schedules cover the existing operational fact/event/summary path. They **do not refresh** immutable Finance month ends or the newer `review` and `business` extraction families. Their existing `expose` / `expose-business` commands replace a complete month with a new immutable partition. Repeating those full loaders every five minutes would consume source capacity and grow history even when business values have not changed. A separate change-aware refresh design and measured source proof are required for those families; no whole-history loop or automatic month-end publication is installed here. Read source timestamps separately when reviewing their dashboards.

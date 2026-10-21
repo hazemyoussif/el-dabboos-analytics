@@ -40,7 +40,11 @@ run_job_container() {
     -e ENVIRONMENT=staging -e CONTROL_PROVIDER=postgres \
     -e ANALYTICS_JOB_TRIGGER=scheduled -e ANALYTICS_OPERATOR_ID=staging-scheduler \
     --read-only --tmpfs /tmp --entrypoint node "$image_id" \
-    --experimental-transform-types --disable-warning=ExperimentalWarning "${job_command[@]}"
+    --experimental-transform-types --disable-warning=ExperimentalWarning "${job_command[@]}" &
+  # Waiting for a background child lets Bash run TERM/INT traps immediately.
+  # Cleanup removes the job container; committed private checkpoints survive.
+  local docker_pid=$!
+  wait "$docker_pid"
 }
 # Offline role/schema verification finishes before a container receives source configuration.
 job_command=(apps/api/src/staging-cli.ts verify)

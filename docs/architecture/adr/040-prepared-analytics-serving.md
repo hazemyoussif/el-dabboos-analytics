@@ -18,13 +18,14 @@ Snapshot preparation applies the versioned source contract in the background: co
 
 Prepared membership references the existing immutable input revision. Initial coverage is built and verified before activation. Once activated, a source publication cannot become trusted before its required prepared coverage is validated. Failed preparation leaves the previous trusted release available. Backdated edits invalidate affected event dates and dependent snapshot preparation signatures. A later complete observation remains its accepted whole population until that source cutoff is revalidated; rebuilding old mart data does not prove fresh later source observations. Current-only observations do not fabricate past inventory.
 
-A Review/Business exposure and an operational sync retain their RR/RO source snapshot through extraction,
-independent controls and the exact source/mart comparison. A checked source-read
-handoff then closes that lease before offline preparation. Preparation consumes
-only the reconciled facts and controls inside the same publication transaction;
-it does not reread Odoo or relabel its source cutoff. Source loss before handoff,
-failed handoff, failed preparation or parent conflict rolls back the publication.
-The source lease deadline bounds source observation, not subsequent mart work.
+Operational `sync` uses [ADR 042](042-checkpointed-operational-sync.md): retain the
+RR/RO snapshot through extraction and independent controls, close it, then seal a
+complete private capture. Exact comparison, month refresh and prepared chunks can
+commit privately and resume. Accepted heads, audit, cursor, dependencies and trusted
+publication still commit together after all checks. Preparation does not reread
+Odoo or relabel its source cutoff. Other exposure jobs retain their existing source
+handoff and publication transactions. The source lease deadline bounds source
+observation, not subsequent mart work.
 
 Unchanged data members are reused. New validation evidence records the observed source cutoff separately from the original data extraction watermark. No-change detection must compare complete canonical populations and exact states, not summary totals alone. Preparation is bounded and resumable; it does not insert a full new copy merely because a lease timestamp changed.
 

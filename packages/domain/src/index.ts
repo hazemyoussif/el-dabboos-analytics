@@ -50,3 +50,4 @@ export * from './sales-command-calendar.ts';
 export * from './source-state-labels.ts';
 
 export * from './sales-command-insights.ts';
+export type {AnalyticsSyncCandidate,AnalyticsSyncSession,AnalyticsSyncStore} from './analytics-sync.ts';

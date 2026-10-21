@@ -14,6 +14,10 @@ export function analyticsJobObservation() {
   write({stage:'analytics-progress',elapsedMs:Math.round(now-began),activeSteps:[...active].filter(([,count])=>count>0).map(([step])=>step),timings:[...totals].map(([step,total])=>({step,...total,durationMs:Math.round(total.durationMs)}))});
  };
  const progress:OperationalProgressObserver=(event:OperationalProgress)=>{
+  if(event.step==='sync_checkpoint'){
+   write({stage:'analytics-sync-checkpoint',committed:true,...event,elapsedMs:Math.round(performance.now()-began)});
+   return;
+  }
   if(event.step==='mart_candidate_changes') {
    const {groups,...counts}=event.summary;
    write({stage:'analytics-candidate-changes',candidateOnly:true,elapsedMs:Math.round(performance.now()-began),classificationMs:Math.round(event.durationMs),...counts});

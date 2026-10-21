@@ -66,7 +66,7 @@ function validateRequest(request: AnalyticsJobRequest) {
   if (![request.tenantId, request.actorId].every(value => typeof value === 'string' && value.length > 0 && value.length <= 200 && value.trim() === value) || !['sync', 'affected', 'daily', 'deep', 'sweep'].includes(request.kind) || !['manual', 'operator', 'scheduled'].includes(request.trigger)) throw new Error('Invalid analytics job request');
 }
 function emptyEvidence(): OperationalReconciliation { return { caseIds: [], caseCount: 0, mismatchCount: 0, evidenceHash: 'no-changes' }; }
-function validateEvidence(evidence: OperationalReconciliation, unchanged: boolean) {
+export function validateEvidence(evidence: OperationalReconciliation, unchanged: boolean) {
   if (!Number.isSafeInteger(evidence.caseCount) || !Number.isSafeInteger(evidence.mismatchCount) || evidence.mismatchCount < 0 || evidence.mismatchCount > evidence.caseCount || evidence.caseCount !== evidence.caseIds.length || new Set(evidence.caseIds).size !== evidence.caseCount || !evidence.evidenceHash || !unchanged && !evidence.caseCount) throw new Error('Incomplete reconciliation evidence');
 }
 

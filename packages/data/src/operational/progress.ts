@@ -10,6 +10,9 @@ interface OperationalTimingProgress {
 }
 export type OperationalProgress=OperationalTimingProgress|{
  step:'mart_candidate_changes';state:'completed';durationMs:number;summary:CandidateChangeSummary;
+}|{
+ step:'sync_checkpoint';state:'completed';candidateId:string;month?:string;durationMs?:number;
+ checkpoint:'capture'|'resume'|'reconciliation'|'month'|'prepared_chunk'|'acceptance'|'rejection';
 };
 export type OperationalProgressObserver=(progress:OperationalProgress)=>void;
 
