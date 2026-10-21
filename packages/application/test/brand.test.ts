@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { extname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 const root = fileURLToPath(new URL('../../../', import.meta.url));
@@ -19,7 +19,8 @@ const legacyLine = /^ {2}(theme|sidebar|locale|tenant|demoUser): '([^']+)', \/\/
 const legacySuffixes = new Set(['ui-theme', 'sidebar-collapsed', 'ui-locale', 'last-tenant', 'demo-user']);
 test('project-controlled source and docs use canonical brand; only five explicit browser migration constants are exempt', () => {
   const failures: string[] = []; let exemptions = 0;
-  const files = [...projectFiles(join(root, 'apps')), ...projectFiles(join(root, 'packages')), ...projectFiles(join(root, 'docs')), ...projectFiles(join(root, '.agents')), ...projectFiles(join(root, '.github')), ...readdirSync(root).filter(name => extensions.has(extname(name))).map(name => join(root, name))];
+  const githubFiles = existsSync(join(root, '.github')) ? projectFiles(join(root, '.github')) : [];
+  const files = [...projectFiles(join(root, 'apps')), ...projectFiles(join(root, 'packages')), ...projectFiles(join(root, 'docs')), ...projectFiles(join(root, '.agents')), ...githubFiles, ...readdirSync(root).filter(name => extensions.has(extname(name))).map(name => join(root, name))];
   for (const file of files) readFileSync(file, 'utf8').split('\n').forEach((line, index) => {
     if (!line.match(forbidden)) return;
     const match = line.match(legacyLine);
