@@ -2,7 +2,10 @@
 
 Status: implementation approved by the owner on 21 October 2026 and released in
 `8d449b9df9fca8ae7f94c16541c96718e805daa1`. Local staging migration rehearsal
-passed; company deployment and company performance verification remain pending.
+passed; company deployment subsequently passed. The initial company run failed
+before a capture checkpoint with Node heap exhaustion. See the
+[capture memory correction](../../qa/sync-capture-memory-correction-2026-10-21.md).
+Company catch-up and performance verification remain pending.
 Extends ADR 029 and ADR 040 for operational `sync` only.
 
 ## Problem and decision

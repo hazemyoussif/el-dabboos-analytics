@@ -9,7 +9,7 @@ import { coveredOperationalFacts } from './ingestion-scope.ts';
 import {measureOperationalWork} from './progress.ts';
 import type {OperationalProgressObserver} from './progress.ts';
 /** New calendar partitions need a complete initial base; existing months use changed identities only. */
-export async function ingestOperationalCandidate(client:PoolClient,scope:{baseline:OperationalBaseline;source:OperationalSnapshot;cursor:AnalyticsCursor|null;details:OperationDetails;parent:string|null;observeProgress?:OperationalProgressObserver|undefined}) {
+export async function ingestOperationalCandidate(client:PoolClient,scope:{baseline:OperationalBaseline;source:OperationalSnapshot;cursor:AnalyticsCursor|null;details:OperationDetails;parent:string|null;observeProgress?:OperationalProgressObserver|undefined;retainHeads?:boolean}) {
  const {baseline,source,cursor,details,parent,observeProgress}=scope;
  const start=performance.now(),objects={...cursor?.objects};details.previousCursor=cursor;
  const months=(await client.query("SELECT to_char(month,'YYYY-MM') AS period FROM mart.analytics_serving_members WHERE tenant_id=$1 AND revision_id=$2 AND family='facts'",[baseline.tenantId,parent])).rows.map(row=>String(row.period));
@@ -30,11 +30,11 @@ export async function ingestOperationalCandidate(client:PoolClient,scope:{baseli
  }
  details.canonicalRevisions=candidate.changes.length;details.durations.ingestionMs=performance.now()-start;
  details.newCursor={cutoff:source.cutoff,objects};
- return {changes:candidate.changes,cursor:details.newCursor,recordsChanged:candidate.identities.size,
+ return {changes:candidate.changes,cursor:details.newCursor,recordsChanged:candidate.identities.size,heads:scope.retainHeads?candidate.heads:undefined,
   ...dependencies.complete(details,dependencyContext?.initialized??false)};
 }
 class CandidateFacts {
- private readonly pending=new Map<string,ProductionFact>();
+ readonly heads=new Map<string,ProductionFact>();
  readonly changes:FactRevisionChange[]=[];readonly newMonths=new Set<string>();readonly identities=new Set<string>();
  constructor(private readonly client:PoolClient,private readonly baseline:OperationalBaseline,private readonly details:OperationDetails,private readonly knownMonths:ReadonlySet<string>,private readonly observeProgress?:OperationalProgressObserver){}
  async accept(facts:readonly ProductionFact[]) {
@@ -42,7 +42,7 @@ class CandidateFacts {
   const scoped=await measureOperationalWork(this.observeProgress,'mart_scope',()=>coveredOperationalFacts(this.client,this.baseline.tenantId,facts,months));
   this.details.outsideCoverageFacts=(this.details.outsideCoverageFacts??0)+facts.length-scoped.length;
   const start=performance.now();
-  const changes=await measureOperationalWork(this.observeProgress,'mart_candidate',()=>planOperationalFacts(this.client,this.baseline,scoped,{observeProgress:this.observeProgress,pending:this.pending}));
+  const changes=await measureOperationalWork(this.observeProgress,'mart_candidate',()=>planOperationalFacts(this.client,this.baseline,scoped,{observeProgress:this.observeProgress,pending:this.heads}));
   this.details.durations.candidateReadMs=(this.details.durations.candidateReadMs??0)+performance.now()-start;
   for(const change of changes) {
    const fact=change.next;

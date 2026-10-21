@@ -1,5 +1,11 @@
 # Checkpointed sync release — 21 October 2026
 
+Company follow-up: deployment of `8d449b9` passed schema/runtime verification and
+readiness on 21 October. The first company sync then failed with JavaScript heap
+exhaustion before reporting a committed capture. Follow the
+[memory correction](sync-capture-memory-correction-2026-10-21.md) for the subsequent
+code-only release; do not repeat this migration deployment for that correction.
+
 Status: release merged to `main` as `8db0181`. Local staging rehearsal passed.
 Company deployment and source catch-up have not run. GitHub CI remains
 disabled. Do not start company sync while capacity remains unresolved.
