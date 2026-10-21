@@ -1,7 +1,7 @@
 # Checkpointed sync release — 21 October 2026
 
-Status: release code verified, merged release handoff pending. Local staging rehearsal
-passed. Company deployment and source catch-up have not run. GitHub CI remains
+Status: release merged to `main` as `8db0181`. Local staging rehearsal passed.
+Company deployment and source catch-up have not run. GitHub CI remains
 disabled. Do not start company sync while capacity remains unresolved.
 
 ## Release scope
