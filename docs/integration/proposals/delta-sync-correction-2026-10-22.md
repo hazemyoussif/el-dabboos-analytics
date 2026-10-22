@@ -7,7 +7,7 @@ shared Business raw/prepared reader changes; migrations 068–076 and the sparse
 writer/preparation integration implement that code change. The owner approved
 focused synthetic verification and local gates. Disposable PostgreSQL 18.6 applied
 these migrations; focused checks and the application test suite have run. Final
-gate results are recorded in the release handoff. No company source job, rehearsal,
+gate results are recorded in [the verification handoff](../../qa/command-delta-verification-2026-10-23.md). No company source job, rehearsal,
 deployment or timer change was performed. Company performance remains unproven.
 
 ## Current integration draft
