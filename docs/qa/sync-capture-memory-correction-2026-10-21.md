@@ -1,8 +1,14 @@
 # Sync capture memory correction — 21 October 2026
 
-Status: code correction, approved focused verification and local API rehearsal
-completed. Company deployment of the correction and a successful company catch-up
-remain unverified. Release image: `cffb5cf28c81f29163a65342246f283653469367`.
+Status: company deployment of `cffb5cf28c81f29163a65342246f283653469367` passed,
+but its 21 October 21:08:18 UTC sync failed with JavaScript heap exhaustion at
+21:17:01, before a committed capture. Source handoff completed at 482.048 seconds;
+classification reported 569,542 entries at 513.282 seconds. The focused synthetic
+result below did not establish a working company sync. Do not use this document's
+historical rollout command as a recommendation to repeat that run. The unverified
+[22 October code draft](../integration/proposals/delta-sync-correction-2026-10-22.md)
+addresses cursor reset and whole-candidate buffering; the business refresh gap
+remains open.
 
 ## Observed failure
 

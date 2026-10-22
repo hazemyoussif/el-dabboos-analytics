@@ -1,6 +1,6 @@
 import type {CandidateChangeSummary} from './candidate-change-summary.ts';
 /** Fixed operation names, timings and aggregate counts only; no row values, identities or SQL. */
-export type OperationalStep='source_page'|'source_lookup_discovery'|'source_receivable_discovery'|'source_receivable_snapshot'|'source_controls'|'mart_scope'|'mart_candidate'|'mart_page'|'mart_reconciliation'|'mart_heads'|'mart_revision_write'|'mart_head_write'|'mart_retirement'
+export type OperationalStep='source_page'|'source_lookup_discovery'|'source_receivable_discovery'|'source_receivable_snapshot'|'source_controls'|'mart_scope'|'mart_candidate'|'mart_impact'|'mart_page'|'mart_reconciliation'|'mart_heads'|'mart_revision_write'|'mart_head_write'|'mart_retirement'
  |'refresh_manifest'|'refresh_carry_manifest'|'refresh_month'|'refresh_prior_proofs'|'refresh_partition'
  |'refresh_copy_daily'|'refresh_rebuild_daily'|'refresh_copy_membership'|'refresh_rebuild_membership'
  |'refresh_rollup_lookup'|'refresh_monthly_rollup'|'refresh_aggregate_proof'|'refresh_drill_proof'|'refresh_membership_guard';

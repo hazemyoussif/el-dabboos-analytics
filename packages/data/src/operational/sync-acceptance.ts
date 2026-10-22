@@ -14,7 +14,7 @@ export async function finishSyncCandidate(context:SyncContext,candidate:StoredSy
  const run=completedRun(candidate,checked,rejected);
  await recordOperationalRun(context.client,run,checked.caseIds);
  if(!rejected)await acceptState(context,candidate);
- await context.client.query('INSERT INTO mart.analytics_run_details VALUES($1,$2,$3)',[context.tenantId,candidate.candidateId,JSON.stringify({...candidate.details,refreshedMonths:rejected?[]:affectedMonths(candidate.partitions)})]);
+ await context.client.query('INSERT INTO mart.analytics_run_details VALUES($1,$2,$3)',[context.tenantId,candidate.candidateId,JSON.stringify({...candidate.details,partitions:candidate.partitions,refreshedMonths:rejected?[]:affectedMonths(candidate.partitions)})]);
  if(!rejected)await context.client.query('INSERT INTO mart.analytics_sync_acceptances VALUES($1,$2) ON CONFLICT DO NOTHING',[context.tenantId,candidate.candidateId]);
  await context.client.query('DELETE FROM mart.analytics_sync_pending WHERE tenant_id=$1 AND candidate_id=$2',[context.tenantId,candidate.candidateId]);
  return run;

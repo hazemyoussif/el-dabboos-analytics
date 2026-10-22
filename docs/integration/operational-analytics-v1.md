@@ -1,5 +1,13 @@
 # Operational analytics v1
 
+The unverified [22 October delta-sync draft](proposals/delta-sync-correction-2026-10-22.md)
+changes lookup/receivable initialization and sync capture buffering. It retains
+the accepted cursor when dependency metadata is missing and stages bounded fact
+pages in PostgreSQL. The historical initialization and verification descriptions
+below describe the prior releases; they are not evidence for this draft. The
+business-family changed-record refresh remains unimplemented. No company rerun
+or release is recommended from the draft.
+
 The deterministic Odoo-to-mart operational path is implemented. Operator jobs use
 read-only retained PostgreSQL source snapshots, versioned approved mappings,
 immutable operational fact revisions, independent exact controls, affected-month

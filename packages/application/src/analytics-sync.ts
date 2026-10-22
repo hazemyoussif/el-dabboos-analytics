@@ -16,10 +16,8 @@ export class CheckpointedAnalyticsSync {
     if(!candidate){
      this.observe?.('source_open');source=await this.options.source.open(request.tenantId);
      this.observe?.('source_read');
-     candidate=await session.capture(source,request,identity,changes=>{
-      this.observe?.('impact_calculation');const partitions=resolveAnalyticsImpact(changes,this.options.impact);
-      this.observe?.('source_reconciliation');return partitions;
-     },async()=>{this.observe?.('source_handoff');await source!.close();source=undefined;});
+     candidate=await session.capture(source,request,identity,changes=>resolveAnalyticsImpact(changes,this.options.impact),
+      async()=>{this.observe?.('source_handoff');await source!.close();source=undefined;});
     }
     this.observe?.('offline_reconciliation');const evidence=await session.reconcile(candidate);
     validateEvidence(evidence,candidate.recordsChanged===0);

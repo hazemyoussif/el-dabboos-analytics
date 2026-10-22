@@ -12,14 +12,17 @@ export async function* discoverLookupChanges(scope:{pool:Pool;lease:OdooSnapshot
  if(!context)return;
  const {pool,lease,config,observe}=scope;
  const projection=await measureOperationalWork(observe,'source_lookup_discovery',()=>readOdooLookupProjection(pool,lease,config));
- const initialize=!context.initialized||context.projectionVersion!==projection.version;
+ if(context.projectionVersion&&context.projectionVersion!==projection.version)throw new Error('Lookup projection changed; explicit baseline migration required');
+ // A missing fingerprint means that a *polled* lookup is conservatively changed.
+ // It does not invalidate the accepted source cursor or select untouched lookups.
+ const initialize=!cursor;
  const changes:Record<keyof OdooLookupChanges,string[]>={customer:[],salesperson:[],business_line:[],state:[]};
  const pages=readOdooLookupDependencies(pool,lease,config,{cursor,initialize,projection});
  try {
   while(true) {
    const page=await measureOperationalWork(observe,'source_lookup_discovery',()=>pages.next());
    if(page.done)break;
-   const changed=initialize?page.value:await context.changed(page.value);
+   const changed=await context.changed(page.value);
    for(const dependency of changed)changes[dependency.object].push(dependency.id);
    yield {object:'lookup_dependency',facts:[],rows:0,lookupDependencies:changed};
   }

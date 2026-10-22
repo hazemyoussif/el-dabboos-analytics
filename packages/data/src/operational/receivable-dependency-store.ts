@@ -7,17 +7,19 @@ export async function readReceivableDependencyContext(client:PoolClient,baseline
  if(!baseline.mappings.some(mapping=>mapping.measures.some(rule=>rule.measureId==='net_aged_receivable')))return;
  const checkpoint=(await client.query(`SELECT cutoff FROM mart.analytics_receivable_dependency_checkpoints
  WHERE tenant_id=$1 AND source_id=$2 AND definition_version=$3 AND mapping_version=$4`,namespace(baseline))).rows[0];
+ if(checkpoint&&(!cursor||checkpoint.cutoff.toISOString()!==cursor.cutoff))throw new Error('Receivable checkpoint conflicts with accepted cursor');
  return {initialized:!!cursor&&checkpoint?.cutoff.toISOString()===cursor.cutoff,
-  previousFrom:dependencies=>previousDependencyFrom(client,baseline,dependencies)};
+  previousFrom:dependencies=>previousDependencyFrom(client,baseline,dependencies,cursor)};
 }
-async function previousDependencyFrom(client:PoolClient,baseline:OperationalBaseline,dependencies:readonly ReceivableDependency[]):Promise<string|null> {
+async function previousDependencyFrom(client:PoolClient,baseline:OperationalBaseline,dependencies:readonly ReceivableDependency[],cursor:AnalyticsCursor|null):Promise<string|null> {
  if(!dependencies.length)return null;
  const result=(await client.query(`SELECT min(previous.effective_from)::text earliest,
- count(*) FILTER(WHERE previous.effective_from IS NULL)::int unknown
- FROM jsonb_to_recordset($5::jsonb) changed(object text,id text)
- JOIN mart.analytics_receivable_dependencies previous ON previous.source_object=changed.object AND previous.source_record_id=changed.id
- WHERE previous.tenant_id=$1 AND previous.source_id=$2 AND previous.definition_version=$3 AND previous.mapping_version=$4`,
- [...namespace(baseline),JSON.stringify(dependencies.map(({object,id})=>({object,id})))])).rows[0];
+ count(*) FILTER(WHERE previous.effective_from IS NULL AND
+  (previous.source_record_id IS NOT NULL OR changed."createdAt" IS NULL OR $6::timestamptz IS NULL OR changed."createdAt"<($6::timestamptz AT TIME ZONE 'UTC')))::int unknown
+ FROM jsonb_to_recordset($5::jsonb) changed(object text,id text,"createdAt" timestamp)
+ LEFT JOIN mart.analytics_receivable_dependencies previous ON previous.source_object=changed.object AND previous.source_record_id=changed.id
+ AND previous.tenant_id=$1 AND previous.source_id=$2 AND previous.definition_version=$3 AND previous.mapping_version=$4`,
+ [...namespace(baseline),JSON.stringify(dependencies),cursor?.cutoff??null])).rows[0];
  return result.unknown?baseline.from:result.earliest;
 }
 /** Called after audit and guarded cursor update, in their existing owner transaction. */

@@ -27,19 +27,27 @@ export interface CandidateChangeGroup extends CandidateChangeCounts {
 export interface CandidateChangeSummary extends CandidateChangeCounts {groups:CandidateChangeGroup[]}
 /** Counts candidate entries, not distinct identities or accepted/committed facts. */
 export function summarizeCandidateChanges(changes:readonly FactRevisionChange[]):CandidateChangeSummary {
- const summary:CandidateChangeSummary={...emptyCounts(),groups:[]},groups=new Map<string,CandidateChangeGroup>();
- for(const change of changes) {
-  const sourceObject=observedObject(change.next.sourceObject),month=observedMonth(change.next.businessDate);
-  const key=`${sourceObject}:${month}`;
-  const group=groups.get(key)??{...emptyCounts(),sourceObject,month,changedFields:{}};
-  countChange(summary,change);countChange(group,change);
-  if(change.previous) {
-   if(!countChangedFields(change.previous,change.next,observedFields,group.changedFields))increment(group.changedFields,'unclassified_business_content');
+ const accumulator=new CandidateChangeAccumulator();accumulator.add(changes);return accumulator.summary();
+}
+/** Retain aggregate diagnostics across pages, never the source facts themselves. */
+export class CandidateChangeAccumulator {
+ private readonly counts=emptyCounts();
+ private readonly groups=new Map<string,CandidateChangeGroup>();
+ add(changes:readonly FactRevisionChange[]) {
+  for(const change of changes) {
+   const sourceObject=observedObject(change.next.sourceObject),month=observedMonth(change.next.businessDate);
+   const key=`${sourceObject}:${month}`;
+   const group=this.groups.get(key)??{...emptyCounts(),sourceObject,month,changedFields:{}};
+   countChange(this.counts,change);countChange(group,change);
+   if(change.previous) {
+    if(!countChangedFields(change.previous,change.next,observedFields,group.changedFields))increment(group.changedFields,'unclassified_business_content');
+   }
+   this.groups.set(key,group);
   }
-  groups.set(key,group);
  }
- summary.groups=[...groups.values()].sort((left,right)=>left.sourceObject.localeCompare(right.sourceObject)||left.month.localeCompare(right.month));
- return summary;
+ summary():CandidateChangeSummary {
+  return {...this.counts,groups:[...this.groups.values()].sort((left,right)=>left.sourceObject.localeCompare(right.sourceObject)||left.month.localeCompare(right.month))};
+ }
 }
 function emptyCounts():CandidateChangeCounts {return {entries:0,withoutPrevious:0,withPrevious:0,active:0,tombstone:0};}
 function countChange(counts:CandidateChangeCounts,change:FactRevisionChange) {

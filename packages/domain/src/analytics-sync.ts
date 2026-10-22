@@ -9,6 +9,7 @@ export interface AnalyticsSyncCandidate {
 }
 export interface AnalyticsSyncSession {
  pending():Promise<AnalyticsSyncCandidate|null>;
+ /** Impact is the union of bounded page results, including each change's old/new footprint. */
  capture(source:AnalyticsSourceSnapshot,request:AnalyticsJobRequest,identity:{runId:string;startedAt:string},
   resolveImpact:(changes:readonly FactRevisionChange[])=>readonly AnalyticsPartition[],releaseSource:()=>Promise<void>):Promise<AnalyticsSyncCandidate>;
  reconcile(candidate:AnalyticsSyncCandidate):Promise<OperationalReconciliation>;

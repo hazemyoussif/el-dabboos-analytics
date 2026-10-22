@@ -8,6 +8,13 @@ before a capture checkpoint with Node heap exhaustion. See the
 Company catch-up and performance verification remain pending.
 Extends ADR 029 and ADR 040 for operational `sync` only.
 
+The [22 October draft](../../integration/proposals/delta-sync-correction-2026-10-22.md)
+replaces the full in-memory fact/dependency buffer with transaction-local PostgreSQL
+staging and preserves the accepted cursor during missing-metadata discovery. Only
+the complete sealed capture commits; individual source pages are not durable
+checkpoints. This draft has no verification or deployment evidence and does not
+add the separate business-family delta refresh.
+
 ## Problem and decision
 
 The company catch-up completed source observation but could not finish all mart

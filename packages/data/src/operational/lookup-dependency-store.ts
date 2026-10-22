@@ -7,6 +7,7 @@ export async function readLookupDependencyContext(client:PoolClient,baseline:Ope
  if(!baseline.mappings.some(mapping=>mapping.measures.some(rule=>rule.sourceObject==='sale_order'||rule.sourceObject==='account_move')))return;
  const checkpoint=(await client.query(`SELECT cutoff,projection_version FROM mart.analytics_lookup_dependency_checkpoints
  WHERE tenant_id=$1 AND source_id=$2 AND definition_version=$3 AND mapping_version=$4`,namespace(baseline))).rows[0];
+ if(checkpoint&&(!cursor||checkpoint.cutoff.toISOString()!==cursor.cutoff))throw new Error('Lookup checkpoint conflicts with accepted cursor');
  return {initialized:!!cursor&&checkpoint?.cutoff.toISOString()===cursor.cutoff,projectionVersion:checkpoint?.projection_version??null,
   changed:dependencies=>changedLookupDependencies(client,baseline,dependencies)};
 }

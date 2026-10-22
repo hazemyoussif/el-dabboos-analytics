@@ -34,8 +34,8 @@ export class OdooOperationalSnapshot implements OperationalSnapshot {
  private async closeSource(){try{await this.lease.assertAlive();}finally{if(--this.references.count===0)await this.lease.close();}}
  async *records(baseline:OperationalBaseline,cursor:AnalyticsCursor|null,dependencies?:ReceivableDependencyContext,lookups?:LookupDependencyContext) {
   const observation=yield* discoverLookupChanges({pool:this.pool,lease:this.lease,config:this.config,observe:this.references.observeProgress},cursor,lookups);
-  // Establish current lookup content across history before allowing metadata-only skips.
-  const window=odooIncrementalWindow(observation?.initialize?null:cursor,this.cutoff);
+  // The accepted cursor belongs to the retained facts, not to optional lookup metadata.
+  const window=odooIncrementalWindow(cursor,this.cutoff);
   for(const object of ['sale_order','account_move'] as const) {
    const mapping=baseline.mappings.find(mapping=>mapping.measures.some(rule=>rule.sourceObject===object));
    if(!mapping)throw new Error('Approved operational object mapping required');
@@ -75,13 +75,13 @@ export class OdooOperationalSnapshot implements OperationalSnapshot {
    const changed=await measureOperationalWork(this.references.observeProgress,'source_receivable_discovery',()=>receivableChangedFrom(this.pool,this.lease,this.config,cursor));
    return changed?baseline.from:null;
   }
-  let from=context.initialized?null:baseline.from;
-  const pages=readReceivableDependencies(this.pool,this.lease,this.config,{cursor,initialize:!context.initialized});
+  let from=cursor?null:baseline.from;
+  const pages=readReceivableDependencies(this.pool,this.lease,this.config,{cursor,initialize:!cursor});
   try {
    while(true) {
     const page=await measureOperationalWork(this.references.observeProgress,'source_receivable_discovery',()=>pages.next());
     if(page.done)break;
-    const previous=context.initialized?await context.previousFrom(page.value):null;
+    const previous=await context.previousFrom(page.value);
     for(const dependency of page.value)from=earliestDependencyDate(from,dependency.from??baseline.from);
     from=earliestDependencyDate(from,previous);
     yield {object:'receivable_dependency',facts:[],rows:0,receivableDependencies:page.value};

@@ -40,28 +40,28 @@ const sourceSchema=`
  INSERT INTO public.business_line SELECT id,'Synthetic Line','2025-01-01' FROM generate_series(1,6) id;
 `;
 const businessDate="(date '2025-10-01'+((id-1)%12)*interval '1 month'+((id-1)/12%27)*interval '1 day')::date";
-async function seedHistory(db:Awaited<ReturnType<typeof database>>) {
+async function seedHistory(db:Awaited<ReturnType<typeof database>>,rowsPerObject:number) {
  await db.admin.query(sourceSchema);
- await db.admin.query(`INSERT INTO public.sale_order SELECT id,1,'2026-01-01',${businessDate},'sale',87,id%30+1,id%2000+1,id%6+1,100,15,115 FROM generate_series(1,$1::int) id`,[historyRowsPerObject]);
- await db.admin.query(`INSERT INTO public.account_move SELECT id,1,'2026-01-01',${businessDate},'posted',87,id%30+1,id%2000+1,id%6+1,100,15,115,'out_invoice','not_paid' FROM generate_series(1,$1::int) id`,[historyRowsPerObject]);
+ await db.admin.query(`INSERT INTO public.sale_order SELECT id,1,'2026-01-01',${businessDate},'sale',87,id%30+1,id%2000+1,id%6+1,100,15,115 FROM generate_series(1,$1::int) id`,[rowsPerObject]);
+ await db.admin.query(`INSERT INTO public.account_move SELECT id,1,'2026-01-01',${businessDate},'posted',87,id%30+1,id%2000+1,id%6+1,100,15,115,'out_invoice','not_paid' FROM generate_series(1,$1::int) id`,[rowsPerObject]);
  // Fixture-only bulk setup: payload templates come from the production mapper. No measured path bypasses validation.
  for(const object of ['sale_order','account_move'] as const) {
   const templates=mapOdooRecord(benchmarkRecord(benchmarkRow(object)),benchmarkMapping,benchmarkBatch);
   for(const payload of templates)await db.admin.query(`INSERT INTO mart.analytics_fact_revisions(tenant_id,fact_key,revision_id,payload)
    SELECT 'a',replace($1,'"fixture-record"',to_json(id::text)::text),'seed',$2::jsonb||jsonb_build_object('sourceRecordId',id::text,'businessDate',${businessDate}::text,'dimensions',jsonb_build_object('customer','fixture:'||(id%2000+1),'salesperson','fixture:'||(id%30+1),'business_line','fixture:1:'||(id%6+1),'city','City '||((id%2000+1)%10+1),'state','fixture:'||((id%2000+1)%8+1)))
-   FROM generate_series(1,$3::int) id`,[operationalFactKey(payload),JSON.stringify(payload),historyRowsPerObject]);
+   FROM generate_series(1,$3::int) id`,[operationalFactKey(payload),JSON.stringify(payload),rowsPerObject]);
  }
  await db.admin.query("INSERT INTO mart.analytics_fact_heads(tenant_id,fact_key,revision_id) SELECT tenant_id,fact_key,revision_id FROM mart.analytics_fact_revisions WHERE tenant_id='a'");
  await db.admin.query('ANALYZE');
 }
-export async function operationalPerformanceFixture() {
+export async function operationalPerformanceFixture(rowsPerObject=historyRowsPerObject) {
  const db=await database();
  let source:Pool|undefined,owner:Pool|undefined;
  const username=`perf_source_${randomUUID().replaceAll('-','')}`;
  try {
   await deploy(db.migrator,benchmarkMapping);
   await bootstrapOperationalServing(db.migrator,'a');
-  await seedHistory(db);
+  await seedHistory(db,rowsPerObject);
   const months=Array.from({length:13},(_,index)=>new Date(Date.UTC(2025,9+index,1)).toISOString().slice(0,7));
   await tenantTransaction(db.migrator,'a',async client=>{
    const parent=(await client.query("SELECT revision_id FROM mart.analytics_trusted_serving WHERE tenant_id='a'")).rows[0].revision_id;

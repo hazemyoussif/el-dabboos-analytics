@@ -9,6 +9,8 @@ export interface ExactControl {partition:AnalyticsPartition;measure:FactMeasureI
 export interface ReceivableDependency {
  object:'account_move_line'|'account_partial_reconcile'|'account_move'|'account_payment';
  id:string;from:string|null;
+ /** UTC source creation time distinguishes a new input from an unknown old footprint. */
+ createdAt?:string|null;
 }
 export interface ReceivableDependencyContext {
  initialized:boolean;
