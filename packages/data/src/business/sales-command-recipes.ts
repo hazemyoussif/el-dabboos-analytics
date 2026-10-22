@@ -1,4 +1,4 @@
-import {receivablesControlBaseSql} from '../operational/receivable-control-sql.ts';
+import {receivablesControlBaseForIdentities} from '../operational/receivable-control-sql.ts';
 import {reviewAllocationPrecision} from '../review/allocation-precision.ts';
 
 const companyJoin=`JOIN res_company company ON company.id=record.company_id JOIN res_currency currency ON currency.id=company.currency_id`;
@@ -10,7 +10,7 @@ const invoiceAttributionJoin=`LEFT JOIN LATERAL (
  ) invoice_owner ON true`;
 const invoiceDimensions=`jsonb_build_object('customer',record.partner_id::text,'salesperson',invoice_owner.salesperson_id::text,'state',partner.state_id::text,'invoice_document_state',record.state,'invoice_payment_state',record.payment_state)`;
 /** Invoice headers stay independent of receivable/product lines. Status values are never renamed. */
-export const commandInvoiceRecipe=`SELECT record.id::text id,record.invoice_date business_date,record.company_id,currency.name currency,
+function invoiceSql(selected=false){return `SELECT record.id::text id,record.invoice_date business_date,record.company_id,currency.name currency,
  ${invoiceDimensions} dimensions,value.measure_id,value.amount,
  (invoice_owner.ambiguous OR record.currency_id<>company.currency_id OR record.amount_total IS NULL OR record.amount_residual IS NULL
  OR record.amount_total<>round(record.amount_total,6) OR record.amount_residual<>round(record.amount_residual,6)) invalid
@@ -26,10 +26,11 @@ export const commandInvoiceRecipe=`SELECT record.id::text id,record.invoice_date
  ('command_net_invoices',CASE WHEN record.state='posted' THEN record.amount_total*CASE WHEN record.move_type='out_refund' THEN -1 ELSE 1 END END)
  ) value(measure_id,amount)
  WHERE record.company_id=$1::int AND record.move_type IN('out_invoice','out_refund') AND record.invoice_date BETWEEN $2::date AND $3::date
- AND $4::text IS NOT NULL AND $5::date IS NOT NULL AND value.amount IS NOT NULL`;
+ AND $4::text IS NOT NULL AND $5::date IS NOT NULL AND value.amount IS NOT NULL${selected?' AND record.id=ANY($10::bigint[])':''}`;}
+export const commandInvoiceRecipe=invoiceSql();
 
 /** Header counts include voids; the cash measure alone applies the eligible cash-state rule. */
-export const commandReceiptRecipe=`SELECT record.id::text id,record.date business_date,record.company_id,currency.name currency,
+function receiptSql(selected=false){return `SELECT record.id::text id,record.date business_date,record.company_id,currency.name currency,
  jsonb_build_object('customer',record.partner_id::text,'salesperson',record.salesperson_id::text,'state',partner.state_id::text,'receipt_state',record.state) dimensions,
  value.measure_id,value.amount,(record.amount IS NULL OR record.amount<>round(record.amount,6)
  OR record.payment_type NOT IN('inbound','outbound') OR record.currency_id IS NULL
@@ -39,9 +40,10 @@ export const commandReceiptRecipe=`SELECT record.id::text id,record.date busines
  CROSS JOIN LATERAL(VALUES ('command_receipt_count',1::numeric),('command_receipt_value',signed.amount),
  ('command_cash_received',CASE WHEN record.state IN('paid','in_process') THEN signed.amount END)) value(measure_id,amount)
  WHERE record.company_id=$1::int AND record.partner_type='customer' AND (record.partner_id IS NOT NULL OR record.amount=0)
- AND record.date BETWEEN $2::date AND $3::date AND $4::text IS NOT NULL AND $5::date IS NOT NULL AND value.amount IS NOT NULL`;
+ AND record.date BETWEEN $2::date AND $3::date AND $4::text IS NOT NULL AND $5::date IS NOT NULL AND value.amount IS NOT NULL${selected?' AND record.id=ANY($10::bigint[])':''}`;}
+export const commandReceiptRecipe=receiptSql();
 
-export const commandOrderRecipe=`SELECT record.id::text id,((record.date_order AT TIME ZONE 'UTC') AT TIME ZONE $4)::date business_date,
+function orderSql(selected=false){return `SELECT record.id::text id,((record.date_order AT TIME ZONE 'UTC') AT TIME ZONE $4)::date business_date,
  record.company_id,currency.name currency,jsonb_build_object('customer',record.partner_id::text,'salesperson',record.user_id::text,
  'state',partner.state_id::text,'order_state',record.state) dimensions,value.measure_id,value.amount,
  (record.currency_id<>company.currency_id OR record.amount_total IS NULL OR record.amount_total<>round(record.amount_total,6)) invalid
@@ -53,10 +55,11 @@ export const commandOrderRecipe=`SELECT record.id::text id,((record.date_order A
  ('command_cancelled_value',CASE WHEN record.state='cancel' THEN record.amount_total END),
  ('command_decided_orders',CASE WHEN record.state IN('sale','done','cancel') THEN 1 END)) value(measure_id,amount)
  WHERE record.company_id=$1::int AND ((record.date_order AT TIME ZONE 'UTC') AT TIME ZONE $4)::date BETWEEN $2::date AND $3::date
- AND $5::date IS NOT NULL AND value.amount IS NOT NULL`;
+ AND $5::date IS NOT NULL AND value.amount IS NOT NULL${selected?' AND record.id=ANY($10::bigint[])':''}`;}
+export const commandOrderRecipe=orderSql();
 
 /** Accepted receivable reconstruction preserves signed credits and checks stored-current equality. */
-export const commandDebtRecipe=receivablesControlBaseSql.replaceAll('$2::date','$3::date')+` SELECT reconstructed.id::text id,
+function debtSql(selected=false){return receivablesControlBaseForIdentities(selected).replaceAll('$2::date','$3::date')+` SELECT reconstructed.id::text id,
  $3::date business_date,$1::int company_id,company_currency currency,
  jsonb_build_object('customer',reconstructed.partner_id::text,'salesperson',coalesce(partner.user_id,line.salesperson_id)::text,'state',partner.state_id::text) dimensions,
  value.measure_id,value.amount,(invalid_links>0 OR reconstructed_current<>stored_current) invalid
@@ -67,10 +70,11 @@ export const commandDebtRecipe=receivablesControlBaseSql.replaceAll('$2::date','
  ('command_future_balance',CASE WHEN reconstructed.date_maturity>=$3::date THEN residual ELSE 0 END),
  ('command_unknown_maturity',CASE WHEN reconstructed.date_maturity IS NULL THEN residual ELSE 0 END),
  ('command_overdue_days',CASE WHEN residual>0 AND reconstructed.date_maturity<$3::date THEN ($3::date-reconstructed.date_maturity)::numeric END)) value(measure_id,amount)
- WHERE $2::date IS NOT NULL AND $4::text IS NOT NULL AND $5::date IS NOT NULL AND residual<>0 AND value.amount IS NOT NULL`;
+ WHERE $2::date IS NOT NULL AND $4::text IS NOT NULL AND $5::date IS NOT NULL AND residual<>0 AND value.amount IS NOT NULL`;}
+export const commandDebtRecipe=debtSql();
 
 /** Only cash-payment legs qualify; invoice credits cannot enter this cohort. */
-export const commandSameDayRecipe=`SELECT partial.id::text id,record.invoice_date business_date,record.company_id,currency.name currency,
+function sameDaySql(selected=false){return `SELECT partial.id::text id,record.invoice_date business_date,record.company_id,currency.name currency,
  ${invoiceDimensions} dimensions,'command_same_day_cash' measure_id,round(partial.amount,${reviewAllocationPrecision.decimalPlaces}) amount,
  (invoice_owner.ambiguous OR partial.create_date IS NULL OR record.currency_id<>company.currency_id OR partial.company_id<>record.company_id OR credit.company_id<>record.company_id OR debit.company_id<>record.company_id
  OR payment.currency_id<>company.currency_id OR payment.partner_id IS DISTINCT FROM record.partner_id
@@ -88,4 +92,17 @@ export const commandSameDayRecipe=`SELECT partial.id::text id,record.invoice_dat
  WHERE record.company_id=$1::int AND record.state='posted' AND record.move_type='out_invoice'
  AND payment.partner_type='customer' AND payment.payment_type='inbound' AND payment.state IN('paid','in_process')
  AND record.invoice_date BETWEEN $2::date AND $3::date AND payment.date=record.invoice_date AND partial.max_date=record.invoice_date
- AND partial.max_date<=$5::date AND (partial.create_date IS NULL OR ((partial.create_date AT TIME ZONE 'UTC') AT TIME ZONE $4)::date=record.invoice_date)`;
+ AND partial.max_date<=$5::date AND (partial.create_date IS NULL OR ((partial.create_date AT TIME ZONE 'UTC') AT TIME ZONE $4)::date=record.invoice_date)${selected?' AND partial.id=ANY($10::bigint[])':''}`;}
+export const commandSameDayRecipe=sameDaySql();
+
+/** Fixed recipe builders add identity predicates at source roots, before aggregation. */
+export function commandIdentityRecipe(object:string):string {
+ switch(object){
+  case 'command_invoice':return invoiceSql(true);
+  case 'command_receipt':return receiptSql(true);
+  case 'command_order':return orderSql(true);
+  case 'command_receivable':return debtSql(true);
+  case 'command_allocation':return sameDaySql(true);
+  default:throw new Error('Governed command identity recipe required');
+ }
+}

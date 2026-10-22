@@ -264,7 +264,7 @@ test('prepared repository disables JIT only in its read transaction and restores
    return sqlQuery(sql,params);
   }
   connection.query=((...args:unknown[])=>{
-   if(typeof args[0]==='string'&&/\bmart\.prepared_cells\b/.test(args[0]))return observeCell(args[0],args[1] as unknown[]|undefined);
+   if(typeof args[0]==='string'&&/\bmart\.(?:business_)?prepared_cells\b/.test(args[0]))return observeCell(args[0],args[1] as unknown[]|undefined);
    return Reflect.apply(original,connection,args);
   }) as PoolClient['query'];
   connection.release();
@@ -354,7 +354,7 @@ test('Sales Command Center reads pinned prepared cells with JIT off and matches 
    const original=client.query.bind(client);
    client.query=((...args:unknown[])=>{
     const sql=typeof args[0]==='string'?args[0]:'';
-    if(sql.includes('mart.prepared_cells'))return original('SHOW jit').then(result=>{
+    if(/\bmart\.(?:business_)?prepared_cells\b/.test(sql))return original('SHOW jit').then(result=>{
      assert.equal(result.rows[0].jit,'off');cellReads++;return Reflect.apply(original,client,args);
     });
     return Reflect.apply(original,client,args);

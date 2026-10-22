@@ -1,4 +1,5 @@
-import {salesCommandCoverage} from '../business/sales-command-coverage.ts';
+import {salesCommandCoverage,nativeSalesCommandCoverage} from '../business/sales-command-coverage.ts';
+import {businessMetricObservation} from '../business/observations.ts';
 import {coverageMetadata,coveredSlot} from '../operational/coverage.ts';
 import type {ServingCoverage} from '../operational/coverage.ts';
 import type {PoolClient} from 'pg';
@@ -18,7 +19,7 @@ import type {PreparedBinding} from './read-plan.ts';
 import {preparedReduction} from './read-sql.ts';
 import type {PreparedFamily} from './contracts.ts';
 export interface PreparedReadScope {query:AnalyticsQuery;context:AnalyticsContext;range:DateRange;family:PreparedFamily;maxGroups:number;coverage?:ServingCoverage;timeBuckets:'observed'|'complete'|'closed-months';emptySnapshotValue?:0;read?:AnalyticsReadOptions;reportingWindow?:DateRange}
-export interface PreparedSelection extends Pick<AnalyticsResult['metadata'],'coverage'|'availability'> {rows:AnalyticsRow[];labels:Record<string,string>;dataThrough:string|null;preparedThrough:string|null;window?:AnalyticsResultWindow;revision:string;sourceAsOf?:string;currency:string|undefined;definitionVersion:string|undefined}
+export interface PreparedSelection extends Pick<AnalyticsResult['metadata'],'coverage'|'availability'> {rows:AnalyticsRow[];labels:Record<string,string>;dataThrough:string|null;preparedThrough:string|null;window?:AnalyticsResultWindow;revision:string;sourceAsOf?:string;snapshotAsOf?:string;currency:string|undefined;definitionVersion:string|undefined}
 /** Runs inside the owning read-only tenant transaction. Source reconstruction is unavailable here. */
 export async function readPreparedSelection(client:PoolClient,scope:PreparedReadScope,readBindings=readPreparedBindings):Promise<PreparedSelection>{
  scope=await governedPreparedRead(client,scope);
@@ -35,8 +36,11 @@ export async function readPreparedSelection(client:PoolClient,scope:PreparedRead
  if(keys.length>maxGroups)throw new AnalyticsResultLimitError(query.groupBy!);
  const slots=querySlots(effective,keys),segments=scopeSegments(scope,eligible,[...slots.current,...slots.prior]);
  const provenance=preparedReadProvenance(scope,eligible,slots);
- const selected=categorical?await readGroupedSql(client,{query:effective,context,input:preparedReduction(effective,context,segments,true),revision,maxGroups,...(read?{read}:{})}):await readTimeRows(client,populationScope(scope,eligible),eligible,slots);
- return {...selected,...preparedCoverage(scope,slots.current,selected.dataThrough,categorical),...provenance,revision,labels:Object.fromEntries(Object.entries(selected.labels).map(([key,label])=>[key,sourceDisplayLabel(label,context.locale)]))};
+ const metricObservation=family==='business'?await businessMetricObservation(client,{tenantId:context.tenantId,revision,query,range}):{};
+ const commandObservation=family==='business'&&query.metric.startsWith('command_')
+  ?await nativeSalesCommandCoverage(client,{query,context,range,revision}):{};
+ const selected=categorical?await readGroupedSql(client,{query:effective,context,input:preparedReduction(effective,context,segments,true,family),revision,maxGroups,...(read?{read}:{})}):await readTimeRows(client,populationScope(scope,eligible),eligible,slots);
+ return {...selected,...preparedCoverage(scope,slots.current,selected.dataThrough,categorical),...provenance,...metricObservation,...commandObservation,revision,labels:Object.fromEntries(Object.entries(selected.labels).map(([key,label])=>[key,sourceDisplayLabel(label,context.locale)]))};
 
 }
 /** Validate basis/currency before reduction and project provenance from the actual selected bindings. */
@@ -64,7 +68,7 @@ async function readTimeRows(client:PoolClient,scope:PreparedReadScope,bindings:P
 }
 async function reduceSlots(client:PoolClient,scope:PreparedReadScope,bindings:PreparedBinding[],slots:QuerySlot[]){
  if(!slots.length)return {rows:[],dataThrough:null};
- const segments=scopeSegments(scope,bindings,slots),input=preparedReduction(scope.query,scope.context,segments,false);
+ const segments=scopeSegments(scope,bindings,slots),input=preparedReduction(scope.query,scope.context,segments,false,scope.family);
  const selected=(await client.query<{key:string|null;value:string|null;through:string|null;unsafe:boolean;invalid:boolean;numerator?:string;denominator?:string}>(input.text,input.params)).rows;
  if(selected.some(row=>row.unsafe))throw new Error('Unsafe SQL numeric output');
  if(selected.some(row=>row.invalid))throw new Error('Compatible base UOM required');

@@ -1,5 +1,5 @@
 /** Governed signed-ledger reconstruction and counterpart-quality control. */
-export const receivablesControlBaseSql=`WITH eligible AS (
+export function receivablesControlBaseForIdentities(selected=false):string {return `WITH eligible AS (
  SELECT line.id,line.move_id,line.partner_id,line.date,line.date_maturity,line.balance,line.amount_residual,
  line.amount_currency,line.currency_id,move.move_type,move.date move_date,company.currency_id company_currency_id,
  currency.name company_currency,currency.rounding
@@ -7,7 +7,7 @@ export const receivablesControlBaseSql=`WITH eligible AS (
  JOIN account_account account ON account.id=line.account_id JOIN res_company company ON company.id=line.company_id
  JOIN res_currency currency ON currency.id=company.currency_id
  WHERE line.company_id=$1::int AND move.company_id=$1::int AND move.state='posted'
- AND account.account_type='asset_receivable' AND line.date<=$2::date
+ AND account.account_type='asset_receivable' AND line.date<=$2::date${selected?' AND line.id=ANY($10::bigint[])':''}
 ), matched AS (
  SELECT eligible.id,partial.id partial_id,partial.amount original_amount,partial.amount effect,partial.max_date,
  debit.date debit_date,credit.date credit_date,partial.company_id partial_company,
@@ -40,7 +40,8 @@ export const receivablesControlBaseSql=`WITH eligible AS (
  round((balance-coalesce(settlement.total_effect,0))/rounding)*rounding reconstructed_current,
  round(amount_residual/rounding)*rounding stored_current
  FROM eligible LEFT JOIN settlement USING(id)
-)`;
+)`;}
+export const receivablesControlBaseSql=receivablesControlBaseForIdentities();
 
 export function controlComponentSql(population: 'open'|'settled'): string {
  const condition=population==='open' ? 'residual<>0' : 'residual=0 AND balance>0';

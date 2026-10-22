@@ -49,10 +49,12 @@ for(const family of ['review','business'] as const)test(`${family} reporting win
   const {referenceAnalyticsResultForWindow}=await import(new URL('../../../../docs/qa/maintenance/prepared-report-reference-2026-10-19.mjs',import.meta.url).href);
   const native=await new TrustedAnalyticsRepository(db.runtime,{reportingCurrencies:{a:'IQD'}}).execute(early,context);
   const result=await repo.execute(early,context),stable=(value:unknown)=>JSON.parse(JSON.stringify(value,(key,item)=>key==='executedAt'?undefined:item));
-  assert.notDeepEqual(stable(native),stable(result),'native source reporting dates must remain unmodified');
+  if(family==='business')assert.deepEqual(stable(native),stable(result),'Business native and prepared reads retain the same selected recipe observation');
+  else assert.notDeepEqual(stable(native),stable(result),'native source reporting dates must remain unmodified');
   const openingReference=referenceAnalyticsResultForWindow(native,window);
   assert.equal(openingReference.metadata.sourceAsOf,native.metadata.sourceAsOf,'date projection must not alter source cutoff to match a result');
-  assert.notEqual(openingReference.metadata.sourceAsOf,result.metadata.sourceAsOf,'the native publication cutoff and selected opening-source cutoff remain an exact comparison difference');
+  if(family==='business')assert.equal(openingReference.metadata.sourceAsOf,result.metadata.sourceAsOf,'Business provenance uses the actual opening recipe, not its newer sibling');
+  else assert.notEqual(openingReference.metadata.sourceAsOf,result.metadata.sourceAsOf,'the native publication cutoff and selected opening-source cutoff remain an exact comparison difference');
   const currentQuery={...early,dateRange:{from:'2025-01-01',to:'2025-01-31'}};
   const currentNative=await new TrustedAnalyticsRepository(db.runtime,{reportingCurrencies:{a:'IQD'}}).execute(currentQuery,context);
   const currentPrepared=await repo.execute(currentQuery,context);

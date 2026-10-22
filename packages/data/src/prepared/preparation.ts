@@ -3,6 +3,7 @@ import type {PoolClient} from 'pg';
 import type {PreparedBuildBounds,PreparedBuildScope,PreparedChunk,PreparedChunkResult,PreparedConfiguration} from './contracts.ts';
 import {buildPreparedWorkspace} from './workspace.ts';
 import {fingerprintPreparedCells,persistPreparedCells} from './materialization.ts';
+import {prepareBusinessDelta} from './business-delta.ts';
 
 /** The owning background transaction holds the existing tenant writer lock. No Odoo access. */
 export async function requiredPreparedChunks(client:PoolClient,scope:PreparedBuildScope,bounds:PreparedBuildBounds):Promise<PreparedChunk[]>{
@@ -25,13 +26,14 @@ export async function prepareChunk(client:PoolClient,scope:PreparedBuildScope,ch
  if(!signature)throw new Error('Prepared source signature missing');
  const reused=(await measurePreparedStep(scope,{step:'reuse'},()=>client.query<{data_id:string;statistics:Record<string,number>}>(`SELECT binding.data_id,binding.statistics FROM mart.prepared_bindings binding
   JOIN mart.prepared_revision_seals seal USING(tenant_id,revision_id) WHERE binding.tenant_id=$1 AND binding.input_fingerprint=$2 LIMIT 1`,[scope.tenantId,signature.fingerprint]))).rows[0];
- if(!reused)await buildPreparedWorkspace(client,scope,config,bounds);
- const materialized=reused?{dataId:reused.data_id,statistics:reused.statistics,rows:Object.values(reused.statistics).reduce((sum,count)=>sum+count,0)}:await measurePreparedStep(scope,{step:'fingerprint'},()=>fingerprintPreparedCells(client,scope,config,bounds.maxCellsPerChunk));
+ const delta=reused?undefined:await measurePreparedStep(scope,{step:'aggregation'},()=>prepareBusinessDelta(client,scope,config,bounds.maxCellsPerChunk));
+ if(!reused&&!delta)await buildPreparedWorkspace(client,scope,config,bounds);
+ const materialized=reused?{dataId:reused.data_id,statistics:reused.statistics,rows:Object.values(reused.statistics).reduce((sum,count)=>sum+count,0)}:delta??await measurePreparedStep(scope,{step:'fingerprint'},()=>fingerprintPreparedCells(client,scope,config,bounds.maxCellsPerChunk));
  if(materialized.rows>bounds.maxCellsPerChunk)throw new Error('Prepared cell storage bound exceeded');
  const found=(await client.query('SELECT 1 FROM mart.prepared_datasets WHERE tenant_id=$1 AND data_id=$2',[scope.tenantId,materialized.dataId])).rowCount;
  if(!found)await measurePreparedStep(scope,{step:'persistence'},()=>persistPreparedCells(client,scope,config,materialized));
  await measurePreparedStep(scope,{step:'binding'},()=>client.query('INSERT INTO mart.prepared_bindings VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)',[scope.tenantId,scope.revisionId,chunk.family,chunk.kind,chunk.period,materialized.dataId,signature.fingerprint,signature.source_cutoff,JSON.stringify(materialized.statistics)]));
- return {...chunk,dataId:materialized.dataId,rows:materialized.rows,reused:Boolean(found)};
+ return {...chunk,dataId:materialized.dataId,rows:materialized.rows,reused:!delta&&Boolean(found)};
 }
 function result(chunk:PreparedChunk,dataId:string,statistics:Record<string,number>,reused:boolean):PreparedChunkResult{return {...chunk,dataId,rows:Object.values(statistics).reduce((sum,count)=>sum+count,0),reused};}
 /** Called only by preparation/publication jobs; serving cannot invoke either materialization function. */

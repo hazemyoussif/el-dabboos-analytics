@@ -49,7 +49,7 @@ export const cashLedgerRecipe=`SELECT journal.id::text id,$5::date business_date
  JOIN res_company company ON company.id=line.company_id JOIN res_currency currency ON currency.id=company.currency_id
  WHERE $2::date IS NOT NULL AND $4::text IS NOT NULL AND $3::date=$5::date AND line.company_id=$1::int AND move.state='posted' AND line.date<=$5::date
  GROUP BY journal.id,currency.name`;
-export const payableRecipe=`SELECT line.id::text id,$5::date business_date,line.company_id,currency.name currency,
+function payableSql(selected=false){return `SELECT line.id::text id,$5::date business_date,line.company_id,currency.name currency,
  jsonb_build_object('supplier',line.partner_id::text) dimensions,value.measure_id,value.amount,(line.amount_residual IS NULL OR line.amount_residual<>round(line.amount_residual,6)) invalid
  FROM account_move_line line JOIN account_move move ON move.id=line.move_id AND move.company_id=line.company_id
  JOIN account_account account ON account.id=line.account_id AND account.account_type='liability_payable'
@@ -59,4 +59,6 @@ export const payableRecipe=`SELECT line.id::text id,$5::date business_date,line.
  ('supplier_payable_due',CASE WHEN line.date_maturity<=$5::date THEN greatest(-line.amount_residual,0) ELSE 0 END),
  ('supplier_payable_unknown_due',CASE WHEN line.date_maturity IS NULL THEN greatest(-line.amount_residual,0) ELSE 0 END),
  ('supplier_advance_balance',greatest(line.amount_residual,0))) value(measure_id,amount)
- WHERE $2::date IS NOT NULL AND $4::text IS NOT NULL AND $3::date=$5::date AND line.company_id=$1::int AND move.state='posted' AND line.date<=$5::date AND (line.amount_residual<>0 OR line.amount_residual IS NULL)`;
+ WHERE $2::date IS NOT NULL AND $4::text IS NOT NULL AND $3::date=$5::date AND line.company_id=$1::int AND move.state='posted' AND line.date<=$5::date AND (line.amount_residual<>0 OR line.amount_residual IS NULL)${selected?' AND line.id=ANY($10::bigint[])':''}`;}
+export const payableRecipe=payableSql();
+export function payableIdentityRecipe(){return payableSql(true);}

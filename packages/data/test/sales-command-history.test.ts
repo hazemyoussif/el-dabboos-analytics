@@ -20,8 +20,12 @@ test('command history requires adjacent coverage, the same source and the same r
 test('obsolete command recipe versions cannot publish new metrics while unchanged Business metrics remain eligible',async()=>{
  const {reviewPublication}=await import('../src/review/publication.ts');
  const {businessDefinitionVersion}=await import('../src/business/definitions.ts');
+ const {businessMapping}=await import('../src/business/definitions.ts');
+ const {withSalesCommandMapping}=await import('../src/business/sales-command-mapping.ts');
  const publication=release('2026-09',['command_order_value','period_net_sales'],'obsolete-command-version');
- const client={async query(){return {rows:[{revision_id:'synthetic-revision',capabilities:{tenantId:'synthetic',mode:'certified',releases:[publication]},definition_version:businessDefinitionVersion(),mapping_id:'business-purpose-v1-sales-command',mapping_version:'obsolete-command-version'}]};}};
+ const mapping=withSalesCommandMapping(businessMapping({tenantId:'synthetic',sourceId:'synthetic',currency:'IQD',timeZone:'Asia/Baghdad',datasetId:'SYNTHETIC',current:false}),false);
+ const observations=[...new Set(mapping.measures.map(rule=>rule.sourceObject))].map(object=>({object,day:'2026-09-30',cutoff:'2026-09-30T09:00:00Z'}));
+ const client={async query(){return {rows:[{revision_id:'synthetic-revision',capabilities:{tenantId:'synthetic',mode:'certified',releases:[publication]},definition_version:businessDefinitionVersion(),mapping_id:'business-purpose-v1-sales-command',mapping_version:'obsolete-command-version',mapping,observations}]};}};
  const result=await reviewPublication(client as unknown as import('pg').PoolClient,{tenantId:'synthetic',locale:'en'},'business');
  assert.deepEqual(result.releases[0]!.capabilities.map(capability=>capability.metric),['period_net_sales']);
 });

@@ -3,6 +3,8 @@ import type { AnalyticsPartition, FactRevisionChange, ImpactPolicy } from './ana
 export type AnalyticsJobKind = 'sync' | 'affected' | 'daily' | 'deep' | 'sweep';
 export interface AnalyticsJobRequest {
   tenantId: string; actorId: string; trigger: 'manual' | 'operator' | 'scheduled'; kind: AnalyticsJobKind;
+  /** Explicit presence-only check of previously recorded allocation identities. */
+  sweepScope?:'allocations';
 }
 export interface AnalyticsCursor {
   /** Last committed bounded snapshot cutoff, independent of business dates. */
@@ -31,7 +33,7 @@ export interface AnalyticsOperationalTransaction {
   trustedRelease(): Promise<string | null>;
   /** Plan validated changes under the tenant lock; no candidate revision writes. */
   ingest(snapshot: AnalyticsSourceSnapshot, cursor: AnalyticsCursor | null): Promise<{ changes: readonly FactRevisionChange[]; cursor: AnalyticsCursor; recordsChanged: number }>;
-  sweep(snapshot: AnalyticsSourceSnapshot): Promise<readonly FactRevisionChange[]>;
+  sweep(snapshot: AnalyticsSourceSnapshot, scope?:'allocations'): Promise<readonly FactRevisionChange[]>;
   /** Capture exact controls under the source snapshot, then await releaseSource
    * before persisting the planned candidate and comparing it in this transaction.
    */

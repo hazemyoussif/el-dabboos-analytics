@@ -20,7 +20,7 @@ export async function discoverPreparedDimensions(pool:Pool,scope:{dimension:Dime
   const bindings=(await client.query<PreparedBinding>(`SELECT binding.data_id,binding.period::text,binding.statistics,binding.source_cutoff,dataset.configuration
    FROM mart.prepared_bindings binding JOIN mart.prepared_datasets dataset USING(tenant_id,data_id)
    WHERE binding.tenant_id=$1 AND binding.revision_id=$2 AND binding.family=$3 AND binding.kind=$4 ORDER BY binding.period`,[context.tenantId,publication.revision,family,preparedMetricBasis(query.metric)])).rows;
-  const segments=planPreparedRead(bindings,query,context,[{key:null,match_key:null,from:range.from,to:range.to}]),input=preparedReduction(query,context,segments,true);
+  const segments=planPreparedRead(bindings,query,context,[{key:null,match_key:null,from:range.from,to:range.to}]),input=preparedReduction(query,context,segments,true,family);
   const params=[...input.params,after,selection.search,selection.selected,selection.limit+1],offset=input.params.length;
   const result=await client.query(`WITH candidates AS MATERIALIZED (${input.text}),page AS (
    SELECT * FROM candidates WHERE key COLLATE "C">$${offset+1}::text COLLATE "C" AND (position(lower($${offset+2}) in lower(coalesce(label,'')))>0 OR position(lower($${offset+2}) in lower(key))>0)

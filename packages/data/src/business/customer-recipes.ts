@@ -1,5 +1,5 @@
 import {customerSegmentSql} from './source-recipes.ts';
-import {receivablesControlBaseSql} from '../operational/receivable-control-sql.ts';
+import {receivablesControlBaseForIdentities} from '../operational/receivable-control-sql.ts';
 export const customerRecipe=`WITH invoice_history AS (
  SELECT partner_id,min(invoice_date) FILTER(WHERE move_type='out_invoice') first_invoice,max(invoice_date) FILTER(WHERE move_type='out_invoice') last_invoice,
  coalesce(sum(amount_untaxed_signed) FILTER(WHERE invoice_date BETWEEN $2::date AND $3::date),0) period_sales,
@@ -41,7 +41,7 @@ export const customerRecipe=`WITH invoice_history AS (
  AND EXISTS(SELECT 1 FROM sale_order_line line JOIN product_product product ON product.id=line.product_id JOIN product_template template ON template.id=product.product_tmpl_id
  WHERE line.order_id=record.id AND line.display_type IS NULL AND template.type<>'service' AND line.product_uom_qty>0 AND line.qty_delivered<line.product_uom_qty))::numeric END)
  ) value(measure_id,amount) WHERE value.amount IS NOT NULL`;
-export const receivableRecipe=receivablesControlBaseSql.replaceAll('$2::date','$3::date')+` SELECT reconstructed.id::text id,$3::date business_date,$1::int company_id,company_currency currency,
+function receivableSql(selected=false){return receivablesControlBaseForIdentities(selected).replaceAll('$2::date','$3::date')+` SELECT reconstructed.id::text id,$3::date business_date,$1::int company_id,company_currency currency,
  jsonb_build_object('customer',partner_id::text,'state',partner.state_id::text,'customer_segment',${customerSegmentSql},'customer_class',NULL::text) dimensions,
  value.measure_id,value.amount,(invalid_links>0 OR reconstructed_current<>stored_current) invalid
  FROM reconstructed LEFT JOIN res_partner partner ON partner.id=reconstructed.partner_id
@@ -53,4 +53,6 @@ export const receivableRecipe=receivablesControlBaseSql.replaceAll('$2::date','$
  ('positive_due_31_60',CASE WHEN $3::date-date_maturity BETWEEN 31 AND 60 THEN greatest(residual,0) ELSE 0 END),
  ('positive_due_61_90',CASE WHEN $3::date-date_maturity BETWEEN 61 AND 90 THEN greatest(residual,0) ELSE 0 END),
  ('positive_due_over_90',CASE WHEN $3::date-date_maturity>90 THEN greatest(residual,0) ELSE 0 END)) value(measure_id,amount)
- WHERE $2::date IS NOT NULL AND $4::text IS NOT NULL AND $5::date IS NOT NULL AND residual<>0`;
+ WHERE $2::date IS NOT NULL AND $4::text IS NOT NULL AND $5::date IS NOT NULL AND residual<>0`;}
+export const receivableRecipe=receivableSql();
+export function receivableIdentityRecipe(){return receivableSql(true);}

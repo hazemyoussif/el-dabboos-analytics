@@ -63,6 +63,7 @@ export class AnalyticsOperations {
   }
 }
 function validateRequest(request: AnalyticsJobRequest) {
+  if(request.sweepScope!==undefined&&(request.kind!=='sweep'||request.sweepScope!=='allocations'))throw new Error('Invalid analytics sweep scope');
   if (![request.tenantId, request.actorId].every(value => typeof value === 'string' && value.length > 0 && value.length <= 200 && value.trim() === value) || !['sync', 'affected', 'daily', 'deep', 'sweep'].includes(request.kind) || !['manual', 'operator', 'scheduled'].includes(request.trigger)) throw new Error('Invalid analytics job request');
 }
 function emptyEvidence(): OperationalReconciliation { return { caseIds: [], caseCount: 0, mismatchCount: 0, evidenceHash: 'no-changes' }; }
@@ -82,7 +83,7 @@ async function discoverCandidate(transaction:AnalyticsOperationalTransaction,sco
  const cursor=await transaction.cursor();
  if(cursor && Date.parse(cursor.cutoff)>Date.parse(source.cutoff))throw new Error('Source cutoff cannot regress');
  const ingested=request.kind==='sync'?await transaction.ingest(source,cursor):undefined;
- const changes=request.kind==='sweep'?await transaction.sweep(source):ingested?.changes??[];
+ const changes=request.kind==='sweep'?await transaction.sweep(source,request.sweepScope):ingested?.changes??[];
  const recordsChanged=ingested?.recordsChanged??new Set(changes.map(change=>JSON.stringify([change.next.sourceId,change.next.sourceObject,change.next.sourceRecordId]))).size;
  validateCandidate(request,source,ingested,changes);
  return {ingested,changes,recordsChanged};

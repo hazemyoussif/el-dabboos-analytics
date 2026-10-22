@@ -18,7 +18,7 @@ export async function discoverReviewDimensions(pool:Pool,scope:{dimension:Dimens
   const rows=(await client.query(`WITH candidates AS MATERIALIZED (
    SELECT fact.payload->'dimensions'->>$2 id,CASE WHEN count(DISTINCT fact.payload->'displayLabels'->>$3)=1 THEN min(fact.payload->'displayLabels'->>$3) END label
    FROM mart.analytics_trusted_serving trusted JOIN mart.analytics_serving_members member USING(tenant_id,revision_id)
-   JOIN mart.review_facts fact USING(tenant_id,partition_id)
+   JOIN mart.review_fact_population fact USING(tenant_id,partition_id)
    WHERE trusted.tenant_id=$1 AND member.family='${scope.family??'review'}' AND fact.payload->>'measureId'=ANY($4::text[])
    ${period} AND fact.payload->'dimensions'->>$2 IS NOT NULL
    ${filters.length?'AND '+filters.join(' AND '):''} GROUP BY fact.payload->'dimensions'->>$2),

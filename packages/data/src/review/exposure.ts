@@ -7,12 +7,36 @@ import type {SourceMapping,ProductionFact} from '@el-dabboos/domain';
 import {tenantTransaction} from '../postgres/session.ts';
 import {reviewCapabilities,reviewDefinitionVersion} from './definitions.ts';
 import type {ReviewControl} from './source.ts';
-export interface ReviewExtraction {
+import {captureBusinessDelta,persistBusinessDelta,recordUnchangedBusinessDelta} from './exposure-delta.ts';
+import type {BusinessIdentityReplacement} from '../business/delta-store.ts';
+import type {RecordedAllocationDeletion} from '../operational/contracts.ts';
+import type {CommandAllocationChange} from '../business/allocation-changes.ts';
+interface ReviewObservation {
  tenantId:string;month:string;mapping:SourceMapping;cutoff:string;revision:string;
- facts:AsyncIterable<readonly ProductionFact[]>;controls:()=>Promise<readonly ReviewControl[]>;assertAlive:()=>Promise<void>;completeSourceRead:()=>Promise<void>;
+ controls:()=>Promise<readonly ReviewControl[]>;assertAlive:()=>Promise<void>;completeSourceRead:()=>Promise<void>;
+}
+export interface ReviewExtraction extends ReviewObservation {facts:AsyncIterable<readonly ProductionFact[]>;requireEmptyMonth?:boolean}
+export interface BusinessDeltaExtraction extends ReviewObservation {
+ /** Unlisted recipes retain both their accepted facts/controls and observation clocks. */
+ observedObjects?:readonly string[];
+ replaceObjects?:readonly string[];
+ discover?:(request:(object:string,ids:readonly string[])=>Promise<void>)=>Promise<void>;
+ readReplacements?:(object:string,ids:readonly string[])=>AsyncIterable<readonly BusinessIdentityReplacement[]>;
+ identityControls:(object:string,ids:readonly string[])=>Promise<readonly ReviewControl[]>;
+ allocationChanges?:AsyncIterable<readonly CommandAllocationChange[]>;
+ replacements:AsyncIterable<readonly BusinessIdentityReplacement[]>;
+ allocationDeletions?:{
+  discover(consume:(records:readonly RecordedAllocationDeletion[])=>Promise<void>,client:PoolClient):Promise<unknown>;
+  replacements(object:string,ids:readonly string[]):AsyncIterable<readonly BusinessIdentityReplacement[]>;
+ };
 }
 /** Atomic complete-month exposure; Finance approval is deliberately absent. */
 export async function exposeReviewMonth(pool:Pool,source:ReviewExtraction,family:'review'|'business'='review') {
+ return exposeMonth(pool,source,family);
+}
+/** Immutable Business delta, referencing accepted recipes without copying their rows. */
+export async function exposeBusinessDeltaMonth(pool:Pool,source:BusinessDeltaExtraction){return exposeMonth(pool,source,'business');}
+async function exposeMonth(pool:Pool,source:ReviewExtraction|BusinessDeltaExtraction,family:'review'|'business') {
  if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(source.month)||!validDateRange({from:source.month+'-01',to:monthEnd(source.month)})||source.mapping.tenantId!==source.tenantId||!source.revision.trim()||!Number.isFinite(Date.parse(source.cutoff)))throw new Error('Complete bounded review month required');
  return tenantTransaction(pool,source.tenantId,async client=>{
   await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',[`analytics:${source.tenantId}`]);
@@ -21,15 +45,25 @@ export async function exposeReviewMonth(pool:Pool,source:ReviewExtraction,family
   const parent=(await client.query('SELECT revision_id FROM mart.analytics_trusted_serving WHERE tenant_id=$1 FOR UPDATE',[source.tenantId])).rows[0]?.revision_id;
   if(!parent)throw new Error('Existing trusted manifest required');
   await assertNewCutoff(client,source,parent,family);
+  await assertEmptyRequestedMonth(client,source,parent,family);
+  const captured='replacements' in source?await captureBusinessDelta(client,{source,parent}):undefined;
+  if(captured?.unchanged&&'replacements' in source){
+   await source.assertAlive();await source.completeSourceRead();
+   await recordUnchangedBusinessDelta(client,source,captured);
+   return {revisionId:parent,partitionId:captured.baseline.partitionId,month:source.month,
+    facts:0,controls:captured.controls.length,financeReview:'pending' as const,unchanged:true};
+  }
   const partitionId=randomUUID(),revisionId=randomUUID();
   const capabilities=(family==='business'?businessCapabilities:reviewCapabilities)(source.mapping,{month:source.month,cutoff:source.cutoff,reference:`technical-exact:${partitionId}`});
   await client.query("INSERT INTO mart.analytics_partitions(tenant_id,partition_id,month,family,capabilities) VALUES($1,$2,$3,$5,$4)",[source.tenantId,partitionId,source.month+'-01',JSON.stringify(capabilities),family]);
   await client.query('INSERT INTO mart.review_extractions VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,true)',[source.tenantId,partitionId,source.month+'-01',source.mapping.sourceId,source.mapping.reportingCurrency,source.cutoff,source.revision,(family==='business'?businessDefinitionVersion:reviewDefinitionVersion)(),JSON.stringify(source.mapping)]);
-  const rows=await persistReviewFacts(client,partitionId,source,family);
-  const controls=await source.controls();
+  const persisted='replacements' in source?await persistBusinessDelta(client,{source,captured:captured!,partitionId}):
+   {rows:await persistReviewFacts(client,partitionId,source,family),controls:await source.controls()};
+  const {rows,controls}=persisted;
   await persistReviewControls(client,source.tenantId,partitionId,controls,family);
   await source.assertAlive();
   if(!(await client.query(`SELECT mart.${family==='business'?'business':'review'}_partition_exact($1,$2) exact`,[source.tenantId,partitionId])).rows[0].exact)throw new Error('Review source/mart controls do not match');
+  if(captured)await captured.workspace.persistAllocationLinks(partitionId);
   // Source evidence is complete and exact; offline preparation must not retain its lease.
   await source.completeSourceRead();
   await client.query("INSERT INTO mart.analytics_serving_revisions(tenant_id,revision_id,parent_revision,cutoff,affected_months,purpose) VALUES($1,$2,$3,$4,$5,$6)",[source.tenantId,revisionId,parent,source.cutoff,[source.month+'-01'],family]);
@@ -64,7 +98,13 @@ async function persistReviewControls(client:PoolClient,tenantId:string,partition
 }
 function monthEnd(month:string){return new Date(Date.UTC(Number(month.slice(0,4)),Number(month.slice(5)),0)).toISOString().slice(0,10);}
 
-async function assertNewCutoff(client:PoolClient,source:ReviewExtraction,parent:string,family:'review'|'business'){
+async function assertEmptyRequestedMonth(client:PoolClient,source:ReviewExtraction|BusinessDeltaExtraction,parent:string,family:'review'|'business'){
+ if(!('requireEmptyMonth' in source)||!source.requireEmptyMonth)return;
+ const existing=await client.query('SELECT 1 FROM mart.analytics_serving_members WHERE tenant_id=$1 AND revision_id=$2 AND family=$3 AND month=$4',[source.tenantId,parent,family,source.month+'-01']);
+ if(existing.rowCount)throw new Error('New recipe month already has an accepted Business member');
+}
+
+async function assertNewCutoff(client:PoolClient,source:ReviewObservation,parent:string,family:'review'|'business'){
  const prior=(await client.query(`SELECT extraction.source_cutoff FROM mart.analytics_serving_members member JOIN mart.review_extractions extraction USING(tenant_id,partition_id)
   WHERE member.tenant_id=$1 AND member.revision_id=$2 AND member.family=$4 AND member.month=$3`,[source.tenantId,parent,source.month+'-01',family])).rows[0];
  if(prior&&Date.parse(source.cutoff)<=prior.source_cutoff.getTime())throw new Error('Newer review source cutoff required');

@@ -27,11 +27,14 @@ export async function writeReceivableDependencies(client:PoolClient,scope:{basel
  const values=[...namespace(scope.baseline),scope.runId,scope.cutoff];
  for(let offset=0;offset<dependencies.length;offset+=1000) {
   await client.query(`INSERT INTO mart.analytics_receivable_dependencies
-   (tenant_id,source_id,definition_version,mapping_version,run_id,cutoff,source_object,source_record_id,effective_from)
-   SELECT $1,$2,$3,$4,$5,$6,record.object,record.id,record."from"
-   FROM jsonb_to_recordset($7::jsonb) record(object text,id text,"from" date)
+   (tenant_id,source_id,definition_version,mapping_version,run_id,cutoff,source_object,source_record_id,effective_from,allocation_links,allocation_links_cutoff)
+   SELECT $1,$2,$3,$4,$5,$6,record.object,record.id,record."from",record."allocationLinks",
+    CASE WHEN record."allocationLinks" IS NOT NULL THEN $6::timestamptz END
+   FROM jsonb_to_recordset($7::jsonb) record(object text,id text,"from" date,"allocationLinks" jsonb)
    ON CONFLICT(tenant_id,source_id,definition_version,mapping_version,source_object,source_record_id)
-   DO UPDATE SET run_id=EXCLUDED.run_id,cutoff=EXCLUDED.cutoff,effective_from=EXCLUDED.effective_from`,
+   DO UPDATE SET run_id=EXCLUDED.run_id,cutoff=EXCLUDED.cutoff,effective_from=EXCLUDED.effective_from,
+    allocation_links=coalesce(EXCLUDED.allocation_links,analytics_receivable_dependencies.allocation_links),
+    allocation_links_cutoff=coalesce(EXCLUDED.allocation_links_cutoff,analytics_receivable_dependencies.allocation_links_cutoff)`,
    [...values,JSON.stringify(dependencies.slice(offset,offset+1000))]);
  }
  await client.query(`INSERT INTO mart.analytics_receivable_dependency_checkpoints

@@ -236,7 +236,7 @@ let historyAttempts=0,cellStatements=0;
 preparedPool.on('connect',client=>{const query=client.query.bind(client);client.query=(...args)=>{
  const sql=typeof args[0]==='string'?args[0]:args[0]?.text??'';
  if(/\b(review_facts|review_controls|analytics_fact_heads|analytics_fact_revisions|finance_snapshot_customers|prepared_input_rows|prepared_expected_cells|prepared_work_[a-z_]+)\b/i.test(sql)){historyAttempts++;throw new Error('Prepared history access blocked');}
- if(/\bprepared_cells\b/.test(sql))cellStatements++;
+ if(/\b(?:business_)?prepared_cells\b/.test(sql))cellStatements++;
  return query(...args);
 };});
 for(const pool of [preparedPool,baselinePool])pool.on('error',()=>{emit({stage:'readOnlyConnectionFailed',activationPerformed:false});process.exit(1);});

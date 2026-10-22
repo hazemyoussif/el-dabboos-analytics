@@ -9,7 +9,7 @@ export async function groupedReviewBase(client:PoolClient,scope:ReviewGroupedSou
  const from=bind(params,scope.range.from),partitions=bind(params,await publishedEventPartitions(client,scope));
  return `WITH facts AS (
  SELECT fact.measure_id,fact.amount value,fact.dimensions,fact.display_labels labels,fact.business_day business_date,fact.entity_id
- FROM mart.review_facts fact WHERE fact.tenant_id=$1 AND fact.partition_id=ANY(${partitions}::text[])
+ FROM mart.review_fact_population fact WHERE fact.tenant_id=$1 AND fact.partition_id=ANY(${partitions}::text[])
  AND fact.measure_id=ANY($2::text[]) AND fact.business_day<=$3::text AND fact.business_day>=${from}::text
  ),base AS (SELECT * FROM facts)`;
 }

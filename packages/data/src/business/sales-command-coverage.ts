@@ -22,13 +22,16 @@ export function salesCommandCoverage(query:AnalyticsQuery,range:DateRange,observ
 /** Native comparison reader proves coverage from completed immutable extraction metadata. */
 export async function nativeSalesCommandCoverage(client:PoolClient,scope:{query:AnalyticsQuery;context:AnalyticsContext;range:DateRange;revision:string}):Promise<Coverage> {
  const snapshot=preparedMetricBasis(scope.query.metric)==='snapshot';
- const rows=(await client.query(`SELECT extraction.month::text "from",
- least((extraction.month+interval '1 month - 1 day')::date,(extraction.source_cutoff AT TIME ZONE (extraction.mapping->'measures'->0->>'timeZone'))::date)::text "to",
- extraction.source_cutoff cutoff FROM mart.analytics_serving_members member
+ const rows=(await client.query(`SELECT extraction.month::text "from",observed.business_day::text "to",
+ observed.cutoff FROM mart.analytics_serving_members member
  JOIN mart.review_extractions extraction USING(tenant_id,partition_id)
+ CROSS JOIN LATERAL (SELECT min(observation.business_day) business_day,min(observation.source_cutoff) cutoff,
+  count(*) observations FROM unnest($4::text[]) required(measure)
+  CROSS JOIN LATERAL mart.business_measure_observation(extraction.tenant_id,extraction.partition_id,required.measure) observation) observed
  WHERE member.tenant_id=$1 AND member.revision_id=$7 AND member.family='business' AND extraction.completed
  AND extraction.mapping->>'mappingId'='business-purpose-v1-sales-command' AND extraction.mapping->>'mappingVersion'=$5
  AND extraction.month<=date_trunc('month',$3::date) AND ($6::boolean OR extraction.month>=date_trunc('month',$2::date))
+ AND observed.observations=cardinality($4::text[])
  AND NOT EXISTS(SELECT 1 FROM unnest($4::text[]) required(measure) WHERE NOT EXISTS(
  SELECT 1 FROM jsonb_array_elements(extraction.mapping->'measures') mapped WHERE mapped->>'measureId'=required.measure))`,[scope.context.tenantId,scope.range.from,scope.range.to,requiredMeasures(scope.query.metric),salesCommandDefinitionVersion(),snapshot,scope.revision])).rows;
  return salesCommandCoverage(scope.query,scope.range,rows.map(row=>({from:row.from,to:row.to,cutoff:row.cutoff.toISOString()})));

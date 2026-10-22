@@ -39,6 +39,8 @@ async function fixture(initialDate='2026-07-15') {
    CREATE TABLE business_line(id int);CREATE TABLE res_country_state(id int);CREATE TABLE sale_order_line(id int);CREATE TABLE sale_order_line_invoice_rel(id int);
    INSERT INTO res_currency VALUES(1,'IQD',0.001);INSERT INTO res_company VALUES(1,1),(2,1);
    INSERT INTO account_account VALUES(1,'asset_receivable'),(2,'liability_payable');`);
+  for(const table of ['account_move','account_move_line','account_partial_reconcile','account_payment'])
+   await db.admin.query(`ALTER TABLE ${table} ADD create_date timestamp DEFAULT (clock_timestamp() AT TIME ZONE 'UTC')`);
   await db.admin.query("INSERT INTO account_move VALUES(1,1,'posted','out_invoice',$1,'2026-10-01'),(9,2,'posted','out_invoice','2020-01-01','2026-10-01')",[initialDate]);
   await db.admin.query("INSERT INTO account_move_line VALUES(1,1,1,1,1,$1,$1,100,100,100,1,'2026-10-01'),(9,9,9,2,1,'2020-01-01','2020-01-01',999,999,999,1,'2026-10-01')",[initialDate]);
   const leases:OdooSnapshotLease[]=[];
@@ -84,9 +86,9 @@ test('receivable dependencies: initializes every cutoff and all four input model
   assert.equal(observed.dependencies.some(row=>row.id==='9'),false);
   await tenantTransaction(f.db.ingestor,'a',async client=>{
    assert.equal((await readReceivableDependencyContext(client,f.scope,cursor))?.initialized,true);
-   assert.equal((await readReceivableDependencyContext(client,f.scope,{...cursor,cutoff:'2026-10-01T00:00:00.000Z'}))?.initialized,false);
    assert.equal((await readReceivableDependencyContext(client,{...f.scope,mappingVersion:'2'},cursor))?.initialized,false);
   });
+  await assert.rejects(tenantTransaction(f.db.ingestor,'a',client=>readReceivableDependencyContext(client,f.scope,{...cursor,cutoff:'2026-10-01T00:00:00.000Z'})),/checkpoint conflicts with accepted cursor/);
  }finally{await f.close();}
 });
 

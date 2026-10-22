@@ -53,17 +53,20 @@ async function commit(f:Awaited<ReturnType<typeof fixture>>,observation:Awaited<
   if(fail)throw new Error('Synthetic publication failure');return cursor;
  });
 }
-async function initialize(f:Awaited<ReturnType<typeof fixture>>) {const observed=await observe(f,{cutoff:'2026-10-10T00:00:00.000Z',objects:{}});return commit(f,observed);}
+async function initialize(f:Awaited<ReturnType<typeof fixture>>) {const observed=await observe(f,null);return commit(f,observed);}
 const documents=(facts:readonly ProductionFact[])=>[...new Set(facts.map(row=>`${row.sourceObject}:${row.sourceRecordId}`))].sort();
 
-test('lookup dependencies: initialization catches up old documents and projection mismatch invalidates the checkpoint',{skip:!enabled},async()=>{
+test('lookup dependencies: cold initialization inventories inputs, missing metadata preserves an accepted cursor and projection changes require migration',{skip:!enabled},async()=>{
  const f=await fixture();try {
-  const observed=await observe(f,{cutoff:'2026-10-10T00:00:00.000Z',objects:{}});
+  const observed=await observe(f,null);
   assert.deepEqual(documents(observed.facts),['account_move:1','account_move:2','account_move:3','sale_order:1','sale_order:2','sale_order:3']);
   assert.deepEqual(new Set(observed.update.dependencies.map(row=>row.object)),new Set(['customer','salesperson','business_line','state']));
   assert.ok(observed.update.dependencies.every(row=>/^[0-9a-f]{64}$/.test(row.fingerprint)));
-  const cursor=await commit(f,observed),invalidated=await observe(f,cursor,'0'.repeat(64));
-  assert.deepEqual(documents(invalidated.facts),documents(observed.facts));
+  const retained=await observe(f,{cutoff:'2026-10-10T00:00:00.000Z',objects:{}});
+  assert.deepEqual(retained.facts,[],'missing optional metadata cannot restart accepted document history');
+  assert.deepEqual(retained.update.dependencies,[],'untouched lookups remain outside the polling overlap');
+  const cursor=await commit(f,observed);
+  await assert.rejects(observe(f,cursor,'0'.repeat(64)),/explicit baseline migration required/);
  }finally{await f.close();}
 });
 

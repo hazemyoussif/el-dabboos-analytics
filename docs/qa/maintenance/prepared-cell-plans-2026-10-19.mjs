@@ -42,7 +42,7 @@ export async function probePreparedCellPlans(scope,deps){
    const captured=[],marker=new Error('Internal cell plan capture');
    const observed={query(...args){
     const text=typeof args[0]==='string'?args[0]:args[0]?.text??'';
-    if(/\bmart\.prepared_cells\b/.test(text)){captured.push({text,params:args[1]});throw marker;}
+    if(/\bmart\.(?:business_)?prepared_cells\b/.test(text)){captured.push({text,params:args[1]});throw marker;}
     return client.query(...args);
    }};
    try{

@@ -1,12 +1,32 @@
 # Operational analytics v1
 
-The unverified [22 October delta-sync draft](proposals/delta-sync-correction-2026-10-22.md)
+The current Command integration and its verification status are described in
+[the delta-sync correction](proposals/delta-sync-correction-2026-10-22.md).
+The owner approved focused synthetic verification and local gates. Company jobs,
+deployments and timers remain paused. The release descriptions below retain their
+historical context; the final Command integration section supersedes their draft gaps.
+
+The allocation-only sweep adds an explicit operator mode,
+`analytics sweep --tenant ID --mode allocations`. It checks previously recorded
+allocation IDs in pages of at most 1,000 against the same company-scoped read-only
+source snapshot. Missing allocations use retained effective dates to select
+existing receivable cutoffs for reconstruction; exact reconciliation, impact,
+preparation and publication retain the existing sweep lifecycle. No deletion means
+no snapshot reconstruction in this mode. Missing retained dates fail explicitly
+instead of selecting all history. It does not advance the incremental cursor,
+change Odoo configuration, replace the ordinary sweep, install a timer, or claim
+coverage of allocations absent from discovery metadata. Run details report checked
+and missing counts, earliest affected date and `recorded-identities-only` coverage.
+The Command integration additionally connects this separate sweep to Business
+allocation, invoice and debt replacement requests. Company execution remains pending.
+
+The [22 October delta-sync correction](proposals/delta-sync-correction-2026-10-22.md)
 changes lookup/receivable initialization and sync capture buffering. It retains
 the accepted cursor when dependency metadata is missing and stages bounded fact
 pages in PostgreSQL. The historical initialization and verification descriptions
 below describe the prior releases; they are not evidence for this draft. The
-business-family changed-record refresh remains unimplemented. No company rerun
-or release is recommended from the draft.
+Business changed-record refresh is implemented in the final integration section.
+No company runtime or performance claim follows from local synthetic verification.
 
 The deterministic Odoo-to-mart operational path is implemented. Operator jobs use
 read-only retained PostgreSQL source snapshots, versioned approved mappings,
@@ -424,3 +444,51 @@ Event details require the summary's trusted release and source-as-of; changed
 state requires Refresh View. Finance details pin the originating immutable
 customer snapshot, with per-point lineage for historical trends. No source
 transport, source verification or export runs during drill-through.
+
+## Command refresh integration draft — 22 October 2026
+
+The job composition now refreshes Command recipes using their accepted
+Business observations before a new operational sync. Sealed operational candidates
+defer this step and retain offline resume. Job output distinguishes the Business
+member results from the operational run and its facts cursor.
+
+Changed root identities and independent scoped source controls feed a sparse
+Business revision referencing its accepted parent. Only new payloads and complete
+replacement markers are stored; an empty replacement removes the old root.
+The approved shared readers resolve inherited rows without copying or retiming them.
+Source timestamps alone do not dirty canonical content. Unchanged
+same-day observations renew freshness without another partition or prepared build.
+Current debt also changes with the reporting calendar. Recipe clocks keep other
+Business measures at their actual prior observation; native and prepared readers
+use that same evidence, including controlled empty populations.
+
+`sweep --mode allocations` additionally feeds retained allocation deletions into
+Command invoice/debt replacements. It covers recorded identities only. Missing old
+edges stop for recovery; no source audit configuration or inferred graph is added.
+New recipe initialization and new current months are distinct from incremental
+polling and preserve existing members.
+
+Business prepared datasets retain a sealed parent and replace daily/monthly/cutoff
+cells identified by old/new root footprints. Recalculation reads contributors to
+those affected keys, preserving extrema, distinct counts and label conflicts.
+Empty snapshot transitions include the synthetic zero groups. New measures and
+grains require initial calculation of those outputs. Established sparse inputs
+cannot fall back to a full-month build when their prepared baseline is missing.
+Kind-specific signatures preserve unrelated event/snapshot reuse. The existing
+family/kind/period binding and atomic promotion remain; other prepared families
+retain their original readers. Logical statistics include inherited cells; physical
+row counts count only stored replacements. An affected monthly summary can require
+reading all contributors to that measure, without copying the month's raw or
+prepared population.
+
+Snapshot configuration retains only operands actually observed at its cutoff;
+later debt observation dates do not establish earlier stock-date coverage.
+
+Migrations 065–076 are exercised in disposable PostgreSQL 18.6 with synthetic data.
+The focused checks cover sparse correction/deletion, daily and month rollover,
+observation clocks, tenant isolation, independent-control rejection and atomic
+rollback. The indexed complete-partition reader remains available alongside sparse
+ancestry. Company timings, ancestry read cost and storage requirements remain
+pending. Source jobs, deployments and timers remain paused.
+See the current integration
+section in [the correction proposal](proposals/delta-sync-correction-2026-10-22.md).

@@ -16,7 +16,7 @@ export async function preparedResult(client:PoolClient,scope:PreparedResultScope
  const metadata:AnalyticsResult['metadata']={...preparedProvenance(scope),executedAt:scope.executedAt,
  servingRevision:publication.revision,...presentation(query),semantics:metric.semantics.kind,
  ...labelMetadata(scope),
- ...(selected.dataThrough?{dataThrough:selected.dataThrough}:{}),...(snapshot&&(selected.dataThrough||selected.coverage?.status==='complete')?{snapshotAsOf:selected.dataThrough??selected.preparedThrough!}:{}),
+ ...(selected.dataThrough?{dataThrough:selected.dataThrough}:{}),...(snapshot&&(selected.snapshotAsOf||selected.dataThrough||selected.coverage?.status==='complete')?{snapshotAsOf:selected.snapshotAsOf??selected.dataThrough??selected.preparedThrough!}:{}),
  ...(selected.window?{window:selected.window}:{}),...(query.analysis?{analysis:query.analysis}:{})};
  Object.assign(metadata,finance);
  return {metric:query.metric,groupBy:query.groupBy??null,rows:selected.rows,metadata};

@@ -15,7 +15,7 @@ export async function readReviewFacts(client:PoolClient,scope:{query:AnalyticsQu
   params.push(filter.dimension,filter.values);return `fact.payload->'dimensions'->>$${params.length-1}=ANY($${params.length}::text[])`;
  });
  params.push(family==='business'?businessDefinitionVersion():reviewDefinitionVersion());
- const result=await client.query<{payload:ReviewReadFact;source_cutoff:Date}>(`SELECT fact.payload,extraction.source_cutoff FROM ${reviewMembers} JOIN mart.review_facts fact USING(tenant_id,partition_id)
+ const result=await client.query<{payload:ReviewReadFact;source_cutoff:Date}>(`SELECT fact.payload,extraction.source_cutoff FROM ${reviewMembers} JOIN mart.review_fact_population fact USING(tenant_id,partition_id)
  WHERE trusted.tenant_id=$1 AND member.family='${family}' AND extraction.definition_version=$${params.length}
  AND fact.payload->>'measureId'=ANY($2::text[]) AND member.month BETWEEN date_trunc('month',$3::date) AND date_trunc('month',$4::date)
  ${filters.length?'AND '+filters.join(' AND '):''} ORDER BY member.month,fact.fact_key LIMIT 250001`,params);

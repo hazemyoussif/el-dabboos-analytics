@@ -12,6 +12,7 @@ import { affectedMonths,refreshOperationalMonths } from './aggregates.ts';
 import { compareCandidate,persistExactCases,completeReconciliationPartitions } from './reconciliation.ts';
 import type { PersistedExactCase } from './reconciliation.ts';
 import { sweepOperationalFacts } from './sweep.ts';
+import {sweepRecordedAllocations} from './allocation-sweep.ts';
 import { ingestOperationalCandidate } from './ingestion.ts';
 import { readBaseline } from './baseline.ts';
 import { snapshotMetric } from './receivables.ts';
@@ -49,11 +50,24 @@ class OperationalTransaction implements AnalyticsOperationalTransaction {
   const candidate=await ingestOperationalCandidate(this.client,{baseline:this.baseline,source,cursor,details:this.details,parent:await this.trustedRelease(),observeProgress:this.observeProgress});
   this.changes=candidate.changes;this.receivableDependencies=candidate.receivableDependencies;this.lookupDependencies=candidate.lookupDependencies;return candidate;
  }
- async sweep(snapshot:AnalyticsSourceSnapshot) {
+ async sweep(snapshot:AnalyticsSourceSnapshot,scope?:'allocations') {
   const source=this.requireSource(snapshot);
+  if(scope==='allocations')return this.sweepAllocations(source);
   const changes=await sweepOperationalFacts(this.client,this.baseline,source);
   for await(const page of source.snapshots(this.baseline,await this.cursor(),true))changes.push(...await planOperationalFacts(this.client,this.baseline,page.facts,{observeProgress:this.observeProgress}));
   this.details.canonicalRevisions=changes.length;this.details.updatedRows=new Set(changes.map(change=>JSON.stringify([change.next.sourceObject,change.next.sourceRecordId]))).size;
+  this.changes=changes;return changes;
+ }
+ private async sweepAllocations(source:OperationalSnapshot){
+  if(!this.baseline.mappings.some(mapping=>mapping.measures.some(rule=>rule.measureId==='net_aged_receivable')))throw new Error('Receivable baseline required for allocation sweep');
+  const evidence=await sweepRecordedAllocations(this.client,this.baseline,source);
+  this.details.allocationSweep=evidence;
+  const changes:FactRevisionChange[]=[];
+  if(evidence.affectedFrom)for await(const page of source.snapshots(this.baseline,await this.cursor(),true,undefined,evidence.affectedFrom)){
+   changes.push(...await planOperationalFacts(this.client,this.baseline,page.facts,{observeProgress:this.observeProgress}));
+  }
+  this.details.canonicalRevisions=changes.length;
+  this.details.updatedRows=new Set(changes.map(change=>JSON.stringify([change.next.sourceObject,change.next.sourceRecordId]))).size;
   this.changes=changes;return changes;
  }
  async reconcile(snapshot:AnalyticsSourceSnapshot,partitions:readonly AnalyticsPartition[],kind:AnalyticsJobRequest['kind'],releaseSource:()=>Promise<void>) {

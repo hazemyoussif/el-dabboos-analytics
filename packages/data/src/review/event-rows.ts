@@ -28,7 +28,7 @@ export async function reviewEventRows(client:PoolClient,scope:{query:AnalyticsQu
  WHERE trusted.tenant_id=$1 AND member.family=${familyParam} AND extraction.definition_version=$5
  AND member.month BETWEEN date_trunc('month',$3::date) AND date_trunc('month',$4::date)
  ),selected AS (SELECT fact.measure_id,fact.business_day,fact.amount,fact.display_labels,partition.source_cutoff,${projection} dimensions
- FROM published_partitions partition JOIN mart.review_facts fact USING(tenant_id,partition_id)
+ FROM published_partitions partition JOIN mart.review_fact_population fact USING(tenant_id,partition_id)
  WHERE fact.tenant_id=$1 AND fact.measure_id=ANY($2::text[]) AND fact.business_day BETWEEN $3::text AND $4::text ${predicates.length?'AND '+predicates.join(' AND '):''}
  ),grouped AS (SELECT measure_id measure,${period} period,dimensions,
  max(business_day) business_date,sum(amount)::text amount,max(source_cutoff) source_cutoff,${label} label FROM selected GROUP BY 1,2,3

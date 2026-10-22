@@ -1,4 +1,5 @@
 import type { Pool } from 'pg';
+import {validDateRange} from '@el-dabboos/domain';
 import type { AnalyticsCursor, AnalyticsPartition, AnalyticsOperationalSource, IngestionBatch, SourceReadRequest } from '@el-dabboos/domain';
 import { OdooSnapshotLease } from '../odoo/snapshot.ts';
 import { OdooPostgresSourceBatchReader } from '../odoo/reader.ts';
@@ -59,9 +60,10 @@ export class OdooOperationalSnapshot implements OperationalSnapshot {
    }
   }
  }
- async *snapshots(baseline:OperationalBaseline,cursor:AnalyticsCursor|null,force=false,dependencies?:ReceivableDependencyContext):AsyncGenerator<OperationalPage> {
+ async *snapshots(baseline:OperationalBaseline,cursor:AnalyticsCursor|null,force=false,dependencies?:ReceivableDependencyContext,forcedFrom?:string):AsyncGenerator<OperationalPage> {
+  if(forcedFrom&&(!force||!validDateRange({from:forcedFrom,to:forcedFrom})))throw new Error('Explicit forced snapshot dependency date required');
   if(!baseline.mappings.some(mapping=>mapping.measures.some(rule=>rule.measureId==='net_aged_receivable')))return;
-  const dependencyFrom=force?baseline.from:(yield* this.receivableDependencyChanges(baseline,cursor,dependencies));
+  const dependencyFrom=force?(forcedFrom??baseline.from):(yield* this.receivableDependencyChanges(baseline,cursor,dependencies));
   if(!dependencyFrom)return;
   for(let month=baseline.from.slice(0,7);month<=baseline.to.slice(0,7);month=followingMonth(month)) {
    const cutoff=monthEnd(month);if(cutoff<dependencyFrom||(baseline.coveredMonths&&!baseline.coveredMonths.includes(month)))continue;
@@ -98,7 +100,7 @@ export class OdooOperationalSnapshot implements OperationalSnapshot {
   return [...eventControls,...receivableControls(partitions,this.snapshotControls)];
  }
  async *presence(object:string,pages:AsyncIterable<readonly string[]>) {
-  if(!['sale_order','account_move'].includes(object))throw new Error('Governed presence object required');
+  if(!['sale_order','account_move','account_partial_reconcile'].includes(object))throw new Error('Governed presence object required');
   const client=await this.pool.connect();
   try {
    await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');await this.lease.importInto(client);
@@ -112,7 +114,7 @@ export class OdooOperationalSnapshot implements OperationalSnapshot {
   }catch(error){await client.query('ROLLBACK');throw error;}finally{client.release();}
  }
  async present(object:string,ids:readonly string[]) {
-  if(!['sale_order','account_move'].includes(object)||ids.length>1000||ids.some(id=>!/^\d+$/.test(id)))throw new Error('Bounded governed presence scope required');
+  if(!['sale_order','account_move','account_partial_reconcile'].includes(object)||ids.length>1000||ids.some(id=>!/^\d+$/.test(id)))throw new Error('Bounded governed presence scope required');
   const client=await this.pool.connect();
   try {
    await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');await this.lease.importInto(client);

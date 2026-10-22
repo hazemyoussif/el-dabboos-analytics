@@ -1,5 +1,6 @@
 import {nativeSalesCommandCoverage} from '../business/sales-command-coverage.ts';
 import {reviewPublication} from './publication.ts';
+import {businessMetricObservation} from '../business/observations.ts';
 import {snapshotReviewResult} from './snapshot-result.ts';
 import {groupedReviewResult} from './grouped-result.ts';
 import {categoricalDimensions} from '@el-dabboos/domain';
@@ -44,9 +45,11 @@ export class ReviewAnalyticsRepository {
   },true,this.timeout);
  }
  private async withCommandCoverage(client:import('pg').PoolClient,scope:{query:AnalyticsQuery;context:AnalyticsContext;range:NonNullable<AnalyticsQuery['dateRange']>},result:AnalyticsResult):Promise<AnalyticsResult>{
-  if(!scope.query.metric.startsWith('command_'))return result;
+  if(this.family!=='business')return result;
   const revision=result.metadata.servingRevision;if(!revision)throw new Error('Command coverage requires a serving revision');
-  return {...result,metadata:{...result.metadata,...await nativeSalesCommandCoverage(client,{...scope,revision})}};
+  const observed=await businessMetricObservation(client,{tenantId:scope.context.tenantId,revision,query:scope.query,range:scope.range});
+  const command=scope.query.metric.startsWith('command_')?await nativeSalesCommandCoverage(client,{...scope,revision}):{};
+  return {...result,metadata:{...result.metadata,...observed,...command}};
  }
  async searchDimensionOptions(dimension:DimensionId,context:AnalyticsContext,request:import('@el-dabboos/domain').DimensionDiscoveryRequest){
   return discoverReviewDimensions(this.pool,{dimension,context,request,capabilities:await this.capabilities(context),timeout:this.timeout,family:this.family});
@@ -57,7 +60,7 @@ export class ReviewAnalyticsRepository {
    if(!metrics.length)return [];
    const params:unknown[]=[context.tenantId,dimension,[...new Set(metrics.flatMap(requiredMeasures))],dimensionLabelField(dimension)];
    const filters=(context.enforcedFilters??[]).map(filter=>{params.push(filter.dimension,filter.values);return `fact.payload->'dimensions'->>$${params.length-1}=ANY($${params.length}::text[])`;});
-   const rows=(await client.query(`SELECT fact.payload->'dimensions'->>$2 key,CASE WHEN count(DISTINCT fact.payload->'displayLabels'->>$4)=1 THEN min(fact.payload->'displayLabels'->>$4) END label FROM ${members} JOIN mart.review_facts fact USING(tenant_id,partition_id)
+   const rows=(await client.query(`SELECT fact.payload->'dimensions'->>$2 key,CASE WHEN count(DISTINCT fact.payload->'displayLabels'->>$4)=1 THEN min(fact.payload->'displayLabels'->>$4) END label FROM ${members} JOIN mart.review_fact_population fact USING(tenant_id,partition_id)
     WHERE trusted.tenant_id=$1 AND member.family='${this.family}' AND fact.payload->>'measureId'=ANY($3::text[])
     AND fact.payload->'dimensions'->>$2 IS NOT NULL ${filters.length?'AND '+filters.join(' AND '):''} GROUP BY fact.payload->'dimensions'->>$2 ORDER BY key LIMIT ${this.maxGroups+1}`,params)).rows;
    if(rows.length>this.maxGroups)throw new AnalyticsResultLimitError(dimension);

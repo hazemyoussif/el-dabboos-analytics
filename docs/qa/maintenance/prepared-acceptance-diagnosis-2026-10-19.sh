@@ -58,7 +58,7 @@ export function profilePool(pool,guardPrepared=false){
    if(guardPrepared&&/\b(review_facts|review_controls|analytics_fact_heads|analytics_fact_revisions|finance_snapshot_customers|prepared_input_rows|prepared_expected_cells|prepared_work_[a-z_]+)\b/i.test(sql)){
     historyAttempts++;throw new Error('Prepared history access blocked');
    }
-   const category=/\bprepared_cells\b/.test(sql)?'preparedCells':/analytics_partitions|analytics_baselines|finance_snapshot_evidence|review_extractions/.test(sql)?'publication':/BEGIN|COMMIT|set_config/.test(sql)?'transaction':'guardsAndBindings';
+   const category=/\b(?:business_)?prepared_cells\b/.test(sql)?'preparedCells':/analytics_partitions|analytics_baselines|finance_snapshot_evidence|review_extractions/.test(sql)?'publication':/BEGIN|COMMIT|set_config/.test(sql)?'transaction':'guardsAndBindings';
    const start=performance.now(),callback=args.at(-1);
    if(typeof callback==='function'){
     args[args.length-1]=(...result)=>{record(category,performance.now()-start);callback(...result);};
