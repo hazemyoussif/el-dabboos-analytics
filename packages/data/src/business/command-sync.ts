@@ -20,7 +20,7 @@ import type {OperationalProgressObserver} from '../operational/progress.ts';
 interface CommandMember {month:string;partitionId:string;mapping:SourceMapping;cutoff:string}
 export async function commandSyncMembers(pool:Pool,tenantId:string):Promise<CommandMember[]>{
  return tenantTransaction(pool,tenantId,async client=>{
-  const rows=(await client.query(`SELECT to_char(member.month,'YYYY-MM') month,member.partition_id,
+  const rows=(await client.query(`SELECT to_char(member.month,'YYYY-MM') AS "month",member.partition_id,
    extraction.mapping,extraction.definition_version,extraction.source_cutoff FROM mart.analytics_trusted_serving trusted
    JOIN mart.analytics_serving_members member USING(tenant_id,revision_id)
    JOIN mart.review_extractions extraction USING(tenant_id,partition_id)

@@ -11,6 +11,33 @@ both timers inactive, sync failed, daily inactive, no running job containers.
 Root has 4.5 GiB free; the existing backup mount has 32 GiB free. These values
 describe preflight only and do not establish sync storage requirements.
 
+## Company startup failure and correction
+
+Application `07c2829` deployed successfully, including migrations 065–076. The
+supervised sync failed at 21:53:06 UTC on 22 October, before source configuration
+resolution or preparation. A read-only company probe confirmed matching Business
+definitions and 29 legacy `business-purpose-v1` members, then SQLSTATE `42601`
+from the actual `commandSyncMembers` selector. Its implicit `month` alias requires
+explicit quoting on PostgreSQL 18.6. The correction is `AS "month"`; no metric,
+mapping, watermark, schema or preparation rule changes.
+
+The earlier full suites did not exercise this startup selector. The new focused
+PostgreSQL regression calls that production function with accepted legacy and
+extended mappings, ordered months, actual cutoffs and another tenant. It passed
+with zero skips. Full lint, root/web types, architecture, quality and API/web builds
+passed for this correction. The previous 988 application / 426 PostgreSQL full
+suite results remain evidence for the parent implementation; those full suites
+were not rerun for this query-only correction.
+
+The [API-only correction runbook](maintenance/deploy-command-startup-fix-2026-10-23.sh)
+retains the current web, old API image, schema and existing coordinated backup.
+It verifies the current schema and runs the corrected selector read-only on actual
+company metadata **before** replacing the API. It does not inject source credentials,
+run a migration, copy history, start a sync or restore timers. Use the pinned
+delivery revision, then execute it with Bash. Review the selector count, readiness
+and capacity output before the supervised source run. Its shell syntax and staged
+diff were checked locally; company execution is pending.
+
 ## Application deployment
 
 After delivery publishes the exact revision to main, fetch and fast-forward to
