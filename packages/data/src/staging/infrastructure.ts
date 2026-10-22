@@ -16,6 +16,7 @@ export async function provisionStagingDatabases(pool: Pool, passwords: Record<St
             if (!existing) await client.query(`CREATE DATABASE ${database} OWNER ${login}`);
             await client.query(`REVOKE ALL ON DATABASE ${database} FROM PUBLIC`);
             for (const role of Object.values(stagingIdentities).filter(role => role.database===database)) await client.query(`GRANT CONNECT ON DATABASE ${database} TO ${role.login}`);
+            if (database===stagingIdentities.martIngestor.database) await client.query(`GRANT TEMPORARY ON DATABASE ${database} TO ${stagingIdentities.martIngestor.login}`);
         }
     } catch (error) { await client.query('ROLLBACK'); throw error; }
     finally { try { await client.query('SELECT pg_advisory_unlock(738421,20)'); } finally { client.release(); } }

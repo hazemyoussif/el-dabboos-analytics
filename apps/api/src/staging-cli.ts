@@ -38,8 +38,17 @@ async function migrate(urls: Record<StagingIdentity,string>): Promise<void> {
     }
 }
 async function verify(urls: Record<StagingIdentity,string>): Promise<void> {
-    const control = createControlPool(urls.controlApp,1), mart = createMartPool(urls.martRuntime,1);
-    try { await assertControlReady(control); await verifyControlAppRole(control); await assertMartRuntimeReady(mart); process.stdout.write('Staging schemas and runtime roles verified; no source connectivity or serving activation performed.\n'); }
-    finally { await Promise.all([control.end(),mart.end()]); }
+    const control = createControlPool(urls.controlApp,1), mart = createMartPool(urls.martRuntime,1), ingestor = createMartPool(urls.martIngestor,1);
+    try {
+        await assertControlReady(control); await verifyControlAppRole(control); await assertMartRuntimeReady(mart);
+        const ingestorTemp = (await ingestor.query("SELECT has_database_privilege(current_database(),'TEMPORARY') allowed")).rows[0]?.allowed;
+        const runtimeTemp = (await mart.query("SELECT has_database_privilege(current_database(),'TEMPORARY') allowed")).rows[0]?.allowed;
+        if (!ingestorTemp || runtimeTemp) throw new StagingWorkspacePrivilegeError();
+        process.stdout.write('Staging schemas and runtime roles verified; no source connectivity or serving activation performed.\n');
+    }
+    finally { await Promise.all([control.end(),mart.end(),ingestor.end()]); }
 }
-try { await execute(); } catch { process.stderr.write('Staging operation failed; check approved manifest, database identities and schema. Sensitive configuration is not printed.\n'); process.exitCode=1; }
+class StagingWorkspacePrivilegeError extends Error {
+    constructor() { super('Staging mart TEMPORARY privileges are incorrect; rerun administrator-only staging provision, then staging verify.'); }
+}
+try { await execute(); } catch (error) { process.stderr.write(error instanceof StagingWorkspacePrivilegeError ? `${error.message}\n` : 'Staging operation failed; check approved manifest, database identities and schema. Sensitive configuration is not printed.\n'); process.exitCode=1; }

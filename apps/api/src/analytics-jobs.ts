@@ -1,12 +1,24 @@
 import { randomUUID } from 'node:crypto';
 import { AnalyticsOperations,CheckpointedAnalyticsSync } from '@el-dabboos/application';
 import type { AnalyticsOperationPhase } from '@el-dabboos/application';
-import { createMartPool,createOdooSourcePool,tenantTransaction,OdooOperationalSource,PostgresOperationalStore,PostgresCheckpointedSyncStore,readBaseline,bootstrapOperationalServing,commandSyncMembers,synchronizeCommandCenter } from '@el-dabboos/data';
+import { createMartPool,createOdooSourcePool,tenantTransaction,OdooOperationalSource,OdooSnapshotUnavailable,PostgresOperationalStore,PostgresCheckpointedSyncStore,readBaseline,bootstrapOperationalServing,commandSyncMembers,synchronizeCommandCenter } from '@el-dabboos/data';
 import type {OperationalProgressObserver} from '@el-dabboos/data';
 import {analyticsJobObservation} from './analytics-job-observation.ts';
 import type { AnalyticsJobRequest,AnalyticsOperationalSource } from '@el-dabboos/domain';
 import { resolveOdooSourceConfig } from './source-connections.ts';
 import { assertHostedMartUrl } from './hosted-mart-url.ts';
+
+type AnalyticsJobSetupStage = 'mart_baseline' | 'report_sync';
+export class AnalyticsJobSetupUnavailable extends Error {
+ constructor(readonly stage:AnalyticsJobSetupStage,readonly code:string){super(`Analytics job setup unavailable at ${stage} (${code}).`);}
+}
+async function setupStep<T>(stage:AnalyticsJobSetupStage,operation:()=>Promise<T>):Promise<T>{
+ try{return await operation();}catch(error){
+  if(error instanceof OdooSnapshotUnavailable)throw error;
+  const code=error&&typeof error==='object'&&'code' in error?String(error.code):'UNAVAILABLE';
+  throw new AnalyticsJobSetupUnavailable(stage,/^[A-Z_0-9]{2,40}$/.test(code)?code:'UNAVAILABLE');
+ }
+}
 
 export async function executeAnalyticsJob(command:string,tenantId:string,mode:string|undefined,environment:NodeJS.ProcessEnv) {
  const trigger=analyticsOperatorTrigger(environment);
@@ -33,8 +45,8 @@ export async function runConfiguredAnalyticsJob(mart:ReturnType<typeof createMar
  const sourcePools:ReturnType<typeof createOdooSourcePool>[]=[];
  let lifecycleStarted=false;
  try {
-  const baseline=await tenantTransaction(mart,request.tenantId,client=>readBaseline(client,request.tenantId),true);
-  const business=await synchronizeReport();
+  const baseline=await setupStep('mart_baseline',()=>tenantTransaction(mart,request.tenantId,client=>readBaseline(client,request.tenantId),true));
+  const business=await setupStep('report_sync',synchronizeReport);
   // A sealed candidate resumes offline, without resolving source credentials.
   const source:AnalyticsOperationalSource={open:async tenantId=>{
    const config=await resolveOdooSourceConfig(environment,{tenantId,sourceId:baseline.sourceId});
