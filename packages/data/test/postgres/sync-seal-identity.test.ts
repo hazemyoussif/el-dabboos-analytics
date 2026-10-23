@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {readFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import type {PoolClient} from 'pg';
 import {enabled} from './support.ts';
@@ -62,6 +63,17 @@ test('missing heads and dependency pages cannot seal and the whole incomplete ca
   for(const relation of ['analytics_sync_candidates','analytics_sync_heads','analytics_sync_seals']){
    assert.equal((await fixture.db.admin.query(`SELECT count(*)::int count FROM mart.${relation} WHERE candidate_id LIKE 'synthetic-incomplete-%'`)).rows[0].count,0);
   }
+  // Upgrade validation must see unsealed rows even with no tenant selected.
+  await tenantTransaction(fixture.db.ingestor,'a',async client=>{
+   await copyCandidate(client,fixture,'synthetic-pre-upgrade');await copyHeads(client,fixture.id,'synthetic-pre-upgrade',1);
+  });
+  const upgrade=await readFile(new URL('../../migrations/postgres/083_sync_upgrade_visibility.sql',import.meta.url),'utf8');
+  const client=await fixture.db.migrator.connect();
+  try{
+   await client.query('BEGIN');
+   await assert.rejects(client.query(upgrade),/Unsealed sync heads must be resolved/);
+  }finally{await client.query('ROLLBACK');client.release();}
+  assert.equal((await fixture.db.admin.query("SELECT count(*)::int count FROM pg_policies WHERE policyname='sync_upgrade_scan'")).rows[0].count,0);
   assert.deepEqual(await acceptedState(fixture.db),fixture.initial);
  }finally{await fixture.db.close();}
 });
