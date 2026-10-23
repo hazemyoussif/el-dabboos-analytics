@@ -1,6 +1,6 @@
 # Independent Command preparation
 
-Code implementation with focused synthetic verification; not company deployment or performance evidence.
+Code implementation with focused synthetic verification. Company operational evidence is recorded separately below.
 
 Ordinary operational sync must never initialize Command recipes, enumerate historical Business members for initialization, or wait for Command background preparation. It retains the existing operational capture/reconciliation/cursor lifecycle. Business observations remain independent; an operational cursor advance is not Business freshness evidence.
 
@@ -29,3 +29,7 @@ The owner approved focused synthetic PostgreSQL tests. They exercise capture exa
 ## Company retention boundary — 23 October 2026
 
 The owner authorized removal of live 2024 analytics data. The company purge removed 2024 accepted membership and corresponding raw/prepared populations while preserving 2025+ membership and bindings. Ordinary sync derives its earliest governed period from the baseline plus accepted fact coverage; Command initialization selects existing accepted Business months. Neither path should recreate the removed 2024 months. Do not restore those reporting partitions as an initialization prerequisite. Correctly dated 2025+ balance snapshots may still include debts originating earlier in Odoo; the read-only source is unchanged. The [maintenance record](../qa/company-storage-retention-2026-10-23.md) owns the recovery point, deletion scope, storage results and outstanding sync validation.
+
+## Company operation — 23 October 2026
+
+Ordinary sync is restored on company release `748019930070afed4625f6a6026eb60f747ab77e`: the saved catch-up candidate published with zero reconciliation mismatches, a fresh ordinary cycle completed in about ten seconds, and the ordinary sync timer is enabled. The first supervised Command background unit sealed the current-month invoice capture in 7.8 seconds. Its separate timer is enabled and advancing saved replay pages. New Command capability publication and historical background completion remain pending; an operational source cursor advance does not imply those recipes are fresh. Daily reconciliation remains paused. Exact run IDs, cutoffs, counts and timings are in the [company sync record](../qa/sync-seal-identity-correction-2026-10-23.md).

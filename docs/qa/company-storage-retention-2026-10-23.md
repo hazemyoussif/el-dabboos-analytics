@@ -67,3 +67,7 @@ Final read-only database evidence:
 - API/web restarted successfully; readiness returned `ready`, with persistence and analytics available.
 
 No automated test suite, synthetic test, GitHub CI or company sync was run for this operational cleanup. Source jobs and timers remain paused. Storage recovery and retention removal are complete; a successful current-data sync and independent Command background publication are still outstanding and are not implied by readiness.
+
+## Subsequent sync operation
+
+The cutoff and paused-timer state above describe the cleanup handoff, not the later deployment state. On 23 October, the saved company sync candidate published successfully with zero reconciliation mismatches; the following ordinary incremental cycle took about ten seconds and advanced the cursor to 18:09:45.382 UTC. Ordinary sync and independent Command background timers are enabled. Daily reconciliation remains paused and background capability publication is still pending. See the [subsequent company sync record](sync-seal-identity-correction-2026-10-23.md) for exact evidence and current release. Following capture, preparation and image builds, root has approximately 7.8 GiB free; the earlier 16 GiB was the post-compaction point, not a continuing capacity guarantee.
