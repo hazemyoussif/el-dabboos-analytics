@@ -39,3 +39,7 @@ Ordinary sync is restored on company release `748019930070afed4625f6a6026eb60f74
 A reused prepared dataset reports `prepared_binding`; the API may drain another cheap replay/binding unit within the same ten-unit/ten-second ceiling. Newly materialized preparation, a sealed preparation, source capture and publication return immediately to the scheduler. This batches metadata attachment without copying prepared cells or historical raw facts.
 
 The shared systemd service uses [OnFailure](https://www.freedesktop.org/software/systemd/man/systemd.unit.html#OnFailure=) to activate `el-dabboos-analytics-pause@JOB.service`. The handler stops only `el-dabboos-analytics-JOB.timer`. It preserves the failed service result, logs and saved checkpoints; other job timers remain independent. Install the handler alongside the service template and reload systemd before enabling timers. A correction followed by an explicit successful supervised run is required before the operator restarts a paused timer.
+
+## Continuation timer accuracy
+
+The five-second post-completion interval uses `AccuracySec=1s`. systemd otherwise defaults to a one-minute coalescing window, which the company host confirmed and which introduced unnecessary delays between saved units. This changes only scheduling accuracy, not the per-unit budget, writer locks, source checks or service deadline. See the [systemd timer documentation](https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html#AccuracySec=).

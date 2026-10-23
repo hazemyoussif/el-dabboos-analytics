@@ -24,3 +24,9 @@ The original publication guard query also entered dense history proof despite on
 ## Rollout
 
 The root-only pinned script is `docs/qa/maintenance/deploy-additive-publication-2026-10-24.sh`. It requires deployed ca6be22 and exactly migrations 088–089, pauses schedules, takes a schema recovery record on the separate volume, preserves the web image and verifies the upgraded API. Run a fresh ordinary cycle, resume the sealed receipt candidate, then restore independent timers. Actual remaining recipe publication, freshness and browser acceptance remain pending.
+
+## Continuation evidence
+
+The 70da55e API deployment is healthy. Ordinary sync passed at 22:52:58 UTC on October 23 in 11 seconds, and the saved receipt worker advanced ten canonical pages successfully by 22:53:03 UTC. All three timers were restored. The receipt's changed prepared chunk subsequently committed; unchanged history is reused. The existing sales/invoicing report was verified serving actual figures in the signed-in Arabic browser.
+
+Company timer inspection showed `AccuracyUSec=1min` despite a five-second continuation interval; observed gaps exceeded that intended interval. A timer-only configuration correction sets the standard `AccuracySec=1s`, with the application image retained at 70da55e. No synthetic test or image rebuild is needed for this single setting; unit verification and effective configuration observation establish application of the setting. Actual remaining publication and Command Center acceptance remain pending.

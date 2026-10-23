@@ -2,6 +2,7 @@
 Description=Resume one bounded Command preparation unit between ordinary sync runs
 
 [Timer]
+AccuracySec=1s
 OnActiveSec=1min
 OnUnitInactiveSec=5s
 Unit=el-dabboos-analytics@command-background.service
