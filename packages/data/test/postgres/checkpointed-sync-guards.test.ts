@@ -1,3 +1,4 @@
+import {AnalyticsOperationBusy} from '@el-dabboos/domain';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {enabled} from './support.ts';
@@ -42,7 +43,7 @@ test('runtime cannot read private captures; tenant RLS and session lock prevent 
   await tenantTransaction(f.db.runtime,'b',async client=>assert.equal((await client.query("SELECT mart.pending_sync_candidate('a') candidate")).rows[0].candidate,null),true);
   const store=new PostgresCheckpointedSyncStore(f.db.ingestor);
   await store.session('a',async()=>{
-   await assert.rejects(store.session('a',async()=>{}),/already running/);
+   await assert.rejects(store.session('a',async()=>{}),error=>error instanceof AnalyticsOperationBusy);
    assert.equal(await store.session('b',session=>session.pending()),null);
   });
   assert.equal((await store.session('a',session=>session.pending()))?.candidateId,f.id,'lock released after session completion');

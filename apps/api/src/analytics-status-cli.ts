@@ -1,3 +1,4 @@
+import {AnalyticsOperationBusy} from '@el-dabboos/domain';
 import {executeCommandBackground,CommandBackgroundUnavailable} from './analytics-command-background.ts';
 import {executeAnalyticsPreparation,isAnalyticsPreparationCommand} from './analytics-preparation.ts';
 import {executeSalesCommandInspection,SalesCommandInspectionUnavailable} from './sales-command-inspection.ts';
@@ -56,6 +57,10 @@ function operatorResult(result:Awaited<ReturnType<typeof executeAnalyticsJob>>) 
   return {...result,details:{...details,affectedPartitionCount:scope.length,affectedMonths:[...new Set(scope.map(partition=>partition.month))].sort(),affectedMetrics:[...new Set(scope.map(partition=>partition.metric))].sort(),affectedDimensions:[...new Set(scope.flatMap(partition=>partition.dimension?[partition.dimension]:[]))].sort()}};
 }
 try {await main();}catch(error) {
+ if(error instanceof AnalyticsOperationBusy){
+  process.stdout.write(JSON.stringify({state:'deferred',reason:'tenant_busy'})+'\n');
+ }else{
   process.stderr.write(error instanceof SalesCommandInspectionUnavailable||error instanceof OdooSnapshotUnavailable||error instanceof AnalyticsJobSetupUnavailable||error instanceof CommandBackgroundUnavailable?`${error.message}\n`:'Analytics operation unavailable. Check local runtime configuration and explicit mart migrations.\n');
   process.exitCode=1;
+ }
 }

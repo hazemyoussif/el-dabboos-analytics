@@ -1,4 +1,4 @@
-import {resolveAnalyticsImpact} from '@el-dabboos/domain';
+import {AnalyticsOperationBusy,resolveAnalyticsImpact} from '@el-dabboos/domain';
 import type {AnalyticsJobRequest,AnalyticsOperationalSource,AnalyticsSourceSnapshot,AnalyticsSyncStore,ImpactPolicy} from '@el-dabboos/domain';
 import type {AnalyticsOperationPhase} from './analytics-operations.ts';
 import {validateEvidence} from './analytics-operations.ts';
@@ -26,7 +26,7 @@ export class CheckpointedAnalyticsSync {
     this.observe?.('prepare_and_publish');await session.prepare(candidate);
     this.observe?.('audit');return session.accept(candidate,evidence);
    });
-  }catch(error){await this.options.store.recordFailure(request,identity.runId,identity.startedAt);throw error;}
+  }catch(error){if(!(error instanceof AnalyticsOperationBusy))await this.options.store.recordFailure(request,identity.runId,identity.startedAt);throw error;}
   finally{await source?.close();}
  }
 }

@@ -1,3 +1,4 @@
+import {AnalyticsOperationBusy} from '@el-dabboos/domain';
 import {prepareActivatedPublication} from '../prepared/publication.ts';
 import { randomUUID } from 'node:crypto';
 import type { Pool,PoolClient } from 'pg';
@@ -24,7 +25,7 @@ export class PostgresOperationalStore implements AnalyticsOperationalStore {
  constructor(private readonly pool:Pool,private readonly runId:string,private readonly observeProgress?:OperationalProgressObserver) {}
  transaction<T>(tenantId:string,operation:(transaction:AnalyticsOperationalTransaction)=>Promise<T>) {
   return tenantTransaction(this.pool,tenantId,async client=>{
-   if(!(await client.query('SELECT pg_try_advisory_xact_lock(hashtextextended($1,0)) locked',[`analytics:${tenantId}`])).rows[0].locked)throw new Error('Tenant analytics operation already running');
+   if(!(await client.query('SELECT pg_try_advisory_xact_lock(hashtextextended($1,0)) locked',[`analytics:${tenantId}`])).rows[0].locked)throw new AnalyticsOperationBusy();
    await client.query('SAVEPOINT operational_candidate');
    return operation(new OperationalTransaction(client,await readBaseline(client,tenantId),this.runId,this.observeProgress));
   });

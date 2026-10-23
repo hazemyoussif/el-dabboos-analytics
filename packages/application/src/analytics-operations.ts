@@ -1,4 +1,4 @@
-import { resolveAnalyticsImpact } from '@el-dabboos/domain';
+import { AnalyticsOperationBusy,resolveAnalyticsImpact } from '@el-dabboos/domain';
 import type { AnalyticsCursor, FactRevisionChange, AnalyticsJobRequest, AnalyticsJobRun, AnalyticsOperationsOptions, AnalyticsOperationalTransaction, AnalyticsSourceSnapshot, OperationalReconciliation } from '@el-dabboos/domain';
 
 export type AnalyticsOperationPhase='source_open'|'source_read'|'impact_calculation'|'source_reconciliation'|'offline_reconciliation'|'source_handoff'|'offline_refresh'|'prepare_and_publish'|'audit'|'cursor'|'mart_commit';
@@ -20,7 +20,7 @@ export class AnalyticsOperations {
         this.observePhase?.('mart_commit');return run;
       });
     } catch (error) {
-      await this.options.store.recordFailure(request, runId, startedAt);
+      if(!(error instanceof AnalyticsOperationBusy))await this.options.store.recordFailure(request, runId, startedAt);
       throw error;
     } finally { await snapshot?.close(); }
   }

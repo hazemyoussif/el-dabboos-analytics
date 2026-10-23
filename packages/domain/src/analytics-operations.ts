@@ -1,5 +1,10 @@
 import type { AnalyticsPartition, FactRevisionChange, ImpactPolicy } from './analytics-impact.ts';
 
+/** Another writer owns this tenant; no candidate has changed. */
+export class AnalyticsOperationBusy extends Error {
+ constructor(){super('Tenant analytics operation already running');}
+}
+
 export type AnalyticsJobKind = 'sync' | 'affected' | 'daily' | 'deep' | 'sweep';
 export interface AnalyticsJobRequest {
   tenantId: string; actorId: string; trigger: 'manual' | 'operator' | 'scheduled'; kind: AnalyticsJobKind;

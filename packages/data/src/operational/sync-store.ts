@@ -1,3 +1,4 @@
+import {AnalyticsOperationBusy} from '@el-dabboos/domain';
 import type {Pool} from 'pg';
 import type {AnalyticsJobRequest,AnalyticsSyncCandidate,AnalyticsSyncSession,AnalyticsSyncStore,OperationalReconciliation} from '@el-dabboos/domain';
 import {SyncContext} from './sync-context.ts';
@@ -15,7 +16,7 @@ export class PostgresCheckpointedSyncStore implements AnalyticsSyncStore {
   const client=await this.pool.connect();
   try {
    const locked=(await client.query('SELECT pg_try_advisory_lock(hashtextextended($1,0)) locked',[`analytics:${tenantId}`])).rows[0]?.locked;
-   if(!locked)throw new Error('Tenant analytics operation already running');
+   if(!locked)throw new AnalyticsOperationBusy();
    return await operation(new PostgresSyncSession(new SyncContext(client,tenantId,this.observe)));
   }finally{
    // Destroy this session, including its advisory lock, even if rollback failed.
