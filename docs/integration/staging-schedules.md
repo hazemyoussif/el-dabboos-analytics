@@ -40,6 +40,7 @@ Install both timers and their shared service only after the reviewed release is 
 
 ```bash
 install -m 644 infra/staging/el-dabboos-analytics@.service /etc/systemd/system/
+install -m 644 infra/staging/el-dabboos-analytics-pause@.service /etc/systemd/system/
 install -m 644 infra/staging/el-dabboos-analytics-sync.timer /etc/systemd/system/
 install -m 644 infra/staging/el-dabboos-analytics-daily.timer /etc/systemd/system/
 systemctl daemon-reload
@@ -97,7 +98,7 @@ This requires a clean checkout, derives API/web tags and public build number fro
 
 Enabled timers remain enabled through maintenance; a sync can only skip the shared lock. After successful restart, the next job resolves the new healthy API image ID and verifies its matching schema before receiving source configuration. No jobs image pin needs a manual update. Do not bypass this entry point with raw `migrate` or an independent deployment while timers are enabled. Restore backups through the same maintenance exclusion; bootstrap/provision, rollback and database restore remain separate explicit operations.
 
-After a release changes timer/service definitions, reinstall those three unit files and run `systemctl daemon-reload`. For this runner migration, stop/disable existing timers before replacing old scripts and wait for old services to finish: an invocation already running the previous runner has no new safety guarantees. Existing approved backup/restore policy still applies.
+After a release changes timer/service definitions, reinstall the service template, failure handler and enabled timer unit files and run `systemctl daemon-reload`. For this runner migration, stop/disable existing timers before replacing old scripts and wait for old services to finish: an invocation already running the previous runner has no new safety guarantees. Existing approved backup/restore policy still applies.
 
 ## Verify ongoing operation
 
@@ -108,3 +109,7 @@ journalctl -u 'el-dabboos-analytics@*' --since '1 hour ago' --no-pager
 ```
 
 Check the read-only analytics status for recent successful sync, zero mismatches, no pending candidate/aggregates and intended trusted revision. A failure preserves the last trusted data and must be investigated. Daily success does not clear failed sync evidence. To stop future invocations, disable both timers; an active job needs separate controlled stopping. Source credential rotation, recovery and notifications are outside this setup.
+
+## Failed-job scheduling
+
+The installed service template's `OnFailure` handler stops only the failed job's timer. It does not reset its failed state or loop on the same error. Investigate the original failure and resume the saved checkpoint under supervision; re-enable that timer only after success. Ordinary sync, daily reconciliation and Command background timers are independent. Install `el-dabboos-analytics-pause@.service` whenever installing or replacing the shared template.

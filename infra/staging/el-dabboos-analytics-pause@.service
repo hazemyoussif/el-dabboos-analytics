@@ -1,0 +1,6 @@
+[Unit]
+Description=Pause El Dabboos analytics %i scheduling after a failed job
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/systemctl stop el-dabboos-analytics-%i.timer

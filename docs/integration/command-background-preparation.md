@@ -6,7 +6,7 @@ Ordinary operational sync must never initialize Command recipes, enumerate histo
 
 ## Separate lifecycle
 
-`analytics command-background --tenant ID` is a separate awaited operator command. Its scheduler invokes one source-capture, prepared-chunk or publication unit. The API may drain at most ten canonical replay pages within a ten-second budget; it never loops over historical months in one invocation. Coverage is discovered from the trusted manifest and registered recipe observations. Missing current-period recipes precede older gaps. Published capabilities include only measures with complete source evidence. Previously accepted raw/prepared data remains the serving authority until atomic publication.
+`analytics command-background --tenant ID` is a separate awaited operator command. Its scheduler invokes one source-capture, prepared-chunk or publication unit. The API may drain at most ten canonical replay pages or reused binding metadata units within a ten-second budget; it never loops over historical months in one invocation. Coverage is discovered from the trusted manifest and registered recipe observations. Missing current-period recipes precede older gaps. Published capabilities include only measures with complete source evidence. Previously accepted raw/prepared data remains the serving authority until atomic publication.
 
 A missing recipe is captured into private pages under one live exported read-only source snapshot. Page writes commit separately. Capture seals only after independent source controls match, with contiguous page/count/identity/lineage checks. If the source owner is lost, its unsealed recipe capture is abandoned and recaptured from a new snapshot. Page checkpoints do not recreate an expired PostgreSQL snapshot. A sealed capture resumes offline without resolving source credentials.
 
@@ -33,3 +33,9 @@ The owner authorized removal of live 2024 analytics data. The company purge remo
 ## Company operation — 23 October 2026
 
 Ordinary sync is restored on company release `748019930070afed4625f6a6026eb60f747ab77e`: the saved catch-up candidate published with zero reconciliation mismatches, a fresh ordinary cycle completed in about ten seconds, and the ordinary sync timer is enabled. The first supervised Command background unit sealed the current-month invoice capture in 7.8 seconds. Its separate timer is enabled and advancing saved replay pages. New Command capability publication and historical background completion remain pending; an operational source cursor advance does not imply those recipes are fresh. Daily reconciliation remains paused. Exact run IDs, cutoffs, counts and timings are in the [company sync record](../qa/sync-seal-identity-correction-2026-10-23.md).
+
+## Bounded reuse and automatic failure pausing
+
+A reused prepared dataset reports `prepared_binding`; the API may drain another cheap replay/binding unit within the same ten-unit/ten-second ceiling. Newly materialized preparation, a sealed preparation, source capture and publication return immediately to the scheduler. This batches metadata attachment without copying prepared cells or historical raw facts.
+
+The shared systemd service uses [OnFailure](https://www.freedesktop.org/software/systemd/man/systemd.unit.html#OnFailure=) to activate `el-dabboos-analytics-pause@JOB.service`. The handler stops only `el-dabboos-analytics-JOB.timer`. It preserves the failed service result, logs and saved checkpoints; other job timers remain independent. Install the handler alongside the service template and reload systemd before enabling timers. A correction followed by an explicit successful supervised run is required before the operator restarts a paused timer.

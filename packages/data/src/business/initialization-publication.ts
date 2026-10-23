@@ -42,8 +42,8 @@ export async function prepareCommandChunk(client:PoolClient,tenantId:string,work
   const present=(await client.query(`SELECT 1 FROM mart.prepared_bindings WHERE tenant_id=$1 AND revision_id=$2
    AND family=$3 AND kind=$4 AND period=$5`,[tenantId,work.revision_id,chunk.family,chunk.kind,chunk.period])).rowCount;
   if(present)continue;
-  await prepareChunk(client,{...scope,observeStep:event=>observe({phase:'prepare',month:work.month,...event})},chunk,limits);
-  return 'prepared_chunk';
+  const prepared=await prepareChunk(client,{...scope,observeStep:event=>observe({phase:'prepare',month:work.month,...event})},chunk,limits);
+  return prepared.reused?'prepared_binding':'prepared_chunk';
  }
  await client.query("INSERT INTO mart.prepared_revision_seals VALUES($1,$2,'prepared-v1')",[tenantId,work.revision_id]);
  return 'prepared_sealed';

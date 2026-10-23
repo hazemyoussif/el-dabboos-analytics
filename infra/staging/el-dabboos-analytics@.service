@@ -3,6 +3,7 @@ Description=El Dabboos staging analytics %i
 Requires=docker.service
 After=docker.service network-online.target
 Wants=network-online.target
+OnFailure=el-dabboos-analytics-pause@%i.service
 
 [Service]
 Type=oneshot
