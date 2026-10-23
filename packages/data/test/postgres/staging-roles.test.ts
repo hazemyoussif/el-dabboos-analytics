@@ -35,6 +35,7 @@ test('staging roles isolate developer DBs, reject escalation and retain pending-
         const migrationPolicies = await restrictivePolicies('dabboos_runtime');
         assert.ok(migrationPolicies.length>0);
         assert.deepEqual(await restrictivePolicies('staging_mart_runtime_login'),migrationPolicies);
+        await assertDependencyColumnPrivileges(pools.martIngestor);
         await assertControlReady(pools.controlApp); await verifyControlAppRole(pools.controlApp); await assertMartRuntimeReady(pools.martRuntime);
         for (const identity of Object.keys(pools) as StagingIdentity[]) {
             const url = new URL(endpoint); url.pathname=`/${developerDatabase}`; url.username=stagingIdentities[identity].login; url.password=passwords[identity];
@@ -64,3 +65,18 @@ test('staging roles isolate developer DBs, reject escalation and retain pending-
         await admin.end(); await fixture.close();
     }
 });
+
+async function assertDependencyColumnPrivileges(ingestor: Pool) {
+    const mismatches = await ingestor.query(`SELECT relname,attname,privilege
+      FROM pg_attribute JOIN pg_class ON pg_class.oid=attrelid JOIN pg_namespace ON pg_namespace.oid=relnamespace
+      CROSS JOIN (VALUES ('SELECT'),('INSERT'),('UPDATE'),('REFERENCES')) permissions(privilege)
+      WHERE nspname='mart' AND relname=ANY($1::text[]) AND attnum>0 AND NOT attisdropped
+      AND has_column_privilege(current_user,attrelid,attnum,privilege)
+       IS DISTINCT FROM has_column_privilege('dabboos_ingestor',attrelid,attnum,privilege)`,[
+        ['analytics_receivable_dependencies','analytics_receivable_dependency_checkpoints','analytics_lookup_dependencies','analytics_lookup_dependency_checkpoints'],
+    ]);
+    assert.deepEqual(mismatches.rows,[],'staging login must copy exactly the reviewed column privileges');
+    assert.equal((await ingestor.query("SELECT has_table_privilege(current_user,'mart.analytics_receivable_dependencies','UPDATE') allowed")).rows[0].allowed,false);
+    await ingestor.query('UPDATE mart.analytics_receivable_dependencies SET allocation_links=allocation_links,allocation_links_cutoff=allocation_links_cutoff WHERE false');
+    await assert.rejects(ingestor.query('UPDATE mart.analytics_receivable_dependencies SET source_record_id=source_record_id WHERE false'),/permission denied/);
+}

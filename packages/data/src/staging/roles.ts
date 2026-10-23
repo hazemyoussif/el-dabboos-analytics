@@ -38,12 +38,21 @@ export async function grantStagingPrivileges(client: PoolClient, identity: Stagi
       FROM pg_class JOIN pg_namespace ON pg_namespace.oid=relnamespace CROSS JOIN LATERAL aclexplode(relacl)
       WHERE grantee=$1::regrole AND nspname=ANY($3::text[])`,[group,login,[schema,`${schema}_admin`,...(identity==='controlApp' ? ['auth'] : [])]])).rows;
     for (const command of commands) await client.query(command.sql);
+    await grantStagingColumnPrivileges(client,group,login,[schema,`${schema}_admin`,...(identity==='controlApp' ? ['auth'] : [])]);
     const functions = (await client.query(`SELECT format('GRANT EXECUTE ON FUNCTION %I.%I(%s) TO %I',nspname,proname,pg_get_function_identity_arguments(pg_proc.oid),$2::text) sql
       FROM pg_proc JOIN pg_namespace ON pg_namespace.oid=pronamespace CROSS JOIN LATERAL aclexplode(proacl)
       WHERE grantee=$1::regrole AND nspname=$3 AND privilege_type='EXECUTE'`,[group,login,schema])).rows;
     for (const command of functions) await client.query(command.sql);
     await grantAdministrationSchema(client,identity);
     if (identity==='martRuntime') await grantRuntimePolicies(client,login);
+}
+/** Column ACLs are separate from relation ACLs; preserve the reviewed column boundary. */
+async function grantStagingColumnPrivileges(client: PoolClient, group: string, login: string, schemas: string[]): Promise<void> {
+    const commands = (await client.query(`SELECT format('GRANT %s (%I) ON TABLE %I.%I TO %I',privilege_type,attname,nspname,relname,$2::text) sql
+      FROM pg_attribute JOIN pg_class ON pg_class.oid=attrelid JOIN pg_namespace ON pg_namespace.oid=relnamespace
+      CROSS JOIN LATERAL aclexplode(attacl)
+      WHERE grantee=$1::regrole AND nspname=ANY($3::text[]) AND attnum>0 AND NOT attisdropped`,[group,login,schemas])).rows;
+    for (const command of commands) await client.query(command.sql);
 }
 async function grantAdministrationSchema(client: PoolClient, identity: StagingIdentity): Promise<void> {
     const { login } = stagingIdentities[identity];
