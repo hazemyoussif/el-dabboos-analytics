@@ -25,7 +25,6 @@ exec 8>/run/lock/el-dabboos-command-background.lock
 flock -w 60 8
 test -z "$(docker ps -q --filter label=el-dabboos.staging.analytics-job=true)"
 test -z "$(docker ps -q --filter label=el-dabboos.staging.command-background=true)"
-compose stop web api
 python3 - <<'PY'
 import json,os,subprocess
 container='dabboos-analytics-mart-postgres-1'
@@ -41,11 +40,12 @@ environment['MART_LOCAL_ADMIN_PASSWORD']=settings['POSTGRES_PASSWORD']
 command=['docker','compose','-f','infra/postgres/compose.mart.yml']
 configuration=json.loads(subprocess.check_output(command+['config','--format','json'],env=environment))
 service=configuration['services']['postgres']
-assert service['shm_size']==1073741824
+assert int(service['shm_size'])==1073741824, 'Unexpected PostgreSQL shared-memory ceiling'
 assert service['image']==before['Config']['Image']=='postgres:18.6'
 assert service['environment']['POSTGRES_USER']==settings['POSTGRES_USER']
 assert service['environment']['POSTGRES_PASSWORD']==settings['POSTGRES_PASSWORD']
 assert configuration['volumes'][service['volumes'][0]['source']]['name']==volume(before)[0][1]
+subprocess.run(['docker','compose','-f','infra/staging/compose.yml','stop','web','api'],check=True)
 subprocess.run(command+['up','-d','--wait','--no-deps','postgres'],env=environment,check=True)
 after=inspect()
 assert volume(after)==volume(before)
