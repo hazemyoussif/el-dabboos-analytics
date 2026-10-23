@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Code-only bounded scheduler/failure handler update; timers remain paused.
+# Scoped Business preparation and scheduler update; timers remain paused.
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/../../.."
 test "$(id -u)" = 0
@@ -7,7 +7,7 @@ test -z "$(git status --porcelain --untracked-files=all)"
 previous=9b75d57cef11493afe4ba7f0986451496eaab9e6
 release=$(git rev-parse HEAD)
 git merge-base --is-ancestor "$previous" "$release"
-test -z "$(git diff --name-status "$previous" "$release" -- packages/data/migrations)"
+test "$(git diff --name-status "$previous" "$release" -- packages/data/migrations)" = "$(printf 'A\tpackages/data/migrations/postgres/086_scoped_review_measure_access.sql')"
 test "$(docker inspect --format '{{.Config.Image}}' el-dabboos-staging-api-1)" = "el-dabboos-api:$previous"
 for unit in sync daily command-background; do
  test "$(systemctl show "el-dabboos-analytics-$unit.timer" -p ActiveState --value)" = inactive
@@ -35,7 +35,7 @@ flock -w 60 8
 test -z "$(docker ps -q --filter label=el-dabboos.staging.analytics-job=true)"
 test -z "$(docker ps -q --filter label=el-dabboos.staging.command-background=true)"
 umask 077
-record="/mnt/HC_Volume_107192875/el-dabboos-backups/scheduler-guards-$(date -u +%Y%m%dT%H%M%SZ)"
+record="/mnt/HC_Volume_107192875/el-dabboos-backups/scoped-preparation-$(date -u +%Y%m%dT%H%M%SZ)"
 mkdir -p "$record"
 printf '%s\n' "$previous" "$release" "$recovery" > "$record/releases-and-recovery.txt"
 docker exec dabboos-analytics-mart-postgres-1 sh -c 'exec pg_dump -U "$POSTGRES_USER" --schema-only el_dabboos_analytics_staging' > "$record/pre-migration-schema.sql"
@@ -49,5 +49,5 @@ install -m 644 infra/staging/el-dabboos-analytics@.service /etc/systemd/system/
 systemd-analyze verify /etc/systemd/system/el-dabboos-analytics@.service /etc/systemd/system/el-dabboos-analytics-pause@.service
 systemctl daemon-reload
 curl --fail --silent --show-error --max-time 10 http://127.0.0.1:8088/health/ready
-printf '\nBounded scheduler safeguards deployed: %s. Source jobs and timers remain paused.\n' "$release"
+printf '\nScoped preparation and scheduler safeguards deployed: %s. Source jobs and timers remain paused.\n' "$release"
 df -hT /

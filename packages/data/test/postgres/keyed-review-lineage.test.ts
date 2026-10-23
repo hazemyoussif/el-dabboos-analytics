@@ -20,8 +20,11 @@ test('keyed lineage equals dense reads with duplicate, empty, missing keys and m
   assert.deepEqual(await rows(fixture,fixture.accepted.partitionId,[keys[0]!,keys[0]!,'missing']),dense.slice(0,1));
   assert.deepEqual(await rows(fixture,fixture.accepted.partitionId,[]),[]);
   assert.deepEqual(await rows(fixture,fixture.accepted.partitionId,keys,[]),[]);
+  assert.deepEqual(await rows(fixture,fixture.accepted.partitionId,null,[]),[]);
   const measure=dense[0]!.payload.measureId;
   assert.deepEqual(await rows(fixture,fixture.accepted.partitionId,keys,[measure]),dense.filter(row=>row.payload.measureId===measure));
+  assert.deepEqual(await rows(fixture,fixture.accepted.partitionId,null,[measure,measure]),dense.filter(row=>row.payload.measureId===measure));
+  assert.deepEqual(await rows(fixture,fixture.accepted.partitionId,null,[measure],'b'),[]);
   assert.deepEqual(await rows(fixture,fixture.accepted.partitionId,keys,null,'b'),[]);
  }finally{await fixture.db.close();}
 });
