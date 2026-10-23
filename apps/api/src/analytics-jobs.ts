@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { AnalyticsOperations,CheckpointedAnalyticsSync } from '@el-dabboos/application';
 import type { AnalyticsOperationPhase } from '@el-dabboos/application';
-import { createMartPool,createOdooSourcePool,tenantTransaction,OdooOperationalSource,OdooSnapshotUnavailable,PostgresOperationalStore,PostgresCheckpointedSyncStore,readBaseline,bootstrapOperationalServing,commandSyncMembers,synchronizeCommandCenter } from '@el-dabboos/data';
+import { createMartPool,createOdooSourcePool,tenantTransaction,OdooOperationalSource,PostgresOperationalStore,PostgresCheckpointedSyncStore,readBaseline,bootstrapOperationalServing } from '@el-dabboos/data';
 import type {OperationalProgressObserver} from '@el-dabboos/data';
 import {analyticsJobObservation} from './analytics-job-observation.ts';
 import type { AnalyticsJobRequest,AnalyticsOperationalSource } from '@el-dabboos/domain';
@@ -14,7 +14,6 @@ export class AnalyticsJobSetupUnavailable extends Error {
 }
 async function setupStep<T>(stage:AnalyticsJobSetupStage,operation:()=>Promise<T>):Promise<T>{
  try{return await operation();}catch(error){
-  if(error instanceof OdooSnapshotUnavailable)throw error;
   const code=error&&typeof error==='object'&&'code' in error?String(error.code):'UNAVAILABLE';
   throw new AnalyticsJobSetupUnavailable(stage,/^[A-Z_0-9]{2,40}$/.test(code)?code:'UNAVAILABLE');
  }
@@ -41,12 +40,12 @@ function jobKind(command:string,mode:string|undefined):AnalyticsJobRequest['kind
 
 /** Shared CLI/HTTP composition; the application lifecycle owns every pipeline step and durable audit. */
 export async function runConfiguredAnalyticsJob(mart:ReturnType<typeof createMartPool>,request:AnalyticsJobRequest,environment:NodeJS.ProcessEnv,observePhase?:(phase:AnalyticsOperationPhase)=>void,observeProgress?:OperationalProgressObserver) {
+ if(request.kind==='sweep'&&request.sweepScope==='allocations')throw new AnalyticsJobSetupUnavailable('report_sync','BACKGROUND_WORKER_REQUIRED');
  const runId=randomUUID(),startedAt=new Date().toISOString(),store=new PostgresOperationalStore(mart,runId,observeProgress);
  const sourcePools:ReturnType<typeof createOdooSourcePool>[]=[];
  let lifecycleStarted=false;
  try {
   const baseline=await setupStep('mart_baseline',()=>tenantTransaction(mart,request.tenantId,client=>readBaseline(client,request.tenantId),true));
-  const business=await setupStep('report_sync',synchronizeReport);
   // A sealed candidate resumes offline, without resolving source credentials.
   const source:AnalyticsOperationalSource={open:async tenantId=>{
    const config=await resolveOdooSourceConfig(environment,{tenantId,sourceId:baseline.sourceId});
@@ -61,17 +60,7 @@ export async function runConfiguredAnalyticsJob(mart:ReturnType<typeof createMar
   lifecycleStarted=true;
   const run=await operations.run(request);
   const details=await tenantTransaction(mart,request.tenantId,async client=>(await client.query('SELECT details FROM mart.analytics_run_details WHERE tenant_id=$1 AND run_id=$2',[request.tenantId,run.runId])).rows[0].details,true);
-  return {run,details,business};
-  async function synchronizeReport(){
-   if(request.kind!=='sync'&&!(request.kind==='sweep'&&request.sweepScope==='allocations'))return {state:'not_requested' as const};
-   const pending=await tenantTransaction(mart,request.tenantId,async client=>(await client.query('SELECT 1 FROM mart.analytics_sync_pending WHERE tenant_id=$1',[request.tenantId])).rowCount,true);
-   if(pending)return {state:'deferred_for_offline_resume' as const};
-   const members=await commandSyncMembers(mart,request.tenantId);
-   if(!members.length)return {state:'not_published' as const};
-   const config=await resolveOdooSourceConfig(environment,{tenantId:request.tenantId,sourceId:baseline.sourceId});
-   const owner=createOdooSourcePool(config),reader=createOdooSourcePool(config);sourcePools.push(owner,reader);
-   return {state:'observed' as const,members:await synchronizeCommandCenter({mart,owner,reader,config,members,sweepAllocations:request.kind==='sweep',...(observeProgress?{observe:observeProgress}:{})})};
-  }
+  return {run,details,business:{state:request.kind==='sync'||request.kind==='sweep'?'background_managed' as const:'not_requested' as const}};
  }catch(error){
   if(!lifecycleStarted)await store.recordFailure(request,runId,startedAt);
   throw error;

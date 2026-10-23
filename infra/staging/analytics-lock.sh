@@ -17,6 +17,10 @@ acquire_analytics_lock() {
     *) echo 'Invalid analytics lock mode' >&2; exit 2 ;;
   esac
   active_jobs=$(docker ps -q --filter label=el-dabboos.staging.analytics-job=true)
+  if [[ "$mode" == wait && "${STAGING_ANALYTICS_JOB_KIND:-maintenance}" == maintenance ]] && [[ -n "$(docker ps -q --filter label=el-dabboos.staging.command-background=true)" ]]; then
+    echo 'A Command background unit is active. Pause its timer and wait for it before deployment or maintenance.' >&2
+    exit 1
+  fi
   if [[ -n "$active_jobs" ]]; then
     echo 'A scheduled container outlived its host process. Inspect it before running jobs or migrations.' >&2
     exit 1

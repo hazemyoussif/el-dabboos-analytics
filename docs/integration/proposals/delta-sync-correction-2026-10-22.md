@@ -15,11 +15,7 @@ deployment or timer change was performed. Company performance remains unproven.
 The findings and intermediate drafts below record the development sequence. This
 section supersedes their earlier statements that normal-sync composition is absent.
 
-`runConfiguredAnalyticsJob` now coordinates a Command refresh before starting a
-new operational sync, and includes its member results separately in the response.
-The Business recipes use their own accepted observations; the facts cursor never
-marks them fresh. A pending sealed operational candidate defers this new source
-operation so its existing offline resume remains source-free.
+The prior pre-sync Command initialization was incorrect and is removed. `runConfiguredAnalyticsJob` now executes the ordinary operational lifecycle independently. Missing Command recipe capture, private page replay, prepared chunks and atomic publication are separate background units. Current-period missing recipes are selected before older gaps; already published Command recipes retain their own scoped delta and presence-sweep paths. See [independent background preparation](../command-background-preparation.md). A pending sealed operational candidate still resumes without resolving source credentials.
 
 The Command adapter discovers header, journal-item, allocation and lookup changes
 in the existing inclusive polling overlap. Root requests are deduplicated in SQL.

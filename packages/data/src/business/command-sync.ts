@@ -34,7 +34,8 @@ export async function commandSyncMembers(pool:Pool,tenantId:string):Promise<Comm
 /** Independent family watermark. A failed Business refresh never advances it from the facts cursor.
  * Each completed member is reusable on retry; only changed members prepare new data.
  */
-export async function synchronizeCommandCenter(scope:{mart:Pool;owner:Pool;reader:Pool;config:OdooSourceConfig;members:readonly CommandMember[];sweepAllocations?:boolean;observe?:OperationalProgressObserver}){
+export async function synchronizeCommandCenter(scope:{mart:Pool;owner:Pool;reader:Pool;config:OdooSourceConfig;members:readonly CommandMember[];sweepAllocations?:boolean;initializeMissing?:boolean;observe?:OperationalProgressObserver}){
+ assertCommandRefreshScope(scope);
  const results=[];
  for(const member of scope.members){
   const lease=await OdooSnapshotLease.open(scope.owner,scope.config,scope.config.snapshotMaxDurationMs,scope.config.credentialPolicy);
@@ -53,7 +54,7 @@ export async function synchronizeCommandCenter(scope:{mart:Pool;owner:Pool;reade
     tenantId:scope.config.tenantId,month:member.month,mapping,
     cutoff:lease.evidence.sourceAsOf,revision:lease.evidence.frozenRevision,observedObjects:objects,
     replaceObjects:replaceDebt?['command_receivable']:[],replacements:emptyReplacements(),
-    allocationChanges:commandAllocationChanges({pool:scope.reader,config:scope.config,lease,cutoff:initialize&&graph?graph.toISOString():previousCutoff,initialize:!graph}),
+    ...(mapping.measures.some(rule=>rule.sourceObject==='command_allocation')?{allocationChanges:commandAllocationChanges({pool:scope.reader,config:scope.config,lease,cutoff:initialize&&graph?graph.toISOString():previousCutoff,initialize:!graph,...(scope.observe?{observe:scope.observe}:{})})}:{}),
     ...(scope.sweepAllocations&&!initialize?{allocationDeletions:{
      discover:(consume:(records:readonly RecordedAllocationDeletion[])=>Promise<void>,client:PoolClient)=>sweepBusinessAllocations(client,{pool:scope.reader,config:scope.config,lease,partitionId:member.partitionId,previousCutoff},consume),
      replacements:(object:string,ids:readonly string[])=>reader.replacements(object,ids),
@@ -74,9 +75,14 @@ export async function synchronizeCommandCenter(scope:{mart:Pool;owner:Pool;reade
    results.push(result);
   }finally{await lease.close();}
  }
+ if(scope.initializeMissing===false)return results;
  const current=await initializeCurrentCommandMonth(scope);
  if(current)results.push(current);
  return results;
+}
+function assertCommandRefreshScope(scope:{members:readonly CommandMember[];initializeMissing?:boolean}){
+ if(scope.initializeMissing!==false)return;
+ if(scope.members.length>1||scope.members.some(member=>member.mapping.mappingId==='business-purpose-v1'))throw new Error('Background delta requires one initialized month; initialization is separate');
 }
 async function* emptyReplacements():AsyncGenerator<never>{/* Identity requests are discovered before source replacement reads. */}
 

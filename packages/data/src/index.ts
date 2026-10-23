@@ -73,3 +73,5 @@ export {commandSyncMembers,synchronizeCommandCenter} from './business/command-sy
 export {PublishedAnalyticsRepository} from './published-repository.ts';
 
 export {withSalesCommandMapping,salesCommandDefinitionVersion} from './business/sales-command-mapping.ts';
+export {runCommandBackgroundUnit} from './business/initialization-worker.ts';
+export type {CommandBackgroundScope} from './business/initialization-worker.ts';

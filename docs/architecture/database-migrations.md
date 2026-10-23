@@ -125,3 +125,10 @@ databases. Local staging applied 062/063 successfully with tested API `2edef29`;
 operator role/schema verification and HTTPS readiness passed. Company application
 is pending.
 No cache initialization or source sync ran during this rehearsal.
+
+
+### Independent Command background preparation (077–081)
+
+These additive candidate migrations separate missing-recipe preparation from ordinary operational synchronization. 077 adds ingestor-only private frozen source pages with exact-control seals. 078 closes the Business second-membership parent-check bypass while permitting an unchanged accepted Business base. 079 adds append-only offline replay/publication/conflict checkpoints. 080 stores background scheduling checks independently of metric observation clocks. 081 restricts runtime raw review/Business visibility to trusted roots and their required sparse ancestors. Prepared bindings and seals for private candidates are also hidden by 077. Existing migration files remain unchanged. No company application, new source extraction or serving activation is performed by the migrations.
+
+Focused synthetic PostgreSQL tests cover the new lifecycle; this is not company acceptance. See [independent Command preparation](../integration/command-background-preparation.md).

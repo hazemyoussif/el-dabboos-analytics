@@ -1,0 +1,10 @@
+[Unit]
+Description=Resume one bounded Command preparation unit between ordinary sync runs
+
+[Timer]
+OnActiveSec=1min
+OnUnitInactiveSec=5s
+Unit=el-dabboos-analytics@command-background.service
+
+[Install]
+WantedBy=timers.target

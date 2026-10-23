@@ -13,6 +13,7 @@ export function analyticsJobObservation() {
   const now=performance.now();lastProgress=now;
   write({stage:'analytics-progress',elapsedMs:Math.round(now-began),activeSteps:[...active].filter(([,count])=>count>0).map(([step])=>step),timings:[...totals].map(([step,total])=>({step,...total,durationMs:Math.round(total.durationMs)}))});
  };
+ const heartbeat=setInterval(flush,30000);heartbeat.unref();
  const progress:OperationalProgressObserver=(event:OperationalProgress)=>{
   if(event.step==='sync_checkpoint'){
    write({stage:'analytics-sync-checkpoint',committed:true,...event,elapsedMs:Math.round(performance.now()-began)});
@@ -36,7 +37,7 @@ export function analyticsJobObservation() {
   }
   if(event.state==='failed'||performance.now()-lastProgress>=30000)flush();
  };
- return {progress,finish:flush,phase:(next:AnalyticsOperationPhase)=>{
+ return {progress,finish:()=>{clearInterval(heartbeat);flush();},phase:(next:AnalyticsOperationPhase)=>{
   const now=performance.now();
   write({stage:'analytics-operation',phase:next,elapsedMs:Math.round(now-began),...(phase?{completedPhase:phase,phaseDurationMs:Math.round(now-phaseBegan)}:{})});
   phase=next;phaseBegan=now;flush();

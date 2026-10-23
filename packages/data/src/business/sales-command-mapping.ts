@@ -19,6 +19,45 @@ export function withSalesCommandMapping(mapping:SourceMapping,current:boolean):S
  const extended:SourceMapping={...mapping,mappingId:mapping.mappingId+'-sales-command',mappingVersion:salesCommandDefinitionVersion(),businessBasis:'Business-purpose v1 plus Sales Command Center; original recipes retained; tax-inclusive headers, signed cash and current-cutoff receivables; Finance review pending',measures:[...mapping.measures,...rules],capabilities:[...mapping.capabilities,...metrics.map(metric=>({metric,dimensions:salesCommandCatalog[metric].dimensions}))]};
  validateSourceMapping(extended);return extended;
 }
+/** Add exactly one registered recipe. A capability appears only after all its
+ * required source objects have complete recipe coverage in this mapping.
+ */
+export function withSalesCommandRecipe(mapping:SourceMapping,object:string,current:boolean):SourceMapping {
+ if(!commandObjects.has(object)||!['business-purpose-v1','business-purpose-v1-sales-command'].includes(mapping.mappingId))throw new Error('Registered Command recipe and Business mapping required');
+ const base:SourceMapping={...mapping,mappingId:'business-purpose-v1',mappingVersion:'1',
+  businessBasis:'Source-native business purposes; unknown classifications retained; technical exposure before Finance review',
+  measures:mapping.measures.filter(rule=>!rule.measureId.startsWith('command_')),
+  capabilities:mapping.capabilities.filter(capability=>!capability.metric.startsWith('command_'))};
+ const full=withSalesCommandMapping(base,current);
+ const existingMeasures=new Set(mapping.measures.map(rule=>rule.measureId));
+ const measures=[...mapping.measures,...full.measures.filter(rule=>rule.sourceObject===object&&!existingMeasures.has(rule.measureId))];
+ const included=new Set(measures.map(rule=>rule.measureId));
+ const existingCapabilities=new Set(mapping.capabilities.map(capability=>capability.metric));
+ const capabilities=[...mapping.capabilities,...full.capabilities.filter(capability=>
+  !existingCapabilities.has(capability.metric)&&requiredMeasures(capability.metric).every(measure=>included.has(measure)))];
+ const next:SourceMapping={...mapping,mappingId:full.mappingId,mappingVersion:full.mappingVersion,
+  businessBasis:full.businessBasis,measures,capabilities};
+ validateSourceMapping(next);return next;
+}
+/** A month with no accepted Business member starts with one exact Command recipe;
+ * absent original Business and Command recipes are not advertised as covered.
+ */
+export function commandOnlyMapping(template:SourceMapping,object:string,current:boolean,datasetId:string):SourceMapping {
+ if(!commandObjects.has(object)||!datasetId.trim())throw new Error('Registered Command recipe and dataset required');
+ const base={...template,datasetId,mappingId:'business-purpose-v1',mappingVersion:'1',
+  businessBasis:'Source-native business purposes; unknown classifications retained; technical exposure before Finance review',
+  measures:template.measures.filter(rule=>!rule.measureId.startsWith('command_')),
+  capabilities:template.capabilities.filter(capability=>!capability.metric.startsWith('command_'))};
+ return selectedCommandMapping(withSalesCommandMapping(base,current),new Set([object]),false);
+}
+const commandObjects=new Set(['command_invoice','command_receipt','command_order','command_receivable','command_allocation']);
+function selectedCommandMapping(full:SourceMapping,covered:ReadonlySet<string>,includeBusiness:boolean):SourceMapping {
+ const measures=full.measures.filter(rule=>rule.measureId.startsWith('command_')?covered.has(rule.sourceObject):includeBusiness);
+ const included=new Set(measures.map(rule=>rule.measureId));
+ const capabilities=full.capabilities.filter(capability=>capability.metric.startsWith('command_')?
+  requiredMeasures(capability.metric).every(measure=>included.has(measure)):includeBusiness);
+ const next={...full,measures,capabilities};validateSourceMapping(next);return next;
+}
 function commandRule(measure:FactMeasureId,mapping:SourceMapping):SourceMapping['measures'][number] {
  const metrics=salesCommandMetricIds.filter(metric=>requiredMeasures(metric).includes(measure));
  const dimensions=metrics.map(metric=>salesCommandCatalog[metric].dimensions).reduce((shared,next)=>shared.filter(dimension=>next.includes(dimension)));

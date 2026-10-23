@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
-job=${1:?Use check, sync or daily}
-case "$job" in check|sync|daily) ;; *) echo 'Use check, sync or daily' >&2; exit 2;; esac
+job=${1:?Use check, sync, daily or command-background}
+case "$job" in check|sync|daily|command-background) ;; *) echo 'Use check, sync, daily or command-background' >&2; exit 2;; esac
 : "${STAGING_API_CONTAINER:?Set the deployed API container name}"
 : "${STAGING_DATABASE_NETWORK:?Set the existing database network}"
 : "${STAGING_OPERATOR_ENV_FILE:?Set the protected operator env-file path}"
@@ -9,8 +9,28 @@ case "$job" in check|sync|daily) ;; *) echo 'Use check, sync or daily' >&2; exit
 : "${STAGING_ANALYTICS_TENANT:?Set the tenant}"
 test -f "$STAGING_OPERATOR_ENV_FILE"
 test -f "$STAGING_SOURCE_ENV_FILE"
+export STAGING_ANALYTICS_JOB_KIND="$job"
 source "$(dirname "${BASH_SOURCE[0]}")/analytics-lock.sh"
-if [[ "$job" == sync ]]; then acquire_analytics_lock skip; else acquire_analytics_lock wait 300; fi
+if [[ "$job" == command-background ]]; then
+  # A private capture must not hold the ordinary sync file lock for its lifetime.
+  # Database publication still uses the shared tenant transaction lock and CAS.
+  exec 8>"${STAGING_COMMAND_BACKGROUND_LOCK_FILE:-/run/lock/el-dabboos-command-background.lock}"
+  if flock -n -E 75 8; then :; else
+    background_lock_status=$?
+    if [[ "$background_lock_status" != 75 ]]; then exit "$background_lock_status"; fi
+    echo 'Another Command background unit is running; skipped.'; exit 0
+  fi
+  exec 9>"${STAGING_ANALYTICS_LOCK_FILE:-/run/lock/el-dabboos-analytics.lock}"
+  if flock -n -E 75 9; then :; else
+    background_lock_status=$?
+    if [[ "$background_lock_status" != 75 ]]; then exit "$background_lock_status"; fi
+    echo 'Ordinary analytics work has priority; background unit deferred.'; exit 0
+  fi
+  exec 9>&-
+  test -z "$(docker ps -q --filter label=el-dabboos.staging.command-background=true)"
+elif [[ "$job" == sync ]]; then acquire_analytics_lock skip
+else acquire_analytics_lock wait 300
+fi
 
 # Resolve every invocation from the healthy deployed binary; never use an old jobs.env image pin.
 deployed=$(docker inspect --format '{{.Config.Image}} {{.Image}} {{.State.Status}} {{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "$STAGING_API_CONTAINER")
@@ -32,12 +52,14 @@ cleanup_job_container() {
 trap cleanup_job_container EXIT
 trap 'exit 143' TERM
 trap 'exit 130' INT
+job_label=el-dabboos.staging.analytics-job=true
+if [[ "$job" == command-background ]]; then job_label=el-dabboos.staging.command-background=true; fi
 run_job_container() {
   rm -f -- "$state_directory/container.cid"
   docker run --rm --pull never --network "$STAGING_DATABASE_NETWORK" \
-    --label el-dabboos.staging.analytics-job=true --cidfile "$state_directory/container.cid" \
+    --label "$job_label" --cidfile "$state_directory/container.cid" \
     "$@" --env-file "$STAGING_OPERATOR_ENV_FILE" \
-    -e ENVIRONMENT=staging -e CONTROL_PROVIDER=postgres \
+    -e ENVIRONMENT=staging -e CONTROL_PROVIDER=postgres -e "PGAPPNAME=el-dabboos-analytics-$job" \
     -e ANALYTICS_JOB_TRIGGER=scheduled -e ANALYTICS_OPERATOR_ID=staging-scheduler \
     --read-only --tmpfs /tmp --entrypoint node "$image_id" \
     --experimental-transform-types --disable-warning=ExperimentalWarning "${job_command[@]}" &
@@ -53,6 +75,9 @@ if [[ "$job" == check ]]; then
   job_command=(apps/api/src/analytics-status-cli.ts verify-schedule --tenant "$STAGING_ANALYTICS_TENANT")
   if [[ "${STAGING_JOB_REQUIRE_FRESH:-0}" == 1 ]]; then job_command+=(--require-fresh); fi
   run_job_container
+elif [[ "$job" == command-background ]]; then
+  job_command=(apps/api/src/analytics-status-cli.ts command-background --tenant "$STAGING_ANALYTICS_TENANT")
+  run_job_container --env-file "$STAGING_SOURCE_ENV_FILE"
 else
   job_command=(apps/api/src/analytics-status-cli.ts verify-schedule --tenant "$STAGING_ANALYTICS_TENANT")
   run_job_container

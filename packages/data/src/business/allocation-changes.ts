@@ -1,3 +1,5 @@
+import {measureOperationalWork} from '../operational/progress.ts';
+import type {OperationalProgressObserver} from '../operational/progress.ts';
 import type {Pool} from 'pg';
 import type {AllocationLinks} from '../operational/contracts.ts';
 import type {OdooSourceConfig} from '../odoo/config.ts';
@@ -7,7 +9,7 @@ import {odooIncrementalWindow} from '../odoo/incremental-watermark.ts';
 export interface CommandAllocationChange {id:string;from:string;createdAt:string;updatedAt:string;links:AllocationLinks}
 
 /** Financial facts stay in the recipe reader; this retains only actual source dependency edges. */
-export async function* commandAllocationChanges(scope:{pool:Pool;config:OdooSourceConfig;lease:OdooSnapshotLease;cutoff:string;initialize?:boolean}):AsyncGenerator<CommandAllocationChange[]>{
+export async function* commandAllocationChanges(scope:{pool:Pool;config:OdooSourceConfig;lease:OdooSnapshotLease;cutoff:string;initialize?:boolean;observe?:OperationalProgressObserver}):AsyncGenerator<CommandAllocationChange[]>{
  const lower=odooIncrementalWindow({cutoff:scope.cutoff,objects:{}},scope.lease.evidence.sourceAsOf).modificationFrom;
  const client=await scope.pool.connect();let broken=false;const onError=()=>{broken=true;};client.on('error',onError);
  try{
@@ -25,7 +27,7 @@ export async function* commandAllocationChanges(scope:{pool:Pool;config:OdooSour
    WHERE partial.company_id=ANY($1::int[]) AND ($4::boolean OR partial.write_date BETWEEN $2::timestamp AND $3::timestamptz AT TIME ZONE 'UTC')`,
    [scope.config.companyIds,lower,scope.lease.evidence.sourceAsOf,scope.initialize??false]);
   for(;;){
-   const rows=(await client.query(`FETCH FORWARD ${scope.config.batchSize} FROM command_allocation_links`)).rows;
+   const rows=(await measureOperationalWork(scope.observe,'source_allocation_dependencies',()=>client.query(`FETCH FORWARD ${scope.config.batchSize} FROM command_allocation_links`))).rows;
    await scope.lease.assertAlive();if(!rows.length)break;
    if(rows.some(row=>row.invalid!==false))throw new Error('Allocation dependency company scope conflict');
    yield rows as CommandAllocationChange[];

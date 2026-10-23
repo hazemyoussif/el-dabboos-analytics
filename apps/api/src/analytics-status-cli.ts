@@ -1,3 +1,4 @@
+import {executeCommandBackground,CommandBackgroundUnavailable} from './analytics-command-background.ts';
 import {executeAnalyticsPreparation,isAnalyticsPreparationCommand} from './analytics-preparation.ts';
 import {executeSalesCommandInspection,SalesCommandInspectionUnavailable} from './sales-command-inspection.ts';
 import {assertAnalyticsScheduleReady} from './analytics-schedule-status.ts';
@@ -19,6 +20,13 @@ async function main() {
   if('run' in result&&result.run.status==='failed')process.exitCode=1;
 }
 async function readAnalyticsCommand(command:string|undefined,tenantId:string,extra:string[]):Promise<boolean>{
+  if(command==='command-background'){
+   if(extra.length)throw new Error('Unexpected Command background flags');
+   process.stdout.write(JSON.stringify(await executeCommandBackground(tenantId,process.env))+'\n');return true;
+  }
+ if(command==='sweep'&&extra.length===2&&extra[0]==='--mode'&&extra[1]==='allocations'){
+  process.stdout.write(JSON.stringify(await executeCommandBackground(tenantId,process.env,true))+'\n');return true;
+ }
  if(command==='inspect-sales-command'){
   process.stdout.write(JSON.stringify(await executeSalesCommandInspection(tenantId,extra,process.env))+'\n');return true;
  }
@@ -48,6 +56,6 @@ function operatorResult(result:Awaited<ReturnType<typeof executeAnalyticsJob>>) 
   return {...result,details:{...details,affectedPartitionCount:scope.length,affectedMonths:[...new Set(scope.map(partition=>partition.month))].sort(),affectedMetrics:[...new Set(scope.map(partition=>partition.metric))].sort(),affectedDimensions:[...new Set(scope.flatMap(partition=>partition.dimension?[partition.dimension]:[]))].sort()}};
 }
 try {await main();}catch(error) {
-  process.stderr.write(error instanceof SalesCommandInspectionUnavailable||error instanceof OdooSnapshotUnavailable||error instanceof AnalyticsJobSetupUnavailable?`${error.message}\n`:'Analytics operation unavailable. Check local runtime configuration and explicit mart migrations.\n');
+  process.stderr.write(error instanceof SalesCommandInspectionUnavailable||error instanceof OdooSnapshotUnavailable||error instanceof AnalyticsJobSetupUnavailable||error instanceof CommandBackgroundUnavailable?`${error.message}\n`:'Analytics operation unavailable. Check local runtime configuration and explicit mart migrations.\n');
   process.exitCode=1;
 }
