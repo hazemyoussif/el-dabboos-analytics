@@ -5,26 +5,30 @@ import type {RecordedAllocationDeletion} from '../operational/contracts.ts';
 
 /** Separate presence checks over recorded IDs. Odoo and the polling cursor remain unchanged. */
 export async function sweepBusinessAllocations(client:PoolClient,scope:{pool:Pool;config:OdooSourceConfig;lease:OdooSnapshotLease;partitionId:string;previousCutoff:string},consume:(records:readonly RecordedAllocationDeletion[])=>Promise<void>){
- const source=await scope.pool.connect();let broken=false,after='',checked=0,missing=0;
+ const source=await scope.pool.connect();let broken=false,checked=0,missing=0;
  const onError=()=>{broken=true;};source.on('error',onError);
  try{
   await source.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');await scope.lease.importInto(source);
   await source.query("SELECT set_config('statement_timeout',$1,true)",[String(scope.config.statementTimeoutMs)]);
-  for(;;){
-   const rows=(await client.query(`SELECT id FROM (
+  // Build the transaction's recorded identity set once. Re-running the UNION
+  // for each keyset page repeatedly reads the same accepted lineage and graph.
+  await client.query(`DECLARE business_recorded_allocation_ids NO SCROLL CURSOR FOR SELECT id FROM (
     SELECT source_record_id id FROM mart.business_allocation_links WHERE tenant_id=$1 AND source_id=$2
     UNION SELECT payload->>'sourceRecordId' FROM mart.review_fact_population WHERE tenant_id=$1 AND partition_id=$3 AND payload->>'sourceObject'='command_allocation'
     UNION SELECT dependency.source_record_id FROM mart.analytics_receivable_dependencies dependency
      JOIN mart.analytics_baselines baseline USING(tenant_id,source_id,definition_version,mapping_version)
      WHERE dependency.tenant_id=$1 AND dependency.source_id=$2 AND dependency.source_object='account_partial_reconcile'
-   ) recorded WHERE id>$4 ORDER BY id LIMIT 1000`,[scope.config.tenantId,scope.config.sourceId,scope.partitionId,after])).rows;
+   ) recorded WHERE id>'' ORDER BY id`,[scope.config.tenantId,scope.config.sourceId,scope.partitionId]);
+  for(;;){
+   const rows=(await client.query('FETCH FORWARD 1000 FROM business_recorded_allocation_ids')).rows;
    if(!rows.length)break;
-   const ids=rows.map(row=>String(row.id));after=ids[ids.length-1]!;
+   const ids=rows.map(row=>String(row.id));
    const present=new Set((await source.query('SELECT id::text FROM account_partial_reconcile WHERE company_id=ANY($1::int[]) AND id=ANY($2::bigint[])',[scope.config.companyIds,ids])).rows.map(row=>String(row.id)));
    await scope.lease.assertAlive();checked+=ids.length;
    const removed=ids.filter(id=>!present.has(id));if(!removed.length)continue;
    await readDeletedLinks(client,{...scope,ids:removed},consume);missing+=removed.length;
   }
+  await client.query('CLOSE business_recorded_allocation_ids');
   return {checked,missing,coverage:'recorded-identities-only' as const};
  }finally{try{await source.query('ROLLBACK');}catch{broken=true;}finally{source.removeListener('error',onError);source.release(broken);}}
 }
