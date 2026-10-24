@@ -1,6 +1,7 @@
 import {tenantTransaction} from '../postgres/session.ts';
 import {commandSyncMembers,synchronizeCommandCenter} from './command-sync.ts';
 import {reviewBusinessDate} from '../review/cutoff.ts';
+import {commandReportObjects} from './command-report-windows.ts';
 import type {CommandBackgroundScope} from './initialization-worker.ts';
 
 /** Initialization never runs here. Refresh one already published month using
@@ -9,10 +10,10 @@ import type {CommandBackgroundScope} from './initialization-worker.ts';
 export async function refreshCommandMonth(scope:CommandBackgroundScope,currentOnly:boolean,sweepAllocations=false){
  const members=(await commandSyncMembers(scope.mart,scope.tenantId)).filter(member=>member.mapping.mappingId==='business-purpose-v1-sales-command'&&(!sweepAllocations||member.mapping.measures.some(rule=>rule.sourceObject==='command_allocation')));
  const template=members.at(-1)?.mapping;if(!template)return false;
- const current=reviewBusinessDate(new Date().toISOString(),template.measures[0]!.timeZone).slice(0,7);
+ const today=reviewBusinessDate(new Date().toISOString(),template.measures[0]!.timeZone),current=today.slice(0,7);
  const checked=await tenantTransaction(scope.mart,scope.tenantId,async client=>(await client.query(`SELECT to_char(month,'YYYY-MM') AS "month",max(checked_at) checked
   FROM mart.command_delta_checks WHERE tenant_id=$1 AND kind=$2 GROUP BY month`,[scope.tenantId,sweepAllocations?'allocations':'delta'])).rows,true);
- const due=members.filter(member=>(!currentOnly||member.month===current)&&
+ const due=members.filter(member=>(scope.sweepAllocations||commandReportObjects(today,member.month).length>0)&&(!currentOnly||member.month===current)&&
   !checked.some(record=>record.month===member.month&&Date.now()-new Date(record.checked).getTime()<(sweepAllocations?86400:(scope.freshnessTargetSeconds??600))*1000));
  due.sort((left,right)=>Number(right.month===current)-Number(left.month===current)||
   lastChecked(left.month)-lastChecked(right.month));

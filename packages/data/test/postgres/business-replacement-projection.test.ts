@@ -32,9 +32,12 @@ test('projected replacement cells equal original cells for moved corrections, de
   await fixture.db.admin.query(reference);
   const cutoff='2026-10-20T10:00:00.000Z';
   const moved=changedInvoice(fixture.initial,cutoff).map(fact=>observedFact(fact,cutoff,'2026-10-14'));
-  const changed=await exposeBusinessDeltaMonth(fixture.db.ingestor,deltaSource(fixture.source,cutoff,[{object:'command_invoice',id:'10',facts:moved},{object:'command_invoice',id:'11',facts:changedInvoice(fixture.initial,cutoff,'11')}]));
+  const labelled=['11','12','13'].map((id,index)=>({object:'command_invoice',id,
+   facts:changedInvoice(fixture.initial,cutoff,id).map(fact=>({...fact,displayLabels:{customer:index===1?'Other label':'Repeated label'}}))}));
+  const changed=await exposeBusinessDeltaMonth(fixture.db.ingestor,deltaSource(fixture.source,cutoff,[{object:'command_invoice',id:'10',facts:moved},...labelled]));
   const corrected=await compareCells(fixture,changed.revisionId,'event');
   assert.ok(corrected.some(cell=>cell.minimum!==null&&cell.maximum!==null));
+  assert.ok(corrected.some(cell=>cell.conflicting_labels.includes('customer')),'distinct contributor labels must remain conflicting despite repeated labels');
   const removed=await exposeBusinessDeltaMonth(fixture.db.ingestor,deltaSource(fixture.source,'2026-10-20T11:00:00.000Z',[{object:'command_invoice',id:'10',facts:[]}]));
   await compareCells(fixture,removed.revisionId,'event');
   const empty=deltaSource(fixture.source,'2026-10-21T10:00:00.000Z',[{object:'command_receivable',id:'10',facts:[]}],['command_receivable']);

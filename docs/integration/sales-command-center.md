@@ -1,14 +1,12 @@
 # Sales Command Center
 
-Status: the report and source extension are implemented and published in local
-staging. The user confirmed the current numbers are correct and authorized final
-deployment on 20 October 2026. The existing configured source remains unchanged;
-local prepared/native agreement is separate from cross-environment reference
-comparison. Company deployment, new-measure publication and company performance
-acceptance have not been performed by the agent.
-The [implementation receipt](../qa/sales-command-center-2026-10-20.md) separates
-source checks, synthetic and real local prepared-reader evidence, user acceptance
-and the remaining company release work.
+Status (24 October 2026): company API `09d411ea3a05f81d93152dda7cdae9838ba3a143`
+is healthy. All five current-period Command recipes are published; scoped refresh,
+allocation presence checking, ordinary sync and daily reconciliation have completed
+on the company host. September comparison and six-week trend coverage is still
+preparing. Automatic history is restricted to the report’s calculated comparison and six-week windows; older Command history requires an explicit operator request. Finance review remains visibly pending. Local evidence does not certify
+company readiness; the [company cursor release record](../qa/allocation-presence-cursor-2026-10-24.md)
+separates actual company results from static and synthetic verification.
 
 ## Report boundary
 
@@ -99,33 +97,27 @@ security, and extends the exact-control guard only for the explicitly versioned
 command mapping. Existing migration SQL, forced RLS, grouped exact controls,
 lineage and immutable membership are preserved. Startup does not migrate anything.
 
-After an authorized deployment, schema verification and backup/recovery preflight,
-the protected operator can opt into a complete month exposure:
+Normal preparation uses the separate `analytics command-background --tenant TENANT_ID`
+worker described in [independent Command preparation](command-background-preparation.md).
+It captures only a missing recipe under a live read-only source snapshot and seals
+that evidence before offline replay. Saved pages, one prepared chunk and atomic
+publication are separate units. Accepted raw/prepared ancestry remains the serving
+authority; incomplete work is private. Existing prepared datasets are reused.
+Ordinary operational sync does not initialize Command recipes or enumerate history
+as a prerequisite.
 
-```bash
-pnpm analytics expose-business --tenant TENANT_ID --month YYYY-MM --sales-command
-```
+After current recipes are available, a scoped refresh discovers updated identities
+and their actual dependencies, compares complete replacements with accepted rows,
+and prepares affected cells. Unchanged facts remain in immutable ancestry. A separate
+presence sweep detects deleted allocations through recorded identities and prior
+links without changing Odoo. The inventory cursor reads the deduplicated set once,
+then checks source presence in 1,000-ID batches. Missing prior links reject rather
+than inventing a deletion footprint.
 
-**This is a write/promotion operation, not a diagnostic.** It extracts a complete
-Business month, verifies independent header aggregates plus exact grouped source/mart
-controls, prepares through the existing lifecycle and advances the trusted revision
-atomically. Do not run it as a connection test. Select the months needed by the
-trusted clock for comparisons and the six-week window; do not hard-code a reporting
-month in application code. Current residual/ownership observations are not fabricated
-for historical months.
-
-The source lease covers reads, independent controls and the exact source/mart
-comparison. The checked source-read handoff closes it before offline preparation;
-no source access occurs afterwards. Reconciled facts, controls, preparation and
-promotion remain one atomic mart transaction. Source loss before handoff or failed
-preparation leaves the accepted publication unchanged. This avoids retaining an
-unused source snapshot during longer preparation without relaxing source checks
-or raising the maximum lease duration.
-
-Prepared history serves report reads. New source observations must complete the
-accepted preparation lifecycle before becoming current; incomplete work cannot be
-stitched into a report. No route or browser queries Odoo directly. Source refresh
-and report refresh remain separate operations.
+Manual `expose-business --sales-command` remains an explicit complete-month promotion
+operation. It is not required for ordinary sync or used as a connection test or
+recurring refresh. Runtime report reads use accepted prepared data; report refresh
+rereads that data and never connects the browser or HTTP route to Odoo.
 
 ## Read-only diagnostics
 
@@ -142,31 +134,30 @@ Production least-privilege acceptance is separate from this staging evidence.
 
 ## Deployment ownership and scheduled freshness
 
-The agreed workflow on 20 October 2026 is local Docker rehearsal first, repository
-merge second, then company-host commands executed by the user. Local and company
-staging are separate installations with separate serving revisions and prepared
-coverage. A successful local rehearsal does not certify the company publication.
+The owner subsequently authorized direct company SSH deployment and verification,
+and stopped further local rehearsals and GitHub CI. Local and company installations
+have separate accepted populations and publications. Actual company acceptance is
+recorded separately from earlier local results.
 
-The existing sync/daily services resolve the healthy deployed commit-pinned API
-image on every invocation. An application update does not require changing an
-image pin in the timer configuration. Deployment and jobs already share the host
-maintenance lock.
+Ordinary sync, daily reconciliation/presence sweeping and independent Command
+background preparation resolve the healthy deployed commit-pinned API image. Their
+separate timers share the required writer/publication serialization. A failed job
+pauses only its own timer. A busy tenant publication lock is a deferral, not a
+successful reconciliation; the deferred midnight daily job was explicitly completed
+under supervision later on October 24.
 
-Their workload remains operational facts sync, daily reconciliation and presence
-sweep. They do not refresh the Business source observations used by the new command
-metrics. Report refresh only rereads accepted prepared data. Therefore automatic
-freshness for this overview remains unfinished even after the application deploys.
+The Command worker prioritizes missing current recipes, scoped current refresh and
+allocation presence checks before older recipe gaps. Its current freshness target
+is ten minutes; every metric still shows its own actual accepted source observation.
+The operational cursor cannot establish Business freshness. Pending historical
+coverage remains unavailable until accepted, including comparison operands.
 
-[ADR 040](../architecture/adr/040-prepared-analytics-serving.md) requires complete
-population equality/reuse and correction/dependency coverage before recurring
-Business exposure. Do not attach repeated full-month extraction to the five-minute
-timer. The remaining refresh work must cover changed and deleted documents,
-allocations created later or backdated, customer/salesperson reassignment, current
-balance observations, month rollover and affected historical event periods; then
-reuse unchanged prepared populations, publish atomically, and measure source,
-preparation and storage cost. Each family must retain its own truthful freshness.
-The existing timer units can continue their existing workload while this is built;
-they must not be presented as keeping the entire report current.
+[ADR 040](../architecture/adr/040-prepared-analytics-serving.md) retains complete
+population equality/reuse, dependency coverage and atomic publication. On the company
+host, the supervised current delta replaced 26 identities and persisted 82 fact rows;
+it retained the rest of the month through sparse ancestry. The corrected allocation
+presence unit completed in 119.462 seconds. Neither path repeats a full-month raw
+copy or requires rebuilding all retained Business months before ordinary sync.
 
 ## Release and recovery
 
@@ -178,7 +169,8 @@ off and zero raw fallback, compare source controls and measure first/repeat plus
 concurrent-user performance. Retain the previous accepted revision during preparation.
 A schema rollback is not promised; use verified backups or a reviewed forward fix.
 
-Local deployment and September/October source exposure/promotion are complete.
-The user authorized repository merge; company deployment and publication are
-performed separately through the [company rollout](../qa/sales-command-center-company-rollout-2026-10-20.md).
-Company Finance review remains visibly pending.
+Company current-period recipe publication, renewed source observations and scheduled
+ordinary/daily work have been verified on the deployed API. September comparison
+and trend acceptance remains pending while its saved background units advance.
+Historical rollout documents are recovery history, not instructions to repeat old
+full-month preparation. Company Finance review remains visibly pending.

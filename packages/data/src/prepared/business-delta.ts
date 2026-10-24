@@ -6,9 +6,12 @@ import type {PreparedBuildScope,PreparedConfiguration} from './contracts.ts';
  */
 export async function prepareBusinessDelta(client:PoolClient,scope:PreparedBuildScope,config:PreparedConfiguration,maxCells:number){
  if(config.family!=='business')return;
- const created=(await client.query<{data_id:string}>('SELECT data_id FROM mart.prepare_business_delta_dataset($1,$2,$3,$4)',
+ const created=(await client.query<{data_id:string}>('SELECT data_id FROM mart.prepare_business_delta_keys($1,$2,$3,$4)',
   [scope.tenantId,scope.revisionId,JSON.stringify(config),maxCells])).rows[0];
  if(!created)return;
+ // Keep key derivation and cell construction under separate statement budgets;
+ // both remain in the caller's transaction and publication still proves both.
+ await client.query('SELECT mart.materialize_business_delta_cells($1,$2,$3,$4)',[scope.tenantId,scope.revisionId,created.data_id,maxCells]);
  const statistics=(await client.query<{statistics:Record<string,number>|null}>('SELECT mart.business_prepared_statistics($1,$2) statistics',
   [scope.tenantId,created.data_id])).rows[0]?.statistics;
  if(!statistics)throw new Error('Business prepared baseline statistics invalid');

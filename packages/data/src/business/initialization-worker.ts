@@ -5,6 +5,7 @@ import {tenantTransaction} from '../postgres/session.ts';
 import {reviewBusinessDate} from '../review/cutoff.ts';
 import {refreshCommandMonth} from './initialization-refresh.ts';
 import {commandSyncMembers} from './command-sync.ts';
+import {commandReportObjects} from './command-report-windows.ts';
 import {commandOnlyMapping,withSalesCommandRecipe} from './sales-command-mapping.ts';
 import {captureCommandRecipe} from './initialization-capture.ts';
 import {pendingCommandInitialization,currentBusinessParent,CommandBusinessBaseChanged} from './initialization-state.ts';
@@ -72,12 +73,12 @@ async function nextCommandUnit(scope:CommandBackgroundScope){
 async function captureNextCommandRecipe(scope:CommandBackgroundScope,currentOnly:boolean){
  const members=await commandSyncMembers(scope.mart,scope.tenantId);
  const template=members.at(-1)?.mapping;if(!template)return 'covered';
- const current=reviewBusinessDate(new Date().toISOString(),template.measures[0]!.timeZone).slice(0,7);
- const ordered=currentOnly?[current]:[current,...members.map(member=>member.month).filter(month=>month!==current).sort().reverse()];
+ const today=reviewBusinessDate(new Date().toISOString(),template.measures[0]!.timeZone),current=today.slice(0,7);
+ const ordered=(currentOnly?[current]:[current,...members.map(member=>member.month).filter(month=>month!==current).sort().reverse()])
+  .filter(month=>commandReportObjects(today,month).length>0);
  for(const month of ordered){
   const member=members.find(candidate=>candidate.month===month);
-  const objects=month===current?['command_invoice','command_receipt','command_order','command_receivable','command_allocation']:
-   ['command_invoice','command_receipt','command_order','command_allocation'];
+  const objects=commandReportObjects(today,month);
   const missing=objects.find(object=>!member?.mapping.measures.some(rule=>rule.sourceObject===object));
   if(!missing)continue;
   const mapping=member?withSalesCommandRecipe(member.mapping,missing,month===current):commandOnlyMapping(template,missing,true,`command:${month}:${randomUUID()}`);
