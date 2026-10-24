@@ -1,5 +1,6 @@
 import { registerAnalystRoutes } from './routes/ai-analyst.ts';
 import {registerSalesCommandCenterRoutes} from './routes/sales-command-center.ts';
+import {registerProductsWarehousesRoutes} from './routes/products-warehouses.ts';
 import { registerAnalyticsStatusRoutes } from './routes/analytics-status.ts';
 import { registerLocalAuthentication } from './auth/routes.ts';
 import type { LocalAuthenticationRuntime } from './auth/runtime.ts';
@@ -39,6 +40,7 @@ export async function buildApi(deps: ApiDependencies, runtime: { corsOrigins?: r
   registerTemplateRoutes(app, services);
   registerAnalyticsRoutes(app, services);
   registerSalesCommandCenterRoutes(app, services);
+  registerProductsWarehousesRoutes(app, services);
   registerAnalyticsStatusRoutes(app, services);
   registerDashboardRoutes(app, services);
   registerResultWindowRoutes(app, services);

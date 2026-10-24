@@ -1,0 +1,16 @@
+.products-warehouses, .products-warehouses > form { min-width: 0; }
+.products-warehouses > header { max-width: 64rem; margin-block-end: var(--space-4); }
+.products-warehouses h1 { margin-block: 0 var(--space-2); }
+.products-warehouses fieldset { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: end; margin-block: var(--space-3); border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: var(--space-3); min-width: 0; }
+.products-warehouses legend { font-weight: 600; }
+.products-warehouses label { display: grid; gap: var(--space-1); min-width: 0; flex: 1 1 11rem; }
+.products-warehouses input, .products-warehouses select { min-width: 0; max-width: 100%; min-height: 44px; }
+.products-warehouses fieldset > p { flex-basis: 100%; margin-block: var(--space-1); font-size: .9rem; }
+.products-report-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.products-report-actions button, .products-report-scope summary { min-height: 44px; }
+.products-report-section, .products-report-pending { margin-block: var(--space-6); border-block-start: 1px solid var(--border-default); padding-block-start: var(--space-3); }
+.products-report-reading { margin-block: var(--space-4); min-width: 0; }
+.products-report-reading > p, .products-report-provenance { font-size: .85rem; overflow-wrap: anywhere; }
+.products-report-scope { margin-block: var(--space-3); }
+.products-warehouses summary { cursor: pointer; padding-block: var(--space-2); }
+@media (max-width: 600px) { .products-warehouses fieldset { flex-direction: column; align-items: stretch; } .products-warehouses label { flex-basis: auto; } }

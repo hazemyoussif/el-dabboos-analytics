@@ -19,6 +19,7 @@ Web main.tsx mounts App, theme provider and workspace feature hooks. API server.
 | Builder and metric drop? | web hooks/useDashboardBuilder.ts; builder/model.ts, metric-drop.ts, grid-map.ts, DashboardGrid.tsx |
 | Templates? | application/templates.ts; API routes/templates.ts; web library/TemplateBrowser.tsx |
 | Sales Command Center? | application/sales-command-center.ts and sales-command-center-definition.ts; API routes/sales-command-center.ts; web reports/SalesCommandCenterPage.tsx; [implementation and inspection](../integration/sales-command-center.md) |
+| Products & Warehouses? | application/products-warehouses.ts and products-warehouses-definition.ts; API routes/products-warehouses.ts; web reports/ProductsWarehousesPage.tsx; [offline draft and remaining source work](../integration/products-warehouses.md) |
 | Saved dashboard lifecycle? | application/saved-dashboards.ts; data/dashboard-sqlite.ts; API routes/saved-dashboards.ts; web dashboard-lifecycle.ts and hooks/useDashboardProductFlow.ts |
 | Folders/preferences? | application/dashboard-library.ts; data/library-sqlite.ts; API routes/dashboard-library.ts; web library-model.ts and hooks/useDashboardLibrary.ts |
 | LLM transport / planner? | API providers/openai-compatible.ts; application/structured-planner.ts, generation-plan.ts, edit-plan.ts, visualization-intent.ts, provider-schema.ts, structured-diagnostics.ts; API structured-diagnostics.ts |

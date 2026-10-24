@@ -26,7 +26,7 @@ function subscribeRoute(notify:()=>void) {
 }
 /** Browser history is the destination source; loaded report data remains independent. */
 export function useWorkspaceRoute(){return parseWorkspaceRoute(useSyncExternalStore(subscribeRoute,pathname,()=>'/'));}
-export const managementRouteIds=['finance-control','data-status','customer-performance','sales-command-center'] as const;
+export const managementRouteIds=['finance-control','data-status','customer-performance','sales-command-center','products-warehouses'] as const;
 export function isManagementRoute(route:WorkspaceRoute,customerAvailable:boolean) {
- return route.kind==='report'&&(route.id==='sales-command-center'||route.id==='finance-control'||route.id==='data-status'||route.id==='customer-performance'&&!customerAvailable);
+ return route.kind==='report'&&(route.id==='products-warehouses'||route.id==='sales-command-center'||route.id==='finance-control'||route.id==='data-status'||route.id==='customer-performance'&&!customerAvailable);
 }

@@ -1,4 +1,5 @@
 import {SalesCommandCenterView} from './reports/SalesCommandCenterPage.tsx';
+import {ProductsWarehousesView} from './reports/ProductsWarehousesPage.tsx';
 import { BuildVersion } from './shell/BuildVersion.tsx';
 import { AnalystArea, AnalystBreadcrumb, AnalystNavigation } from './analyst/AnalystWorkspace.tsx';
 import { navigateWorkspace } from './workspace-route.ts';
@@ -92,7 +93,7 @@ export default function App({ authenticatedUser,onLogout,authenticationError }: 
       <div className="page-content">
         <WorkspaceContent page={adminPage} workspace={workspace}><>
         <AnalystArea workspace={workspace} onDashboard={(spec,result)=>{builder.reset();planner.reset();flow.close();workspace.openGenerated(spec,result);}}>
-        <ManagementArea salesCommandView={<SalesCommandCenterView workspace={workspace} active={management.page==='sales-command-center'}/>} statusView={<OperationalStatusPage operations={operations} locale={locale} profile={profile}/>} page={management.page} locale={locale} profile={profile} published={published} metadata={metadata} review={management.review} reviewLoading={management.loading} reviewError={management.error} onRetry={()=>void management.reload()}>
+        <ManagementArea productsWarehousesView={<ProductsWarehousesView workspace={workspace} active={management.page==='products-warehouses'}/>} salesCommandView={<SalesCommandCenterView workspace={workspace} active={management.page==='sales-command-center'}/>} statusView={<OperationalStatusPage operations={operations} locale={locale} profile={profile}/>} page={management.page} locale={locale} profile={profile} published={published} metadata={metadata} review={management.review} reviewLoading={management.loading} reviewError={management.error} onRetry={()=>void management.reload()}>
         <DashboardCreationPanel panel={flow.panel} locale={locale} profile={profile} templates={templates} prompt={planner.prompt} onPrompt={planner.setPrompt}
           activity={planner} loading={loading} canGenerate={permissions.includes('ai:generate')} onChooseAi={() => flow.enterCreation('create-ai')}
           onBlank={flow.blank} onChooseTemplate={() => flow.enterCreation('choose-template')} onTemplate={id => profile && flow.openTemplate(id, profile, locale)}
