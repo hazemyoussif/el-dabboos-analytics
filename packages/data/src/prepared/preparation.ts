@@ -3,7 +3,7 @@ import type {PoolClient} from 'pg';
 import type {PreparedBuildBounds,PreparedBuildScope,PreparedChunk,PreparedChunkResult,PreparedConfiguration} from './contracts.ts';
 import {buildPreparedWorkspace} from './workspace.ts';
 import {fingerprintPreparedCells,persistPreparedCells} from './materialization.ts';
-import {prepareBusinessDelta} from './business-delta.ts';
+import {prepareChangedCells} from './changed-cells.ts';
 
 /** The owning background transaction holds the existing tenant writer lock. No Odoo access. */
 export async function requiredPreparedChunks(client:PoolClient,scope:PreparedBuildScope,bounds:PreparedBuildBounds):Promise<PreparedChunk[]>{
@@ -26,7 +26,7 @@ export async function prepareChunk(client:PoolClient,scope:PreparedBuildScope,ch
  if(!signature)throw new Error('Prepared source signature missing');
  const reused=(await measurePreparedStep(scope,{step:'reuse'},()=>client.query<{data_id:string;statistics:Record<string,number>}>(`SELECT binding.data_id,binding.statistics FROM mart.prepared_bindings binding
   JOIN mart.prepared_revision_seals seal USING(tenant_id,revision_id) WHERE binding.tenant_id=$1 AND binding.input_fingerprint=$2 LIMIT 1`,[scope.tenantId,signature.fingerprint]))).rows[0];
- const delta=reused?undefined:await measurePreparedStep(scope,{step:'aggregation'},()=>prepareBusinessDelta(client,scope,config,bounds.maxCellsPerChunk));
+ const delta=reused?undefined:await measurePreparedStep(scope,{step:'aggregation'},()=>prepareChangedCells(client,scope,config,bounds.maxCellsPerChunk));
  if(!reused&&!delta)await buildPreparedWorkspace(client,scope,config,bounds);
  const materialized=reused?{dataId:reused.data_id,statistics:reused.statistics,rows:Object.values(reused.statistics).reduce((sum,count)=>sum+count,0)}:delta??await measurePreparedStep(scope,{step:'fingerprint'},()=>fingerprintPreparedCells(client,scope,config,bounds.maxCellsPerChunk));
  if(materialized.rows>bounds.maxCellsPerChunk)throw new Error('Prepared cell storage bound exceeded');

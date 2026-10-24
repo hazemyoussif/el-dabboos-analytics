@@ -13,10 +13,10 @@ import type {OperationalProgressObserver} from '../../src/operational/progress.t
 
 export const request={tenantId:'a',actorId:'synthetic-sync',kind:'sync' as const,trigger:'operator' as const};
 export const impact={through:'2026-12-31',movingAverageWindows:[],runningTotals:false,yearOverYear:false,contribution:false,snapshotDependencies:()=>[]};
-export async function syncFixture(prepared=false){
+export async function syncFixture(prepared=false,selectedMapping=mapping()){
  const db=await database();
  try {
-  await deploy(db.migrator,mapping());await bootstrapOperationalServing(db.migrator,'a');
+  await deploy(db.migrator,selectedMapping);await bootstrapOperationalServing(db.migrator,'a');
   const baseline=await tenantTransaction(db.ingestor,'a',client=>readBaseline(client,'a'),true);
   const initial=await acceptedState(db);
   if(prepared){

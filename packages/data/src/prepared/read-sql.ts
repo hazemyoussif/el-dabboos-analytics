@@ -7,6 +7,8 @@ import {dimensionLabelField} from '../postgres/display-labels.ts';
 import type {PreparedSegment} from './read-plan.ts';
 import type {PreparedFamily} from './contracts.ts';
 
+const retainedRowFamilies:ReadonlySet<PreparedFamily|undefined>=new Set<PreparedFamily>(['business','facts']);
+
 /** Runtime SQL reads only prepared cells. The caller pins and authorizes the published input. */
 export function preparedReduction(query:AnalyticsQuery,context:AnalyticsContext,segments:readonly PreparedSegment[],categorical:boolean,family?:PreparedFamily){
  if(query.aggregation&&query.aggregation!=='sum')throw new Error('Uncertified prepared aggregation');
@@ -23,7 +25,7 @@ export function preparedReduction(query:AnalyticsQuery,context:AnalyticsContext,
  SELECT ${key} key,cell.measure_id,cell.dimensions,${maximum?'cell.maximum':'cell.value'} value,cell.fact_count,
  cell.labels->>${labelOperand} label,${labelOperand}=ANY(cell.conflicting_labels) conflicting_label,cell.data_through
  FROM jsonb_to_recordset($2::jsonb) plan(key text,data_id text,grain_id text,time_grain text,"from" date,"to" date)
- ${family==='business'?'JOIN LATERAL mart.business_prepared_cells($1,plan.data_id,plan.grain_id,plan.time_grain,$3::text[],plan."from",plan."to") cell ON true':'JOIN mart.prepared_cells cell ON cell.tenant_id=$1 AND cell.data_id=plan.data_id AND cell.grain_id=plan.grain_id'}
+ ${retainedRowFamilies.has(family)?'JOIN LATERAL mart.business_prepared_cells($1,plan.data_id,plan.grain_id,plan.time_grain,$3::text[],plan."from",plan."to") cell ON true':'JOIN mart.prepared_cells cell ON cell.tenant_id=$1 AND cell.data_id=plan.data_id AND cell.grain_id=plan.grain_id'}
  AND cell.time_grain=plan.time_grain AND cell.business_date BETWEEN plan."from" AND plan."to"
  WHERE cell.measure_id=ANY($3::text[]) ${filters.length?'AND '+filters.join(' AND '):''}
  ) SELECT base.key,${value} value${components},${unsafe} unsafe,${invalid} invalid,

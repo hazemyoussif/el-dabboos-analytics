@@ -47,3 +47,21 @@ The shared systemd service uses [OnFailure](https://www.freedesktop.org/software
 ## Continuation timer accuracy
 
 The five-second post-completion interval uses `AccuracySec=1s`. systemd otherwise defaults to a one-minute coalescing window, which the company host confirmed and which introduced unnecessary delays between saved units. This changes only scheduling accuracy, not the per-unit budget, writer locks, source checks or service deadline. See the [systemd timer documentation](https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html#AccuracySec=).
+
+## Pending ordinary prepared-update correction — 24 October 2026
+
+Company jobs and all three timers were stopped at the owner's request. Migration 094 and the shared `prepared/changed-cells.ts` builder are local implementation only; they have been verified on isolated synthetic PostgreSQL 18.6, but have not been deployed or measured on the company database. No additional job, persistent table or publication state is added.
+
+Ordinary fact preparation uses the same replacement-key/cell storage already used by Command preparation. It compares the old and new base populations projected into each configured group. Only changes to values, dates, eligibility or that group's assignments require numeric reduction. A label-only difference retains the accepted numeric value, count, extrema and data-through date and calculates that group's labels. Changed values or assignments replace both old and new groups; an empty replacement removes the old output. All unrelated prepared cells remain inherited.
+
+The existing reader and exact binding guard are extended to ordinary facts. A complete independently derived replacement-key set and exact replacement contents are still required, with matching sealed parent, tenant, source configuration and logical row bounds. The accepted parent remains immutable. Snapshot selection remains latest-per-entity and rejects ambiguous observations; cutoff changes compare the old and new populations. Unchanged output groups can reuse their accepted dataset and its actual observation date, even when the containing monthly base receives a new identifier.
+
+This correction narrows prepared writes. Ordinary source discovery, independent source controls and monthly aggregate/drill validation remain in the existing flow. Initial preparation without a compatible accepted parent retains the existing full initialization path. No company job, source read, deployment or rehearsal has been started for this correction. The owner subsequently approved focused synthetic verification after coding was complete.
+
+### Approved verification for migration 094
+
+Twenty focused PostgreSQL cases passed: six new cases covering label-only numeric preservation, affected-group/period reuse, successive value/date/assignment corrections, cross-month movement and deletion, detail/observation-only reuse, snapshot selection and duplicate rejection; plus fourteen existing Command replacement-key, rollback, checkpoint/privacy and source-free resume cases. New cases compare the effective prepared output with the independent complete canonical calculation and runtime base-reader results, and exercise dimension options and tenant isolation. Previously accepted cells are asserted byte-for-byte unchanged.
+
+The combined run passed eighteen cases. The remaining two synthetic inputs were corrected (a duplicate transaction-label property and a missing declared dimension), then those two cases passed separately without further production-code changes. Earlier migration verification exposed a CASE syntax error and the existing parent guard's Business-only restriction; both were corrected before the combined run. This is correctness evidence on small synthetic populations, not a company throughput or deployment claim.
+
+Changed-file ESLint, root TypeScript, architecture, quality and diff gates pass. No full suite, GitHub CI or local staging rehearsal was run. The temporary synthetic PostgreSQL service was removed after verification. Company schedules remain paused for owner review.
