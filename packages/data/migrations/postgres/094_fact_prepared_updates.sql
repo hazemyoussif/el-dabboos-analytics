@@ -487,3 +487,60 @@ CREATE OR REPLACE FUNCTION mart.guard_business_prepared_origin() RETURNS trigger
  THEN RAISE EXCEPTION 'Business prepared delta requires a compatible sealed publication parent'; END IF;
  RETURN NEW;
  END $$;
+
+-- Keep the independent full calculation, selecting ordinary event partitions
+-- before reading their facts. Snapshot history and other families are unchanged.
+CREATE OR REPLACE FUNCTION mart.prepared_expected_cells(selected_tenant text,selected_revision text,config jsonb)
+RETURNS TABLE(time_grain text,grain_id text,business_date date,measure_id text,dimensions jsonb,value numeric,fact_count bigint,minimum numeric,maximum numeric,data_through date,labels jsonb,conflicting_labels text[])
+LANGUAGE sql STABLE AS $$
+ WITH source(measure_id,kind,business_day,entity_id,amount,dimensions,labels,item_count) AS MATERIALIZED (
+  SELECT fact.payload->>'measureId',fact.payload->>'kind',(fact.payload->>'businessDate')::date,
+   fact.payload->>'entityId',(fact.payload->>'value')::numeric,fact.payload->'dimensions',
+   coalesce(fact.payload->'displayLabels',fact.payload->'transaction'->'labels','{}'::jsonb),1::bigint
+  FROM mart.analytics_serving_members member JOIN mart.analytics_partition_facts link USING(tenant_id,partition_id)
+  JOIN mart.analytics_fact_revisions fact ON fact.tenant_id=link.tenant_id AND fact.fact_key=link.fact_key AND fact.revision_id=link.revision_id
+  WHERE config->>'family'='facts' AND config->>'kind'='event'
+   AND member.tenant_id=selected_tenant AND member.revision_id=selected_revision AND member.family='facts'
+   AND member.month BETWEEN date_trunc('month',(config->>'from')::date)::date AND date_trunc('month',(config->>'through')::date)::date
+   AND fact.payload->>'kind'='event' AND (fact.payload->>'businessDate')::date BETWEEN (config->>'from')::date AND (config->>'through')::date
+  UNION ALL SELECT * FROM mart.prepared_input_rows(selected_tenant,selected_revision,config->>'family') fact
+  WHERE NOT (config->>'family'='facts' AND config->>'kind'='event')
+   AND fact.kind=config->>'kind' AND fact.business_day<=(config->>'through')::date
+   AND (fact.kind='snapshot' OR fact.business_day>=(config->>'from')::date)
+ ),observations AS (
+  SELECT DISTINCT ON(measure_id) * FROM mart.prepared_snapshot_observations(selected_tenant,selected_revision,config->>'family')
+  WHERE config->>'kind'='snapshot' AND business_day<=(config->>'through')::date ORDER BY measure_id,business_day DESC
+ ),latest AS (
+  SELECT DISTINCT ON(measure_id,entity_id) * FROM source WHERE kind='snapshot' AND config->>'snapshotPopulation'='delta'
+  ORDER BY measure_id,entity_id,business_day DESC
+ ),population AS (
+  SELECT * FROM source WHERE kind='event'
+  UNION ALL SELECT * FROM latest
+  UNION ALL SELECT source.* FROM source JOIN observations USING(measure_id,business_day)
+   WHERE source.kind='snapshot' AND config->>'snapshotPopulation'='complete'
+  UNION ALL SELECT measure_id,'snapshot',business_day,NULL,0::numeric,'{}'::jsonb,'{}'::jsonb,0::bigint
+   FROM observations WHERE expected_count=0 AND expected_value=0 AND config->>'snapshotPopulation'='complete'
+ ),expanded AS MATERIALIZED (
+  SELECT bucket.time_grain,grain->>'id' grain_id,
+   CASE bucket.time_grain WHEN 'monthly' THEN date_trunc('month',fact.business_day)::date WHEN 'cutoff' THEN (config->>'through')::date ELSE fact.business_day END business_date,
+   fact.measure_id,coalesce((SELECT jsonb_object_agg(attribute.key,attribute.value) FROM jsonb_each(fact.dimensions) attribute WHERE grain->'dimensions' ? attribute.key),'{}'::jsonb) dimensions,
+   fact.amount,fact.item_count,fact.business_day data_through,
+   coalesce((SELECT jsonb_object_agg(label.key,label.value) FROM jsonb_each(fact.labels) label WHERE EXISTS(
+    SELECT 1 FROM jsonb_array_elements_text(grain->'dimensions') dimension WHERE label.key=CASE dimension WHEN 'business_line' THEN 'businessLine' ELSE dimension END)),'{}'::jsonb) labels
+  FROM population fact CROSS JOIN jsonb_array_elements(config->'grains') grain
+  CROSS JOIN LATERAL (SELECT 'cutoff'::text time_grain WHERE config->>'kind'='snapshot'
+   UNION ALL SELECT 'daily' WHERE config->>'kind'='event' UNION ALL SELECT 'monthly' WHERE config->>'kind'='event') bucket
+ ),reduced AS (
+  SELECT time_grain,grain_id,business_date,measure_id,dimensions,sum(amount) value,sum(item_count)::bigint fact_count,min(amount) FILTER(WHERE item_count>0) minimum,max(amount) FILTER(WHERE item_count>0) maximum,max(data_through) data_through
+  FROM expanded GROUP BY 1,2,3,4,5
+ ),label_values AS (
+  SELECT time_grain,grain_id,business_date,measure_id,dimensions,label.key,min(label.value) label,count(DISTINCT label.value) choices
+  FROM expanded CROSS JOIN LATERAL jsonb_each_text(labels) label GROUP BY 1,2,3,4,5,6
+ ),label_groups AS (
+  SELECT time_grain,grain_id,business_date,measure_id,dimensions,
+   coalesce(jsonb_object_agg(key,label) FILTER(WHERE choices=1),'{}'::jsonb) labels,
+   coalesce(array_agg(key ORDER BY key) FILTER(WHERE choices>1),'{}'::text[]) conflicting_labels
+  FROM label_values GROUP BY 1,2,3,4,5
+ ) SELECT reduced.*,coalesce(label_groups.labels,'{}'::jsonb),coalesce(label_groups.conflicting_labels,'{}'::text[])
+ FROM reduced LEFT JOIN label_groups USING(time_grain,grain_id,business_date,measure_id,dimensions)
+$$;

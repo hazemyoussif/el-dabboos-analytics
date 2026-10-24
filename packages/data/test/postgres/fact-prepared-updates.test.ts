@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
 import {enabled} from './support.ts';
 import {acceptedState,syntheticFact} from './sync-fixture.ts';
 import {preparedFactFixture,binding,assertCanonical,revise,context,january} from './fact-prepared-fixture.ts';
@@ -117,5 +118,36 @@ test('mixed value and label corrections retain exact counts, extrema and label c
   const two=f.state.population.find(row=>row.sourceRecordId==='two')!;
   assert.equal((await f.change([revise(two,{status:'tombstone'})])).status,'passed');
   await assertCanonical(f);
+ }finally{await f.db.close();}
+});
+
+
+test('period-scoped canonical comparison matches the original for event ranges and complete snapshot history',{skip:!enabled},async()=>{
+ const balance=(id:string,day:string)=>syntheticFact(id,day,{measureId:'outstanding_amount',kind:'snapshot',entityId:'entity-a',
+  dimensions:{branch:'cairo',customer:'division-a'},displayLabels:{customer:'division-a'}});
+ const f=await preparedFactFixture([balance('january-balance','2026-01-10'),balance('february-balance','2026-02-10')]);try{
+  const original=await readFile(new URL('../../migrations/postgres/053_prepared_serving.sql',import.meta.url),'utf8');
+  const definition=original.slice(original.indexOf('CREATE FUNCTION mart.prepared_expected_cells('));
+  const legacy=definition.slice(0,definition.indexOf('\n$$;')+4).replace('mart.prepared_expected_cells','mart.synthetic_original_expected_cells');
+  await f.db.migrator.query(legacy+`; REVOKE ALL ON FUNCTION mart.synthetic_original_expected_cells(text,text,jsonb) FROM PUBLIC;
+   GRANT EXECUTE ON FUNCTION mart.synthetic_original_expected_cells(text,text,jsonb) TO dabboos_ingestor;`);
+  await tenantTransaction(f.db.ingestor,'a',async client=>{
+   const rows=(await client.query(`SELECT binding.revision_id,dataset.configuration FROM mart.analytics_trusted_serving trusted
+    JOIN mart.prepared_bindings binding USING(tenant_id,revision_id) JOIN mart.prepared_datasets dataset USING(tenant_id,data_id)
+    WHERE trusted.tenant_id='a' AND binding.family='facts'`)).rows;
+   const event=rows.find(row=>row.configuration.kind==='event');
+   const checks=[...rows,{...event,configuration:{...event.configuration,from:'2026-01-10',through:'2026-02-15'}}];
+   for(const row of checks){
+    const result=(await client.query(`WITH original AS MATERIALIZED (SELECT * FROM mart.synthetic_original_expected_cells('a',$1,$2)),
+     scoped AS MATERIALIZED (SELECT * FROM mart.prepared_expected_cells('a',$1,$2)),differences AS (
+      (SELECT * FROM original EXCEPT ALL SELECT * FROM scoped) UNION ALL (SELECT * FROM scoped EXCEPT ALL SELECT * FROM original))
+     SELECT (SELECT count(*) FROM original)::int population,(SELECT count(*) FROM differences)::int mismatches`,[row.revision_id,row.configuration])).rows[0];
+    assert.ok(result.population>0);assert.equal(result.mismatches,0);
+   }
+  },true);
+  const current=await binding(f,'2026-01-01');
+  assert.equal((await tenantTransaction(f.db.ingestor,'b',client=>client.query(`SELECT * FROM mart.prepared_expected_cells('a',$1,$2)`,
+   [current.revision_id,current.configuration]),true)).rowCount,0);
+  assert.equal((await f.db.runtime.query(`SELECT has_function_privilege(current_user,'mart.prepared_expected_cells(text,text,jsonb)','EXECUTE') allowed`)).rows[0].allowed,false);
  }finally{await f.db.close();}
 });
