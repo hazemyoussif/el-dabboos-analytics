@@ -1,5 +1,10 @@
 # Independent Command preparation
 
+## Current status — 24 October 2026
+
+The comparison correction is complete as code `df473e6` on `codex/bounded-ingestion-overlap`. Fourteen focused synthetic PostgreSQL cases passed. The final company check under the actual restricted identity passed exact full-output equality for the selected December period in **9.458 seconds**; its write, row-count and exact-binding steps also passed. The entire diagnostic transaction rolled back. Migration 094 and these application changes are **not deployed**; the company API remains on `f8feeee`. All three schedules remain paused. The owner requested the comparison correction only, so no sync batching change, queue restart or deployment was performed. Completing the saved queue and publishing remaining required Command coverage remain outstanding.
+
+
 Code implementation with focused synthetic verification. Company operational evidence is recorded separately below.
 
 Ordinary operational sync must never initialize Command recipes, enumerate historical Business members for initialization, or wait for Command background preparation. It retains the existing operational capture/reconciliation/cursor lifecycle. Business observations remain independent; an operational cursor advance is not Business freshness evidence.
@@ -101,3 +106,7 @@ At the owner's request, only nonexecuting `EXPLAIN` was run for the final compar
 The owner authorized finishing the comparison correction only and declined a batching change. The independent `prepared_expected_cells` calculation now selects ordinary event membership months before reading linked facts, retaining the original projection, reductions, label conflicts, duplicate multiplicity and all snapshot history. Other families retain their original input path. No sync batching or scheduling behavior changed.
 
 Fourteen focused PostgreSQL cases passed in one run, with no failures or skips. The new equivalence case compares the scoped calculation with the original migration-053 calculation for individual months, a partial range spanning two months, and historical/latest snapshot observations, and checks tenant isolation and runtime EXECUTE denial. Existing update, count, deletion, rollback and Business regressions also passed. Changed-file ESLint, root TypeScript, architecture, quality and diff gates passed. Company comparison remains pending; deployment and timers remain paused.
+
+### Successful final company comparison
+
+The saved company diagnostic completed with `exact_base_comparison = true`, explicit `ROLLBACK` and `CHECK_EXIT=0`. Its signature took 16.446 seconds, key build 19.021 seconds, 24,387 replacement writes 25.355 seconds, row statistics 0.333 seconds, exact binding 52.692 seconds and independent complete-output comparison 9.458 seconds. The comparison used December's membership before fetching raw operands; no timeout was raised or increased. Safe output is retained on the company host at `/tmp/el-dabboos-scoped-comparison.log`. No Odoo access, accepted-data change, publication, deployment or timer restart occurred. This establishes the selected period's exactness and bounded execution; it does not establish completion of the remaining saved queue.
