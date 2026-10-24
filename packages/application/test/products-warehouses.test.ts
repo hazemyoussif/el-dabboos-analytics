@@ -36,6 +36,20 @@ test('month-to-date default uses the tenant clock and never hardcodes a year',as
  const output=await report({execute:async query=>result(query)}).execute({},actor,profile);
  assert.deepEqual(output.metadata.selectedRange,{from:'2026-04-01',to:'2026-04-01'});
 });
+test('certified defaults use the latest existing coverage while explicit sales dates remain exact',async()=>{
+ const capabilities=async(context:AnalyticsContext):Promise<PublishedAnalyticsCapabilities>=>({...syntheticCapabilities(context),mode:'certified',releases:syntheticCapabilities(context).releases.map(release=>({...release,period:{from:'2026-03-01',to:'2026-03-15'}}))});
+ const queries:AnalyticsQuery[]=[];
+ const service=report({async execute(query){queries.push(query);return result(query);}},capabilities);
+ const output=await service.execute({},actor,profile);
+ assert.deepEqual(output.metadata.selectedRange,{from:'2026-03-01',to:'2026-03-15'});
+ assert.equal(output.metadata.stockRequestedAsOf,'2026-03-15');
+ assert.equal(queries.length,6);assert.ok(output.readings.every(reading=>reading.execution));
+ for(const query of queries)assert.deepEqual(query.dateRange,semanticCatalog[query.metric].semantics.kind==='snapshot'?{from:'2026-03-15',to:'2026-03-15'}:{from:'2026-03-01',to:'2026-03-15'});
+ const explicit={from:'2026-04-01',to:'2026-04-01'};
+ const unavailable=await service.execute({dateRange:explicit},actor,profile);
+ assert.deepEqual(unavailable.metadata.selectedRange,explicit);
+ assert.ok(unavailable.readings.filter(reading=>reading.section==='sales').every(reading=>!reading.execution&&reading.issues.some(issue=>issue.startsWith('period:'))));
+});
 test('unpublished combinations and unsupported enforced dimensions cannot trigger reads',async()=>{
  let reads=0;
  const capabilities=async(context:AnalyticsContext):Promise<PublishedAnalyticsCapabilities>=>({tenantId:context.tenantId,mode:'certified',releases:[{datasetId:'fixture',sourceId:'synthetic',mappingId:'fixture',mappingVersion:'1',certificationReference:'SYNTHETIC ONLY',period:{from:'2026-04-01',to:'2026-04-30'},capabilities:[{metric:'internal_stock_quantity',summary:false,dimensions:['product'],analyses:[]}]}]});

@@ -1,9 +1,10 @@
-# Products & Warehouses — offline implementation draft
+# Products & Warehouses
 
-Date: 24 October 2026. Status: **code only, unverified, not deployed**.
-The owner declined tests, static checks and builds for this increment. No source
-connection, source job, preparation, publication, timer change or company deployment
-was attempted. This is not acceptance evidence or a source-parity claim.
+Updated: 25 October 2026. The owner subsequently authorized verification, push and
+deployment. Initial local gates passed (1,005 unit and 451 PostgreSQL tests, zero
+skips). The first company browser check exposed a default-date mismatch with
+existing published coverage; a regression test now protects coverage-based defaults.
+See the QA handoff for exact release verification. No source-parity claim is made.
 
 ## Independent dashboard
 
@@ -40,8 +41,9 @@ The code base for this increment is `298f1e3`; its unrelated files are preserved
 Every reading is an independent canonical product table. No incompatible product
 units are added into a headline total. Quantity and money remain separate tables.
 The existing renderer supplies value formatting, definitions, result-window search
-and paging, drill-through and Excel export of loaded rows. These integrations have
-not been exercised for this new report.
+and paging, drill-through and Excel export of loaded rows. Paging, search and metric
+definitions were exercised in the synthetic browser fixture; manual Excel download
+and full keyboard traversal remain separate pending checks.
 
 Product, product-category and brand filters apply to both sections. Warehouse
 selection applies only to inventory. Customer, invoice salesperson and invoice
@@ -49,8 +51,11 @@ governorate filters apply only to invoice sales; the UI explicitly distinguishes
 them from current customer-owner/address attribution. Unsupported user or enforced
 policy dimensions never disappear from a query to make it executable.
 
-The sales period defaults to tenant-local month-to-date and can be changed. Stock
-requests the latest accepted snapshot at or before tenant-local today; changing
+The preferred sales period is tenant-local month-to-date. When that is not
+published, the default is the latest available published month or partial month,
+shown explicitly in the date controls. Explicit user dates are never silently
+clipped. Stock defaults to the latest published cutoff at or before tenant-local
+today; changing
 sales dates never claims to recreate historical inventory. Each table retains its
 own actual snapshot/source-as-of/data-through and Finance-review evidence. An old
 inventory cutoff is called out. Refresh rereads accepted analytics only.

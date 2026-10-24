@@ -2,6 +2,17 @@
 
 ## Verification authorized after the code-only checkpoint
 
+25 October follow-up: the first live browser check correctly refused today's
+unpublished period. Runtime publication metadata confirms existing product sales
+and stock coverage through 15 October (distinct from source observation time).
+Defaults now choose the latest published stock cutoff and sales month/partial
+month, without clipping an explicit sales range. The regression case passes;
+full unit rerun: 1,006 passed, zero failures/skips. Lint, architecture, quality,
+typecheck and diff gates pass after this fix. Domain/data and dependencies remain
+unchanged; the prior 451-test PostgreSQL result applies to those unchanged layers.
+Native browser date editing was not conclusively verified; API/application tests
+cover explicit date preservation and rejection outside published coverage.
+
 The owner subsequently requested verification and deployment, then explicitly
 requested pushing the report and confirming reads of existing data. The older
 code-only checkpoint below records the original state, superseded by this section.

@@ -9,6 +9,7 @@ import type {DashboardExecutionOptions} from './query-execution.ts';
 import {publishedCatalog} from './published-analytics.ts';
 import {resolveRelativeDatePreset} from './relative-date.ts';
 import {productReportProductDimensions,productReportReadings,productReportSalesDimensions} from './products-warehouses-definition.ts';
+import {productReportDefaultPeriod} from './products-warehouses-periods.ts';
 import type {ProductReportReading} from './products-warehouses-definition.ts';
 
 export interface ProductsWarehousesInput {dateRange?:DateRange;productFilters?:AnalyticsFilter[];salesFilters?:AnalyticsFilter[];warehouse?:string}
@@ -45,9 +46,10 @@ export class ProductsWarehousesReport {
   this.dependencies.policy.authorize('dashboard:view',actor);this.dependencies.policy.authorize('analytics:query',actor);
   if(profile.id!==actor.tenant.tenantId)throw new AuthorizationError('TENANT_FORBIDDEN','Report profile belongs to another workspace.');
   const now=this.dependencies.clock?.()??new Date(),context=analyticsContext(actor);
-  const stock=resolveRelativeDatePreset('today',profile.timeZone,now),sales=input.dateRange??resolveRelativeDatePreset('current_month',profile.timeZone,now);
   return consistentAnalyticsExecution(this.dependencies.repository,context,this.dependencies.options??{},async reader=>{
    const published=publishedCatalog(actor,await this.dependencies.published(context)).published;
+   const stock=productReportDefaultPeriod('inventory',resolveRelativeDatePreset('today',profile.timeZone,now),published);
+   const sales=input.dateRange??productReportDefaultPeriod('sales',resolveRelativeDatePreset('current_month',profile.timeZone,now),published);
    const scope:ReadingScope={actor,context,profile,now,published,reader};
    const jobs=productReportReadings.map(definition=>this.executeReading(definition,input,definition.section==='inventory'?stock:sales,scope));
    const settled=await Promise.allSettled(jobs),failure=settled.find(entry=>entry.status==='rejected');
