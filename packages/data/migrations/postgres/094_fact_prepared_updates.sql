@@ -127,21 +127,40 @@ GRANT EXECUTE ON FUNCTION mart.fact_prepared_updates(text,text,jsonb) TO dabboos
 -- Join the recorded replacement keys before reading existing physical cells.
 -- This is an ingestor-only keyed read of the existing prepared ancestry.
 CREATE FUNCTION mart.prepared_replaced_cells(selected_tenant text,selected_parent text,selected_data text)
- RETURNS SETOF mart.prepared_cells LANGUAGE sql STABLE AS $$
- WITH RECURSIVE lineage(data_id,depth) AS (
-  SELECT selected_parent,0 UNION ALL SELECT origin.base_data_id,lineage.depth+1 FROM lineage
-  JOIN mart.business_prepared_origins origin ON origin.tenant_id=selected_tenant AND origin.data_id=lineage.data_id
- ) SELECT cell.* FROM lineage JOIN mart.prepared_cells cell ON cell.tenant_id=selected_tenant AND cell.data_id=lineage.data_id
- JOIN mart.business_prepared_keys requested ON requested.tenant_id=selected_tenant AND requested.data_id=selected_data
-  AND requested.time_grain=cell.time_grain AND requested.grain_id=cell.grain_id AND requested.measure_id=cell.measure_id
-  AND requested.dimension_key=cell.dimension_key AND requested.dimensions=cell.dimensions
-  AND (cell.time_grain='cutoff' OR requested.business_date=cell.business_date)
- WHERE NOT EXISTS(SELECT 1 FROM lineage newer JOIN mart.business_prepared_keys replaced
-  ON replaced.tenant_id=selected_tenant AND replaced.data_id=newer.data_id
-  WHERE newer.depth<lineage.depth AND replaced.time_grain=cell.time_grain AND replaced.grain_id=cell.grain_id
-  AND replaced.measure_id=cell.measure_id AND replaced.dimension_key=cell.dimension_key AND replaced.dimensions=cell.dimensions
-  AND (cell.time_grain='cutoff' OR replaced.business_date=cell.business_date))
-$$;
+ RETURNS SETOF mart.prepared_cells LANGUAGE plpgsql STABLE AS $$
+DECLARE source_data text;source_cutoff date;newer_data text[]:='{}'::text[];
+BEGIN
+ -- Bind one ancestor ID before opening its cells. Joining a recursive list to
+ -- the full cell table lets the planner choose a scan of every dataset.
+ FOR source_data IN
+  WITH RECURSIVE lineage(data_id,depth) AS (
+   SELECT selected_parent,0 UNION ALL SELECT origin.base_data_id,lineage.depth+1 FROM lineage
+   JOIN mart.business_prepared_origins origin ON origin.tenant_id=selected_tenant AND origin.data_id=lineage.data_id
+  ) SELECT data_id FROM lineage ORDER BY depth
+ LOOP
+  SELECT (configuration->>'through')::date INTO STRICT source_cutoff FROM mart.prepared_datasets
+   WHERE tenant_id=selected_tenant AND data_id=source_data;
+  RETURN QUERY WITH matched AS MATERIALIZED (
+   SELECT cell.* FROM mart.business_prepared_keys requested
+   JOIN mart.prepared_cells cell ON cell.tenant_id=selected_tenant AND cell.data_id=source_data
+    AND requested.time_grain=cell.time_grain AND requested.grain_id=cell.grain_id
+    AND requested.business_date=cell.business_date AND requested.measure_id=cell.measure_id
+    AND requested.dimension_key=cell.dimension_key AND requested.dimensions=cell.dimensions
+   WHERE requested.tenant_id=selected_tenant AND requested.data_id=selected_data AND requested.time_grain<>'cutoff'
+   UNION ALL SELECT cell.* FROM mart.business_prepared_keys requested
+   JOIN mart.prepared_cells cell ON cell.tenant_id=selected_tenant AND cell.data_id=source_data
+    AND cell.time_grain='cutoff' AND cell.business_date=source_cutoff AND requested.grain_id=cell.grain_id
+    AND requested.measure_id=cell.measure_id AND requested.dimension_key=cell.dimension_key AND requested.dimensions=cell.dimensions
+   WHERE requested.tenant_id=selected_tenant AND requested.data_id=selected_data AND requested.time_grain='cutoff'
+  ) SELECT cell.* FROM matched cell
+  WHERE NOT EXISTS(SELECT 1 FROM mart.business_prepared_keys replaced
+   WHERE replaced.tenant_id=selected_tenant AND replaced.data_id=ANY(newer_data)
+   AND replaced.time_grain=cell.time_grain AND replaced.grain_id=cell.grain_id
+   AND replaced.measure_id=cell.measure_id AND replaced.dimension_key=cell.dimension_key AND replaced.dimensions=cell.dimensions
+   AND (cell.time_grain='cutoff' OR replaced.business_date=cell.business_date));
+  newer_data:=array_append(newer_data,source_data);
+ END LOOP;
+END $$;
 REVOKE ALL ON FUNCTION mart.prepared_replaced_cells(text,text,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION mart.prepared_replaced_cells(text,text,text) TO dabboos_ingestor;
 
@@ -167,26 +186,35 @@ CREATE FUNCTION mart.fact_prepared_replacements(selected_tenant text,selected_re
    ON projected.measure_id=updates.measure_id AND projected.grain_id=updates.grain_id AND projected.dimensions=updates.dimensions
    AND updates.business_date=CASE updates.time_grain WHEN 'cutoff' THEN (config->>'through')::date
     WHEN 'monthly' THEN date_trunc('month',projected.business_day)::date ELSE projected.business_day END
- ),numbers AS (
-  SELECT time_grain,grain_id,business_date,measure_id,dimensions,dimension_key,
-   sum(amount) value,count(*)::bigint fact_count,min(amount) minimum,max(amount) maximum,max(business_day) data_through
-  FROM contributors WHERE numeric_changed GROUP BY 1,2,3,4,5,6
-  UNION ALL SELECT prior.time_grain,prior.grain_id,updates.business_date,prior.measure_id,prior.dimensions,prior.dimension_key,
-   prior.value,prior.fact_count,prior.minimum,prior.maximum,prior.data_through
-  FROM mart.fact_prepared_parent(selected_tenant,selected_revision,config) parent
+ ),prior_cells AS MATERIALIZED (
+  SELECT prior.* FROM mart.fact_prepared_parent(selected_tenant,selected_revision,config) parent
   CROSS JOIN LATERAL mart.prepared_replaced_cells(selected_tenant,parent.data_id,selected_data) prior
-  JOIN updates ON NOT updates.numeric_changed AND updates.time_grain=prior.time_grain AND updates.grain_id=prior.grain_id
-   AND updates.measure_id=prior.measure_id AND updates.dimension_key=prior.dimension_key AND updates.dimensions=prior.dimensions
-   AND (prior.time_grain='cutoff' OR prior.business_date=updates.business_date)
- ),label_sets AS (
-  SELECT time_grain,grain_id,business_date,measure_id,dimension_key,array_agg(DISTINCT labels) labels
-  FROM contributors GROUP BY 1,2,3,4,5
- ) SELECT numbers.*,coalesce(label_groups.labels,'{}'::jsonb),coalesce(label_groups.conflicts,'{}'::text[])
- FROM numbers JOIN label_sets USING(time_grain,grain_id,business_date,measure_id,dimension_key)
+ ),operands AS (
+  SELECT time_grain,grain_id,business_date,measure_id,dimensions,dimension_key,
+   CASE WHEN numeric_changed THEN amount END value,CASE WHEN numeric_changed THEN 1::bigint END fact_count,
+   CASE WHEN numeric_changed THEN amount END minimum,CASE WHEN numeric_changed THEN amount END maximum,
+   CASE WHEN numeric_changed THEN business_day END data_through,labels
+  FROM contributors
+  UNION ALL SELECT prior.time_grain,prior.grain_id,updates.business_date,prior.measure_id,prior.dimensions,prior.dimension_key,
+   prior.value,prior.fact_count,prior.minimum,prior.maximum,prior.data_through,NULL::jsonb
+  FROM prior_cells prior JOIN updates ON NOT updates.numeric_changed AND updates.time_grain=prior.time_grain
+   AND updates.grain_id=prior.grain_id AND updates.measure_id=prior.measure_id AND updates.dimension_key=prior.dimension_key
+   AND updates.dimensions=prior.dimensions AND (prior.time_grain='cutoff' OR prior.business_date=updates.business_date)
+ ),groups AS MATERIALIZED (
+  -- Reduce numbers and labels together. A join between separately reduced
+  -- outputs can rescan the inherited numbers once for every label group.
+  SELECT time_grain,grain_id,business_date,measure_id,dimensions,dimension_key,
+   sum(value) value,sum(fact_count)::bigint fact_count,min(minimum) minimum,max(maximum) maximum,max(data_through) data_through,
+   array_agg(DISTINCT labels) FILTER(WHERE labels IS NOT NULL) label_sets
+  FROM operands GROUP BY 1,2,3,4,5,6 HAVING sum(fact_count)>0 AND count(labels)>0
+ ) SELECT groups.time_grain,groups.grain_id,groups.business_date,groups.measure_id,groups.dimensions,groups.dimension_key,
+  groups.value,groups.fact_count,groups.minimum,groups.maximum,groups.data_through,
+  coalesce(label_groups.labels,'{}'::jsonb),coalesce(label_groups.conflicts,'{}'::text[])
+ FROM groups
  CROSS JOIN LATERAL (
   SELECT jsonb_object_agg(key,label) FILTER(WHERE choices=1) labels,array_agg(key ORDER BY key) FILTER(WHERE choices>1) conflicts
   FROM (SELECT attribute.key,min(attribute.value) label,count(DISTINCT attribute.value) choices
-   FROM unnest(label_sets.labels) label_set(labels) CROSS JOIN LATERAL jsonb_each_text(label_set.labels) attribute
+   FROM unnest(groups.label_sets) label_set(labels) CROSS JOIN LATERAL jsonb_each_text(label_set.labels) attribute
    GROUP BY attribute.key) fields
  ) label_groups
 $$;

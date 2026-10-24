@@ -100,3 +100,22 @@ test('ambiguous snapshots cannot publish or advance accepted data',{skip:!enable
   assert.deepEqual(await acceptedState(f.db),before);
  }finally{await f.db.close();}
 });
+
+test('mixed value and label corrections retain exact counts, extrema and label conflicts across inherited updates',{skip:!enabled},async()=>{
+ const f=await preparedFactFixture();try{
+  const one=f.state.population.find(row=>row.sourceRecordId==='one')!;
+  const three=f.state.population.find(row=>row.sourceRecordId==='three')!;
+  assert.equal((await f.change([revise(one,{value:'15.000000',displayLabels:{customer:'RENAMED'}}),
+   revise(three,{displayLabels:{customer:'OTHER'}})])).status,'passed');
+  await assertCanonical(f);
+  const current=await binding(f,'2026-01-01');
+  const grouped=(await f.db.admin.query(`SELECT value,fact_count,minimum,maximum,conflicting_labels FROM mart.prepared_cells
+   WHERE data_id=$1 AND time_grain='monthly' AND grain_id='["customer"]' AND dimensions='{"customer":"division-a"}'`,[current.data_id])).rows[0];
+  assert.equal(Number(grouped.value),35);assert.equal(Number(grouped.fact_count),2);
+  assert.equal(Number(grouped.minimum),15);assert.equal(Number(grouped.maximum),20);
+  assert.deepEqual(grouped.conflicting_labels,['customer']);
+  const two=f.state.population.find(row=>row.sourceRecordId==='two')!;
+  assert.equal((await f.change([revise(two,{status:'tombstone'})])).status,'passed');
+  await assertCanonical(f);
+ }finally{await f.db.close();}
+});
