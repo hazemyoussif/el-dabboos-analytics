@@ -33,6 +33,7 @@ test('Business correction/deletion stores only replacements, preserves baseline 
   assert.equal((await db.admin.query('SELECT count(*)::int count FROM mart.business_prepared_origins WHERE revision_id=$1',[changed.revisionId])).rows[0].count,1);
   const deleted=await exposeBusinessDeltaMonth(db.ingestor,deltaSource(source,'2026-10-20T11:00:00.000Z',[{object:'command_invoice',id:'10',facts:[]}]));
   assert.equal(deleted.facts,0);
+  await assertPreparedCounts(db);
   assert.equal((await prepared.execute(query,deltaContext)).rows[0]?.value,1);
   assert.deepEqual((await prepared.execute(query,deltaContext)).rows,(await native.execute(query,deltaContext)).rows);
   const beforeNoop=await storedCounts(db),unchanged=added.map(fact=>observedFact(fact,'2026-10-20T12:00:00.000Z'));
@@ -70,6 +71,7 @@ test('Business snapshot rollover replaces empty groups, preserves stock observat
   assert.deepEqual((await prepared.execute({...next,groupBy:'customer'},deltaContext)).rows,(await native.execute({...next,groupBy:'customer'},deltaContext)).rows);
   assert.equal((await prepared.execute({metric:'internal_stock_quantity',groupBy:'product',dateRange:deltaRange},deltaContext)).metadata.snapshotAsOf,'2026-10-20');
   await assert.rejects(prepared.execute({metric:'internal_stock_quantity',groupBy:'product',dateRange:next.dateRange},deltaContext),/Uncertified prepared query/);
+  await assertPreparedCounts(db);
  }finally{await db.close();}
 });
 
@@ -104,3 +106,15 @@ test('established sparse Business input without a sealed prepared parent rejects
   assert.deepEqual(await storedCounts(db),before);
  }finally{await db.close();}
 });
+
+async function assertPreparedCounts(db:Awaited<ReturnType<typeof deltaFixture>>['db']){
+ await tenantTransaction(db.ingestor,'a',async client=>{
+  const bindings=(await client.query(`SELECT binding.data_id,binding.statistics FROM mart.analytics_trusted_serving trusted
+   JOIN mart.prepared_bindings binding USING(tenant_id,revision_id) WHERE trusted.tenant_id='a' AND binding.family='business'`)).rows;
+  for(const binding of bindings){
+   const actual=(await client.query(`SELECT coalesce(jsonb_object_agg(key,row_count),'{}'::jsonb) statistics FROM (
+    SELECT time_grain||':'||grain_id key,count(*) row_count FROM mart.business_prepared_cells('a',$1) GROUP BY 1) counted`,[binding.data_id])).rows[0].statistics;
+   assert.deepEqual(binding.statistics,actual,'stored counts match the complete effective Business output');
+  }
+ },true);
+}

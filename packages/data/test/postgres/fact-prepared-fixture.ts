@@ -51,8 +51,11 @@ export async function assertCanonical(f:FactFixture){
     SELECT time_grain,grain_id,business_date,measure_id,dimensions,value,fact_count,minimum,maximum,data_through,labels,conflicting_labels
     FROM mart.business_prepared_cells('a',$3))
     SELECT NOT EXISTS((SELECT * FROM expected EXCEPT ALL SELECT * FROM actual)
-     UNION ALL (SELECT * FROM actual EXCEPT ALL SELECT * FROM expected)) exact`,[row.revision_id,JSON.stringify(row.configuration),row.data_id]);
+     UNION ALL (SELECT * FROM actual EXCEPT ALL SELECT * FROM expected)) exact,
+     (SELECT coalesce(jsonb_object_agg(key,row_count),'{}'::jsonb) FROM (
+      SELECT time_grain||':'||grain_id key,count(*) row_count FROM expected GROUP BY 1) counted) statistics`,[row.revision_id,JSON.stringify(row.configuration),row.data_id]);
    assert.equal(checked.rows[0].exact,true,`${row.kind} ${row.period.toISOString()}`);
+   assert.deepEqual(row.statistics,checked.rows[0].statistics,'stored row counts match the complete canonical output');
   }
  },true);
  for(const groupBy of [undefined,'customer' as const,'date' as const]){
