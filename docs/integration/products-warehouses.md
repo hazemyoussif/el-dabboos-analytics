@@ -9,6 +9,10 @@ is deployed at `2316d6677a8d4c7432a97fb7c4ea4303e8029faf`. The availability
 extension below is a local candidate; migration 095 and its source observation have
 not been applied to the company mart. See [extension verification](../qa/inventory-availability-2026-10-25.md).
 
+## Published-mart readiness correction — 26 October
+
+A successful result from an accepted mart revision with its existing publication reference is usable even when the optional coverage field is omitted. Explicit partial/unavailable coverage, source errors and missing publication evidence still remain unproven. The report's metrics, dates, filters and permissions are unchanged. This removes the redundant report-status condition that left valid mart rows labelled unproven.
+
 ## Independent dashboard
 
 `/reports/products-warehouses` is a separate management-report destination with its

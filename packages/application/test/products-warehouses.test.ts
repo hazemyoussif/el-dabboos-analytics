@@ -79,6 +79,19 @@ test('incomplete and missing certified coverage stay unproven, source errors rem
  const partial=await report({async execute(query){const response=result(query);response.metadata.coverage!.status='partial';return response;}}).execute({},actor,profile);
  assert.ok(partial.readings.every(entry=>!entry.complete));
 });
+test('accepted mart evidence supplies report readiness without optional coverage; explicit partial data stays unproven',async()=>{
+ const capabilities=async(context:AnalyticsContext):Promise<PublishedAnalyticsCapabilities>=>({...syntheticCapabilities(context),mode:'certified'});
+ const repository=(partial:boolean):AnalyticsRepository=>({async execute(query){
+  const response=result(query,'accepted-synthetic-revision');
+  response.metadata.release={datasetId:'synthetic-dataset',sourceId:'synthetic',mappingId:'synthetic-mapping',mappingVersion:'1',certificationReference:'SYNTHETIC EXACT PUBLICATION'};
+  if(partial)response.metadata.coverage!.status='partial';else delete response.metadata.coverage;
+  return response;
+ }});
+ const accepted=await report(repository(false),capabilities).execute({},actor,profile);
+ assert.ok(accepted.readings.every(entry=>entry.complete));
+ const partial=await report(repository(true),capabilities).execute({},actor,profile);
+ assert.ok(partial.readings.every(entry=>!entry.complete));
+});
 test('all readings share a revision and retry a changed publication after reads settle',async()=>{
  let scopes=0,active=0,peak=0,verified=0;
  const repository:AnalyticsRepository={execute:async()=>{throw new Error('No root reads');},async createExecutionScope(){assert.equal(active,0);const revision=String(++scopes);return {servingRevision:revision,async execute(query){active++;peak=Math.max(peak,active);await setImmediate();active--;if(revision==='1'&&query.metric==='internal_stock_quantity')throw new AnalyticsPublicationChangedError();return result(query,revision);},async verifyExecution(){verified++;assert.equal(active,0);}};}};

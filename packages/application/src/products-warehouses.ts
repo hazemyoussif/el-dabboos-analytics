@@ -80,5 +80,11 @@ function assertProductReportRevision(execution:DashboardExecutionResult,revision
  for(const widget of Object.values(execution.widgetResults))for(const series of Object.values(widget.seriesResults))if(series.status==='success'&&series.result.metadata.servingRevision!==revision)throw new AnalyticsPublicationChangedError();
 }
 function completeProductReading(execution:DashboardExecutionResult,mode:PublishedAnalyticsCapabilities['mode']):boolean {
- return Object.values(execution.widgetResults).every(widget=>Object.values(widget.seriesResults).every(series=>series.status==='success'&&!series.result.metadata.availability&&(series.result.metadata.coverage?.status==='complete'||mode==='synthetic'&&!series.result.metadata.coverage)));
+ return Object.values(execution.widgetResults).every(widget=>Object.values(widget.seriesResults).every(series=>{
+  if(series.status!=='success')return false;
+  const {availability,coverage,servingRevision,release}=series.result.metadata;
+  if(availability)return false;
+  if(coverage)return coverage.status==='complete';
+  return mode==='synthetic'||Boolean(servingRevision&&release?.certificationReference);
+ }));
 }
