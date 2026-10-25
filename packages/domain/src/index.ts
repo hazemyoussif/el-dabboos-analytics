@@ -1,6 +1,7 @@
 export * from './contracts.ts';
 export * from './analytics-order.ts';
 export * from './catalog.ts';
+export * from './inventory-availability-catalog.ts';
 export * from './validation.ts';
 export * from "./patch.ts";
 export * from './tenants.ts';

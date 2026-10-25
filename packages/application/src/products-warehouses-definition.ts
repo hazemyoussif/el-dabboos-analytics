@@ -6,9 +6,12 @@ const text=(en:string,ar:string):LocalizedText=>({en,ar});
 function reading(metric:MetricId,section:ProductReportSection,title:LocalizedText):ProductReportReading {
  return {section,widget:{id:metric,type:'table',dimension:'product',title,series:[{id:metric,metric}]}};
 }
-/** Existing canonical meanings only. Availability and coverage require new certified inputs. */
+/** Read only canonical metrics with their own certified periods and filter scope. */
 export const productReportReadings:readonly ProductReportReading[]=[
  reading('internal_stock_quantity','inventory',text('On-hand stock by product','المخزون الفعلي حسب المنتج')),
+ reading('reserved_stock_quantity','inventory',text('Reserved stock by product','المخزون المحجوز حسب المنتج')),
+ reading('free_stock_quantity','inventory',text('Free stock by product','المخزون المتاح حسب المنتج')),
+ reading('free_stock_value','inventory',text('Free-stock value at standard cost','قيمة المخزون المتاح بالتكلفة القياسية')),
  reading('expired_stock_quantity','inventory',text('Expired stock by product','المخزون المنتهي حسب المنتج')),
  reading('near_expiry_stock_quantity','inventory',text('Stock expiring within two calendar months','مخزون ينتهي خلال شهرين تقويميين')),
  reading('unknown_expiry_stock_quantity','inventory',text('Stock with unknown expiry','مخزون بصلاحية غير معروفة')),

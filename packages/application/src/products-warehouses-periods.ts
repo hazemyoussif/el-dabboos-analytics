@@ -1,12 +1,12 @@
 import {publishedQueryIssues} from '@el-dabboos/domain';
-import type {DateRange,PublishedAnalyticsCapabilities} from '@el-dabboos/domain';
+import type {DateRange,MetricId,PublishedAnalyticsCapabilities} from '@el-dabboos/domain';
 import {productReportReadings} from './products-warehouses-definition.ts';
 import type {ProductReportSection} from './products-warehouses-definition.ts';
 
 /** Defaults select existing authorized coverage; explicit sales dates remain untouched. */
-export function productReportDefaultPeriod(section:ProductReportSection,preferred:DateRange,published:PublishedAnalyticsCapabilities):DateRange {
+export function productReportDefaultPeriod(section:ProductReportSection,preferred:DateRange,published:PublishedAnalyticsCapabilities,selectedMetric?:MetricId):DateRange {
  if(published.mode==='synthetic')return preferred;
- const metrics=productReportReadings.filter(reading=>reading.section===section).map(reading=>reading.widget.series[0]!.metric).filter(metric=>published.releases.some(release=>release.capabilities.some(capability=>capability.metric===metric&&capability.dimensions.includes('product'))));
+ const metrics=productReportReadings.filter(reading=>reading.section===section).map(reading=>reading.widget.series[0]!.metric).filter(metric=>(!selectedMetric||selectedMetric===metric)&&published.releases.some(release=>release.capabilities.some(capability=>capability.metric===metric&&capability.dimensions.includes('product'))));
  if(!metrics.length)return preferred;
  const supported=(dateRange:DateRange)=>metrics.every(metric=>!publishedQueryIssues({metric,groupBy:'product',dateRange},published).length);
  if(supported(preferred))return preferred;

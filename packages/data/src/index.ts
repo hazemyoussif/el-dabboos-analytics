@@ -68,6 +68,7 @@ export {OdooSnapshotLease} from './odoo/snapshot.ts';
 
 export {businessMapping} from './business/definitions.ts';
 export {OdooBusinessReader} from './business/source.ts';
+export {observeInventoryAvailability} from './business/inventory-availability-observation.ts';
 export {commandSyncMembers,synchronizeCommandCenter} from './business/command-sync.ts';
 
 export {PublishedAnalyticsRepository} from './published-repository.ts';

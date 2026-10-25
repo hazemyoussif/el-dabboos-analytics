@@ -12,7 +12,7 @@ test('independent product report authenticates, validates scopes and preserves r
   for(const payload of [{tenantId:'other'},{revision:'override'},{warehouse:[]},{salesFilters:[{dimension:'brand',values:['a']}]},{productFilters:[{dimension:'customer',values:['a']}]},{dateRange:{from:'invalid',to:'invalid'}}])assert.equal((await app.inject({method:'POST',url,headers,payload})).statusCode,400);
   const response=await app.inject({method:'POST',url,headers,payload:{dateRange:{from:'2026-03-01',to:'2026-03-31'},warehouse:'warehouse-a',salesFilters:[{dimension:'customer',values:['customer-a']}]}});
   assert.equal(response.statusCode,200,response.body);
-  const body=response.json();assert.equal(body.metadata.refresh,'report_only');assert.equal(body.metadata.stockRequestedAsOf,'2026-04-03');assert.equal(body.readings.length,6);
+  const body=response.json();assert.equal(body.metadata.refresh,'report_only');assert.equal(body.metadata.stockRequestedAsOf,'2026-04-03');assert.equal(body.readings.length,9);
   assert.ok(body.readings.every((entry:{dashboard:{schemaVersion:number}})=>entry.dashboard.schemaVersion===2));
   assert.ok(!Object.hasOwn(body,'record'));assert.ok(!Object.hasOwn(body,'savedDashboard'));
   assert.equal((await app.inject({method:'GET',url,headers})).statusCode,404);

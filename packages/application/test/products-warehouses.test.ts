@@ -19,7 +19,7 @@ test('product report separates snapshot, sales periods and filter scopes without
  const selected={from:'2026-02-03',to:'2026-02-19'};
  const output=await report({async execute(query,context){calls.push({query,context});return result(query);}}).execute({dateRange:selected,productFilters:[{dimension:'brand',values:['brand-a']}],salesFilters:[{dimension:'customer',values:['customer-a']},{dimension:'salesperson',values:['invoice-owner']}],warehouse:'warehouse-a'},restricted,profile);
  assert.equal(output.metadata.stockRequestedAsOf,'2026-04-01');assert.equal(output.metadata.refresh,'report_only');
- assert.equal(calls.length,6);
+ assert.equal(calls.length,9);
  for(const {query,context} of calls){
   assert.deepEqual(context.enforcedFilters,restricted.authorization.enforcedFilters);
   assert.equal(query.groupBy,'product');assert.ok(query.filters?.some(filter=>filter.dimension==='brand'));
@@ -42,8 +42,8 @@ test('certified defaults use the latest existing coverage while explicit sales d
  const service=report({async execute(query){queries.push(query);return result(query);}},capabilities);
  const output=await service.execute({},actor,profile);
  assert.deepEqual(output.metadata.selectedRange,{from:'2026-03-01',to:'2026-03-15'});
- assert.equal(output.metadata.stockRequestedAsOf,'2026-03-15');
- assert.equal(queries.length,6);assert.ok(output.readings.every(reading=>reading.execution));
+ assert.equal(output.metadata.stockRequestedAsOf,'2026-04-01');
+ assert.equal(queries.length,9);assert.ok(output.readings.every(reading=>reading.execution));
  for(const query of queries)assert.deepEqual(query.dateRange,semanticCatalog[query.metric].semantics.kind==='snapshot'?{from:'2026-03-15',to:'2026-03-15'}:{from:'2026-03-01',to:'2026-03-15'});
  const explicit={from:'2026-04-01',to:'2026-04-01'};
  const unavailable=await service.execute({dateRange:explicit},actor,profile);
@@ -59,6 +59,18 @@ test('unpublished combinations and unsupported enforced dimensions cannot trigge
  const restricted={...actor,authorization:{...actor.authorization,enforcedFilters:[{dimension:'customer' as const,values:['only-this-customer']}]}};
  const policyOutput=await service.execute({},restricted,profile);
  assert.equal(reads,0);assert.ok(policyOutput.readings.every(entry=>!entry.execution));
+});
+test('independent inventory observations use each metric cutoff without borrowing a sibling source date',async()=>{
+ const capabilities=async(context:AnalyticsContext):Promise<PublishedAnalyticsCapabilities>=>{
+  const base=syntheticCapabilities(context);
+  return {...base,mode:'certified',releases:base.releases.flatMap(release=>[
+   {...release,period:{from:'2026-03-01',to:'2026-03-15'},capabilities:release.capabilities.filter(capability=>!capability.metric.startsWith('free_')&&capability.metric!=='reserved_stock_quantity')},
+   {...release,period:{from:'2026-03-01',to:'2026-03-28'},capabilities:release.capabilities.filter(capability=>capability.metric.startsWith('free_')||capability.metric==='reserved_stock_quantity')},
+  ])};
+ };
+ const output=await report({execute:async query=>result(query)},capabilities).execute({},actor,profile);
+ for(const entry of output.readings.filter(reading=>reading.section==='inventory'))assert.equal(entry.period.to,entry.widget.id.startsWith('free_')||entry.widget.id==='reserved_stock_quantity'?'2026-03-28':'2026-03-15');
+ assert.deepEqual(output.metadata.selectedRange,{from:'2026-03-01',to:'2026-03-15'});
 });
 test('incomplete and missing certified coverage stay unproven, source errors remain safe',async()=>{
  const capabilities=async(context:AnalyticsContext):Promise<PublishedAnalyticsCapabilities>=>({...syntheticCapabilities(context),mode:'certified'});

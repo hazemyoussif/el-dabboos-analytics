@@ -1,5 +1,6 @@
 import type { Permission } from './security.ts';
 export type Locale = 'en' | 'ar';
+export type InventoryAvailabilityMetricId = 'reserved_stock_quantity' | 'free_stock_quantity' | 'free_stock_value';
 export type SalesCommandMetricId = 'command_invoice_total' | 'command_invoice_count' | 'command_invoice_residual' | 'command_invoice_settled' | 'command_document_count' | 'command_document_value' | 'command_invoice_refunds' | 'command_net_invoices' | 'command_cash_received' | 'command_receipt_count' | 'command_receipt_value' | 'command_order_count' | 'command_order_value' | 'command_order_status_count' | 'command_order_status_value' | 'command_cancelled_count' | 'command_cancelled_value' | 'command_cancellation_rate' | 'command_customers' | 'command_same_day_cash' | 'command_same_day_rate' | 'command_customer_balance' | 'command_overdue_balance' | 'command_future_balance' | 'command_unknown_maturity' | 'command_overdue_days';
 export type BusinessMetricId =
   'invoice_refund_sales_percentage' | 'delivered_customer_quantity' | 'physical_return_rate_quantity' |
@@ -8,6 +9,7 @@ export type BusinessMetricId =
   'invoiced_product_quantity' |
   'period_net_sales' | 'period_invoice_sales' | 'period_invoice_refunds' | 'period_cash_collections' | 'period_collection_percentage' | 'customer_period_sales' | 'customer_average_monthly_sales' | 'customer_observed_orders' | 'observed_new_customers' | 'observed_single_order_customers' | 'observed_inactive_customers' | 'customer_last_invoice_date' | 'customer_last_collection_date' | 'review_customer_balance' | 'customer_balance_sales_percentage' | 'receivable_unknown_due' | 'positive_receivable_not_due' | 'positive_due_0_30' | 'positive_due_31_60' | 'positive_due_61_90' | 'positive_due_over_90' | 'internal_stock_quantity' | 'expired_stock_quantity' | 'near_expiry_stock_quantity' | 'unknown_expiry_stock_quantity' | 'negative_stock_positions' | 'physical_return_quantity' | 'internal_transfer_quantity' | 'delivered_unbilled_quantity' | 'received_unbilled_quantity' | 'order_age_exceptions' | 'book_cash_balance' | 'supplier_payable_due' | 'supplier_payable_unknown_due' | 'supplier_advance_balance';
 export type MetricId =
+  | InventoryAvailabilityMetricId
   | BusinessMetricId
   | SalesCommandMetricId
   | 'revenue' | 'net_revenue' | 'order_count' | 'units_sold' | 'average_order_value'

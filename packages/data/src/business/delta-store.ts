@@ -101,7 +101,8 @@ export class BusinessDeltaWorkspace {
    [this.baseline.tenantId,this.baseline.mapping.sourceId,this.observation.cutoff,this.observation.revision,partitionId]);
  }
  async request(object:string,ids:readonly string[]){
-  if(this.state!=='capturing'||ids.length>1000||!this.observation.mapping.measures.some(rule=>rule.sourceObject===object)||ids.some(id=>!(/^[1-9]\d*$/).test(id)))throw new Error('Bounded governed Business identity request required');
+  // Canonical source identities are opaque strings; recipe adapters own their syntax.
+  if(this.state!=='capturing'||ids.length>1000||!this.observation.mapping.measures.some(rule=>rule.sourceObject===object)||ids.some(id=>!id.trim()||id.length>160||id!==id.trim()))throw new Error('Bounded governed Business identity request required');
   await this.client.query(`INSERT INTO pg_temp.business_delta_requests SELECT $1,unnest($2::text[]) ON CONFLICT DO NOTHING`,[object,ids]);
  }
  async requestPreviousObject(object:string){

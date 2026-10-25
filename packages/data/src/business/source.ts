@@ -14,11 +14,13 @@ import {invoiceRecipe,cashRecipe,invoiceQuantityRecipe} from './source-recipes.t
 import {customerRecipe,receivableRecipe,receivableIdentityRecipe} from './customer-recipes.ts';
 import {stockRecipe,movementRecipe,unbilledRecipe,cashLedgerRecipe,payableRecipe,payableIdentityRecipe} from './stock-recipes.ts';
 import {businessSourceObject,currentBusinessMetrics} from './definitions.ts';
+import {inventoryAvailabilityRecipe} from './inventory-availability-recipes.ts';
+import {inventoryAvailabilityObject} from './inventory-availability-mapping.ts';
 import {measureOperationalWork} from '../operational/progress.ts';
 import type {OperationalProgressObserver} from '../operational/progress.ts';
 interface SourceVector {id:string;business_date:string;company_id:number;currency:string;invalid:boolean;dimensions:Partial<Record<DimensionId,string|null>>;values:Partial<Record<FactMeasureId,string>>}
 interface SourceRow {id:string;business_date:string;company_id:number;currency:string;measure_id:FactMeasureId;value:string;invalid:boolean;dimensions:Partial<Record<DimensionId,string|null>>;labels?:ProductionFact['displayLabels']}
-const recipes=[['command_invoice',commandInvoiceRecipe],['command_receipt',commandReceiptRecipe],['command_order',commandOrderRecipe],['command_receivable',commandDebtRecipe],['command_allocation',commandSameDayRecipe],['business_invoice_quantity',invoiceQuantityRecipe],['business_invoice',invoiceRecipe],['business_cash',cashRecipe],['business_customer',customerRecipe],['business_receivable',receivableRecipe],['business_stock',stockRecipe],['business_movement',movementRecipe],['business_sale_exception',unbilledRecipe(false)],['business_purchase_exception',unbilledRecipe(true)],['business_cash_ledger',cashLedgerRecipe],['business_payable',payableRecipe]] as const;
+const recipes=[[inventoryAvailabilityObject,inventoryAvailabilityRecipe],['command_invoice',commandInvoiceRecipe],['command_receipt',commandReceiptRecipe],['command_order',commandOrderRecipe],['command_receivable',commandDebtRecipe],['command_allocation',commandSameDayRecipe],['business_invoice_quantity',invoiceQuantityRecipe],['business_invoice',invoiceRecipe],['business_cash',cashRecipe],['business_customer',customerRecipe],['business_receivable',receivableRecipe],['business_stock',stockRecipe],['business_movement',movementRecipe],['business_sale_exception',unbilledRecipe(false)],['business_purchase_exception',unbilledRecipe(true)],['business_cash_ledger',cashLedgerRecipe],['business_payable',payableRecipe]] as const;
 /** One exported, bounded read-only source snapshot; independent aggregate controls precede promotion. */
 export class OdooBusinessReader {
  private readonly end:string;
@@ -59,8 +61,8 @@ export class OdooBusinessReader {
  }
  /** Explicit governed identities only. Discovery owns which IDs and months changed. */
  async *replacements(object:string,ids:readonly string[]):AsyncGenerator<BusinessIdentityReplacement[]> {
-  const sql=object==='business_receivable'?receivableIdentityRecipe():object==='business_payable'?payableIdentityRecipe():commandIdentityRecipe(object);
-  if(ids.length>1000||ids.some(id=>!(/^[1-9]\d*$/).test(id))||new Set(ids).size!==ids.length)throw new Error('Distinct bounded source identities required');
+  const sql=businessIdentityRecipe(object);
+  if(ids.length>1000||!validBusinessSourceIdentities(object,ids)||new Set(ids).size!==ids.length)throw new Error('Distinct bounded source identities required');
   if(!this.selected(object))throw new Error('Business recipe absent from selected mapping');
   if(!ids.length)return;
   yield* completeBusinessIdentityReplacements({object,ids,facts:this.factPages(sql,ids)});
@@ -104,8 +106,8 @@ export class OdooBusinessReader {
  }
  /** Independent source aggregation for one complete changed-identity scope. */
  async identityControls(object:string,ids:readonly string[]):Promise<ReviewControl[]>{
-  if(!this.selected(object)||!ids.length||ids.length>1000||new Set(ids).size!==ids.length||ids.some(id=>!(/^[1-9]\d*$/).test(id)))throw new Error('Bounded distinct Business control scope required');
-  const sql=object==='business_receivable'?receivableIdentityRecipe():object==='business_payable'?payableIdentityRecipe():commandIdentityRecipe(object);
+  if(!this.selected(object)||!ids.length||ids.length>1000||new Set(ids).size!==ids.length||!validBusinessSourceIdentities(object,ids))throw new Error('Bounded distinct Business control scope required');
+  const sql=businessIdentityRecipe(object);
   const client=await this.pool.connect();let broken=false;const onError=()=>{broken=true;};client.on('error',onError);
   try{
    await this.begin(client);
@@ -119,7 +121,7 @@ export class OdooBusinessReader {
  }
  private selected(object:string){return (!this.scope.objects||this.scope.objects.includes(object))&&this.scope.mapping.measures.some(rule=>rule.sourceObject===object);}
  private selectedCurrentSnapshot(metric:import('@el-dabboos/domain').MetricId){
-  const current=currentBusinessMetrics.some(candidate=>candidate===metric)||currentSalesCommandMetrics.some(candidate=>candidate===metric);
+  const current=currentBusinessMetrics.some(candidate=>candidate===metric)||currentSalesCommandMetrics.some(candidate=>candidate===metric)||requiredMeasures(metric).some(measure=>businessSourceObject(measure)===inventoryAvailabilityObject);
   const semantics=semanticCatalog[metric].semantics;
   const snapshot=semantics.kind==='snapshot'||semantics.kind==='ratio'&&semantics.basis==='snapshot';
   return current&&snapshot&&requiredMeasures(metric).some(measure=>this.scope.mapping.measures.some(rule=>rule.measureId===measure&&this.selected(rule.sourceObject)));
@@ -166,4 +168,13 @@ export class OdooBusinessReader {
    await this.lease.assertAlive();
   }finally{try{await client.query('ROLLBACK');}catch{broken=true;}client.removeListener('error',onError);client.release(broken);}
  }
+}
+
+function businessIdentityRecipe(object:string){
+ if(object===inventoryAvailabilityObject)return inventoryAvailabilityRecipe+" AND product.id::text||':'||coalesce(totals.warehouse_id::text,'unassigned')=ANY($10::text[])";
+ return object==='business_receivable'?receivableIdentityRecipe():object==='business_payable'?payableIdentityRecipe():commandIdentityRecipe(object);
+}
+function validBusinessSourceIdentities(object:string,ids:readonly string[]){
+ const pattern=object===inventoryAvailabilityObject?/^[1-9]\d*:(?:[1-9]\d*|unassigned)$/:/^[1-9]\d*$/;
+ return ids.every(id=>id.length<=160&&pattern.test(id));
 }

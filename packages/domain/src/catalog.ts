@@ -1,5 +1,6 @@
 import {salesCommandCatalog} from './sales-command-catalog.ts';
 import {businessCatalog} from './business-catalog.ts';
+import {inventoryAvailabilityCatalog} from './inventory-availability-catalog.ts';
 import { metricHelp } from './metric-help.ts';
 import type { DimensionId, FactMeasureId, MetricId, MetricSemantics, SemanticMetric } from './contracts.ts';
 
@@ -19,7 +20,7 @@ const transactions: DimensionId[] = [...time,'customer','salesperson','business_
 const maintenance: DimensionId[] = [...time, 'equipment', 'equipment_category', 'technician', 'branch'];
 
 /** These recipes use canonical measures only; source adapters map physical data to them. */
-const semantics: Record<Exclude<MetricId,import('./contracts.ts').BusinessMetricId|import('./contracts.ts').SalesCommandMetricId>, MetricSemantics> = {
+const semantics: Record<Exclude<MetricId,import('./contracts.ts').BusinessMetricId|import('./contracts.ts').SalesCommandMetricId|import('./contracts.ts').InventoryAvailabilityMetricId>, MetricSemantics> = {
   customer_cash_collected: {kind:'additive',measure:'customer_cash_collected'},
   cash_applied_to_invoices: {kind:'additive',measure:'cash_applied_to_invoices'},
   unallocated_customer_receipts: {kind:'additive',measure:'unallocated_customer_receipts'},
@@ -136,7 +137,7 @@ const dialectSynonyms: Partial<Record<MetricId, { iq?: readonly string[]; eg?: r
   order_count: { iq: ['عدد الطلبيات'], eg: ['عدد الأوردرات'] },
   collected_amount: { iq: ['المبالغ المقبوضة'], eg: ['الفلوس المتحصلة'] },
 };
-export const semanticCatalog: Readonly<Record<MetricId, SemanticMetric>> = {...businessCatalog,...salesCommandCatalog,...Object.fromEntries(
+export const semanticCatalog: Readonly<Record<MetricId, SemanticMetric>> = {...businessCatalog,...salesCommandCatalog,...inventoryAvailabilityCatalog,...Object.fromEntries(
   definitions.map(([id, en, ar, type, supportedDimensions, enSynonyms, arSynonyms]) => [id, {
     id, labels: { en, ar }, descriptions: metricHelp(id, {en, ar}, semantics[id as keyof typeof semantics]).shortDefinition,
     synonyms: { en: enSynonyms, ar: arSynonyms },

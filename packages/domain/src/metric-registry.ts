@@ -13,7 +13,7 @@ const domainFor = (id: MetricId): MetricDomain => {
   if (id.startsWith('aged_') || ['net_aged_receivable','total_overdue_receivable','overdue_receivable_percentage','gross_open_receivable_components','credit_balances'].includes(id)) return 'finance';
   if (['customer_cash_collected','cash_applied_to_invoices','unallocated_customer_receipts','customer_collection_ratio','weighted_collection_days','receivables_due_for_collection'].includes(id)) return 'finance';
   if (['invoiced_amount', 'collected_amount', 'outstanding_amount', 'overdue_amount'].includes(id)) return 'finance';
-  if (['stock_on_hand', 'inventory_value', 'low_stock_count'].includes(id)) return 'inventory';
+  if (['stock_on_hand', 'inventory_value', 'low_stock_count','reserved_stock_quantity','free_stock_quantity','free_stock_value'].includes(id)) return 'inventory';
   if (['maintenance_requests', 'failure_count', 'mtbf', 'mttr', 'maintenance_cost'].includes(id)) return 'maintenance';
   return 'sales';
 };

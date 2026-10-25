@@ -48,10 +48,10 @@ export class ProductsWarehousesReport {
   const now=this.dependencies.clock?.()??new Date(),context=analyticsContext(actor);
   return consistentAnalyticsExecution(this.dependencies.repository,context,this.dependencies.options??{},async reader=>{
    const published=publishedCatalog(actor,await this.dependencies.published(context)).published;
-   const stock=productReportDefaultPeriod('inventory',resolveRelativeDatePreset('today',profile.timeZone,now),published);
+   const stock=resolveRelativeDatePreset('today',profile.timeZone,now);
    const sales=input.dateRange??productReportDefaultPeriod('sales',resolveRelativeDatePreset('current_month',profile.timeZone,now),published);
    const scope:ReadingScope={actor,context,profile,now,published,reader};
-   const jobs=productReportReadings.map(definition=>this.executeReading(definition,input,definition.section==='inventory'?stock:sales,scope));
+   const jobs=productReportReadings.map(definition=>this.executeReading(definition,input,definition.section==='inventory'?productReportDefaultPeriod('inventory',stock,published,definition.widget.series[0]!.metric):sales,scope));
    const settled=await Promise.allSettled(jobs),failure=settled.find(entry=>entry.status==='rejected');
    if(failure?.status==='rejected')throw failure.reason;
    return {readings:settled.flatMap(entry=>entry.status==='fulfilled'?[entry.value]:[]),metadata:{executedAt:now.toISOString(),selectedRange:sales,stockRequestedAsOf:stock.to,mode:published.mode,...(reader.servingRevision?{servingRevision:reader.servingRevision}:{}),refresh:'report_only'}};
