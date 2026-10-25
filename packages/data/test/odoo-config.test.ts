@@ -26,3 +26,7 @@ test('loopback Odoo source remains the default path',()=>{
   assert.equal(config.connection.host,'127.0.0.1');
   assert.equal(config.credentialPolicy,'least_privilege');
 });
+
+test('an explicit API source selection cannot fall back to PostgreSQL',()=>{
+ assert.throws(()=>odooSourceConfig({...base,ODOO_SOURCE_HOST:'127.0.0.1',ANALYTICS_SOURCE_MODE:'odoo-orm-observed'},scope),/disabled by the selected transport/);
+});

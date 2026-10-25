@@ -1,9 +1,9 @@
+import { openOdooReadLease } from '../odoo/read-lease.ts';
 import {randomUUID} from 'node:crypto';
 import type {Pool} from 'pg';
 import {validateSourceMapping} from '@el-dabboos/domain';
 import type {SourceMapping} from '@el-dabboos/domain';
 import type {OdooSourceConfig} from '../odoo/config.ts';
-import {OdooSnapshotLease} from '../odoo/snapshot.ts';
 import {tenantTransaction} from '../postgres/session.ts';
 import {OdooBusinessReader} from './source.ts';
 
@@ -20,7 +20,7 @@ export async function captureCommandRecipe(scope:CommandCaptureScope){
   scope.mapping.sourceId!==scope.config.sourceId||scope.mapping.measures.some(rule=>rule.sourceObject===scope.object&&
   !rule.measureId.startsWith('command_'))||!scope.mapping.measures.some(rule=>rule.sourceObject===scope.object))throw new Error('Governed Command capture scope required');
  validateSourceMapping(scope.mapping);
- const lease=await OdooSnapshotLease.open(scope.owner,scope.config,scope.config.snapshotMaxDurationMs,scope.config.credentialPolicy);
+ const lease=await openOdooReadLease(scope.owner,scope.config);
  const candidateId=randomUUID();let created=false,factPages=0,controlPages=0,factCount=0,controlCount=0;
  try{
   const source=new OdooBusinessReader(scope.reader,scope.config,lease,{month:scope.month,mapping:scope.mapping,objects:[scope.object]});

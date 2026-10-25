@@ -55,7 +55,7 @@ export function widgetExportData(widget: DashboardWidget, entry: WidgetExecution
     const label = context.catalog[series.metric]?.labels[context.locale] ?? series.metric;
     if (result?.status !== 'success') return [[label, text.error]];
     const metadata = result.result.metadata;
-    return [[label, metadata.availability?.state === 'DATA_NOT_READY' ? text.error : metadata.availability ? text.partial : text.success], ...(metadata.snapshotAsOf ? [[`${label} · ${text.asOf}`, metadata.snapshotAsOf]] : [])];
+    return [[label, metadata.availability?.state === 'DATA_NOT_READY' ? text.error : metadata.availability ? text.partial : text.success], ...(metadata.snapshotAsOf ? [[`${label} · ${text.asOf}`, metadata.snapshotAsOf]] : []), ...(metadata.sourceConsistency==='api_observed'?[[label,context.locale==='ar'?'استيراد عبر واجهة أودو مع إعادة فحص القراءات؛ قد تتغير السجلات بين الطلبات.':'Odoo API import with repeated read checks; records may change between requests.']]:[])];
   });
   return [
     [widgetExportTitle(widget, context)], ...contextRows(context),

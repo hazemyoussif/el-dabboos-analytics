@@ -76,3 +76,19 @@ export {PublishedAnalyticsRepository} from './published-repository.ts';
 export {withSalesCommandMapping,salesCommandDefinitionVersion} from './business/sales-command-mapping.ts';
 export {runCommandBackgroundUnit} from './business/initialization-worker.ts';
 export type {CommandBackgroundScope} from './business/initialization-worker.ts';
+
+export * from './odoo-orm/config.ts';
+export * from './odoo-orm/client.ts';
+export * from './odoo-orm/discovery.ts';
+export * from './odoo-orm/comparison.ts';
+export {captureOwnedOdooStage,OwnedStageCaptureError} from './odoo-orm/stage-capture.ts';
+export {ownedStageConfig} from './odoo-orm/stage-config.ts';
+export {resolveObservedCopyConfig} from './odoo-orm/stage-resolve.ts';
+export {openOdooReadLease} from './odoo/read-lease.ts';
+export { OdooOrmError } from './odoo-orm/transport.ts';
+export type { OperationalBaseline } from './operational/contracts.ts';
+
+export {initializeOwnedOdooStage} from './odoo-orm/stage-initialize.ts';
+
+export {readFinanceCustomers,readFinanceCompanySummary} from './operational/finance-source.ts';
+export {publishFinanceSnapshot} from './operational/finance-publication.ts';

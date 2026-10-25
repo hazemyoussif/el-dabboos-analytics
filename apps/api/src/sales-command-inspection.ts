@@ -1,8 +1,9 @@
+import { openOdooReadLease } from '@el-dabboos/data';
 import {salesCommandSixWeeks} from '@el-dabboos/domain';
 import {resolveRelativeDatePreset,salesCommandWidgets} from '@el-dabboos/application';
 import {publishedQueryIssues,validDateRange} from '@el-dabboos/domain';
 import type {AnalyticsFilter,DateRange,PublishedAnalyticsCapabilities} from '@el-dabboos/domain';
-import {createMartPool,createOdooSourcePool,inspectSalesCommandSource,OdooSnapshotLease,PublishedAnalyticsRepository,readBaseline,tenantTransaction,verifyMartRuntimeRole} from '@el-dabboos/data';
+import {createMartPool,createOdooSourcePool,inspectSalesCommandSource,PublishedAnalyticsRepository,readBaseline,tenantTransaction,verifyMartRuntimeRole} from '@el-dabboos/data';
 import {resolveOdooSourceConfig} from './source-connections.ts';
 import {assertHostedMartUrl} from './hosted-mart-url.ts';
 
@@ -30,7 +31,7 @@ export async function executeSalesCommandInspection(tenantId:string,extra:string
   const config=await inspectStep('source_configuration',()=>resolveOdooSourceConfig(environment,{tenantId,sourceId:baseline.sourceId}));
   const owner=createOdooSourcePool(config),reader=createOdooSourcePool(config);
   try{
-   const lease=await inspectStep('source_snapshot',()=>OdooSnapshotLease.open(owner,config,config.snapshotMaxDurationMs,config.credentialPolicy));
+   const lease=await inspectStep('source_snapshot',()=>openOdooReadLease(owner,config));
    try{
     const source=await inspectStep('source_inspection',()=>inspectSalesCommandSource(reader,config,lease,period,timeZone));
     await scope.verifyExecution?.();

@@ -1,3 +1,4 @@
+import { openOdooReadLease } from '../odoo/read-lease.ts';
 import type { Pool } from 'pg';
 import {validDateRange} from '@el-dabboos/domain';
 import type { AnalyticsCursor, AnalyticsPartition, AnalyticsOperationalSource, IngestionBatch, SourceReadRequest } from '@el-dabboos/domain';
@@ -19,7 +20,7 @@ export class OdooOperationalSource implements AnalyticsOperationalSource {
  constructor(private readonly owner:Pool,private readonly reader:Pool,private readonly config:OdooSourceConfig,private readonly versions:{mappingVersion:string;definitionVersion:string},private readonly observeProgress?:OperationalProgressObserver) {}
  async open(tenantId:string):Promise<OdooOperationalSnapshot> {
   if(tenantId!==this.config.tenantId)throw new Error('Unauthorized operational source');
-  const lease=await OdooSnapshotLease.open(this.owner,this.config,this.config.snapshotMaxDurationMs,this.config.credentialPolicy);
+  const lease=await openOdooReadLease(this.owner,this.config);
   return new OdooOperationalSnapshot(this.reader,this.config,lease,this.versions,{count:1,observeProgress:this.observeProgress});
  }
 }

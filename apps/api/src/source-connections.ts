@@ -22,6 +22,11 @@ export function localSourceResolver(environment: Readonly<Record<string,string|u
 }
 /** Opt-in PostgreSQL authoring authority for offline extraction. No dashboard-serving dependency. */
 export async function resolveOdooSourceConfig(environment: Readonly<Record<string,string|undefined>>, scope: { tenantId: string; sourceId: string }): Promise<OdooSourceConfig> {
+    if (environment.ANALYTICS_SOURCE_MODE === 'odoo-orm-observed') {
+        await assertOrmSourceRegistration(environment, {...scope, companyIds:['1']});
+        const {resolveObservedCopyConfig} = await import('@el-dabboos/data');
+        return resolveObservedCopyConfig(environment,scope);
+    }
     const provider = environment.CONTROL_PROVIDER ?? 'sqlite';
     if (!['sqlite','postgres'].includes(provider)) throw new Error('Invalid control provider');
     if (provider === 'sqlite') return odooSourceConfig(environment,scope);
@@ -35,5 +40,19 @@ export async function resolveOdooSourceConfig(environment: Readonly<Record<strin
         if (!source) throw new Error('Source definition required');
         const config = odooSourceConfig({ ...environment,ODOO_SOURCE_COMPANY_IDS: source.companyIds.join(',') },scope);
         return { ...config,connection: localSourceResolver(environment,source).resolve(source) };
+    } finally { await pool.end(); }
+}
+
+/** An observed transport override must retain the registered source's enabled/company authority. */
+export async function assertOrmSourceRegistration(environment: Readonly<Record<string,string|undefined>>, scope: { tenantId: string; sourceId: string; companyIds: readonly string[] }): Promise<void> {
+    const provider = environment.CONTROL_PROVIDER ?? 'sqlite';
+    if (provider === 'sqlite') return;
+    if (provider !== 'postgres' || !environment.CONTROL_DATABASE_URL) throw new Error('Control source configuration required');
+    const { createControlPool, assertControlReady, verifyControlAppRole, PostgresSourceDefinitions } = await import('@el-dabboos/data');
+    const pool = createControlPool(environment.CONTROL_DATABASE_URL, 1);
+    try {
+        await assertControlReady(pool); await verifyControlAppRole(pool);
+        const source = await new PostgresSourceDefinitions(pool).get(scope.tenantId, scope.sourceId);
+        if (!source?.enabled || [...source.companyIds].sort().join(',') !== [...scope.companyIds].sort().join(',')) throw new Error('Odoo ORM source disabled or out of scope');
     } finally { await pool.end(); }
 }

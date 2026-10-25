@@ -2,6 +2,8 @@ import { createHash, randomUUID } from 'node:crypto';
 import type { Pool, PoolClient } from 'pg';
 import { verifyOdooSourceIdentity } from './identity.ts';
 import type { OdooCredentialPolicy } from './identity.ts';
+import type {ObservedCopyDescriptor} from '../odoo-orm/stage-config.ts';
+import {assertOwnedLeaseScope,assertOwnedReader,readOwnedSnapshot} from '../odoo-orm/stage-lease-evidence.ts';
 
 export class OdooSnapshotUnavailable extends Error {
   constructor(){super('Source snapshot lease lost or expired');this.name='OdooSnapshotUnavailable';}
@@ -46,6 +48,22 @@ export class OdooSnapshotLease {
       try { await owner.query('ROLLBACK'); } finally { owner.release(true); }
       throw error;
     }
+  }
+  /** The retained snapshot is of a sealed local input copy, never claimed as an ERP-wide MVCC snapshot. */
+  static async openObservedCopy(pool:Pool,identity:{tenantId:string;sourceId:string},durationMs:number,copy:ObservedCopyDescriptor):Promise<OdooSnapshotLease>{
+    assertOwnedLeaseScope(identity,durationMs,copy);
+    const owner=await pool.connect();
+    const started=performance.now();
+    try{
+      await owner.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
+      await owner.query("SELECT set_config('statement_timeout',$1,true),set_config('idle_in_transaction_session_timeout',$1,true)",[String(durationMs)]);
+      await assertOwnedReader(owner,copy.schema);
+      const snapshot=await readOwnedSnapshot(owner,copy);
+      const remaining=durationMs-(performance.now()-started);
+      if(remaining<=0)throw new Error('Owned input lease expired');
+      return new OdooSnapshotLease(owner,snapshot.token,Object.freeze({...identity}),{sourceAsOf:copy.sourceAsOf,descriptor:snapshot.descriptor,
+        frozenRevision:`orm-observed-copy-v1:${copy.fingerprint}`,freezeReference:`api-copy:${copy.schema}`},remaining);
+    }catch(error){try{await owner.query('ROLLBACK');}finally{owner.release(true);}throw error;}
   }
   assertScope(scope: Pick<OdooSnapshotEvidence,'sourceAsOf'|'frozenRevision'|'freezeReference'>,identity: { tenantId: string; sourceId: string }): void {
     this.requireAlive();

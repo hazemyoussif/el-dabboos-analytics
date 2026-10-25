@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { validateProductionFact } from '@el-dabboos/domain';
 import type { FactMeasureId, IngestionBatch, ProductionFact, SourceMapping, SourceRecord, TransactionEvidence } from '@el-dabboos/domain';
 import type { OdooSourceRow } from './rows.ts';
@@ -38,6 +39,9 @@ function contributions(row: OdooSourceRow): Contribution[] {
 /** Deterministic all-or-reject mapping; ineligible contributions explicitly tombstone previous eligibility. */
 export function mapOdooRecord(record: SourceRecord<OdooSourceRow>,mapping: SourceMapping,batch: IngestionBatch,period?: { from: string; to: string }): ProductionFact[] {
   const row = record.payload;
+  const observedCopy=batch.frozenRevision.startsWith('orm-observed-copy-v1:');
+  const sourceVersion=observedCopy?createHash('sha256').update(JSON.stringify(row)).digest('hex'):record.version;
+  const sourceRevision=observedCopy?(BigInt(Date.parse(batch.sourceAsOf))*1000n).toString():record.revision;
   if (!batch.companyIds.includes(row.company_id) || batch.tenantId!==mapping.tenantId || batch.sourceId!==mapping.sourceId || record.object!==row.object || record.recordId!==row.id || record.version!==row.write_date || record.revision!==odooRevision(row.write_date) || record.change!=='upsert') throw new Error('Source mapping scope or version');
   if (!row.business_date) throw new Error('Source business date required');
   const scope = `${mapping.sourceId}:${row.company_id}`;
@@ -49,7 +53,7 @@ export function mapOdooRecord(record: SourceRecord<OdooSourceRow>,mapping: Sourc
     if (!rule) throw new Error('Registered transaction mapping required');
     const monetary = ['order_revenue','net_invoiced_revenue','invoiced_revenue','refund_value'].includes(contribution.measureId);
     const fact: ProductionFact = { tenantId: mapping.tenantId,datasetId: mapping.datasetId,measureId: contribution.measureId,kind: 'event',businessDate: row.business_date!,value: contribution.value,
-      dimensions,sourceId: mapping.sourceId,sourceObject: row.object,sourceRecordId: row.id,componentId: 'whole',sourceVersion: record.version,sourceRevision: record.revision,sourceUpdatedAt: sourceTimestamp(row.write_date),
+      dimensions,sourceId: mapping.sourceId,sourceObject: row.object,sourceRecordId: row.id,componentId: 'whole',sourceVersion,sourceRevision,sourceUpdatedAt: sourceTimestamp(row.write_date),
       mappingId: mapping.mappingId,mappingVersion: mapping.mappingVersion,batchId: batch.batchId,sourceAsOf: batch.sourceAsOf,frozenRevision: batch.frozenRevision,status: contribution.eligible && inPeriod ? 'active' : 'tombstone',transaction,
       ...(monetary ? { currency: { mode: 'native' as const,transactionCurrency: row.currency,transactionValue: contribution.value,reportingCurrency: mapping.reportingCurrency,policyReference: rule.currencyPolicy } } : {}) };
     validateProductionFact(fact,mapping);

@@ -1,5 +1,6 @@
+import { openOdooReadLease } from '@el-dabboos/data';
 import {randomUUID} from 'node:crypto';
-import {createMartPool,createOdooSourcePool,tenantTransaction,readBaseline,OdooSnapshotLease,reviewMapping,OdooReviewReader,OdooBusinessReader,businessMapping,withSalesCommandMapping,exposeReviewMonth} from '@el-dabboos/data';
+import {createMartPool,createOdooSourcePool,tenantTransaction,readBaseline,reviewMapping,OdooReviewReader,OdooBusinessReader,businessMapping,withSalesCommandMapping,exposeReviewMonth} from '@el-dabboos/data';
 import {resolveOdooSourceConfig} from './source-connections.ts';
 import {assertHostedMartUrl} from './hosted-mart-url.ts';
 /** Explicit operator month exposure; no Finance approval record is required or fabricated. */
@@ -11,7 +12,7 @@ export async function exposeAnalyticsReview(tenantId:string,month:string,environ
   const config=await resolveOdooSourceConfig(environment,{tenantId,sourceId:baseline.sourceId});
   const owner=createOdooSourcePool(config),reader=createOdooSourcePool(config);
   try{
-   const lease=await OdooSnapshotLease.open(owner,config,config.snapshotMaxDurationMs,config.credentialPolicy);
+   const lease=await openOdooReadLease(owner,config);
    try{
     const baseMapping=(family==='business'?businessMapping:reviewMapping)({tenantId,sourceId:baseline.sourceId,currency:baseline.reportingCurrency,timeZone:baseline.mappings[0]!.measures[0]!.timeZone,datasetId:`${family}:${month}:${randomUUID()}`,current:month===new Intl.DateTimeFormat('en-CA',{timeZone:baseline.mappings[0]!.measures[0]!.timeZone,year:'numeric',month:'2-digit'}).format(new Date(lease.evidence.sourceAsOf)).slice(0,7)});
     const mapping=salesCommand?withSalesCommandMapping(baseMapping,month===new Intl.DateTimeFormat('en-CA',{timeZone:baseline.mappings[0]!.measures[0]!.timeZone,year:'numeric',month:'2-digit'}).format(new Date(lease.evidence.sourceAsOf)).slice(0,7)):baseMapping;

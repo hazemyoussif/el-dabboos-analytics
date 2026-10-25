@@ -179,3 +179,21 @@ test('pending publication stops source access; signal cleanup removes only the c
   assert.ok(!calls.some(call=>call.includes('rm -f synthetic-api')));
  }finally{await fixture.close();}
 });
+
+
+test('observed API scheduling retains daily reconciliation, sweeps and Command preparation against the owned copy',async()=>{
+ const fixture=await scheduleFixture();
+ try {
+  await writeFile(fixture.environment.STAGING_SOURCE_ENV_FILE,'ANALYTICS_SOURCE_MODE=odoo-orm-observed\n');
+  assert.equal(fixture.run('analytics-job.sh',['daily']).status,0);
+  let calls=await fixture.calls();
+  assert.ok(calls.some(call=>call.includes('stage:capture --tenant synthetic-tenant --accept-observed')));
+  assert.ok(calls.some(call=>call.includes('refresh --tenant synthetic-tenant --accept-observed')));
+  assert.ok(calls.some(call=>call.includes('reconcile --tenant synthetic-tenant --mode daily')));
+  assert.ok(calls.some(call=>call.includes('sweep --tenant synthetic-tenant')));
+  await fixture.clear();
+  assert.equal(fixture.run('analytics-job.sh',['command-background']).status,0);
+  calls=await fixture.calls();
+  assert.ok(calls.some(call=>call.includes('command-background --tenant synthetic-tenant')&&call.includes(fixture.environment.STAGING_SOURCE_ENV_FILE)));
+ }finally{await fixture.close();}
+});

@@ -1,3 +1,4 @@
+import { openOdooReadLease } from '../../packages/data/src/index.ts';
 import type { IngestionBatch, ProductionFact, ReconciliationCase, SourceMapping } from '../../packages/domain/src/index.ts';
 import { createMartPool, createOdooSourcePool, mapReceivableSnapshots, OdooSnapshotLease, PostgresExtractionRuns, PostgresMappingReleases, PostgresMartWriter, PostgresReconciliation, receivableMeasures, receivableSummaryCandidate, tenantTransaction } from '../../packages/data/src/index.ts';
 import { resolveOdooSourceConfig } from '../../apps/api/src/source-connections.ts';
@@ -66,7 +67,7 @@ export async function extractHistoricalAging(period: HistoricalMonth, datasetId:
   try {
     const mapping = agingMapping(period,datasetId);
     await new PostgresMappingReleases(migrator).registerCandidate(mapping);
-    snapshot = await OdooSnapshotLease.open(owner,config,config.snapshotMaxDurationMs,config.credentialPolicy);
+    snapshot = await openOdooReadLease(owner,config);
     client = await source.connect();
     await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY'); await snapshot.importInto(client);
     await client.query("SELECT set_config('statement_timeout','120000',true)");

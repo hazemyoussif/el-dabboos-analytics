@@ -1,3 +1,4 @@
+import {preparedSourceConsistency} from './source-consistency.ts';
 import type {PoolClient} from 'pg';
 import {semanticCatalog,preparedMetricBasis,categoricalDimensions} from '@el-dabboos/domain';
 import type {AnalyticsResult,AnalyticsQuery,PublishedAnalyticsRelease} from '@el-dabboos/domain';
@@ -15,7 +16,7 @@ export async function preparedResult(client:PoolClient,scope:PreparedResultScope
  if(finance.availability)return unavailableFinanceResult(scope,finance.availability);
  const metadata:AnalyticsResult['metadata']={...preparedProvenance(scope),executedAt:scope.executedAt,
  servingRevision:publication.revision,...presentation(query),semantics:metric.semantics.kind,
- ...labelMetadata(scope),
+ ...labelMetadata(scope),...await preparedSourceConsistency(client,scope),
  ...(selected.dataThrough?{dataThrough:selected.dataThrough}:{}),...(snapshot&&(selected.snapshotAsOf||selected.dataThrough||selected.coverage?.status==='complete')?{snapshotAsOf:selected.snapshotAsOf??selected.dataThrough??selected.preparedThrough!}:{}),
  ...(selected.window?{window:selected.window}:{}),...(query.analysis?{analysis:query.analysis}:{})};
  Object.assign(metadata,finance);
@@ -24,7 +25,7 @@ export async function preparedResult(client:PoolClient,scope:PreparedResultScope
 async function financeLineage(client:PoolClient,scope:PreparedResultScope):Promise<Partial<AnalyticsResult['metadata']>>{
  const {query,publication,release,selected}=scope;
  if(!selected.preparedThrough)return {availability:{state:'DATA_NOT_READY',reason:'no_snapshot'}};
- const cutoffs=(await client.query<{snapshot_day:string;snapshot_id:string;definition_version:string;source_cutoff:Date}>(`SELECT evidence.snapshot_date::text snapshot_day,evidence.snapshot_id,evidence.definition_version,evidence.source_cutoff
+ const cutoffs=(await client.query<{snapshot_day:string;snapshot_id:string;definition_version:string;source_cutoff:Date;source_revision:string}>(`SELECT evidence.snapshot_date::text snapshot_day,evidence.snapshot_id,evidence.definition_version,evidence.source_cutoff,evidence.source_revision
  FROM mart.analytics_serving_members member JOIN mart.analytics_partitions part USING(tenant_id,partition_id)
  JOIN mart.finance_snapshot_evidence evidence ON evidence.tenant_id=part.tenant_id AND evidence.snapshot_id=part.snapshot_id
  WHERE member.tenant_id=$1 AND member.revision_id=$2 AND member.family='receivables' ORDER BY evidence.snapshot_date`,[scope.publication.families.receivables.tenantId,publication.revision])).rows;
@@ -35,7 +36,7 @@ async function financeLineage(client:PoolClient,scope:PreparedResultScope):Promi
   const snapshot=query.groupBy==='month'?cutoffs.filter(snapshot=>snapshot.snapshot_day.slice(0,7)<=row.key!).at(-1):evidence;
   return snapshot?[[row.key,snapshot.snapshot_id]]:[];
  }));
- return {drillReleases,snapshotAsOf:evidence.snapshot_day,dataThrough:evidence.snapshot_day,sourceAsOf:evidence.source_cutoff.toISOString(),
+ return {...(evidence.source_revision.startsWith('orm-observed-copy-v1:')?{sourceConsistency:'api_observed' as const}:{}),drillReleases,snapshotAsOf:evidence.snapshot_day,dataThrough:evidence.snapshot_day,sourceAsOf:evidence.source_cutoff.toISOString(),
  reconciliation:{status:'exact',reference:evidence.snapshot_id,definitionReference:release.certificationReference},
  release:{datasetId:evidence.snapshot_id,sourceId:release.sourceId,mappingId:'trusted-finance-customer-snapshot',mappingVersion:'1',certificationReference:evidence.definition_version,outputCertificationReference:`Exact historical snapshot: ${evidence.snapshot_id}`}};
 }

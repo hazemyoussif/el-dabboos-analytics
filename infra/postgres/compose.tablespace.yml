@@ -1,0 +1,6 @@
+# Explicit company storage override; use together with compose.mart.yml.
+# The existing database volume remains mounted unchanged.
+services:
+  postgres:
+    volumes:
+      - ${MART_TABLESPACE_ROOT:?Set the existing secondary-disk tablespace directory}:/var/lib/postgresql-tablespaces

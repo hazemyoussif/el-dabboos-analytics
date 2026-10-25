@@ -9,7 +9,7 @@ export function manualAnalyticsCommands(provider:string,environment:NodeJS.Proce
  if(mode===undefined||mode==='disabled')return undefined;
  if(mode!=='enabled'||provider!=='postgres'||!environment.MART_INGESTOR_URL)throw new Error('Manual analytics operations require explicit PostgreSQL writer configuration');
  const writerUrl=environment.MART_INGESTOR_URL;
- const tenantId=environment.ANALYTICS_SOURCE_TENANT_ID??'',sourceId=environment.ANALYTICS_SOURCE_ID??'';
+ const tenantId=environment.ANALYTICS_SOURCE_TENANT_ID??environment.ODOO_ORM_TENANT_ID??'',sourceId=environment.ANALYTICS_SOURCE_ID??environment.ODOO_ORM_SOURCE_ID??'';
  const availability=new CachedSourceAvailability(tenantId,()=>probeAnalyticsSource(environment,{tenantId,sourceId}));
  availability.start();
  return {availability:(tenantId:string)=>availability.snapshot(tenantId),close:()=>availability.close(),run:async(request:AnalyticsJobRequest)=>{

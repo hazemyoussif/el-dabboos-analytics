@@ -48,6 +48,7 @@ export async function runConfiguredAnalyticsJob(mart:ReturnType<typeof createMar
   const baseline=await setupStep('mart_baseline',()=>tenantTransaction(mart,request.tenantId,client=>readBaseline(client,request.tenantId),true));
   // A sealed candidate resumes offline, without resolving source credentials.
   const source:AnalyticsOperationalSource={open:async tenantId=>{
+   if(environment.ANALYTICS_SOURCE_MODE&&!['odoo-postgres','odoo-orm-observed'].includes(environment.ANALYTICS_SOURCE_MODE))throw new Error('Unknown analytics source mode');
    const config=await resolveOdooSourceConfig(environment,{tenantId,sourceId:baseline.sourceId});
    const owner=createOdooSourcePool(config);sourcePools.push(owner);
    const reader=createOdooSourcePool(config);sourcePools.push(reader);

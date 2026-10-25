@@ -1,3 +1,4 @@
+import { openOdooReadLease } from '../../packages/data/src/index.ts';
 import {createMartPool,createOdooSourcePool,OdooSnapshotLease,migratePostgres,tenantTransaction} from '../../packages/data/src/index.ts';
 import {resolveOdooSourceConfig} from '../../apps/api/src/source-connections.ts';
 import {historicalJobOptions} from '../../apps/api/src/historical-job-options.ts';
@@ -14,7 +15,7 @@ try {
  for(const period of periods){
   const existing=await tenantTransaction(mart,tenantId,async client=>(await client.query('SELECT snapshot_id FROM mart.trusted_finance_snapshots WHERE tenant_id=$1 AND snapshot_date=$2',[tenantId,period.to])).rows[0],true);
   if(existing){console.log(JSON.stringify({date:period.to,status:'already-published',snapshotId:existing.snapshot_id}));continue;}
-  const lease=await OdooSnapshotLease.open(owner,config,config.snapshotMaxDurationMs,config.credentialPolicy);
+  const lease=await openOdooReadLease(owner,config);
   const started=performance.now();
   try {
    const customers=await readFinanceCustomers(source,lease,config,period.to);

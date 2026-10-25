@@ -87,3 +87,16 @@ test('stored city formatting is canonicalized without changing amounts, eligibil
   assert.equal(map({ ...order,city: ' \t' })[0]!.dimensions.city,'unassigned');
   assert.throws(() => map({ ...order,city: 'x'.repeat(201) }),/capability/);
 });
+
+
+test('API-copy receipt order accepts same-second corrections without impersonating ERP microseconds',()=>{
+ const observed={...lineageBatch,frozenRevision:'orm-observed-copy-v1:synthetic',sourceAsOf:'2026-10-25T12:00:00.000Z'};
+ const coarse={...order,write_date:'2026-10-01 10:00:00.000000'};
+ const first=mapOdooRecord(sourceRecord(coarse),candidate,observed)[0]!;
+ const corrected=mapOdooRecord(sourceRecord({...coarse,amount_total:'120'}),candidate,{...observed,sourceAsOf:'2026-10-25T12:00:01.000Z'})[0]!;
+ assert.ok(BigInt(corrected.sourceRevision)>BigInt(first.sourceRevision));
+ assert.notEqual(first.sourceVersion,corrected.sourceVersion);
+ assert.equal(first.sourceUpdatedAt,'2026-10-01T10:00:00.000Z');
+ assert.equal(first.sourceRevision,(BigInt(Date.parse(observed.sourceAsOf))*1000n).toString());
+ assert.equal(first.value,'115.000000');assert.equal(corrected.value,'120.000000');
+});

@@ -148,6 +148,8 @@ export interface AnalyticsResult {
     dataThrough?: string;
     /** Source extraction/synchronization timestamp, only when supplied by the adapter. */
     sourceAsOf?: string;
+    /** Receipt time and repeated checks; no shared source snapshot is claimed. */
+    sourceConsistency?: 'api_observed';
     metricType: MetricType;
     unit?: string;
     semantics: MetricSemantics['kind'];

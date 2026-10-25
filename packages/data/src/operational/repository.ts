@@ -1,3 +1,4 @@
+import { observedImportMetadata } from './source-observation.ts';
 import {businessFamilyMetricIds} from '@el-dabboos/domain';
 import {productReviewMetrics} from '../review/definitions.ts';
 import {ReviewAnalyticsRepository,reviewQuery} from '../review/repository.ts';
@@ -58,7 +59,8 @@ export class TrustedAnalyticsRepository implements AnalyticsRepository,Dimension
    const months=await trustedMetricMonths(client,context.tenantId,query.metric);
    const selected=await servingRows(client,query,context,{from:metricRelease.period.from,to:metricRelease.period.to,cutoff:stored.cutoff.toISOString(),cutoffDay:stored.cutoff_day,months},{maxGroups:this.maxGroups,revision:stored.revision_id,...(read?{read}:{})});
    const dimensionLabels='labels' in selected?selected.labels:query.groupBy?await servingLabels(client,query.groupBy,context,query,selected.rows.map(row=>row.key)):{};
-   return trustedFactResult(query,stored,selected,dimensionLabels,(this.options.clock?.()??new Date()).toISOString());
+   const result=trustedFactResult(query,stored,selected,dimensionLabels,(this.options.clock?.()??new Date()).toISOString());
+   return {...result,metadata:{...result.metadata,...await observedImportMetadata(client,context.tenantId,stored.cutoff.toISOString())}};
   },true,this.options.statementTimeoutMs??15000);
  }
  async listDimensionValues(dimension:DimensionId,context:AnalyticsContext){return (await this.listDimensionOptions(dimension,context)).map(option=>option.id);}

@@ -1,9 +1,11 @@
 import { Pool } from 'pg';
 import type { PoolConfig } from 'pg';
 import type { OdooCredentialPolicy } from './identity.ts';
+import type {ObservedCopyDescriptor} from '../odoo-orm/stage-config.ts';
 export interface OdooSourceConfig {
   connection: PoolConfig;
   credentialPolicy?: OdooCredentialPolicy;
+  observedCopy?: ObservedCopyDescriptor;
   tenantId: string; sourceId: string; companyIds: readonly string[];
   batchSize: number; statementTimeoutMs: number; snapshotMaxDurationMs: number;
 }
@@ -35,6 +37,7 @@ function validateSourceHost(host: string,environment: Readonly<Record<string,str
 }
 /** Caller owns shell > .env.local > .env loading. Never used by tests or serving startup. */
 export function odooSourceConfig(environment: Readonly<Record<string,string|undefined>>,scope: { tenantId: string; sourceId: string }): OdooSourceConfig {
+  if (environment.ANALYTICS_SOURCE_MODE && environment.ANALYTICS_SOURCE_MODE !== 'odoo-postgres') throw new Error('PostgreSQL source is disabled by the selected transport');
   const host = required(environment,'ODOO_SOURCE_HOST');
   const companyIds = required(environment,'ODOO_SOURCE_COMPANY_IDS').split(',');
   if (!companyIds.length || companyIds.length>64 || companyIds.some(company => !/^[1-9]\d*$/.test(company)) || new Set(companyIds).size!==companyIds.length) throw new Error('Invalid Odoo source company scope');

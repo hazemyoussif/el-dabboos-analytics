@@ -9,6 +9,8 @@ case "$job" in check|sync|daily|command-background) ;; *) echo 'Use check, sync,
 : "${STAGING_ANALYTICS_TENANT:?Set the tenant}"
 test -f "$STAGING_OPERATOR_ENV_FILE"
 test -f "$STAGING_SOURCE_ENV_FILE"
+observed_api_mode=false
+if grep -qx 'ANALYTICS_SOURCE_MODE=odoo-orm-observed' "$STAGING_SOURCE_ENV_FILE"; then observed_api_mode=true; fi
 export STAGING_ANALYTICS_JOB_KIND="$job"
 source "$(dirname "${BASH_SOURCE[0]}")/analytics-lock.sh"
 if [[ "$job" == command-background ]]; then
@@ -85,5 +87,13 @@ else
     job_command=(apps/api/src/analytics-status-cli.ts "$1" --tenant "$STAGING_ANALYTICS_TENANT" "${@:2}")
     run_job_container --env-file "$STAGING_SOURCE_ENV_FILE"
   }
-  if [[ "$job" == sync ]]; then run_source_job sync; else run_source_job reconcile --mode daily; run_source_job sweep; fi
+  if [[ "$job" == daily && "$observed_api_mode" == true ]]; then
+    job_command=(apps/api/src/odoo-orm-cli.ts stage:capture --tenant "$STAGING_ANALYTICS_TENANT" --accept-observed)
+    run_job_container --env-file "$STAGING_SOURCE_ENV_FILE"
+    job_command=(apps/api/src/odoo-orm-cli.ts refresh --tenant "$STAGING_ANALYTICS_TENANT" --accept-observed)
+    run_job_container --env-file "$STAGING_SOURCE_ENV_FILE"
+    run_source_job reconcile --mode daily
+    run_source_job sweep
+  elif [[ "$job" == sync ]]; then run_source_job sync
+  else run_source_job reconcile --mode daily; run_source_job sweep; fi
 fi

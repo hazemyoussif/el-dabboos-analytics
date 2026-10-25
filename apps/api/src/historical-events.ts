@@ -1,3 +1,4 @@
+import { openOdooReadLease } from '@el-dabboos/data';
 import type { ExtractionRun, SourceMapping } from '@el-dabboos/domain';
 import { createMartPool, createOdooSourcePool, ingestRetainedOdooPilot, odooComparisonCandidate, OdooSnapshotLease, PostgresMappingReleases, tenantTransaction, readHistoricalSourceQuality } from '@el-dabboos/data';
 import { resolveOdooSourceConfig } from './source-connections.ts';
@@ -32,7 +33,7 @@ async function extractMonth(mapping: SourceMapping, extractionId: string, period
   let snapshot: OdooSnapshotLease | undefined;
   const began = performance.now();
   try {
-    snapshot = await OdooSnapshotLease.open(owner, config, config.snapshotMaxDurationMs, config.credentialPolicy);
+    snapshot = await openOdooReadLease(owner,config);
     const run: ExtractionRun = { tenantId: mapping.tenantId,sourceId: mapping.sourceId,companyIds: ['1'],datasetId: mapping.datasetId,mappingId: mapping.mappingId,mappingVersion: mapping.mappingVersion,extractionId,sourceObjects: ['sale_order','account_move'],from: period.from,to: period.to,sourceAsOf: snapshot.evidence.sourceAsOf,frozenRevision: snapshot.evidence.frozenRevision,freezeReference: snapshot.evidence.freezeReference,completeness: 'complete_scope' };
     const sourceQuality = await readHistoricalSourceQuality(source,period,snapshot);
     const result = await ingestRetainedOdooPilot({ sourcePool: source,martPool: mart,sourceConfig: config,mapping,run,snapshot,groupings: [null,'business_line','salesperson','customer'],progress:progress=>console.log(JSON.stringify({month:period.month,kind:'events',stage:'extraction-page',...progress})) });

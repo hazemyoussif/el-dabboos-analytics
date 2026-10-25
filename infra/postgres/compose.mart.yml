@@ -1,3 +1,5 @@
+# Company server: its existing sdb tablespaces also require the protected storage override.
+# See docs/integration/odoo-standard-api.md before recreating that PostgreSQL container.
 name: dabboos-analytics-mart
 services:
   postgres:

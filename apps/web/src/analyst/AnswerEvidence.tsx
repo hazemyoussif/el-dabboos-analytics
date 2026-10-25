@@ -4,6 +4,7 @@ import type { AnalystPanel, Locale, TenantProfile } from '@el-dabboos/domain';
 import { analysisHelp } from '../metrics/analysis-help.ts';
 import { formatDate, formatTimestamp } from '../i18n.ts';
 import { analystCopy } from './copy.ts';
+import {SourceObservation} from '../rendering/SourceObservation.tsx';
 export function AnswerEvidence({panel,locale,profile,labels,demo}:{panel:AnalystPanel;locale:Locale;profile:TenantProfile;labels:Record<string,string>;demo:boolean}) {
  const text=analystCopy[locale],metadata=panel.result.metadata,metric=semanticCatalog[panel.query.metric],period=panel.query.dateRange;
  return <details className="analyst-evidence"><summary>{text.provenance} <span className="report-status">{demo?text.demo:metadata.release?text.trusted:text.unverified}</span></summary><dl>
@@ -17,5 +18,5 @@ export function AnswerEvidence({panel,locale,profile,labels,demo}:{panel:Analyst
   <div><dt>{text.reconciliation}</dt><dd>{metadata.reconciliation?.status==='exact'?text.exact:text.unknown}</dd></div>
   <div><dt>{text.freshness}</dt><dd>{metadata.sourceAsOf?formatTimestamp(metadata.sourceAsOf,locale,profile):text.unknown}</dd></div>
   <div><dt>{text.coverage}</dt><dd>{metadata.coverage?`${formatDate(metadata.coverage.from,locale,profile)} — ${formatDate(metadata.coverage.through,locale,profile)}`:metadata.dataThrough?formatDate(metadata.dataThrough,locale,profile):text.unknown}</dd></div>
- </dl></details>;
+ </dl><SourceObservation metadata={metadata} locale={locale}/></details>;
 }

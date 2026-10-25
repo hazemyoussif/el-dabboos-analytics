@@ -1,9 +1,9 @@
+import { openOdooReadLease } from '../odoo/read-lease.ts';
 import type {Pool,PoolClient} from 'pg';
 import {validateSourceMapping} from '@el-dabboos/domain';
 import type {SourceMapping} from '@el-dabboos/domain';
 import {randomUUID} from 'node:crypto';
 import type {OdooSourceConfig} from '../odoo/config.ts';
-import {OdooSnapshotLease} from '../odoo/snapshot.ts';
 import {tenantTransaction} from '../postgres/session.ts';
 import {exposeBusinessDeltaMonth,exposeReviewMonth} from '../review/exposure.ts';
 import {reviewBusinessDate} from '../review/cutoff.ts';
@@ -38,7 +38,7 @@ export async function synchronizeCommandCenter(scope:{mart:Pool;owner:Pool;reade
  assertCommandRefreshScope(scope);
  const results=[];
  for(const member of scope.members){
-  const lease=await OdooSnapshotLease.open(scope.owner,scope.config,scope.config.snapshotMaxDurationMs,scope.config.credentialPolicy);
+  const lease=await openOdooReadLease(scope.owner,scope.config);
   try{
    const observations=await tenantTransaction(scope.mart,scope.config.tenantId,client=>readBusinessRecipeObservations(client,scope.config.tenantId,member.partitionId),true);
    const today=reviewBusinessDate(lease.evidence.sourceAsOf,member.mapping.measures[0]!.timeZone);
@@ -92,7 +92,7 @@ async function* emptyReplacements():AsyncGenerator<never>{/* Identity requests a
 async function initializeCurrentCommandMonth(scope:{mart:Pool;owner:Pool;reader:Pool;config:OdooSourceConfig;members:readonly CommandMember[];observe?:OperationalProgressObserver}){
  if(!scope.members.length)return;
  const template=scope.members[scope.members.length-1]!.mapping;
- const lease=await OdooSnapshotLease.open(scope.owner,scope.config,scope.config.snapshotMaxDurationMs,scope.config.credentialPolicy);
+ const lease=await openOdooReadLease(scope.owner,scope.config);
  try{
   const month=reviewBusinessDate(lease.evidence.sourceAsOf,template.measures[0]!.timeZone).slice(0,7);
   if(scope.members.some(member=>member.month===month))return;
