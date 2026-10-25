@@ -5,7 +5,7 @@ import {ownedStageReaderConfig} from './stage-config.ts';
 import type {ObservedCopyDescriptor} from './stage-config.ts';
 
 function assertObservedScope(environment:Readonly<Record<string,string|undefined>>,scope:{tenantId:string;sourceId:string}):void {
- if(environment.ODOO_ORM_COMPANY_IDS!=='1'||environment.ODOO_ORM_ACCEPT_OBSERVED!=='true'||environment.ODOO_ORM_TENANT_ID!==scope.tenantId||environment.ODOO_ORM_SOURCE_ID!==scope.sourceId)throw new Error('Explicit owned API source scope required');
+ if(environment.ODOO_ORM_COMPANY_IDS!=='1'||environment.ODOO_ORM_TENANT_ID!==scope.tenantId||environment.ODOO_ORM_SOURCE_ID!==scope.sourceId)throw new Error('Explicit owned API source scope required');
 }
 export async function resolveObservedCopyConfig(environment:Readonly<Record<string,string|undefined>>,scope:{tenantId:string;sourceId:string}):Promise<OdooSourceConfig>{
  assertObservedScope(environment,scope);

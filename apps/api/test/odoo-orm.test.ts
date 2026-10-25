@@ -12,7 +12,7 @@ test('ORM operator refuses ingestion, publication and malformed commands before 
   await assert.rejects(executeOdooOrmProbe(['compare', '--from', '2026-09-01'], {}, fetcher), /Usage/);
 });
 
-test('API import requires explicit acceptance, exact source/tenant and scoped synchronization', async () => {
-  await assert.rejects(executeOdooOrmSync(['--tenant','a'],{}), /Usage/);
+test('API synchronization rejects malformed arguments and foreign tenant scope', async () => {
+  await assert.rejects(executeOdooOrmSync([], {}), /Usage/);
   await assert.rejects(executeOdooOrmSync(['--tenant','a','--accept-observed'],{ODOO_ORM_TENANT_ID:'b'}), /scope/);
 });

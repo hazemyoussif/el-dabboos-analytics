@@ -22,6 +22,10 @@ async function main() {
   const useStdin = args[0] === '--credentials-stdin';
   const environment = useStdin ? { ...process.env, ...await credentialsFromStdin() } : process.env;
   const command = useStdin ? args.slice(1) : args;
+  if(command[0]==='import'){
+    await executeOdooOrmStage(['stage:capture',...command.slice(1)],environment);
+    process.stdout.write(`${JSON.stringify(await executeOdooOrmRefresh(command.slice(1),environment))}\n`);return;
+  }
   const result = command[0] === 'refresh' ? await executeOdooOrmRefresh(command.slice(1),environment) : command[0]?.startsWith('stage:') ? await executeOdooOrmStage(command,environment) : command[0] === 'sync' ? await executeOdooOrmSync(command.slice(1), environment) : await executeOdooOrmProbe(command, environment);
   process.stdout.write(`${JSON.stringify(result)}\n`);
   if ('schemaCompatible' in result && !result.schemaCompatible) process.exitCode = 1;

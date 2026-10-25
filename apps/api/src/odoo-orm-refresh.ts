@@ -26,8 +26,8 @@ export async function refreshObservedReportFamilies(day:string,operations:Refres
 }
 
 export async function executeOdooOrmRefresh(args:readonly string[],environment:NodeJS.ProcessEnv){
- if(args.length!==3||args[0]!=='--tenant'||!args[1]||args[2]!=='--accept-observed'||args[1]!==environment.ODOO_ORM_TENANT_ID)throw new Error('Usage: odoo:orm refresh --tenant ID --accept-observed');
- const tenantId=args[1],selected:NodeJS.ProcessEnv={...environment,ANALYTICS_SOURCE_MODE:'odoo-orm-observed',ODOO_ORM_ACCEPT_OBSERVED:'true'};
+ if(![2,3].includes(args.length)||args[0]!=='--tenant'||!args[1]||(args[2]!==undefined&&args[2]!=='--accept-observed')||args[1]!==environment.ODOO_ORM_TENANT_ID)throw new Error('Usage: odoo:orm refresh --tenant ID');
+ const tenantId=args[1],selected:NodeJS.ProcessEnv={...environment,ANALYTICS_SOURCE_MODE:'odoo-orm-observed'};
  const mart=createMartPool(assertHostedMartUrl(selected.MART_INGESTOR_URL,selected,'Configured mart writer required'),1);
  try{
   const baseline=await tenantTransaction(mart,tenantId,client=>readBaseline(client,tenantId),true);

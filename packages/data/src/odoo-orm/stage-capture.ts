@@ -17,18 +17,17 @@ export class OwnedStageCaptureError extends Error {
 async function modelPlan(client:OdooOrmClient):Promise<StageModel[]> {
  const result:StageModel[]=[];
  for(const descriptor of stageModels){
-  if(!await client.readable(descriptor.model))throw new Error('Required Odoo model is not readable');
   result.push(stageModel(descriptor,await client.fields(descriptor.model)));
  }
  return result;
 }
-async function scanModel(client:OdooOrmClient,scope:{model:StageModel;deadline:number;write?:(rows:import('./client.ts').OrmRow[])=>Promise<void>}):Promise<ModelEvidence> {
+async function captureModelRows(client:OdooOrmClient,scope:{model:StageModel;deadline:number;write:(rows:import('./client.ts').OrmRow[])=>Promise<void>}):Promise<ModelEvidence> {
  const hash=createHash('sha256');let rows=0,bytes=0;
  for await(const page of readOdooOrmPages(client,{...scope.model,deadline:scope.deadline,rawRelations:true})){
   bytes+=Buffer.byteLength(JSON.stringify(page));rows+=page.length;
   if(bytes>2147483648)throw new Error('Owned API staging byte bound exceeded');
   hash.update(ormRecordHash(page));
-  if(scope.write)await scope.write(page);
+  await scope.write(page);
  }
  return {model:scope.model.model,rows,hash:hash.digest('hex')};
 }
@@ -46,7 +45,7 @@ async function captureModel(writer:Pool,client:OdooOrmClient,scope:StageCaptureS
  scope.observe?.({phase:'capture',model:model.model});
  const connection=await writer.connect();
  try{
-  const evidence=await scanModel(client,{model,deadline,write:rows=>writeStagePage(connection,{schema,model},rows)});
+  const evidence=await captureModelRows(client,{model,deadline,write:rows=>writeStagePage(connection,{schema,model},rows)});
   scope.observe?.({phase:'captured',model:model.model,rows:evidence.rows});return evidence;
  }catch{throw new OwnedStageCaptureError(`capture:${model.model}`,'CAPTURE_UNAVAILABLE');}
  finally{connection.release();}
@@ -63,13 +62,6 @@ export async function captureOwnedOdooStage(scope:StageCaptureScope):Promise<Obs
   phase='schema';const models=await modelPlan(client);await createStageSchema(writer,schema,models);
   phase='capture';
   const evidence=await boundedModels(models,model=>captureModel(writer,client,scope,{schema,model,deadline}));
-  phase='verify';
-  await boundedModels(models,async model=>{
-   const checked=await scanModel(client,{model,deadline});
-   const original=evidence.find(item=>item.model===model.model)!;
-   if(checked.hash!==original.hash||checked.rows!==original.rows)throw new OwnedStageCaptureError(`verify:${model.model}`,'INPUTS_CHANGED');
-   scope.observe?.({phase:'verified',model:model.model,rows:checked.rows});
-  });
   phase='index';await finishStageTables(writer,schema,models);
   const sourceEndpointFingerprint=createHash('sha256').update(JSON.stringify([scope.api.url,scope.api.database])).digest('hex');
   const descriptor:ObservedCopyDescriptor={schema,tenantId:scope.tenantId,sourceId:scope.sourceId,companyIds:['1'],sourceAsOf:new Date().toISOString(),

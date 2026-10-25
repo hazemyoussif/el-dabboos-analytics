@@ -14,7 +14,7 @@ export async function probeAnalyticsSource(environment:NodeJS.ProcessEnv,scope:{
  finally {await source.end();}
 }
 async function probeObservedApi(environment:NodeJS.ProcessEnv,scope:{tenantId:string;sourceId:string}) {
- if(environment.ODOO_ORM_ACCEPT_OBSERVED!=='true'||environment.ODOO_ORM_TENANT_ID!==scope.tenantId||environment.ODOO_ORM_SOURCE_ID!==scope.sourceId)throw new Error('Explicit scoped Odoo ORM approval required');
+ if(environment.ODOO_ORM_TENANT_ID!==scope.tenantId||environment.ODOO_ORM_SOURCE_ID!==scope.sourceId)throw new Error('Explicit scoped Odoo ORM approval required');
  const config=odooOrmConfig(environment);
  await assertOrmSourceRegistration(environment,{...scope,companyIds:config.companyIds});
  try {

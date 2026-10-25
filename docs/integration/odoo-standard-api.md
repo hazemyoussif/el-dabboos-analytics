@@ -4,18 +4,18 @@ The owner accepted observed API ingestion, all report families and a private com
 
 ## Protected configuration
 
-Use protected operator/source environments. Never put keys in arguments, Git, manifests, browser settings or logs. Required API fields: `ODOO_ORM_URL` (HTTPS origin), `ODOO_ORM_DATABASE`, `ODOO_ORM_LOGIN`, `ODOO_ORM_API_KEY`, `ODOO_ORM_COMPANY_IDS=1`, `ODOO_ORM_TENANT_ID`, `ODOO_ORM_SOURCE_ID`, `ODOO_ORM_ACCEPT_OBSERVED=true`. Existing control registration must remain enabled with the exact company scope.
+Use protected operator/source environments. Never put keys in arguments, Git, manifests, browser settings or logs. Required API fields: `ODOO_ORM_URL` (HTTPS origin), `ODOO_ORM_DATABASE`, `ODOO_ORM_LOGIN`, `ODOO_ORM_API_KEY`, `ODOO_ORM_COMPANY_IDS=1`, `ODOO_ORM_TENANT_ID`, `ODOO_ORM_SOURCE_ID`. Existing control registration must remain enabled with the exact company scope.
 
 The separate database is exactly `el_dabboos_api_stage`, on the approved Analytics database endpoint. Provision distinct nonsuperuser, non-BYPASSRLS writer/reader logins named `odoo_api_stage_writer` and `odoo_api_stage_reader`; neither may create roles/databases. The writer owns this private database; the reader receives CONNECT and SELECT only. Revoke PUBLIC database access. Store URLs in `ODOO_API_STAGE_WRITER_URL` and `ODOO_API_STAGE_READER_URL`. These must never point at Odoo, control or mart databases.
 
 Initialize explicitly, then capture on the company server:
 
 ```bash
-pnpm odoo:orm stage:init --tenant el-dabboos-iq --accept-observed
-pnpm odoo:orm stage:capture --tenant el-dabboos-iq --accept-observed
+pnpm odoo:orm stage:init --tenant el-dabboos-iq
+pnpm odoo:orm import --tenant el-dabboos-iq
 ```
 
-The worker streams a closed 28-model manifest, preserving source numeric tokens and existing many-to-many SQL bridges. Three bounded workers read at most 5,000,000 rows per model with 1,000-row pages, a 2 GiB JSON bound per model and a 30-minute capture deadline. Repeated complete scans must match before indexes, read grants and a sealed catalog manifest become usable. Only model identifiers, phases and counts are logged. Source captions use the API en_US context; translated fields retain an en_US JSON shape, so other source-language translations are not attested. A failed/unsealed schema is never selected; inspect and remove failed private copies explicitly before retrying. Do not bypass input-change checks or technical bounds.
+The worker streams a closed 28-model manifest, preserving source numeric tokens and existing many-to-many SQL bridges. Three bounded workers read at most 5,000,000 rows per model with 1,000-row pages, a 2 GiB JSON bound per model and a 30-minute capture deadline. The import reads each model once, then indexes the private copy and makes it available to the existing reconciliation and preparation job. Only model identifiers, phases and counts are logged. The `import` command combines API capture and the existing full-family refresh; `refresh` reuses an already captured copy. Source captions use the API en_US context; translated fields retain an en_US JSON shape, so other source-language translations are not attested. A failed/unsealed schema is never selected; inspect and remove failed private copies explicitly before retrying. Normal access control, tenant isolation and financial reconciliation remain required.
 
 Select `ANALYTICS_SOURCE_MODE=odoo-orm-observed` only after a copy seals. Optional `ODOO_API_STAGE_SCHEMA=api_<32 hex digits>` pins that exact sealed copy; otherwise composition resolves the newest sealed tenant/source match. The endpoint/database identity must match the configured API. A retained read-only lease over the copy is explicitly distinguished from an ERP snapshot. Direct PostgreSQL ERP credentials are not used.
 
@@ -24,7 +24,7 @@ Select `ANALYTICS_SOURCE_MODE=odoo-orm-observed` only after a copy seals. Option
 The ordered refresh command pins one sealed copy, prepares the current and previous Business months with Sales Command enabled first, then prepares current review, synchronizes core events and receivable operands, and publishes the observation-day Finance snapshot:
 
 ```bash
-pnpm odoo:orm refresh --tenant el-dabboos-iq --accept-observed
+pnpm odoo:orm refresh --tenant el-dabboos-iq
 ```
 
 For an individual current-month Business preparation:
@@ -36,12 +36,14 @@ pnpm analytics expose-business --tenant el-dabboos-iq --month 2026-10 --sales-co
 Use the actual company-local capture month; this example is not a rolling default. Validate both saved reports through prepared serving and preserve comparison-period coverage. Then run existing core synchronization, historical Business/review exposure and Finance reconstruction against the same pinned copy. Historical stock/current-debt values must remain unsupported unless their existing mappings provide a valid dated observation. Reconciliation and prepared publication must complete before any report is described as refreshed.
 
 ```bash
-pnpm odoo:orm sync --tenant el-dabboos-iq --accept-observed
+pnpm odoo:orm sync --tenant el-dabboos-iq
 ```
 
 Ordinary sync, daily reconciliation, absence sweeps and Command workers retain their existing lifecycles against the owned input. Two-minute sync and Command workers **reuse** the sealed copy. In observed mode the existing daily job performs a new capture and ordered refresh before its ordinary reconciliation and sweep. Advancing API freshness outside that run requires an explicit capture first. Do not claim a two-minute API refresh from the existing sync timer. Measure full-copy duration before scheduling it. Failed API capture, mismatched controls or failed preparation leave the trusted publication unchanged.
 
 Copy revisions begin `orm-observed-copy-v1:`. `sourceAsOf` is the receipt time. Prepared-result metadata exposes `sourceConsistency=api_observed`; dashboard notes, answer evidence and Excel disclose possible changes between requests. Existing business-date, snapshot cutoff, currency, policy and explicit publication semantics remain intact. Wire precision is preserved without attesting unknown ERP storage precision.
+
+The owner explicitly removed the second full API scan, repeated acceptance flag and duplicate model-readability probe. Odoo itself enforces read permissions. Migration 095 makes the existing event preparer read only selected monthly members before canonical lineage expansion; formulas, tenant RLS, reconciliation and preparation budgets remain unchanged.
 
 ## Recovery and storage
 
