@@ -19,16 +19,16 @@ export class OdooSnapshotLease {
   readonly evidence: Readonly<OdooSnapshotEvidence>;
   private alive = true;
   private readonly deadline: number;
-  private readonly timer: ReturnType<typeof setTimeout>;
+  private readonly timer: ReturnType<typeof setTimeout> | undefined;
   private closing: Promise<void> | undefined;
   private readonly onError = () => { this.alive = false; };
-  private constructor(private readonly owner: PoolClient,token: string,readonly identity: Readonly<{ tenantId: string; sourceId: string }>,evidence: OdooSnapshotEvidence,durationMs: number) {
+  private constructor(private readonly owner: PoolClient,token: string,readonly identity: Readonly<{ tenantId: string; sourceId: string }>,evidence: OdooSnapshotEvidence,durationMs?: number) {
     this.#token = token;
     this.evidence = Object.freeze(evidence);
-    this.deadline = performance.now()+durationMs;
+    this.deadline = durationMs===undefined?Number.POSITIVE_INFINITY:performance.now()+durationMs;
     owner.on('error',this.onError);
-    this.timer = setTimeout(() => { void this.close(); },durationMs);
-    this.timer.unref();
+    this.timer = durationMs===undefined?undefined:setTimeout(() => { void this.close(); },durationMs);
+    this.timer?.unref();
   }
   static async open(pool: Pool,identity: { tenantId: string; sourceId: string },durationMs: number,credentialPolicy: OdooCredentialPolicy = 'least_privilege'): Promise<OdooSnapshotLease> {
     if (!Number.isInteger(durationMs) || durationMs<1 || durationMs>600000) throw new Error('Invalid source snapshot duration');
@@ -50,19 +50,16 @@ export class OdooSnapshotLease {
     }
   }
   /** The retained snapshot is of a sealed local input copy, never claimed as an ERP-wide MVCC snapshot. */
-  static async openObservedCopy(pool:Pool,identity:{tenantId:string;sourceId:string},durationMs:number,copy:ObservedCopyDescriptor):Promise<OdooSnapshotLease>{
-    assertOwnedLeaseScope(identity,durationMs,copy);
+  static async openObservedCopy(pool:Pool,identity:{tenantId:string;sourceId:string},copy:ObservedCopyDescriptor):Promise<OdooSnapshotLease>{
+    assertOwnedLeaseScope(identity,copy);
     const owner=await pool.connect();
-    const started=performance.now();
     try{
       await owner.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
-      await owner.query("SELECT set_config('statement_timeout',$1,true),set_config('idle_in_transaction_session_timeout',$1,true)",[String(durationMs)]);
+      await owner.query("SELECT set_config('statement_timeout','120000',true),set_config('idle_in_transaction_session_timeout','0',true)");
       await assertOwnedReader(owner,copy.schema);
       const snapshot=await readOwnedSnapshot(owner,copy);
-      const remaining=durationMs-(performance.now()-started);
-      if(remaining<=0)throw new Error('Owned input lease expired');
       return new OdooSnapshotLease(owner,snapshot.token,Object.freeze({...identity}),{sourceAsOf:copy.sourceAsOf,descriptor:snapshot.descriptor,
-        frozenRevision:`orm-observed-copy-v1:${copy.fingerprint}`,freezeReference:`api-copy:${copy.schema}`},remaining);
+        frozenRevision:`orm-observed-copy-v1:${copy.fingerprint}`,freezeReference:`api-copy:${copy.schema}`});
     }catch(error){try{await owner.query('ROLLBACK');}finally{owner.release(true);}throw error;}
   }
   assertScope(scope: Pick<OdooSnapshotEvidence,'sourceAsOf'|'frozenRevision'|'freezeReference'>,identity: { tenantId: string; sourceId: string }): void {

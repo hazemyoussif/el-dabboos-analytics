@@ -9,5 +9,5 @@ OnFailure=el-dabboos-analytics-pause@%i.service
 Type=oneshot
 EnvironmentFile=/opt/el-dabboos/secrets/staging-jobs.env
 ExecStart=/bin/bash /opt/el-dabboos/analytics/infra/staging/analytics-job.sh %i
-TimeoutStartSec=15min
+TimeoutStartSec=2h
 UMask=0077

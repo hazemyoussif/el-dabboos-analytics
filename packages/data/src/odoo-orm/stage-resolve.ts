@@ -22,7 +22,7 @@ export async function resolveObservedCopyConfig(environment:Readonly<Record<stri
   const expected=createHash('sha256').update(JSON.stringify([origin,database])).digest('hex');
   if(copy.tenantId!==scope.tenantId||copy.sourceId!==scope.sourceId||copy.sourceEndpointFingerprint!==expected||copy.companyIds.join(',')!=='1')throw new Error('Owned API copy source identity conflict');
   if(!/^api_[a-f0-9]{32}$/.test(copy.schema)||!/^[a-f0-9]{64}$/.test(copy.fingerprint)||!Number.isFinite(Date.parse(copy.sourceAsOf)))throw new Error('Invalid sealed API copy');
-  return {...scope,companyIds:['1'],batchSize:500,statementTimeoutMs:15000,snapshotMaxDurationMs:600000,credentialPolicy:'least_privilege',
+  return {...scope,companyIds:['1'],batchSize:500,statementTimeoutMs:120000,snapshotMaxDurationMs:600000,credentialPolicy:'least_privilege',
    observedCopy:copy,connection:{...stage.reader,max:1,options:`-c default_transaction_read_only=on -c search_path=${copy.schema},pg_catalog`}};
  }finally{await pool.end();}
 }

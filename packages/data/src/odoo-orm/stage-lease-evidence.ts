@@ -2,8 +2,8 @@ import type {PoolClient} from 'pg';
 import {ownedStageDatabase,stageReaderRole} from './stage-config.ts';
 import type {ObservedCopyDescriptor} from './stage-config.ts';
 
-export function assertOwnedLeaseScope(identity:{tenantId:string;sourceId:string},durationMs:number,copy:ObservedCopyDescriptor):void{
- if(!Number.isInteger(durationMs)||durationMs<1||durationMs>600000||!/^api_[a-f0-9]{32}$/.test(copy.schema)||!/^[a-f0-9]{64}$/.test(copy.fingerprint))throw new Error('Invalid owned input lease');
+export function assertOwnedLeaseScope(identity:{tenantId:string;sourceId:string},copy:ObservedCopyDescriptor):void{
+ if(!/^api_[a-f0-9]{32}$/.test(copy.schema)||!/^[a-f0-9]{64}$/.test(copy.fingerprint))throw new Error('Invalid owned input lease');
  if(copy.tenantId!==identity.tenantId||copy.sourceId!==identity.sourceId||copy.companyIds.join(',')!=='1')throw new Error('Owned input scope conflict');
 }
 export async function assertOwnedReader(owner:PoolClient,schema:string):Promise<void>{

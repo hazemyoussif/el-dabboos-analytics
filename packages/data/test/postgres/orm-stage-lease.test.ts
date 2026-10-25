@@ -37,7 +37,8 @@ test('sealed API input resolves exact identity and permits concurrent read-only 
   await sealStage(writer,{schema,...scope,companyIds:['1'],sourceAsOf:'2026-10-25T12:00:00.000Z',fingerprint:'a'.repeat(64),sourceEndpointFingerprint:createHash('sha256').update(JSON.stringify(['https://synthetic.invalid','synthetic'])).digest('hex')},{});
   await assert.rejects(resolveObservedCopyConfig({...environment,ODOO_ORM_DATABASE:'foreign'},scope),/identity/);
   const resolved=await resolveObservedCopyConfig({...environment,ODOO_API_STAGE_WRITER_URL:undefined},scope),owner=new Pool({...resolved.connection,max:2});pools.push(owner);
-  const first=await openOdooReadLease(owner,resolved);leases.push(first);
+  const first=await openOdooReadLease(owner,{...resolved,snapshotMaxDurationMs:1});leases.push(first);
+  await new Promise(resolve=>setTimeout(resolve,10));await first.assertAlive();
   const second=await openOdooReadLease(owner,resolved);leases.push(second);
   assert.equal(first.evidence.sourceAsOf,'2026-10-25T12:00:00.000Z');
   assert.equal(first.evidence.frozenRevision,'orm-observed-copy-v1:'+'a'.repeat(64));
