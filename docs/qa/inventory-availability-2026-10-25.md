@@ -1,6 +1,8 @@
 # Inventory availability extension — 25 October 2026
 
-Branch: `codex/products-warehouses`, continuing `354f5b5`. This is a candidate
+Verified application/data/domain revision: `cfe3bdd4b6b48ddf3cbf82cd1ae806ff8c65ff58`,
+pushed to `origin/codex/products-warehouses`. The following documentation-only
+record does not change that verified code. Branch continues `354f5b5`. This is a candidate
 extension to the deployed six-table report (`2316d66`); company migration,
 preparation and deployment have not occurred for this extension.
 
