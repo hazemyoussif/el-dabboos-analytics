@@ -13,7 +13,7 @@ test('empty metadata migration, explicit synthetic reconciliation and idempotent
         migrateMetadata(db, { reconcile: seedDemoAdministration });
         assertMetadataReady(db);
         migrateMetadata(db);
-        assert.equal(db.prepare('SELECT COUNT(*) AS n FROM metadata_schema_migrations').get()?.n, 6);
+        assert.equal(db.prepare('SELECT COUNT(*) AS n FROM metadata_schema_migrations').get()?.n, 7);
     }
     finally {
         db.close();
@@ -63,7 +63,7 @@ test('unreconciled foreign legacy owner rolls back entire upgrade', () => {
     }
 });
 test('changed checksums, history gaps and future schema fail readiness', () => {
-    for (const [sql, error] of [["UPDATE metadata_schema_migrations SET sha256='tampered' WHERE version=1", 'CHECKSUM_MISMATCH'], ['DELETE FROM metadata_schema_migrations WHERE version=2', 'HISTORY_GAP'], ["INSERT INTO metadata_schema_migrations VALUES (7,'future','x','now')", 'NEWER_VERSION']] as const) {
+    for (const [sql, error] of [["UPDATE metadata_schema_migrations SET sha256='tampered' WHERE version=1", 'CHECKSUM_MISMATCH'], ['DELETE FROM metadata_schema_migrations WHERE version=2', 'HISTORY_GAP'], ["INSERT INTO metadata_schema_migrations VALUES (8,'future','x','now')", 'NEWER_VERSION']] as const) {
         const db = new DatabaseSync(':memory:');
         try {
             migrateMetadata(db);
@@ -83,7 +83,7 @@ test('migration failure restores foreign keys and leaves no partially applied sc
         assert.equal(db.prepare('PRAGMA foreign_keys').get()?.foreign_keys, 1);
         assert.equal(db.prepare("SELECT name FROM sqlite_master WHERE name='customers'").get(), undefined);
         migrateMetadata(db);
-        assert.equal(metadataMigrations.length, 6);
+        assert.equal(metadataMigrations.length, 7);
     }
     finally {
         db.close();

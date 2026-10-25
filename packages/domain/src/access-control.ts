@@ -126,7 +126,7 @@ export interface TenantInvitation extends VersionedMetadata {
     /** One-use token hash, never a reusable secret. Actual invitation delivery is deferred. */
     tokenDigest: string;
 }
-export const adminAuditActions = ['ai.settings_changed', 'customer.created', 'customer.updated', 'tenant.created', 'tenant.updated', 'tenant.suspended',
+export const adminAuditActions = ['source.settings_drafted', 'ai.settings_changed', 'customer.created', 'customer.updated', 'tenant.created', 'tenant.updated', 'tenant.suspended',
     'user.updated', 'user.suspended', 'identity.disabled', 'membership.created', 'membership.candidate_provisioned', 'membership.updated', 'membership.suspended',
     'membership.roles_changed', 'membership.scope_changed', 'role.created', 'role.updated', 'role.deleted',
     'dashboard.access_changed', 'invitation.created', 'invitation.revoked', 'invitation.accepted', 'platform.access_changed'] as const;

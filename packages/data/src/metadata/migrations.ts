@@ -4,7 +4,7 @@ import { DatabaseSync } from 'node:sqlite';
 export class MetadataSchemaError extends Error {
     constructor(readonly code: string) { super(`Metadata schema: ${code}. Run the explicit metadata migration command against an approved backup.`); }
 }
-const files = ['001-baseline.sql', '002-administration.sql', '003-sharing.sql', '004-assignment-candidates.sql', '005-analyst.sql', '006-workspace-ai-settings.sql'];
+const files = ['001-baseline.sql', '002-administration.sql', '003-sharing.sql', '004-assignment-candidates.sql', '005-analyst.sql', '006-workspace-ai-settings.sql', '007-tenant-source-settings.sql'];
 export const metadataMigrations = files.map((name, index) => {
     const sql = readFileSync(new URL(`./migrations/${name}`, import.meta.url), 'utf8');
     return { version: index + 1, name, sql, sha256: createHash('sha256').update(sql).digest('hex') };
@@ -38,7 +38,7 @@ export function assertMetadataReady(db: DatabaseSync): void {
         throw new MetadataSchemaError('FOREIGN_KEYS_DISABLED');
     if (db.prepare('PRAGMA foreign_key_check').all().length)
         throw new MetadataSchemaError('FOREIGN_KEY_VIOLATION');
-    for (const table of ['dashboard_records', 'dashboard_folders', 'dashboard_library_preferences', 'dashboard_grants', 'customers', 'tenants', 'users', 'identities', 'roles', 'memberships', 'platform_assignments', 'admin_audit_events', 'bootstrap_state', 'tenant_assignment_candidates', 'analyst_conversations', 'analyst_question_audit', 'workspace_ai_settings']) {
+    for (const table of ['dashboard_records', 'dashboard_folders', 'dashboard_library_preferences', 'dashboard_grants', 'customers', 'tenants', 'users', 'identities', 'roles', 'memberships', 'platform_assignments', 'admin_audit_events', 'bootstrap_state', 'tenant_assignment_candidates', 'analyst_conversations', 'analyst_question_audit', 'workspace_ai_settings', 'tenant_source_settings']) {
         try {
             db.prepare(`SELECT 1 FROM ${table} LIMIT 0`).all();
         }

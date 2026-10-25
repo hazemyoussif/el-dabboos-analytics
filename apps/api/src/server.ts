@@ -1,3 +1,4 @@
+import { createTenantSourceAdministration } from './source-settings/runtime.ts';
 import { createWorkspaceAiResolver } from './workspace-ai/provider.ts';
 import { createWorkspaceAiAdministration } from './workspace-ai/models.ts';
 import { WorkspaceAiKeyCipher } from './workspace-ai/key-cipher.ts';
@@ -100,7 +101,7 @@ const workspaceAiAdministration = createWorkspaceAiAdministration(workspaceAiCon
 const workspaceAi = createWorkspaceAiResolver({ read: administration.read.bind(administration), config: workspaceAiConfig, cipher: workspaceAiCipher, dimensionValues: repository });
 const sourceRelay=await localAnalyticsSourceRelay(process.env);
 const operationalCommands=manualAnalyticsCommands(provider,process.env);
-const app = await buildApi({ workspaceAi, workspaceAiAdministration, analystRepository:administration.analyst,...(analystPlanner?{analystPlanner}:{}),...(analystSynthesis?{analystSynthesis}:{}), ...(drillThroughRepository?{drillThroughRepository}:{}), ...(operationalCommands?{operationalCommands}:{}), ...(operationalStatus?{operationalStatus}:{}), ...(provider==='postgres' ? { publishedCapabilities: repository as PublishedAnalyticsRepository } : {}),analyticsRepository: repository, dimensionValues: repository, executionConcurrency: config.executionConcurrency,
+const app = await buildApi({ tenantSourceAdministration: createTenantSourceAdministration(process.env), workspaceAi, workspaceAiAdministration, analystRepository:administration.analyst,...(analystPlanner?{analystPlanner}:{}),...(analystSynthesis?{analystSynthesis}:{}), ...(drillThroughRepository?{drillThroughRepository}:{}), ...(operationalCommands?{operationalCommands}:{}), ...(operationalStatus?{operationalStatus}:{}), ...(provider==='postgres' ? { publishedCapabilities: repository as PublishedAnalyticsRepository } : {}),analyticsRepository: repository, dimensionValues: repository, executionConcurrency: config.executionConcurrency,
     readiness: { persistence: async () => { await localAuth?.ready(); return controlStorage.ready(); }, analytics: analyticsReady },
     administration: { unitOfWork: administration, directory: administration.directory, profiles: administration.profiles, dataReady,
         ...(localAuth ? { provisionEmployee: localAuth.provisionEmployee,provisionWorkspaceEmployee:localAuth.provisionWorkspaceEmployee } : {}),

@@ -51,3 +51,5 @@ export * from './source-state-labels.ts';
 
 export * from './sales-command-insights.ts';
 export type {AnalyticsSyncCandidate,AnalyticsSyncSession,AnalyticsSyncStore} from './analytics-sync.ts';
+
+export * from './tenant-source-settings.ts';

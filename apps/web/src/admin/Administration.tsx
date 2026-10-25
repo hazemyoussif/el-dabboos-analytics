@@ -1,3 +1,4 @@
+import { SourceSettingsPage } from './SourceSettingsPage.tsx';
 import { AiSettingsPage } from './AiSettingsPage.tsx';
 import type { Locale } from '@el-dabboos/domain';
 import { Building2, Users, Contact, Shield, SlidersHorizontal, LayoutDashboard, Settings } from 'lucide-react';
@@ -10,10 +11,10 @@ import { PlatformUsersPage } from './PlatformUsersPage.tsx';
 import { RolesPage } from './RolesPage.tsx';
 import { TenantsPage } from './TenantsPage.tsx';
 import { WorkspacePage } from './WorkspacePage.tsx';
-export type AdminPage = 'platform-customers' | 'platform-tenants' | 'platform-users' | 'users' | 'roles' | 'data-access' | 'dashboard-access' | 'tenant' | 'ai-settings';
+export type AdminPage = 'platform-customers' | 'platform-tenants' | 'platform-users' | 'users' | 'roles' | 'data-access' | 'dashboard-access' | 'tenant' | 'ai-settings' | 'source-settings';
 const administrationIcons = {
     'platform-customers': Contact, 'platform-tenants': Building2, 'platform-users': Users,
-    users: Users, roles: Shield, 'data-access': SlidersHorizontal, 'dashboard-access': LayoutDashboard, tenant: Settings, 'ai-settings': Settings,
+    users: Users, roles: Shield, 'data-access': SlidersHorizontal, 'dashboard-access': LayoutDashboard, tenant: Settings, 'ai-settings': Settings, 'source-settings': Settings,
 };
 export const adminPages: readonly {
     page: AdminPage;
@@ -22,6 +23,7 @@ export const adminPages: readonly {
     ar: string;
 }[] = [
     { page: 'platform-customers', permission: 'platform:customers:view', en: 'Customers', ar: 'العملاء' }, { page: 'platform-tenants', permission: 'platform:tenants:view', en: 'Tenants', ar: 'مساحات العمل' }, { page: 'platform-users', permission: 'platform:users:view', en: 'Users / Access', ar: 'المستخدمون / الوصول' },
+    { page: 'source-settings', permission: 'tenant:manage', en: 'Source settings', ar: 'إعدادات المصدر' },
     { page: 'ai-settings', permission: 'tenant:manage', en: 'AI settings', ar: 'إعدادات AI' },
     { page: 'users', permission: 'users:view', en: 'Users', ar: 'المستخدمون' }, { page: 'roles', permission: 'roles:view', en: 'Roles', ar: 'الأدوار' }, { page: 'data-access', permission: 'data_scopes:view', en: 'Data Access', ar: 'الوصول للبيانات' }, { page: 'dashboard-access', permission: 'dashboard_access:view', en: 'Dashboard Access', ar: 'الوصول للوحات' }, { page: 'tenant', permission: 'tenant:view', en: 'Tenant', ar: 'مساحة العمل' },
 ];
@@ -45,6 +47,7 @@ export function Administration(props: AdministrationPageProps & {
     page: AdminPage;
 }) {
     switch (props.page) {
+        case 'source-settings': return <SourceSettingsPage key={props.session.userId + ':' + props.session.tenantId + ':' + props.session.locale} {...props}/>;
         case 'ai-settings': return <AiSettingsPage key={props.session.userId + ':' + props.session.tenantId + ':' + props.session.locale} {...props}/>;
         case 'roles': return <RolesPage key={props.session.userId + ':' + props.session.tenantId + ':' + props.session.locale} {...props}/>;
         case 'users': return <MembershipsPage key={props.session.userId + ':' + props.session.tenantId + ':' + props.session.locale} {...props}/>;

@@ -101,3 +101,49 @@ These control statuses are governance metadata, never proof of certification or 
 ## Remaining shared staging gates
 
 Reviewed employee authentication rollout and future IdP selection/adapters; approved metadata backup/cutover; source/business ownership and Odoo Invoice Analysis gross/refund/filter certification; explicit certified publication/recovery use case; deployment secrets, TLS/origin/session policy; encrypted backups/restore drills; resource/pool/concurrency sizing and operational observability. React/Fastify will use the two staging databases and staging-only secrets/Odoo endpoint. Production repeats the boundaries on separate resources. Scheduled sync, backfill, hard-delete reconciliation, production integration and shared deployment are outside this milestone.
+
+## Tenant source preparation settings (25 October 2026)
+
+Control migration 010 and SQLite metadata 007 add one versioned source draft per
+tenant. Tenant administrators with no enforced data scopes can open
+**Administration → Source settings**, save a draft, check the saved version and
+export its metadata. Drafts contain a logical source ID, protected connection
+reference, explicit company IDs, bounded PostgreSQL adapter parameters and
+physical header/Business Line bindings. They contain no credentials, SQL,
+expressions, executable transforms or active serving state. Odoo 18 PostgreSQL is
+the supported preparation adapter. Existing source definitions, operational
+configuration, certified mappings, cursors and serving remain authoritative.
+
+Saving is explicit, optimistic-version checked and atomically audited. Compatibility
+checks authenticate before any source call and again before returning results,
+rejecting drafts changed during the check. Checks read schema/version/company
+metadata only, inside read-only transactions, and do not certify business meaning
+or source continuity. A database identity hash is diagnostic evidence only.
+Activation is not exposed by this settings page: use the existing approved
+candidate/extraction/reconciliation/publication process. A new physical mapping
+must be implemented and certified before it can change operational extraction.
+
+`TENANT_SOURCE_CONNECTIONS` is an optional operator-supplied JSON array of
+`{tenantId,sourceId,connectionRef,companyIds,host,port,database,user,passwordEnv}`.
+`passwordEnv` names a protected server environment variable; never put a password
+in the registry JSON or a draft. Registry entries bind exact tenant/source identity
+and an allowed company set. The browser receives only references/source/company
+IDs. Registered destinations are operator-approved, including any needed external
+tunnel. No SSH credential handling or tunnel management is added.
+
+Without registry entries, the existing `odoo-staging-main` reference is available
+only to the exact `ANALYTICS_SOURCE_TENANT_ID` / `ANALYTICS_SOURCE_ID` scope and
+`ODOO_SOURCE_COMPANY_IDS` configured by the operator. Existing `ODOO_SOURCE_*`
+credentials are resolved server-side and never returned. An unregistered reference
+can be drafted for a later handoff, but cannot be checked. There is no cross-tenant
+or unknown-reference fallback.
+
+Only one source compatibility check runs at a time per API process. The diagnostic
+queries cap statement time at two seconds (or the smaller configured limit), plus
+a one-second lock timeout and a maximum ten-second connection timeout. The saved
+extraction/snapshot limits are preparation metadata, not changes to current jobs.
+
+Apply migrations explicitly against an approved backup before releasing the new
+API. No live migration, source check, switch or deployment is implied by saving a
+draft. Existing migration files remain immutable. See
+[tenant source preparation handoff](../qa/tenant-source-settings-2026-10-25.md).

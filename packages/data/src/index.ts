@@ -23,6 +23,7 @@ export * from './postgres/mapping-releases.ts';
 export * from './postgres/derived-certification.ts';
 export * from './postgres/extraction-reconciliation.ts';
 export * from './odoo/config.ts';
+export * from './odoo/settings-inspector.ts';
 export * from './odoo/sales-command-inspection.ts';
 export * from './odoo/reader.ts';
 export * from './odoo/mapper.ts';
