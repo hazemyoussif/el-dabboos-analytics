@@ -43,7 +43,7 @@ Ordinary sync, daily reconciliation, absence sweeps and Command workers retain t
 
 Copy revisions begin `orm-observed-copy-v1:`. `sourceAsOf` is the receipt time. Prepared-result metadata exposes `sourceConsistency=api_observed`; dashboard notes, answer evidence and Excel disclose possible changes between requests. Existing business-date, snapshot cutoff, currency, policy and explicit publication semantics remain intact. Wire precision is preserved without attesting unknown ERP storage precision.
 
-The owner explicitly removed the second full API scan, repeated acceptance flag and duplicate model-readability probe. Odoo itself enforces read permissions. Migration 095 makes the existing event preparer read only selected monthly members before canonical lineage expansion; formulas, tenant RLS, reconciliation and preparation budgets remain unchanged. Migration 096 applies the same selected-root approach to complete snapshots and adds a partial index for summary controls.
+The owner explicitly removed the second full API scan, repeated acceptance flag and duplicate model-readability probe. Odoo itself enforces read permissions. Migration 095 makes the existing event preparer read only selected monthly members before canonical lineage expansion; formulas, tenant RLS and reconciliation remain unchanged. Migration 096 applies the same selected-root approach to complete snapshots and adds a partial index for summary controls. Activated background publication allows up to ten minutes per preparation statement so complete-history identity proofs can finish at company scale. It restores the caller deadline before promotion; interactive and source query deadlines remain unchanged. Financial and identity checks still run in full.
 
 ## Recovery and storage
 
