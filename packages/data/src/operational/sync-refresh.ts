@@ -32,7 +32,7 @@ export async function prepareSyncCandidate(context:SyncContext,candidate:StoredS
  },id);
  if(!plan)return;
  for(const chunk of plan.chunks){
-  await context.transaction(()=>prepareChunk(client,scope,chunk,plan.bounds),id,120000);
+  await context.transaction(()=>prepareChunk(client,scope,chunk,plan.bounds),id,600000);
   checkpoint(context,id,'prepared_chunk',chunk.period);
  }
  await context.transaction(async()=>{await client.query("INSERT INTO mart.prepared_revision_seals VALUES($1,$2,'prepared-v1')",[tenantId,id]);},id);

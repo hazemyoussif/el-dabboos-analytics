@@ -1,3 +1,4 @@
+import {sameObservedOdooInput} from '../odoo-orm/observation.ts';
 import type {PoolClient} from 'pg';
 import type {ProductionFact,SourceMapping} from '@el-dabboos/domain';
 import {validateProductionFact} from '@el-dabboos/domain';
@@ -48,7 +49,7 @@ export class BusinessDeltaWorkspace {
  async open(){
   if(this.state!=='new')throw new Error('Business delta workspace already opened');
   this.state='failed';
-  if(!Number.isFinite(Date.parse(this.observation.cutoff))||Date.parse(this.observation.cutoff)<=Date.parse(this.baseline.cutoff)||
+  if(!Number.isFinite(Date.parse(this.observation.cutoff))||(Date.parse(this.observation.cutoff)<=Date.parse(this.baseline.cutoff)&&!sameObservedOdooInput({cutoff:this.baseline.cutoff,revision:this.baseline.sourceRevision},this.observation))||
    !this.observation.revision.trim()||!compatibleBusinessDeltaMapping(this.baseline.mapping,this.observation.mapping))throw new Error('Newer source observation and compatible Business mapping required');
   await this.assertParent();
   await this.client.query(`CREATE TEMP TABLE business_delta_identities (
@@ -97,7 +98,10 @@ export class BusinessDeltaWorkspace {
  async persistAllocationLinks(partitionId:string){
   if(this.state!=='sealed')throw new Error('Sealed Business source dependency evidence required');
   await this.client.query(`INSERT INTO mart.business_allocation_links
-   SELECT $1,$2,id,$3,$4,$5,effective_from,links FROM pg_temp.business_delta_allocation_links`,
+   SELECT $1,$2,incoming.id,$3,$4,$5,incoming.effective_from,incoming.links FROM pg_temp.business_delta_allocation_links incoming
+   WHERE NOT EXISTS(SELECT 1 FROM mart.business_allocation_links retained
+    WHERE retained.tenant_id=$1 AND retained.source_id=$2 AND retained.source_record_id=incoming.id AND retained.source_cutoff=$3
+    AND retained.source_revision=$4 AND retained.effective_from=incoming.effective_from AND retained.allocation_links=incoming.links)`,
    [this.baseline.tenantId,this.baseline.mapping.sourceId,this.observation.cutoff,this.observation.revision,partitionId]);
  }
  async request(object:string,ids:readonly string[]){

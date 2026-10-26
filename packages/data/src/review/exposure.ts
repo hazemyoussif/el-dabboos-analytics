@@ -1,3 +1,4 @@
+import {sameObservedOdooInput} from '../odoo-orm/observation.ts';
 import {prepareActivatedPublication} from '../prepared/publication.ts';
 import {businessCapabilities,businessDefinitionVersion} from '../business/definitions.ts';
 import {randomUUID,createHash} from 'node:crypto';
@@ -104,8 +105,14 @@ async function assertEmptyRequestedMonth(client:PoolClient,source:ReviewExtracti
  if(existing.rowCount)throw new Error('New recipe month already has an accepted Business member');
 }
 
+/** One immutable API copy can serve repeated delta checks. Complete replacement
+ * imports and a different source identity must still advance their observation. */
+function sameObservedDelta(source:ReviewObservation,prior:{source_cutoff:Date;source_revision:string}){
+ return 'replacements' in source&&sameObservedOdooInput({cutoff:prior.source_cutoff.toISOString(),revision:prior.source_revision},source);
+}
+
 async function assertNewCutoff(client:PoolClient,source:ReviewObservation,parent:string,family:'review'|'business'){
- const prior=(await client.query(`SELECT extraction.source_cutoff FROM mart.analytics_serving_members member JOIN mart.review_extractions extraction USING(tenant_id,partition_id)
+ const prior=(await client.query(`SELECT extraction.source_cutoff,extraction.source_revision FROM mart.analytics_serving_members member JOIN mart.review_extractions extraction USING(tenant_id,partition_id)
   WHERE member.tenant_id=$1 AND member.revision_id=$2 AND member.family=$4 AND member.month=$3`,[source.tenantId,parent,source.month+'-01',family])).rows[0];
- if(prior&&Date.parse(source.cutoff)<=prior.source_cutoff.getTime())throw new Error('Newer review source cutoff required');
+ if(prior&&Date.parse(source.cutoff)<=prior.source_cutoff.getTime()&&!sameObservedDelta(source,prior))throw new Error('Newer review source cutoff required');
 }

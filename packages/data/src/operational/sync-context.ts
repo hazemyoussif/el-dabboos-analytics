@@ -12,7 +12,7 @@ export interface StoredSyncCandidate extends AnalyticsSyncCandidate {
 /** One checked-out session owns the advisory lock across bounded transactions. */
 export class SyncContext {
  constructor(readonly client:PoolClient,readonly tenantId:string,readonly observe?:OperationalProgressObserver){}
- async transaction<T>(operation:()=>Promise<T>,candidateId?:string,timeout:15000|120000=15000):Promise<T>{
+ async transaction<T>(operation:()=>Promise<T>,candidateId?:string,timeout:15000|120000|600000=15000):Promise<T>{
   await this.client.query('BEGIN');
   try {
    await this.client.query("SELECT set_config('mart.tenant_id',$1,true),set_config('statement_timeout',$3,true),set_config('mart.sync_candidate_id',$2,true),set_config('mart.sync_accepting','',true)",[this.tenantId,candidateId??'',String(timeout)]);

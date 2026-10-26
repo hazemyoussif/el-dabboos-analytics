@@ -73,7 +73,8 @@ export async function recordUnchangedBusinessDelta(client:PoolClient,source:Busi
    SELECT rule->>'measureId' measure FROM mart.review_extractions extraction,
    LATERAL jsonb_array_elements(extraction.mapping->'measures') rule
    WHERE extraction.tenant_id=$1 AND extraction.partition_id=$2 AND rule->>'sourceObject'=object LIMIT 1
-  ) recipe CROSS JOIN LATERAL mart.business_measure_observation($1,$2,recipe.measure) observation`,
+  ) recipe CROSS JOIN LATERAL mart.business_measure_observation($1,$2,recipe.measure) observation
+  WHERE observation.source_cutoff<$4::timestamptz`,
   [source.tenantId,captured.baseline.partitionId,captured.observed,source.cutoff,source.revision]);
  await captured.workspace.persistAllocationLinks(captured.baseline.partitionId);
 }

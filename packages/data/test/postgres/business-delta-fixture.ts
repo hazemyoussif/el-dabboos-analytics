@@ -15,15 +15,15 @@ export const deltaContext={tenantId:'a',locale:'en' as const};
 export const deltaRange={from:'2026-10-01',to:'2026-10-20'};
 
 /** Small canonical synthetic data only. No developer env or external source. */
-export async function deltaFixture(prepare=true){
+export async function deltaFixture(prepare=true,observedRevision?:string){
  const db=await database();
  try{
   await deploy(db.migrator,mapping());await bootstrapOperationalServing(db.migrator,'a');
   const source=fixture('2026-10',true,'business',true),facts:ProductionFact[]=[];
   for await(const page of source.facts)facts.push(...page);
   const cutoff='2026-10-20T09:00:00.000Z';
-  const initial=facts.map(fact=>observedFact(fact,cutoff,fact.kind==='snapshot'?'2026-10-20':fact.businessDate));
-  const accepted=await exposeReviewMonth(db.ingestor,{...source,cutoff,revision:revision(cutoff),facts:pages(initial),controls:async()=>factControls(initial)},'business');
+  const initial=facts.map(fact=>({...observedFact(fact,cutoff,fact.kind==='snapshot'?'2026-10-20':fact.businessDate),...(observedRevision?{frozenRevision:observedRevision}:{})}));
+  const accepted=await exposeReviewMonth(db.ingestor,{...source,cutoff,revision:observedRevision??revision(cutoff),facts:pages(initial),controls:async()=>factControls(initial)},'business');
   if(prepare){
    await tenantTransaction(db.ingestor,'a',client=>prepareRevision(client,{tenantId:'a',revisionId:accepted.revisionId},deltaBounds));
    await tenantTransaction(db.migrator,'a',client=>client.query('INSERT INTO mart.prepared_activation VALUES($1,$2,$3,$4)',
