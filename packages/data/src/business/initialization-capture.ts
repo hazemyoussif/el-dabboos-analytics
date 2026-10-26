@@ -6,6 +6,7 @@ import type {SourceMapping} from '@el-dabboos/domain';
 import type {OdooSourceConfig} from '../odoo/config.ts';
 import {tenantTransaction} from '../postgres/session.ts';
 import {OdooBusinessReader} from './source.ts';
+import {customerCoverageBasis,customerCoverageObject} from './customer-coverage-mapping.ts';
 
 export interface CommandCaptureScope {
  mart:Pool;owner:Pool;reader:Pool;config:OdooSourceConfig;month:string;object:string;
@@ -18,7 +19,7 @@ export interface CommandCaptureScope {
 export async function captureCommandRecipe(scope:CommandCaptureScope){
  if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(scope.month)||scope.mapping.tenantId!==scope.config.tenantId||
   scope.mapping.sourceId!==scope.config.sourceId||scope.mapping.measures.some(rule=>rule.sourceObject===scope.object&&
-  !rule.measureId.startsWith('command_'))||!scope.mapping.measures.some(rule=>rule.sourceObject===scope.object))throw new Error('Governed Command capture scope required');
+  !registeredCaptureMeasure(scope.mapping,scope.object,rule.measureId))||!scope.mapping.measures.some(rule=>rule.sourceObject===scope.object))throw new Error('Governed Command capture scope required');
  validateSourceMapping(scope.mapping);
  const lease=await openOdooReadLease(scope.owner,scope.config);
  const candidateId=randomUUID();let created=false,factPages=0,controlPages=0,factCount=0,controlCount=0;
@@ -62,4 +63,9 @@ export async function captureCommandRecipe(scope:CommandCaptureScope){
    [scope.config.tenantId,candidateId])).catch(()=>{});
   throw error;
  }finally{await lease.close();}
+}
+function registeredCaptureMeasure(mapping:SourceMapping,object:string,measure:string){
+ if(object!==customerCoverageObject)return measure.startsWith('command_');
+ customerCoverageBasis(mapping);
+ return ['coverage_forecast_quantity','coverage_customer_population','coverage_net_quantity','coverage_tag_membership','coverage_excluded_product_count'].includes(measure);
 }

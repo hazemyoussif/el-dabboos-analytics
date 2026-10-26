@@ -22,8 +22,8 @@ test('independent report exposes native navigation and bilingual honest stock/co
    assert.ok(html.indexOf('id="products-inventory"')<html.indexOf('id="products-sales"'));
    for(const phrase of locale==='en'?['Unknown','On-hand is not free stock','Stock is older']:['غير معروف','المخزون الفعلي ليس المتاح للبيع','لقطة المخزون أقدم'])assert.ok(html.includes(phrase),phrase);
    const page=renderToStaticMarkup(createElement(ProductsWarehousesPage,props));
-   assert.ok(page.includes(locale==='en'?'coverage — awaiting publication':'تغطية منتجات العملاء — بانتظار النشر'));
-   assert.ok(!page.includes('Save dashboard'));assert.ok(!page.includes('value="unsold"'));
+   assert.ok(page.includes(locale==='en'?'Customer product coverage':'تغطية منتجات العملاء'));
+   assert.ok(!page.includes('Save dashboard'));assert.ok(page.includes('value="unsold"'));
    const navigation=renderToStaticMarkup(createElement(ManagementNavigation,{templates:[],locale,published:syntheticCapabilities({tenantId:profile.id,locale}),activeId:'products-warehouses',onSelect:()=>{}}));
    assert.match(navigation,/href="\/reports\/products-warehouses"/);assert.match(navigation,/aria-current="page"/);
    assert.equal(managementTitle('products-warehouses',locale,'fallback'),locale==='en'?'Products & Warehouses':'المنتجات والمخازن');

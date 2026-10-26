@@ -71,5 +71,6 @@ export const drillThrough=(session:ApiSession,query:import('@el-dabboos/domain')
 
 export const getSalesCommandCenter=(session:ApiSession,input:import('@el-dabboos/application').SalesCommandInput,signal?:AbortSignal)=>request<import('@el-dabboos/application').SalesCommandResult>(session,'/api/reports/sales-command-center','POST',input,signal);
 export const getProductsWarehouses=(session:ApiSession,input:import('@el-dabboos/application').ProductsWarehousesInput,signal?:AbortSignal)=>request<import('@el-dabboos/application').ProductsWarehousesResult>(session,'/api/reports/products-warehouses','POST',input,signal);
+export const getCustomerProductCoverage=(session:ApiSession,input:import('@el-dabboos/domain').CustomerProductCoverageInput,signal?:AbortSignal)=>request<import('@el-dabboos/domain').CustomerProductCoverageResult>(session,'/api/reports/products-warehouses/coverage','POST',input,signal);
 
 export const readWidgetWindow=({session,dashboard,widgetId,window,overrides,signal}:{session:ApiSession;dashboard:DashboardSpec;widgetId:string;window:import('@el-dabboos/application').WidgetWindowRequest;overrides:DashboardFilterOverrides;signal?:AbortSignal})=>request<import('@el-dabboos/application').WidgetExecution>(session,`/api/dashboards/widgets/${encodeURIComponent(widgetId)}/window`,'POST',{dashboard,window,overrides},signal);

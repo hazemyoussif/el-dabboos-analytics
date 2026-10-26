@@ -3,6 +3,7 @@ import {readPreparedReportingWindow} from './reporting-window.ts';
 import type {Pool,PoolClient} from 'pg';
 import type {PreparedBuildBounds,PreparedBuildScope,PreparedChunkResult} from './contracts.ts';
 import {requiredPreparedChunks,prepareChunk} from './preparation.ts';
+import {preparePopulationUnit} from './population-preparation.ts';
 export interface PreparedOperatorScope extends PreparedBuildScope {database:string;bounds:PreparedBuildBounds}
 /** Explicit pre-preparation scope registration; database guard owns tenant/revision/lifecycle checks. */
 export async function registerPreparedReportingWindow(pool:Pool,scope:PreparedOperatorScope,window:DateRange){
@@ -38,6 +39,7 @@ export async function preparePublishedRevision(pool:Pool,scope:PreparedOperatorS
    const buildScope:PreparedBuildScope={...scope,...(scope.observeStep?{observeStep:event=>scope.observeStep!({...event,chunk})}:{})};
    const result=await transaction(client,scope,()=>prepareChunk(client,buildScope,chunk,scope.bounds));results.push(result);observe(result);
   }
+  while(await transaction(client,scope,()=>preparePopulationUnit(client,scope,scope.bounds))){/* Each completed unit commits independently. */}
   await transaction(client,scope,async()=>{await client.query("INSERT INTO mart.prepared_revision_seals VALUES($1,$2,'prepared-v1') ON CONFLICT DO NOTHING",[scope.tenantId,scope.revisionId]);});
   return {revisionId:scope.revisionId,chunks:results.length,reused:results.filter(chunk=>chunk.reused).length,rows:results.reduce((total,chunk)=>total+chunk.rows,0)};
  }finally{

@@ -38,8 +38,8 @@ test('single-axis charts reject mixed units, while tables allow independently fo
   ] }] }));
 });
 test('product catalog marks planned concepts without making them executable', () => {
-  assert.equal(Object.keys(semanticCatalog).length, 124);
-  assert.equal(productMetricCatalog.filter(metric => metric.availability === 'available').length, 124);
+  assert.equal(Object.keys(semanticCatalog).length, 129);
+  assert.equal(productMetricCatalog.filter(metric => metric.availability === 'available').length, 129);
   assert.ok(productMetricCatalog.some(metric => metric.id === 'days_sales_outstanding' && metric.availability === 'planned'));
   assert.throws(() => validateDashboardSpec({ ...spec, widgets: [{ id: 'dso', type: 'kpi', series: [{ id: 'dso', metric: 'days_sales_outstanding' }] }] }));
   assert.ok(semanticCatalog.outstanding_amount.dialectSynonyms?.iq?.includes('الديون'));

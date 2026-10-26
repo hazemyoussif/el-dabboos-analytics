@@ -51,5 +51,6 @@ export {supportedPurposeTemplate} from './purpose-charts.ts';
 export * from './sales-command-center.ts';
 export * from './sales-command-center-definition.ts';
 export * from './products-warehouses.ts';
+export * from './customer-product-coverage.ts';
 export * from './products-warehouses-definition.ts';
 export {CheckpointedAnalyticsSync} from './analytics-sync.ts';

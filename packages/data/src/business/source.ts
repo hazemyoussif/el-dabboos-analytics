@@ -1,3 +1,5 @@
+import {customerCoverageRecipe} from './customer-coverage-recipes.ts';
+import {customerCoverageObject,customerCoverageBasis} from './customer-coverage-mapping.ts';
 import {assertSalesCommandHeaders} from './sales-command-controls.ts';
 import {commandInvoiceRecipe,commandReceiptRecipe,commandOrderRecipe,commandDebtRecipe,commandSameDayRecipe,commandIdentityRecipe} from './sales-command-recipes.ts';
 import {completeBusinessIdentityReplacements} from './identity-replacements.ts';
@@ -14,13 +16,13 @@ import {invoiceRecipe,cashRecipe,invoiceQuantityRecipe} from './source-recipes.t
 import {customerRecipe,receivableRecipe,receivableIdentityRecipe} from './customer-recipes.ts';
 import {stockRecipe,movementRecipe,unbilledRecipe,cashLedgerRecipe,payableRecipe,payableIdentityRecipe} from './stock-recipes.ts';
 import {businessSourceObject,currentBusinessMetrics} from './definitions.ts';
-import {inventoryAvailabilityRecipe} from './inventory-availability-recipes.ts';
+import {inventoryAvailabilityRecipe,inventoryAvailabilityObservedRecipe} from './inventory-availability-recipes.ts';
 import {inventoryAvailabilityObject} from './inventory-availability-mapping.ts';
 import {measureOperationalWork} from '../operational/progress.ts';
 import type {OperationalProgressObserver} from '../operational/progress.ts';
 interface SourceVector {id:string;business_date:string;company_id:number;currency:string;invalid:boolean;dimensions:Partial<Record<DimensionId,string|null>>;values:Partial<Record<FactMeasureId,string>>}
 interface SourceRow {id:string;business_date:string;company_id:number;currency:string;measure_id:FactMeasureId;value:string;invalid:boolean;dimensions:Partial<Record<DimensionId,string|null>>;labels?:ProductionFact['displayLabels']}
-const recipes=[[inventoryAvailabilityObject,inventoryAvailabilityRecipe],['command_invoice',commandInvoiceRecipe],['command_receipt',commandReceiptRecipe],['command_order',commandOrderRecipe],['command_receivable',commandDebtRecipe],['command_allocation',commandSameDayRecipe],['business_invoice_quantity',invoiceQuantityRecipe],['business_invoice',invoiceRecipe],['business_cash',cashRecipe],['business_customer',customerRecipe],['business_receivable',receivableRecipe],['business_stock',stockRecipe],['business_movement',movementRecipe],['business_sale_exception',unbilledRecipe(false)],['business_purchase_exception',unbilledRecipe(true)],['business_cash_ledger',cashLedgerRecipe],['business_payable',payableRecipe]] as const;
+const recipes=[[customerCoverageObject,customerCoverageRecipe],[inventoryAvailabilityObject,inventoryAvailabilityRecipe],['command_invoice',commandInvoiceRecipe],['command_receipt',commandReceiptRecipe],['command_order',commandOrderRecipe],['command_receivable',commandDebtRecipe],['command_allocation',commandSameDayRecipe],['business_invoice_quantity',invoiceQuantityRecipe],['business_invoice',invoiceRecipe],['business_cash',cashRecipe],['business_customer',customerRecipe],['business_receivable',receivableRecipe],['business_stock',stockRecipe],['business_movement',movementRecipe],['business_sale_exception',unbilledRecipe(false)],['business_purchase_exception',unbilledRecipe(true)],['business_cash_ledger',cashLedgerRecipe],['business_payable',payableRecipe]] as const;
 /** One exported, bounded read-only source snapshot; independent aggregate controls precede promotion. */
 export class OdooBusinessReader {
  private readonly end:string;
@@ -30,6 +32,7 @@ export class OdooBusinessReader {
   if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(scope.month)||config.companyIds.length!==1||config.batchSize<1||config.batchSize>1000)throw new Error('Explicit bounded business scope required');
   lease.assertScope(lease.evidence,config);
   this.labels=new BusinessSourceLabels(config.sourceId);
+  validateSelectedBusinessRecipes(scope.mapping);
   if(scope.mapping.tenantId!==config.tenantId||scope.mapping.sourceId!==config.sourceId)throw new Error('Business source identity conflict');
   this.day=reviewBusinessDate(lease.evidence.sourceAsOf,scope.mapping.measures[0]!.timeZone);
   if(scope.month>this.day.slice(0,7))throw new Error('Future business period unavailable');
@@ -121,13 +124,17 @@ export class OdooBusinessReader {
  }
  private selected(object:string){return (!this.scope.objects||this.scope.objects.includes(object))&&this.scope.mapping.measures.some(rule=>rule.sourceObject===object);}
  private selectedCurrentSnapshot(metric:import('@el-dabboos/domain').MetricId){
-  const current=currentBusinessMetrics.some(candidate=>candidate===metric)||currentSalesCommandMetrics.some(candidate=>candidate===metric)||requiredMeasures(metric).some(measure=>businessSourceObject(measure)===inventoryAvailabilityObject);
+  const current=currentBusinessMetrics.some(candidate=>candidate===metric)||currentSalesCommandMetrics.some(candidate=>candidate===metric)||requiredMeasures(metric).some(measure=>[inventoryAvailabilityObject,customerCoverageObject].includes(businessSourceObject(measure)));
   const semantics=semanticCatalog[metric].semantics;
   const snapshot=semantics.kind==='snapshot'||semantics.kind==='ratio'&&semantics.basis==='snapshot';
   return current&&snapshot&&requiredMeasures(metric).some(measure=>this.scope.mapping.measures.some(rule=>rule.measureId===measure&&this.selected(rule.sourceObject)));
  }
  private parameters(){return [Number(this.config.companyIds[0]),this.scope.month+'-01',this.end,this.scope.mapping.measures[0]!.timeZone,this.day,this.lease.evidence.sourceAsOf,this.config.sourceId,this.scope.mapping.measures.map(rule=>rule.measureId),JSON.stringify(this.scope.mapping.measures)];}
+ private transportRecipe(sql:string){
+  return this.config.observedCopy&&sql.startsWith(inventoryAvailabilityRecipe)?inventoryAvailabilityObservedRecipe+sql.slice(inventoryAvailabilityRecipe.length):sql;
+ }
  private vectorSql(sql:string){
+  sql=this.transportRecipe(sql);
   return `WITH source AS (${sql}),vectors AS(
    SELECT id,business_date,company_id,currency,dimensions,bool_or(invalid) invalid,jsonb_object_agg(measure_id,amount::numeric(30,6)::text) values
    FROM source WHERE $6::timestamptz IS NOT NULL AND measure_id=ANY($8::text[]) GROUP BY id,business_date,company_id,currency,dimensions
@@ -135,6 +142,7 @@ export class OdooBusinessReader {
   FROM vectors WHERE $9::jsonb IS NOT NULL`;
  }
  private wrapped(sql:string){
+  sql=this.transportRecipe(sql);
   return `WITH source AS (${sql}) SELECT source.id,source.business_date::text,source.company_id,source.currency,source.measure_id,source.amount::numeric(30,6)::text value,source.invalid,
    (SELECT jsonb_object_agg(dimension.key,CASE WHEN dimension.value IS NULL OR dimension.value IN('unknown','ambiguous') THEN coalesce(dimension.value,'unassigned') ELSE $7::text||':'||dimension.value END)
     FROM jsonb_each_text(source.dimensions) dimension WHERE rule."dimensionMappings"?dimension.key) dimensions
@@ -171,10 +179,14 @@ export class OdooBusinessReader {
 }
 
 function businessIdentityRecipe(object:string){
+ if(object===customerCoverageObject)return customerCoverageRecipe+" AND records.id=ANY($10::text[])";
  if(object===inventoryAvailabilityObject)return inventoryAvailabilityRecipe+" AND product.id::text||':'||coalesce(totals.warehouse_id::text,'unassigned')=ANY($10::text[])";
  return object==='business_receivable'?receivableIdentityRecipe():object==='business_payable'?payableIdentityRecipe():commandIdentityRecipe(object);
 }
+function validateSelectedBusinessRecipes(mapping:SourceMapping){
+ if(mapping.measures.some(rule=>rule.sourceObject===customerCoverageObject))customerCoverageBasis(mapping);
+}
 function validBusinessSourceIdentities(object:string,ids:readonly string[]){
- const pattern=object===inventoryAvailabilityObject?/^[1-9]\d*:(?:[1-9]\d*|unassigned)$/:/^[1-9]\d*$/;
+ const pattern=object===customerCoverageObject?/^(?:p:[1-9]\d*|c:\d{4}:[1-9]\d*|s:\d{4}:[1-9]\d*:[1-9]\d*|t:[1-9]\d*:[1-9]\d*)$/:object===inventoryAvailabilityObject?/^[1-9]\d*:(?:[1-9]\d*|unassigned)$/:/^[1-9]\d*$/;
  return ids.every(id=>id.length<=160&&pattern.test(id));
 }

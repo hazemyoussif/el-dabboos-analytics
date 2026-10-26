@@ -7,7 +7,7 @@ import type {SourceMapping} from '../src/production-data.ts';
 function mapping():SourceMapping {
  return {tenantId:'synthetic',sourceId:'fixture',datasetId:'release',mappingId:'test',mappingVersion:'1',businessBasis:'SYNTHETIC ONLY',businessOwner:'synthetic',reportingCurrency:'IQD',approval:{status:'pending'},
   measures:factMeasureIds.map(measureId=>({measureId,sourceObject:'fixture',grain:'record',eligibleStates:['active'],recognitionRule:'date',timeZone:'UTC',amountBasis:'signed',taxTreatment:'none',signConvention:'signed',identityRule:'record',correctionRule:'replace',currencyPolicy:'native',dimensionMappings:{}})),
-  capabilities:Object.values(semanticCatalog).map(metric=>({metric:metric.id,dimensions:[]}))};
+  capabilities:[{metric:'order_count',dimensions:[]}]};
 }
 
 test('dimension index preserves the catalog intersection for every measure and categorical dimension',()=>{

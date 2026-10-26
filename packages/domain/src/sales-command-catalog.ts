@@ -1,5 +1,6 @@
 import {businessMetricIds} from './business-catalog.ts';
 import {inventoryAvailabilityMetricIds} from './inventory-availability-catalog.ts';
+import {customerCoverageMetricIds} from './customer-coverage-catalog.ts';
 import type {MetricId,DimensionId,MetricSemantics,SalesCommandMetricId,SemanticMetric} from './contracts.ts';
 
 const events:readonly DimensionId[]=['date','week','month','quarter','year','customer','salesperson','state'];
@@ -56,4 +57,4 @@ export const salesCommandCatalog=Object.fromEntries(definitions.map(definition=>
 export const salesCommandMetricIds=definitions.map(definition=>definition[0]);
 export const currentSalesCommandMetrics:readonly SalesCommandMetricId[]=['command_invoice_residual','command_invoice_settled','command_customer_balance','command_overdue_balance','command_future_balance','command_unknown_maturity','command_overdue_days'];
 
-export const businessFamilyMetricIds:readonly MetricId[]=[...businessMetricIds,...salesCommandMetricIds,...inventoryAvailabilityMetricIds];
+export const businessFamilyMetricIds:readonly MetricId[]=[...businessMetricIds,...salesCommandMetricIds,...inventoryAvailabilityMetricIds,...customerCoverageMetricIds];

@@ -92,3 +92,5 @@ export {initializeOwnedOdooStage} from './odoo-orm/stage-initialize.ts';
 
 export {readFinanceCustomers,readFinanceCompanySummary} from './operational/finance-source.ts';
 export {publishFinanceSnapshot} from './operational/finance-publication.ts';
+export {PreparedCustomerProductCoverage} from './prepared/coverage.ts';
+export {captureCustomerCoverage} from './business/customer-coverage-capture.ts';

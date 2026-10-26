@@ -28,7 +28,7 @@ const recipeFields = new Set([
   'price_subtotal','product_brand_id','product_id','product_tmpl_id','product_uom','product_uom_id','product_uom_qty','product_qty',
   'qty_delivered','qty_received','qty_invoiced','quantity','quantity_product_uom','salesperson_id','state','state_id','type',
   'uom_id','usage','user_id','view_location_id','city','area','latitude','partner_latitude','longitude','partner_longitude',
-  'gps_shop_location','shop_gps_location','sale_line_ids','invoice_lines',
+  'gps_shop_location','shop_gps_location','sale_line_ids','invoice_lines','reserved_quantity','standard_price','location_final_id','restrict_partner_id',
 ]);
 export const stageBridges = [
   {model:'res.partner',field:'category_id',table:'res_partner_res_partner_category_rel',left:'partner_id',right:'category_id'},
@@ -36,6 +36,20 @@ export const stageBridges = [
 ] as const;
 export interface StageColumn {name:string;type:'bigint'|'numeric'|'boolean'|'text'|'date'|'timestamp'|'jsonb';ormType:string;translated:boolean;companyDependent:boolean}
 export interface StageModel {model:OdooOrmModel;table:string;columns:StageColumn[];fields:string[];domain:unknown[]}
+/** A newly sealed copy must support every registered stock recipe. Older sealed copies stay immutable. */
+export function validateStockStageProjection(models:readonly StageModel[]){
+ const required:Partial<Record<OdooOrmModel,readonly string[]>>={
+  'stock.quant':['quantity','reserved_quantity','owner_id','company_id','location_id','product_id'],
+  'product.product':['standard_price','active','product_tmpl_id'],
+  'stock.move':['location_final_id','restrict_partner_id','product_qty','state','location_id','location_dest_id'],
+ };
+ for(const [name,fields] of Object.entries(required)){
+  const model=models.find(candidate=>candidate.model===name);
+  if(!model||fields.some(field=>!model.columns.some(column=>column.name===field)))throw new Error('Complete stock API projection required');
+ }
+ const cost=models.find(model=>model.model==='product.product')!.columns.find(column=>column.name==='standard_price')!;
+ if(cost.ormType!=='float'||!cost.companyDependent)throw new Error('Company-dependent API standard cost required');
+}
 
 export function stageIdentifier(value:string):string {
   if(!/^[a-z_][a-z0-9_]{0,62}$/.test(value))throw new Error('Invalid owned staging identifier');

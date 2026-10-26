@@ -4,6 +4,7 @@ import type {PreparedBuildBounds,PreparedBuildScope,PreparedChunk,PreparedChunkR
 import {buildPreparedWorkspace} from './workspace.ts';
 import {fingerprintPreparedCells,persistPreparedCells} from './materialization.ts';
 import {prepareChangedCells} from './changed-cells.ts';
+import {preparePopulationUnit} from './population-preparation.ts';
 
 /** The owning background transaction holds the existing tenant writer lock. No Odoo access. */
 export async function requiredPreparedChunks(client:PoolClient,scope:PreparedBuildScope,bounds:PreparedBuildBounds):Promise<PreparedChunk[]>{
@@ -41,6 +42,7 @@ export async function prepareRevision(client:PoolClient,scope:PreparedBuildScope
  if((await client.query('SELECT 1 FROM mart.prepared_revision_seals WHERE tenant_id=$1 AND revision_id=$2',[scope.tenantId,scope.revisionId])).rowCount)return [];
  const chunks=await requiredPreparedChunks(client,scope,bounds),results=[];
  for(const chunk of chunks)results.push(await prepareChunk(client,scope,chunk,bounds));
+ while(await preparePopulationUnit(client,scope,bounds)){/* Resume bounded population units before the existing seal. */}
  await client.query("INSERT INTO mart.prepared_revision_seals VALUES($1,$2,'prepared-v1')",[scope.tenantId,scope.revisionId]);
  return results;
 }

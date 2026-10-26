@@ -4,7 +4,7 @@ import {OdooOrmClient} from './client.ts';
 import type {OdooOrmConfig} from './config.ts';
 import {readOdooOrmPages} from './pages.ts';
 import {ormRecordHash} from './records.ts';
-import {stageModels,stageModel} from './stage-manifest.ts';
+import {stageModels,stageModel,validateStockStageProjection} from './stage-manifest.ts';
 import type {StageModel} from './stage-manifest.ts';
 import {assertStageWriter,createStageSchema,writeStagePage,finishStageTables,sealStage} from './stage-store.ts';
 import type {OwnedStageConfig,ObservedCopyDescriptor} from './stage-config.ts';
@@ -19,7 +19,7 @@ async function modelPlan(client:OdooOrmClient):Promise<StageModel[]> {
  for(const descriptor of stageModels){
   result.push(stageModel(descriptor,await client.fields(descriptor.model)));
  }
- return result;
+ validateStockStageProjection(result);return result;
 }
 async function captureModelRows(client:OdooOrmClient,scope:{model:StageModel;deadline:number;write:(rows:import('./client.ts').OrmRow[])=>Promise<void>}):Promise<ModelEvidence> {
  const hash=createHash('sha256');let rows=0,bytes=0;

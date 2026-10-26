@@ -1,5 +1,5 @@
-/** Reduce negative/positive positions before clamping, once per product/warehouse. */
-export const inventoryAvailabilityRecipe=`WITH cost_defaults AS (
+/** Reduce positions once per product/warehouse, then use the selected transport cost evidence. */
+const databaseCostDefaults=`cost_defaults AS (
  SELECT coalesce((SELECT CASE WHEN defaults.json_value::jsonb IN('null'::jsonb,'false'::jsonb) THEN '0'
   ELSE defaults.json_value::jsonb#>>'{}' END FROM ir_default defaults
   JOIN ir_model_fields field ON field.id=defaults.field_id
@@ -9,7 +9,8 @@ export const inventoryAvailabilityRecipe=`WITH cost_defaults AS (
  EXISTS(SELECT 1 FROM ir_default defaults JOIN ir_model_fields field ON field.id=defaults.field_id
   WHERE field.model='product.product' AND field.name='standard_price' AND defaults.user_id IS NOT NULL AND defaults.condition IS NULL
   AND (defaults.company_id=$1::int OR defaults.company_id IS NULL)) user_specific
-),positions AS (
+)`;
+const inventoryAvailabilityPositions=`positions AS (
  SELECT quant.product_id,quant.company_id,
  (SELECT CASE WHEN count(*)=1 THEN min(warehouse.id) END FROM stock_warehouse warehouse
   JOIN stock_location root ON root.id=warehouse.view_location_id
@@ -41,3 +42,6 @@ export const inventoryAvailabilityRecipe=`WITH cost_defaults AS (
    ELSE greatest(totals.on_hand-totals.reserved,0)*coalesce((product.standard_price->>totals.company_id::text)::numeric,cost_defaults.amount) END)
  ) value(measure_id,amount)
  WHERE $2::date IS NOT NULL AND $3::date=$5::date AND $4::text IS NOT NULL`;
+export const inventoryAvailabilityRecipe=`WITH ${databaseCostDefaults},${inventoryAvailabilityPositions}`;
+/** Standard API returns company-resolved cost; missing values are unverified, never defaulted. */
+export const inventoryAvailabilityObservedRecipe=`WITH cost_defaults AS (SELECT NULL::numeric amount,true user_specific),${inventoryAvailabilityPositions}`;

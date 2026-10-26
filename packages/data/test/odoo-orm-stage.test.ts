@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {ownedStageConfig} from '../src/odoo-orm/stage-config.ts';
-import {stageModel,stageIdentifier} from '../src/odoo-orm/stage-manifest.ts';
+import {stageModel,stageIdentifier,validateStockStageProjection} from '../src/odoo-orm/stage-manifest.ts';
 import {stageRow,stageRelationIds} from '../src/odoo-orm/stage-values.ts';
 
 test('owned copy cannot point at the ERP database, mart, generic roles or a second endpoint',()=>{
@@ -37,4 +37,17 @@ test('owned copy requires the bridge used for invoice-to-order lineage',()=>{
  const model=stageModel({model:'sale.order.line',table:'sale_order_line'},{id:{type:'integer'},invoice_lines:{type:'many2many'}});
  assert.ok(model.fields.includes('invoice_lines'));
  assert.ok(!model.columns.some(column=>column.name==='invoice_lines'));
+});
+test('stock projection retains resolved company cost and reservation/final-destination fields',()=>{
+ const descriptors=[
+  {model:'stock.quant' as const,table:'stock_quant',fields:['quantity','reserved_quantity','owner_id','company_id','location_id','product_id']},
+  {model:'product.product' as const,table:'product_product',fields:['standard_price','active','product_tmpl_id']},
+  {model:'stock.move' as const,table:'stock_move',fields:['location_final_id','restrict_partner_id','product_qty','state','location_id','location_dest_id']},
+ ];
+ const models=descriptors.map(descriptor=>stageModel(descriptor,Object.fromEntries(['id',...descriptor.fields].map(name=>[name,{type:name==='standard_price'||name==='reserved_quantity'?'float':name==='active'?'boolean':'integer',store:true,...(name==='standard_price'?{company_dependent:true}:{})}]))));
+ validateStockStageProjection(models);
+ const product=models.find(model=>model.model==='product.product')!;
+ assert.deepEqual(stageRow(product,{id:'1',standard_price:'0',active:true,product_tmpl_id:'2'}).standard_price,{'1':'0'});
+ assert.throws(()=>validateStockStageProjection(models.map(model=>({...model,columns:model.columns.filter(column=>column.name!=='reserved_quantity')}))),/projection/);
+ assert.throws(()=>validateStockStageProjection(models.map(model=>({...model,columns:model.columns.map(column=>({...column,companyDependent:false}))}))),/cost/);
 });

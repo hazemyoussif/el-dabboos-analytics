@@ -1,3 +1,4 @@
+import {customerCoverageSourceObject} from './customer-coverage-mapping.ts';
 import {salesCommandSourceObject} from './sales-command-mapping.ts';
 import {inventoryAvailabilitySourceObject} from './inventory-availability-mapping.ts';
 import {createHash} from 'node:crypto';
@@ -6,8 +7,7 @@ import type {BusinessMetricId,SourceMapping,PublishedAnalyticsCapabilities,FactM
 export const currentBusinessMetrics:readonly BusinessMetricId[]=['supplier_payable_next_month','receivables_due_next_month','internal_stock_quantity','expired_stock_quantity','near_expiry_stock_quantity','unknown_expiry_stock_quantity','negative_stock_positions','delivered_unbilled_quantity','received_unbilled_quantity','order_age_exceptions','book_cash_balance','supplier_payable_due','supplier_payable_unknown_due','supplier_advance_balance'];
 export function businessDefinitionVersion(){return createHash('sha256').update(JSON.stringify(businessCatalog)).digest('hex');}
 export function businessSourceObject(measure:FactMeasureId){
- const availability=inventoryAvailabilitySourceObject(measure);if(availability)return availability;
- const command=salesCommandSourceObject(measure);if(command)return command;
+ for(const resolve of [customerCoverageSourceObject,inventoryAvailabilitySourceObject,salesCommandSourceObject]){const object=resolve(measure);if(object)return object;}
  const fixed:Partial<Record<FactMeasureId,string>>={invoiced_product_quantity:'business_invoice_quantity',physical_return_quantity:'business_movement',internal_transfer_quantity:'business_movement',delivered_customer_quantity:'business_movement',delivered_unbilled_quantity:'business_sale_exception',received_unbilled_quantity:'business_purchase_exception',book_cash_balance:'business_cash_ledger'};
  if(fixed[measure])return fixed[measure]!;
  if(measure.startsWith('period_cash'))return 'business_cash';

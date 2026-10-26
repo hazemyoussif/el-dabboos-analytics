@@ -1,6 +1,6 @@
 import type { AnalyticsResult, Locale } from '@el-dabboos/domain';
 
-export function SourceObservation({ metadata, locale }: { metadata: AnalyticsResult['metadata']; locale: Locale }) {
+export function SourceObservation({ metadata, locale }: { metadata: Pick<AnalyticsResult['metadata'],'sourceConsistency'>; locale: Locale }) {
   if (metadata.sourceConsistency !== 'api_observed') return null;
   return <p role="note">{locale === 'ar'
     ? 'استيراد عبر واجهة أودو، مع مطابقة الإجماليات. قد تتغير السجلات بين الطلبات؛ وقت التحديث هو وقت الاستيراد.'

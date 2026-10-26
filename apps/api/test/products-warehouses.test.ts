@@ -18,3 +18,20 @@ test('independent product report authenticates, validates scopes and preserves r
   assert.equal((await app.inject({method:'GET',url,headers})).statusCode,404);
  }finally{await app.close();}
 });
+test('coverage API authenticates and authorizes its prepared reader without accepting publication overrides',async()=>{
+ const repository=new MockAnalyticsRepository([]),seen:Array<{tenant:string;year?:number}>=[];
+ const app=await buildApi({analyticsRepository:repository,dimensionValues:repository,customerProductCoverage:{async readCoverage(input,context){
+  seen.push({tenant:context.tenantId,...(input.year===undefined?{}:{year:input.year})});
+  return {rows:[],years:[2026],year:2026,through:'2026-10-26',revision:'synthetic',total:0,sold:0,unsold:0,excludedProducts:0};
+ }}});
+ const url='/api/reports/products-warehouses/coverage',headers={'x-demo-user-id':'demo-iq-admin','x-tenant-id':'demo-iq','x-locale':'en'};
+ try{
+  assert.equal((await app.inject({method:'POST',url,payload:{}})).statusCode,401);
+  for(const payload of [{tenantId:'other'},{revision:'override'},{filters:[{dimension:'state',values:['invoice-state']}]},{status:'missing'}])assert.equal((await app.inject({method:'POST',url,headers,payload})).statusCode,400);
+  assert.equal((await app.inject({method:'POST',url,headers:{...headers,'x-demo-user-id':'demo-iq-sales-analyst'},payload:{}})).statusCode,403);
+  assert.equal((await app.inject({method:'POST',url,headers:{...headers,'x-demo-user-id':'demo-iq-baghdad-manager'},payload:{}})).statusCode,403);
+  const response=await app.inject({method:'POST',url,headers,payload:{year:2026,status:'unsold',filters:[{dimension:'customer_tag',values:['actual-tag']}]}});
+  assert.equal(response.statusCode,200,response.body);assert.equal(response.json().total,0);
+  assert.deepEqual(seen,[{tenant:'demo-iq',year:2026}]);
+ }finally{await app.close();}
+});

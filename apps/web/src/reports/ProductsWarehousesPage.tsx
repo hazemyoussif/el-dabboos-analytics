@@ -11,6 +11,7 @@ import {formatDate,formatTimestamp} from '../i18n.ts';
 import type {WorkspaceController} from '../hooks/useWorkspace.ts';
 import {productReportIssue,productsWarehousesCopy} from './products-warehouses-copy.ts';
 import {useProductsWarehouses} from './useProductsWarehouses.ts';
+import {CustomerProductCoverage} from './CustomerProductCoverage.tsx';
 
 interface Props {session:ApiSession;profile:TenantProfile;catalog:Record<string,SemanticMetric>;options:FilterOptions}
 export function ProductsWarehousesView({workspace,active}:{workspace:WorkspaceController;active:boolean}){
@@ -42,7 +43,7 @@ export function ProductsWarehousesPage(props:Props){
   <details className="products-report-scope"><summary>{locale==='ar'?'نطاق المرشحات والتحديث':'Filter scope and refresh'}</summary><p>{text.scope}</p><p>{text.refreshNote}</p></details>
   {report.busy&&<DashboardSkeleton label={text.loading}/>}{report.failed&&<Notice tone="danger">{text.error}</Notice>}
   {report.result&&<ProductsWarehousesSections {...props} result={report.result}/>}
-  <section className="products-report-pending"><h2>{text.coverageTitle}</h2><p>{text.coverage}</p><p>{text.ownerTags}</p><p>{text.availability}</p></section>
+  <CustomerProductCoverage session={session} options={props.options} productFilters={productFilters}/>
  </section>;
 }
 function ProductFilterFields({dimensions,filters,onChange,...props}:Props&{dimensions:AnalyticsFilter['dimension'][];filters:AnalyticsFilter[];onChange:(filters:AnalyticsFilter[])=>void}){

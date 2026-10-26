@@ -14,3 +14,7 @@
 .products-report-scope { margin-block: var(--space-3); }
 .products-warehouses summary { cursor: pointer; padding-block: var(--space-2); }
 @media (max-width: 600px) { .products-warehouses fieldset { flex-direction: column; align-items: stretch; } .products-warehouses label { flex-basis: auto; } }
+.coverage-table-scroll{max-width:100%;overflow:auto;margin-block:var(--space-4)}
+.coverage-table-scroll table{width:100%;border-collapse:collapse}
+.coverage-table-scroll th,.coverage-table-scroll td{padding:var(--space-3);text-align:start;border-bottom:1px solid var(--border-default);vertical-align:top}
+.coverage-table-scroll .numeric{text-align:end;font-variant-numeric:tabular-nums;white-space:nowrap}

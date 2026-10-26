@@ -2,7 +2,7 @@ import type {Pool} from 'pg';
 import {inventoryAvailabilityMetricIds,validateSourceMapping} from '@el-dabboos/domain';
 import type {SourceMapping} from '@el-dabboos/domain';
 import type {OdooSourceConfig} from '../odoo/config.ts';
-import {OdooSnapshotLease} from '../odoo/snapshot.ts';
+import {openOdooReadLease} from '../odoo/read-lease.ts';
 import {reviewBusinessDate} from '../review/cutoff.ts';
 import {exposeBusinessDeltaMonth} from '../review/exposure.ts';
 import {commandSyncMembers} from './command-sync.ts';
@@ -18,7 +18,7 @@ export async function observeInventoryAvailability(scope:{mart:Pool;owner:Pool;r
  const member=(await commandSyncMembers(scope.mart,scope.config.tenantId)).find(candidate=>candidate.month===scope.month);
  if(!member)throw new Error('Accepted current Business member required');
  const mapping=registeredInventoryAvailabilityMapping(member.mapping);
- const lease=await OdooSnapshotLease.open(scope.owner,scope.config,scope.config.snapshotMaxDurationMs,scope.config.credentialPolicy);
+ const lease=await openOdooReadLease(scope.owner,scope.config);
  try{
   if(scope.month!==reviewBusinessDate(lease.evidence.sourceAsOf,mapping.measures[0]!.timeZone).slice(0,7))throw new Error('Inventory observation requires the current source month');
   const source=new OdooBusinessReader(scope.reader,scope.config,lease,{month:scope.month,mapping,objects:[inventoryAvailabilityObject]});

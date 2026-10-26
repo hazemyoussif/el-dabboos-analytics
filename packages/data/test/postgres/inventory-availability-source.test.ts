@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {database,enabled} from './support.ts';
-import {inventoryAvailabilityRecipe} from '../../src/business/inventory-availability-recipes.ts';
+import {inventoryAvailabilityRecipe,inventoryAvailabilityObservedRecipe} from '../../src/business/inventory-availability-recipes.ts';
 const fixture=`CREATE TABLE stock_location(id int,usage text,parent_path text);
  CREATE TABLE stock_warehouse(id int,company_id int,view_location_id int);
  CREATE TABLE stock_quant(id int,company_id int,product_id int,location_id int,owner_id int,quantity numeric,reserved_quantity numeric);
@@ -33,6 +33,17 @@ test('free stock clamps after product/warehouse reduction and keeps company cost
   assert.equal(get('10:unassigned','free_stock_quantity').amount,'1','unknown warehouse remains present');
   assert.equal(get('11:1','free_stock_value').amount,'0','explicit source zero cost remains zero');
   assert.equal(get('12:1','free_stock_value').amount,'0','no free stock needs no invented cost');
+  await db.admin.query('DROP TABLE ir_default,ir_model_fields');
+  const observed=(await db.admin.query(inventoryAvailabilityObservedRecipe,parameters)).rows;
+  assert.equal(observed.find(row=>row.id==='10:1'&&row.measure_id==='free_stock_value').amount,'2.5','API company-resolved cost needs no ERP metadata tables');
+  assert.equal(observed.find(row=>row.id==='11:1'&&row.measure_id==='free_stock_value').invalid,false,'explicit zero cost is valid');
+  await db.admin.query('UPDATE stock_quant SET quantity=2 WHERE id=9');
+  const absent=(await db.admin.query(inventoryAvailabilityObservedRecipe,parameters)).rows.find(row=>row.id==='12:1'&&row.measure_id==='free_stock_value');
+  assert.equal(absent.invalid,true,'an absent API cost cannot use a guessed default');
+  await db.admin.query(`UPDATE stock_quant SET quantity=-1 WHERE id=9;
+   CREATE TABLE ir_model_fields(id int,model text,name text);
+   CREATE TABLE ir_default(id int,field_id int,company_id int,user_id int,json_value text,condition text);
+   INSERT INTO ir_model_fields VALUES(1,'product.product','standard_price')`);
   assert.ok(rows.every(row=>row.invalid===false));
   assert.equal((await db.admin.query(inventoryAvailabilityRecipe,[1,'2026-09-01','2026-09-30','Asia/Baghdad','2026-10-25'])).rowCount,0,'current stock is not historical');
   await db.admin.query('UPDATE stock_quant SET quantity=2 WHERE id=9');

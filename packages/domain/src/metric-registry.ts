@@ -7,6 +7,7 @@ export type ProductMetric =
   | { id: MetricId; availability: 'available'; domain: MetricDomain; labels: LocalizedText }
   | { id: string; availability: 'planned'; domain: MetricDomain; labels: LocalizedText; reason: string };
 const domainFor = (id: MetricId): MetricDomain => {
+  const coverage=coverageDomain(id);if(coverage)return coverage;
   const business=businessDomain(id);if(business)return business;
   if (['opportunity_count', 'pipeline_value', 'weighted_pipeline', 'win_rate'].includes(id)) return 'crm';
   if(id.startsWith('command_')&&!id.startsWith('command_order')&&!id.startsWith('command_cancel')&&id!=='command_customers')return 'finance';
@@ -17,6 +18,10 @@ const domainFor = (id: MetricId): MetricDomain => {
   if (['maintenance_requests', 'failure_count', 'mtbf', 'mttr', 'maintenance_cost'].includes(id)) return 'maintenance';
   return 'sales';
 };
+function coverageDomain(id:MetricId):MetricDomain|undefined{
+ if(!id.startsWith('coverage_'))return undefined;
+ return id==='coverage_forecast_quantity'?'inventory':id==='coverage_net_quantity'?'sales':'customers';
+}
 const planned = (id: string, domain: MetricDomain, en: string, ar: string, reason: string): ProductMetric =>
   ({ id, availability: 'planned', domain, labels: { en, ar }, reason });
 export const productMetricCatalog: readonly ProductMetric[] = [

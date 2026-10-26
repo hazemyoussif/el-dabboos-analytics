@@ -32,6 +32,7 @@ export interface SourceBatch<T> extends SourceScope {
 export interface SourceBatchReader<T> { readBatch(request: SourceReadRequest): Promise<SourceBatch<T>> }
 
 export interface MeasureMapping {
+  population?: CustomerProductPopulationBasis;
   measureId: FactMeasureId;
   sourceObject: string;
   grain: string;
@@ -45,6 +46,9 @@ export interface MeasureMapping {
   correctionRule: string;
   currencyPolicy: string;
   dimensionMappings: Partial<Record<DimensionId, string>>;
+}
+export interface CustomerProductPopulationBasis {
+  version:1;years:readonly number[];excludedProductCategories:readonly string[];forecast:'positive';
 }
 export interface SourceMapping {
   tenantId: string; sourceId: string;
@@ -79,7 +83,7 @@ export interface ProductionFact {
   currency?: CurrencyLineage;
   transaction?: TransactionEvidence;
   /** Display evidence only; stable dimensions remain the identity and authorization boundary. */
-  displayLabels?: Partial<Record<'invoice_document_state'|'invoice_payment_state'|'receipt_state'|'order_state'|'customer' | 'salesperson' | 'businessLine' | 'product' | 'product_category' | 'brand' | 'customer_segment' | 'customer_class' | 'uom' | 'journal' | 'supplier' | 'warehouse' | 'state', string>>;
+  displayLabels?: Partial<Record<'customer_salesperson'|'customer_state'|'customer_tag'|'coverage_year'|'invoice_document_state'|'invoice_payment_state'|'receipt_state'|'order_state'|'customer' | 'salesperson' | 'businessLine' | 'product' | 'product_category' | 'brand' | 'customer_segment' | 'customer_class' | 'uom' | 'journal' | 'supplier' | 'warehouse' | 'state', string>>;
 }
 export interface IngestionBatch extends SourceScope {
   batchId: string; datasetId: string; mappingId: string; mappingVersion: string; adapterVersion: string;
@@ -128,6 +132,13 @@ const dimensionsByMeasure = new Map(factMeasureIds.map(measureId => {
 }));
 const measureDimensions = (id: FactMeasureId) => dimensionsByMeasure.get(id) ?? [];
 
+export function validateCustomerProductPopulationBasis(value:unknown):asserts value is CustomerProductPopulationBasis{
+ shape(value,['version','years','excludedProductCategories','forecast']);
+ if(value.version!==1||value.forecast!=='positive'||!Array.isArray(value.years)||!value.years.length||value.years.length>4||new Set(value.years).size!==value.years.length||value.years.some(year=>!Number.isSafeInteger(year)||year<1900||year>9999))fail('population_basis');
+ if(!Array.isArray(value.excludedProductCategories)||!value.excludedProductCategories.length||value.excludedProductCategories.length>200||new Set(value.excludedProductCategories).size!==value.excludedProductCategories.length||!value.excludedProductCategories.every(text))fail('population_categories');
+}
+function validateOptionalPopulation(value:unknown){if(value!==undefined)validateCustomerProductPopulationBasis(value);}
+
 export function validateSourceMapping(value: unknown): asserts value is SourceMapping {
   shape(value, ['tenantId','sourceId','datasetId','mappingId','mappingVersion','businessBasis','reportingCurrency','businessOwner','approval','measures','capabilities']);
   for (const key of ['tenantId','sourceId','datasetId','mappingId','mappingVersion','businessBasis','businessOwner']) if (!text(value[key])) fail('mapping_identity');
@@ -139,7 +150,8 @@ export function validateSourceMapping(value: unknown): asserts value is SourceMa
   if (!Array.isArray(value.measures) || !value.measures.length || value.measures.length > 128) fail('mapping_measures');
   const seen = new Set<string>();
   for (const m of value.measures) {
-    shape(m, ['measureId','sourceObject','grain','eligibleStates','recognitionRule','timeZone','amountBasis','taxTreatment','signConvention','identityRule','correctionRule','currencyPolicy','dimensionMappings']);
+    shape(m, ['measureId','sourceObject','grain','eligibleStates','recognitionRule','timeZone','amountBasis','taxTreatment','signConvention','identityRule','correctionRule','currencyPolicy','dimensionMappings'],['population']);
+    validateOptionalPopulation(m.population);
     if (typeof m.measureId !== 'string' || !isFactMeasureId(m.measureId) || seen.has(m.measureId)) fail('invalid_measure');
     seen.add(m.measureId);
     for (const k of ['sourceObject','grain','recognitionRule','timeZone','amountBasis','taxTreatment','signConvention','identityRule','correctionRule','currencyPolicy']) if (!text(m[k])) fail('mapping_rule');
@@ -272,5 +284,5 @@ export function validateFactBatch(value: unknown, facts: readonly ProductionFact
 
 function validateDisplayLabels(labels: unknown): void {
   if (labels === undefined) return;
-  if (!object(labels) || Object.entries(labels).some(([key,value]) => !['invoice_document_state','invoice_payment_state','receipt_state','order_state','customer','salesperson','businessLine','product','product_category','brand','customer_segment','customer_class','uom','journal','supplier','warehouse','state'].includes(key) || typeof value !== 'string' || !value.trim() || value.length > 500)) fail('display_labels');
+  if (!object(labels) || Object.entries(labels).some(([key,value]) => !['customer_salesperson','customer_state','customer_tag','coverage_year','invoice_document_state','invoice_payment_state','receipt_state','order_state','customer','salesperson','businessLine','product','product_category','brand','customer_segment','customer_class','uom','journal','supplier','warehouse','state'].includes(key) || typeof value !== 'string' || !value.trim() || value.length > 500)) fail('display_labels');
 }

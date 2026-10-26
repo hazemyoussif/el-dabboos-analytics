@@ -1,4 +1,5 @@
 import {AnalyticsOperationBusy} from '@el-dabboos/domain';
+import {executeCoverageCapture} from './analytics-coverage-capture.ts';
 import {executeInventoryObservation} from './analytics-inventory-observation.ts';
 import {executeCommandBackground,CommandBackgroundUnavailable} from './analytics-command-background.ts';
 import {executeAnalyticsPreparation,isAnalyticsPreparationCommand} from './analytics-preparation.ts';
@@ -23,6 +24,7 @@ async function main() {
   if('run' in result&&result.run.status==='failed')process.exitCode=1;
 }
 async function inventoryCommand(command:string|undefined,tenantId:string,extra:string[]):Promise<boolean>{
+ if(command==='capture-coverage'){process.stdout.write(JSON.stringify(await executeCoverageCapture(tenantId,extra,process.env))+'\n');return true;}
  if(command!=='observe-inventory')return false;
  if(extra.length!==2||extra[0]!=='--month'||!extra[1])throw new Error('Explicit --month YYYY-MM required');
  process.stdout.write(JSON.stringify(await executeInventoryObservation(tenantId,extra[1],process.env))+'\n');return true;

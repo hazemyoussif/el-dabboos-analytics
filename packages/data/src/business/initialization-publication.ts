@@ -1,6 +1,7 @@
 import {randomUUID} from 'node:crypto';
 import type {PoolClient} from 'pg';
 import {requiredPreparedChunks,prepareChunk} from '../prepared/preparation.ts';
+import {preparePopulationUnit,copyPopulationBindings} from '../prepared/population-preparation.ts';
 import {currentBusinessParent,CommandBusinessBaseChanged} from './initialization-state.ts';
 import type {CommandInitialization} from './initialization-state.ts';
 
@@ -45,6 +46,8 @@ export async function prepareCommandChunk(client:PoolClient,tenantId:string,work
   const prepared=await prepareChunk(client,{...scope,observeStep:event=>observe({phase:'prepare',month:work.month,...event})},chunk,limits);
   return prepared.reused?'prepared_binding':'prepared_chunk';
  }
+ const population=await preparePopulationUnit(client,scope,limits);
+ if(population)return population;
  await client.query("INSERT INTO mart.prepared_revision_seals VALUES($1,$2,'prepared-v1')",[tenantId,work.revision_id]);
  return 'prepared_sealed';
 }
@@ -82,6 +85,7 @@ async function rebaseCommandManifest(client:PoolClient,tenantId:string,work:Comm
   SELECT tenant_id,$2,family,kind,period,data_id,input_fingerprint,source_cutoff,statistics FROM mart.prepared_bindings
   WHERE tenant_id=$1 AND ((revision_id=$3 AND family='business') OR (revision_id=$4 AND family<>'business'))`,
   [tenantId,revision,work.revision_id,parent]);
+ await copyPopulationBindings(client,tenantId,revision,work.revision_id!);
  await client.query("INSERT INTO mart.prepared_revision_seals VALUES($1,$2,'prepared-v1')",[tenantId,revision]);
  return revision;
 }

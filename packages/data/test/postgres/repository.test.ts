@@ -89,12 +89,14 @@ test('repository: certification/currency gates, query bounds, numeric refusal an
 
 test('repository parity: every executable catalog family, inventory/finance snapshots, duration ratios and moved attribution', { skip: !enabled },async t => {
   const { compatibleQuantityMetrics,categoricalDimensions,requiredMeasures,semanticCatalog,timeDimensions,factMeasureIds } = await import('@el-dabboos/domain');
-  const db = await database();
+  const catalog=Object.values(semanticCatalog);
+  for(let offset=0;offset<catalog.length;offset+=128){
+  const metrics=catalog.slice(offset,offset+128),db=await database();
   try {
     const m = mapping();
     const dimensions = new Map(factMeasureIds.map(id => [id,categoricalDimensions.filter(d => Object.values(semanticCatalog).filter(m => requiredMeasures(m.id).includes(id)).every(m => m.dimensions.includes(d)))]));
     m.measures = factMeasureIds.map(id => ({ ...m.measures[0]!,measureId: id,dimensionMappings: Object.fromEntries(dimensions.get(id)!.map(d => [d,`synthetic ${d}`])) }));
-    m.capabilities = Object.values(semanticCatalog).map(metric => ({ metric: metric.id,dimensions: metric.dimensions.filter(d => timeDimensions.includes(d) || requiredMeasures(metric.id).every(id => dimensions.get(id)!.includes(d))) }));
+    m.capabilities = metrics.map(metric => ({ metric: metric.id,dimensions: metric.dimensions.filter(d => timeDimensions.includes(d) || requiredMeasures(metric.id).every(id => dimensions.get(id)!.includes(d))) }));
     await deploy(db.migrator,m);
     const monetary = (id: typeof factMeasureIds[number]) => Object.values(semanticCatalog).some(m => m.type==='currency' && requiredMeasures(m.id).includes(id) && m.semantics.kind!=='ratio');
     const canonical = factMeasureIds.flatMap((measureId,index) => ['2024-02-29','2026-01-31','2026-02-28'].map((businessDate,i) => {
@@ -107,7 +109,7 @@ test('repository parity: every executable catalog family, inventory/finance snap
     await writer.commit(batch('batch-1',canonical.length),canonical.map(f => ({ facts: [f] })),evidence);
     const facts: AnalyticsFact[] = canonical.map(f => ({ tenantId: f.tenantId,measureId: f.measureId,date: f.businessDate,value: Number(f.value),dimensions: f.dimensions,...(f.entityId ? { entityId: f.entityId } : {}) }));
     const repo = new PostgresAnalyticsRepository(db.runtime,{ reportingCurrencies: { a: 'IQD' },clock });
-    for (const metric of Object.values(semanticCatalog)) await t.test(metric.id,async () => {
+    for (const metric of metrics) await t.test(metric.id,async () => {
       const quantity=compatibleQuantityMetrics.includes(metric.id as import('@el-dabboos/domain').BusinessMetricId);
       const dimension = quantity?'uom':m.capabilities.find(c => c.metric===metric.id)!.dimensions.find(d => categoricalDimensions.includes(d));
       for (const groupBy of [undefined,'month' as const,dimension]) {
@@ -130,6 +132,7 @@ test('repository parity: every executable catalog family, inventory/finance snap
       }
     });
   } finally { await db.close(); }
+  }
 });
 test('compiled membership scopes: same-dimension OR, compound AND and latest snapshot before policy', {skip:!enabled},async()=>{
  const {compileMembershipScopes}=await import('@el-dabboos/domain');const db=await database();

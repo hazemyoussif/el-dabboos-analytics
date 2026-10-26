@@ -6,7 +6,7 @@ skips). The first company browser check exposed a default-date mismatch with
 existing published coverage; a regression test now protects coverage-based defaults.
 See the QA handoff for exact release verification. The original six-table report
 is deployed at `2316d6677a8d4c7432a97fb7c4ea4303e8029faf`. The availability
-extension below is a local candidate; migration 095 and its source observation have
+extension below is a local candidate; migration 097 and its source observation have
 not been applied to the company mart. See [extension verification](../qa/inventory-availability-2026-10-25.md).
 
 ## Published-mart readiness correction — 26 October
@@ -81,7 +81,7 @@ published metric/group/period/filter checks precede each initial read. Tenant
 profile and publication ownership are checked. Enforced filters are preserved.
 Generic table continuation uses the existing authorized result-window endpoint.
 
-The inventory extension adds three canonical snapshot operands in migration 095
+The inventory extension adds three canonical snapshot operands in migration 097
 and a versioned `business_stock_availability_v1` source recipe. Existing Business
 and Sales Command definition fingerprints and accepted rules remain unchanged.
 The additive mapping requires an accepted extended Business member; it never
@@ -109,42 +109,69 @@ No runtime source request, raw-history fallback, new serving architecture or
 scheduler is introduced. New metrics remain unavailable until their own prepared
 capabilities are published. Synthetic mode remains explicitly a demo.
 
-## Customer product coverage remaining
+## Customer product coverage
 
-The requested sold/unsold coverage is **not implemented** by these invoice tables.
-It must not be derived from the first result page, a Top-N list, net revenue or
-missing stock/sales results. The page explains this and exposes no inert status
-selector.
+The independent report includes a separate prepared customer/product section with
+calendar year, current customer salesperson, current governorate, actual Odoo tag,
+customer and All / Sold / Unsold filters. Product/category/brand selections also
+apply when coverage filters are applied. Warehouse and invoice date/attribution
+controls keep their existing scope; coverage uses all company warehouses and a
+calendar year through its own frozen source business day.
 
-1. The owner confirmed **forecasted stock**, as in the handoff, for the eligible
-   product universe. This is separate from warehouse free stock. Forecast includes
-   on-hand plus planned incoming minus planned outgoing; pending-move final
-   destinations and product UOM rounding must follow [Odoo's quantity computation](https://github.com/odoo/odoo/blob/18.0/addons/stock/models/product.py).
-   Treatment of zero/negative forecast quantities in the original export remains
-   a business question; do not silently invent the eligibility filter.
-2. Publish current customer owner and governorate plus actual Odoo partner tags
-   using stable IDs. Preserve existing invoice salesperson/governorate semantics.
-   Use tag membership as a predicate, avoiding fact multiplication for multi-tag
-   customers. Tag A, computed Class A and provisional customer segments differ.
-3. Prepare a complete available-product universe at an explicit snapshot plus
-   complete signed customer/product invoice quantities over a configurable period.
-   Exclude governed display-stand products using approved IDs. Customer population
-   follows qualifying posted lines, including returns; the handoff excludes
-   customers with no lines. Treat `net_qty > 0` as sold and `net_qty <= 0` as unsold,
-   including fully returned products. Absence becomes zero only after complete
-   authorized population/period evidence. No cross-customer summation before
-   deciding an individual customer's status. No Cartesian expansion in a dashboard
-   request. Add All / Sold / Unsold and coverage counts only against that accepted
-   prepared population, with bounded customer/product result windows.
-4. Keep the handoff's legacy two-year sugar/non-sugar A/B/C formula separate from
-   existing calendar-YTD classification. This increment does not change either.
+Eligibility is **forecasted quantity > 0**, with configured display-category roots
+and their descendants excluded. Forecast uses company-owned stock, pending move
+incoming/outgoing, final destination and product UOM rounding. Signed posted
+invoice/credit quantities are converted to each product's base UOM before classifying
+each customer/product. Positive net is sold; zero, negative, fully returned and
+never-purchased pairs are unsold. Customers require posted product lines in the
+selected year, including customers whose purchases are all outside eligibility.
+Purchased products outside the eligible list are counted separately for review.
+Actual tag membership is an EXISTS predicate, never a multiplicative sales join.
+Computed Class A and source segments are not substitutes for actual tags.
 
-Verification is authorized. Exercise application/API input rejection,
-cross-tenant and metric-domain denial, enforced unsupported-filter refusal,
-publication-change retries, partial/empty/error coverage, snapshot dates and
-filter scopes using synthetic fixtures. Then run the relevant engineering gates
-and the dashboard quality skill's AFTER review in Arabic/English, Light/Dark and
-phone/tablet/desktop. Record concrete results in the extension QA evidence.
+[ADR 045](../architecture/adr/045-prepared-population-completion.md) extends the
+existing prepared lifecycle with bounded population completion. Source inputs stay
+sparse; zero pairs are created and independently checked in background chunks.
+A revision cannot seal until all required population definitions have sealed
+bindings. Runtime reads only those prepared pairs and prepared attribute dictionaries,
+with forced tenant RLS, application metric-domain authorization, every enforced
+predicate and revision/filter-bound pagination. Unsupported policy dimensions fail
+closed. Neither source access nor Cartesian expansion occurs in a report request.
 
-Reconcile exact prepared grains and source cutoffs before enabling new metrics.
-Remaining customer coverage is implementation work, not a source-connection blocker.
+## Standard API compatibility and operator sequence
+
+The verified API branch's deployed migrations 095/096 are preserved. This feature
+uses 097 for inventory measures, 098 for sparse coverage inputs and canonical
+dimensions, and 099–101 for completion storage/build/proof guards. No existing
+migration is rewritten on the company server. Shared semantic definitions live in
+mart_admin; all tenant content has forced RLS and immutable accepted publication.
+
+The standard API projection adds reserved_quantity, standard_price,
+location_final_id and restrict_partner_id. Standard price is read in the authorized
+company-1 context after Odoo resolves company-dependent defaults. API recipes do
+not query ir_default or ir_model_fields. Explicit zero cost remains zero; absent
+API cost for positive free stock rejects certification. The direct-source recipe
+retains its original controlled default semantics. Source mode remains
+odoo-orm-observed; no direct ERP database fallback is introduced.
+
+After local verification and schema/role deployment, capture one compatible API
+input through the existing stage:capture operator. Previously accepted input schemas
+and serving publications remain immutable. Do not replay completed Business,
+review, Finance or core updates. Publish only the genuinely new stock recipe with
+`analytics observe-inventory --tenant ID --month YYYY-MM`; then use
+`analytics capture-coverage --tenant ID --month YYYY-MM --basis-file /protected/basis.json`.
+The basis contains version 1, explicit years, source-resolved display category IDs,
+and forecast "positive". The existing Command background worker resumes sealed
+capture pages, ordinary preparation, completed-pair chunks and publication. It does
+not require a live source during replay. Existing finite bounds remain unchanged.
+
+Keep the shared job locks for deployment/capture, preserve active timer configuration,
+and retain PostgreSQL's original volume plus the tablespace override/mount. Five-minute
+sync consumes the latest daily API capture; this is not five-minute live Odoo polling.
+New coverage retains its own source receipt and business day, independently of old
+stock, sales, Finance and other report cutoffs. A successful code rollout alone is
+not acceptance: verify complete prepared coverage, real filters, locale behavior,
+existing reports and subsequent ordinary scheduled sync.
+
+Current verification and deployment status is recorded in
+[coverage QA](../qa/customer-product-coverage-2026-10-26.md).

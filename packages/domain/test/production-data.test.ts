@@ -99,7 +99,7 @@ test('reconciliation stays reported until explicit approved tolerance, then comp
 });
 test('migration measure vocabulary matches canonical inputs and current view excludes tombstones', () => {
   const sql = readFileSync(new URL('../../data/migrations/postgres/001_production_foundation.sql', import.meta.url), 'utf8') + readFileSync(new URL('../../data/migrations/postgres/007_transaction_metrics.sql', import.meta.url),'utf8') + readFileSync(new URL('../../data/migrations/postgres/013_receivable_metrics.sql', import.meta.url),'utf8') + readFileSync(new URL('../../data/migrations/postgres/044_post_exposure_review.sql', import.meta.url),'utf8');
-  const completeSql=sql+readFileSync(new URL('../../data/migrations/postgres/046_business_purpose.sql',import.meta.url),'utf8')+readFileSync(new URL('../../data/migrations/postgres/061_sales_command_measures.sql',import.meta.url),'utf8')+readFileSync(new URL('../../data/migrations/postgres/095_inventory_availability_measures.sql',import.meta.url),'utf8');
+  const completeSql=sql+readFileSync(new URL('../../data/migrations/postgres/046_business_purpose.sql',import.meta.url),'utf8')+readFileSync(new URL('../../data/migrations/postgres/061_sales_command_measures.sql',import.meta.url),'utf8')+readFileSync(new URL('../../data/migrations/postgres/097_inventory_availability_measures.sql',import.meta.url),'utf8')+readFileSync(new URL('../../data/migrations/postgres/098_customer_product_coverage_inputs.sql',import.meta.url),'utf8');
   const ids = [...completeSql.matchAll(/\('([a-z0-9_]+)','(?:event|snapshot)',(?:true|false)\)/g)].map(m => m[1]);
   assert.deepEqual(ids.sort(), [...factMeasureIds].sort());
   assert.match(sql, /r.status = 'active' AND b.status = 'committed'/);
