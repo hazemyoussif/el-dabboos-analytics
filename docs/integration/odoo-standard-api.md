@@ -27,7 +27,7 @@ The adapter changes the source transport. It does not add a full-report rebuild 
 pnpm odoo:orm refresh --tenant el-dabboos-iq
 ```
 
-The initial company cutover's current/previous Business replacements are one-off operator work. Do not repeat completed periods to resume a later step. Existing review readers require completed months; Finance retains its independent dated source controls. These operations are not dependencies of ordinary sync.
+The initial company cutover's current/previous Business replacements are one-off operator work. Do not repeat completed periods to resume a later step. Existing review readers require completed months; Finance retains its independent completed-month-end dates and source controls; an API observation on a later day can reconstruct that earlier month end. Do not require the Finance date to equal the API receipt day. These operations are not dependencies of ordinary sync.
 
 For an individual current-month Business preparation:
 

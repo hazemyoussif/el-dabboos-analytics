@@ -13,9 +13,6 @@ export async function refreshObservedFinance(tenantId:string,day:string,environm
   try{
    const lease=await openOdooReadLease(owner,config);
    try{
-    const timeZone=baseline.mappings[0]!.measures[0]!.timeZone;
-    const current=new Intl.DateTimeFormat('en-CA',{timeZone,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(lease.evidence.sourceAsOf));
-    if(day!==current)throw new Error('Finance refresh requires the copy observation day');
     const customers=await readFinanceCustomers(source,lease,config,day);
     const totals=await readFinanceCompanySummary(source,lease,config,day);
     return await publishFinanceSnapshot(mart,{tenantId,date:day,currency:baseline.reportingCurrency,sourceCutoff:lease.evidence.sourceAsOf,sourceRevision:lease.evidence.frozenRevision,totals,customers},()=>lease.assertAlive());
