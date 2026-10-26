@@ -181,13 +181,14 @@ test('pending publication stops source access; signal cleanup removes only the c
 });
 
 
-test('observed API scheduling retains daily reconciliation, sweeps and Command preparation against the owned copy',async()=>{
+test('observed API capture preserves existing jobs without automatically rebuilding report periods',async()=>{
  const fixture=await scheduleFixture();
  try {
   await writeFile(fixture.environment.STAGING_SOURCE_ENV_FILE,'ANALYTICS_SOURCE_MODE=odoo-orm-observed\n');
   assert.equal(fixture.run('analytics-job.sh',['daily']).status,0);
   let calls=await fixture.calls();
-  assert.ok(calls.some(call=>call.includes('import --tenant synthetic-tenant')));
+  assert.ok(calls.some(call=>call.includes('stage:capture --tenant synthetic-tenant')));
+  assert.ok(!calls.some(call=>call.includes(' import --tenant')||call.includes(' refresh --tenant')));
   assert.ok(calls.some(call=>call.includes('reconcile --tenant synthetic-tenant --mode daily')));
   assert.ok(calls.some(call=>call.includes('sweep --tenant synthetic-tenant')));
   await fixture.clear();

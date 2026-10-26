@@ -88,7 +88,7 @@ else
     run_job_container --env-file "$STAGING_SOURCE_ENV_FILE"
   }
   if [[ "$job" == daily && "$observed_api_mode" == true ]]; then
-    job_command=(apps/api/src/odoo-orm-cli.ts import --tenant "$STAGING_ANALYTICS_TENANT")
+    job_command=(apps/api/src/odoo-orm-cli.ts stage:capture --tenant "$STAGING_ANALYTICS_TENANT")
     run_job_container --env-file "$STAGING_SOURCE_ENV_FILE"
     run_source_job reconcile --mode daily
     run_source_job sweep
