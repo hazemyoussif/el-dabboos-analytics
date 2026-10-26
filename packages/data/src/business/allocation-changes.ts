@@ -34,3 +34,8 @@ export async function* commandAllocationChanges(scope:{pool:Pool;config:OdooSour
   }
  }finally{try{await client.query('ROLLBACK');}catch{broken=true;}finally{client.removeListener('error',onError);client.release(broken);}}
 }
+
+/** Recipes and their shared dependency graph can advance independently. */
+export function commandAllocationDiscoveryCutoff(recipeCutoff:string,graphCutoff:Date|null){
+ return new Date(Math.min(Date.parse(recipeCutoff),graphCutoff?.getTime()??Date.parse(recipeCutoff))).toISOString();
+}

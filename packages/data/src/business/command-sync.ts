@@ -12,7 +12,7 @@ import {salesCommandDefinitionVersion,withSalesCommandMapping} from './sales-com
 import {readBusinessRecipeObservations} from './observations.ts';
 import {commandObjects,discoverCommandChanges} from './command-changes.ts';
 import {OdooBusinessReader} from './source.ts';
-import {commandAllocationChanges} from './allocation-changes.ts';
+import {commandAllocationChanges,commandAllocationDiscoveryCutoff} from './allocation-changes.ts';
 import {sweepBusinessAllocations} from './allocation-sweep.ts';
 import type {RecordedAllocationDeletion} from '../operational/contracts.ts';
 import type {OperationalProgressObserver} from '../operational/progress.ts';
@@ -54,7 +54,7 @@ export async function synchronizeCommandCenter(scope:{mart:Pool;owner:Pool;reade
     tenantId:scope.config.tenantId,month:member.month,mapping,
     cutoff:lease.evidence.sourceAsOf,revision:lease.evidence.frozenRevision,observedObjects:objects,
     replaceObjects:replaceDebt?['command_receivable']:[],replacements:emptyReplacements(),
-    ...(mapping.measures.some(rule=>rule.sourceObject==='command_allocation')?{allocationChanges:commandAllocationChanges({pool:scope.reader,config:scope.config,lease,cutoff:initialize&&graph?graph.toISOString():previousCutoff,initialize:!graph,...(scope.observe?{observe:scope.observe}:{})})}:{}),
+    ...(mapping.measures.some(rule=>rule.sourceObject==='command_allocation')?{allocationChanges:commandAllocationChanges({pool:scope.reader,config:scope.config,lease,cutoff:commandAllocationDiscoveryCutoff(previousCutoff,graph),initialize:!graph,...(scope.observe?{observe:scope.observe}:{})})}:{}),
     ...(scope.sweepAllocations&&!initialize?{allocationDeletions:{
      discover:(consume:(records:readonly RecordedAllocationDeletion[])=>Promise<void>,client:PoolClient)=>sweepBusinessAllocations(client,{pool:scope.reader,config:scope.config,lease,partitionId:member.partitionId,previousCutoff},consume),
      replacements:(object:string,ids:readonly string[])=>reader.replacements(object,ids),
