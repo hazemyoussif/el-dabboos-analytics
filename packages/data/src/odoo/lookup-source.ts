@@ -3,7 +3,7 @@ import type {Pool} from 'pg';
 import type {AnalyticsCursor} from '@el-dabboos/domain';
 import type {OdooSourceConfig} from './config.ts';
 import type {OdooSnapshotLease} from './snapshot.ts';
-import {odooIncrementalWindow} from './incremental-watermark.ts';
+import {odooSourceIncrementalWindow} from './source-incremental-window.ts';
 import {odooPartnerProjection,odooPartnerPresentation} from './partner-projection.ts';
 import type {OdooLookupDependency,OdooLookupRole} from './lookup-types.ts';
 export interface OdooLookupProjection {fields:readonly string[];version:string}
@@ -42,7 +42,7 @@ export async function readOdooLookupProjection(pool:Pool,lease:OdooSnapshotLease
  }catch(error){await client.query('ROLLBACK');throw error;}finally{client.release();}
 }
 export async function* readOdooLookupDependencies(pool:Pool,lease:OdooSnapshotLease,config:OdooSourceConfig,scope:{cursor:AnalyticsCursor|null;initialize:boolean;projection:OdooLookupProjection}):AsyncGenerator<OdooLookupDependency[]> {
- const lower=scope.initialize?null:odooIncrementalWindow(scope.cursor,lease.evidence.sourceAsOf).modificationFrom;
+ const lower=scope.initialize?null:(await odooSourceIncrementalWindow(pool,config,{cursor:scope.cursor,cutoff:lease.evidence.sourceAsOf})).modificationFrom;
  const client=await pool.connect();let committed=false;
  try {
   await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');await lease.importInto(client);

@@ -64,7 +64,7 @@ export async function captureOwnedOdooStage(scope:StageCaptureScope):Promise<Obs
   const evidence=await boundedModels(models,model=>captureModel(writer,client,scope,{schema,model,deadline}));
   phase='index';await finishStageTables(writer,schema,models);
   const sourceEndpointFingerprint=createHash('sha256').update(JSON.stringify([scope.api.url,scope.api.database])).digest('hex');
-  const descriptor:ObservedCopyDescriptor={schema,tenantId:scope.tenantId,sourceId:scope.sourceId,companyIds:['1'],sourceAsOf:new Date().toISOString(),
+  const descriptor:ObservedCopyDescriptor={schema,tenantId:scope.tenantId,sourceId:scope.sourceId,companyIds:['1'],sourceAsOf:new Date().toISOString(),captureStartedAt:startedAt,
    fingerprint:createHash('sha256').update(JSON.stringify([sourceEndpointFingerprint,models,evidence])).digest('hex'),sourceEndpointFingerprint};
   phase='seal';await sealStage(writer,descriptor,{startedAt,models,evidence,consistency:'api_observed'});
   scope.observe?.({phase:'sealed'});return descriptor;

@@ -2,7 +2,7 @@ import type {Pool} from 'pg';
 import type {AnalyticsCursor} from '@el-dabboos/domain';
 import type {OdooSourceConfig} from '../odoo/config.ts';
 import type {OdooSnapshotLease} from '../odoo/snapshot.ts';
-import {odooIncrementalWindow} from '../odoo/incremental-watermark.ts';
+import {odooSourceIncrementalWindow} from '../odoo/source-incremental-window.ts';
 import type {ReceivableDependency} from './contracts.ts';
 
 /** Initial imports capture dates; incremental reads poll the same four input models.
@@ -29,7 +29,7 @@ const dependencySql=`SELECT 'account_move_line'::text object,line.id::text id,li
  AND ($2::timestamp IS NULL OR payment.write_date<=$3::timestamptz AT TIME ZONE 'UTC')`;
 
 export async function* readReceivableDependencies(pool:Pool,lease:OdooSnapshotLease,config:OdooSourceConfig,scope:{cursor:AnalyticsCursor|null;initialize:boolean}):AsyncGenerator<ReceivableDependency[]> {
- const lower=scope.initialize?null:odooIncrementalWindow(scope.cursor,lease.evidence.sourceAsOf).modificationFrom;
+ const lower=scope.initialize?null:(await odooSourceIncrementalWindow(pool,config,{cursor:scope.cursor,cutoff:lease.evidence.sourceAsOf})).modificationFrom;
  const client=await pool.connect();let committed=false;
  try {
   await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');await lease.importInto(client);

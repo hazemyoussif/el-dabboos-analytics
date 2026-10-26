@@ -1,7 +1,7 @@
 import type {Pool} from 'pg';
 import type {OdooSourceConfig} from '../odoo/config.ts';
 import type {OdooSnapshotLease} from '../odoo/snapshot.ts';
-import {odooIncrementalWindow} from '../odoo/incremental-watermark.ts';
+import {odooSourceIncrementalWindow} from '../odoo/source-incremental-window.ts';
 import {measureOperationalWork} from '../operational/progress.ts';
 import type {OperationalProgressObserver} from '../operational/progress.ts';
 
@@ -92,7 +92,7 @@ function recognizedIdentities(object:CommandObject):string {
 export async function discoverCommandChanges(scope:{pool:Pool;config:OdooSourceConfig;lease:OdooSnapshotLease;object:string;cutoff:string;month:string;timeZone:string;completeSnapshot:boolean;observe?:OperationalProgressObserver},consume:(ids:readonly string[])=>Promise<void>):Promise<void>{
  if(!commandObjects.some(object=>object===scope.object))throw new Error('Governed Command recipe required');
  if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(scope.month))throw new Error('Explicit Command recognition month required');
- const lower=odooIncrementalWindow({cutoff:scope.cutoff,objects:{}},scope.lease.evidence.sourceAsOf).modificationFrom;
+ const lower=(await odooSourceIncrementalWindow(scope.pool,scope.config,{cursor:{cutoff:scope.cutoff,objects:{}},cutoff:scope.lease.evidence.sourceAsOf})).modificationFrom;
  const client=await scope.pool.connect();let broken=false;const onError=()=>{broken=true;};client.on('error',onError);
  try{
   await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');await scope.lease.importInto(client);

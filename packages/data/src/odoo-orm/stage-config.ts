@@ -30,5 +30,5 @@ export function ownedStageConfig(environment:Readonly<Record<string,string|undef
 }
 export interface ObservedCopyDescriptor {
  schema:string;tenantId:string;sourceId:string;companyIds:readonly string[];sourceAsOf:string;
- fingerprint:string;sourceEndpointFingerprint:string;
+ fingerprint:string;sourceEndpointFingerprint:string;captureStartedAt?:string;
 }

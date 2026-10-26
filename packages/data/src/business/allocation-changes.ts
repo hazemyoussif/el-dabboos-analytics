@@ -4,13 +4,13 @@ import type {Pool} from 'pg';
 import type {AllocationLinks} from '../operational/contracts.ts';
 import type {OdooSourceConfig} from '../odoo/config.ts';
 import type {OdooSnapshotLease} from '../odoo/snapshot.ts';
-import {odooIncrementalWindow} from '../odoo/incremental-watermark.ts';
+import {odooSourceIncrementalWindow} from '../odoo/source-incremental-window.ts';
 
 export interface CommandAllocationChange {id:string;from:string;createdAt:string;updatedAt:string;links:AllocationLinks}
 
 /** Financial facts stay in the recipe reader; this retains only actual source dependency edges. */
 export async function* commandAllocationChanges(scope:{pool:Pool;config:OdooSourceConfig;lease:OdooSnapshotLease;cutoff:string;initialize?:boolean;observe?:OperationalProgressObserver}):AsyncGenerator<CommandAllocationChange[]>{
- const lower=odooIncrementalWindow({cutoff:scope.cutoff,objects:{}},scope.lease.evidence.sourceAsOf).modificationFrom;
+ const lower=(await odooSourceIncrementalWindow(scope.pool,scope.config,{cursor:{cutoff:scope.cutoff,objects:{}},cutoff:scope.lease.evidence.sourceAsOf})).modificationFrom;
  const client=await scope.pool.connect();let broken=false;const onError=()=>{broken=true;};client.on('error',onError);
  try{
   await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');await scope.lease.importInto(client);

@@ -8,6 +8,7 @@ import {createStageSchema,writeStagePage,sealStage} from '../../src/odoo-orm/sta
 import {stageModel} from '../../src/odoo-orm/stage-manifest.ts';
 import {resolveObservedCopyConfig} from '../../src/odoo-orm/stage-resolve.ts';
 import {openOdooReadLease} from '../../src/odoo/read-lease.ts';
+import {odooSourceIncrementalWindow} from '../../src/odoo/source-incremental-window.ts';
 import type {OdooSnapshotLease} from '../../src/odoo/snapshot.ts';
 
 test('sealed API input resolves exact identity and permits concurrent read-only leases only',{skip:!enabled},async()=>{
@@ -34,7 +35,7 @@ test('sealed API input resolves exact identity and permits concurrent read-only 
   const scope={tenantId:'synthetic',sourceId:'synthetic-odoo'};
   const environment={ODOO_ORM_COMPANY_IDS:'1',ODOO_ORM_ACCEPT_OBSERVED:'true',ODOO_ORM_TENANT_ID:scope.tenantId,ODOO_ORM_SOURCE_ID:scope.sourceId,ODOO_ORM_URL:'https://synthetic.invalid/',ODOO_ORM_DATABASE:'synthetic',ODOO_API_STAGE_WRITER_URL:writerUrl,ODOO_API_STAGE_READER_URL:readerUrl};
   await assert.rejects(resolveObservedCopyConfig(environment,scope),/sealed/);
-  await sealStage(writer,{schema,...scope,companyIds:['1'],sourceAsOf:'2026-10-25T12:00:00.000Z',fingerprint:'a'.repeat(64),sourceEndpointFingerprint:createHash('sha256').update(JSON.stringify(['https://synthetic.invalid','synthetic'])).digest('hex')},{});
+  await sealStage(writer,{schema,...scope,companyIds:['1'],sourceAsOf:'2026-10-25T12:00:00.000Z',fingerprint:'a'.repeat(64),sourceEndpointFingerprint:createHash('sha256').update(JSON.stringify(['https://synthetic.invalid','synthetic'])).digest('hex')},{startedAt:'2026-10-25T11:15:00.000Z'});
   await assert.rejects(resolveObservedCopyConfig({...environment,ODOO_ORM_DATABASE:'foreign'},scope),/identity/);
   const resolved=await resolveObservedCopyConfig({...environment,ODOO_API_STAGE_WRITER_URL:undefined},scope),owner=new Pool({...resolved.connection,max:2});pools.push(owner);
   const first=await openOdooReadLease(owner,{...resolved,snapshotMaxDurationMs:1});leases.push(first);
@@ -43,6 +44,7 @@ test('sealed API input resolves exact identity and permits concurrent read-only 
   assert.equal(first.evidence.sourceAsOf,'2026-10-25T12:00:00.000Z');
   assert.equal(first.evidence.frozenRevision,'orm-observed-copy-v1:'+'a'.repeat(64));
   const reader=new Pool(resolved.connection);pools.push(reader);
+  assert.equal((await odooSourceIncrementalWindow(reader,resolved,{cursor:{cutoff:first.evidence.sourceAsOf,objects:{}},cutoff:'2026-10-26T12:00:00.000Z'})).modificationFrom,'2026-10-25 11:13:00.000000');
   const read=await reader.connect();
   try{
    await read.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');await first.importInto(read);

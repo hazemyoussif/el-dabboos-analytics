@@ -5,7 +5,7 @@ import type { AnalyticsCursor, AnalyticsPartition, AnalyticsOperationalSource, I
 import { OdooSnapshotLease } from '../odoo/snapshot.ts';
 import { OdooPostgresSourceBatchReader } from '../odoo/reader.ts';
 import { mapOdooRecord } from '../odoo/mapper.ts';
-import { odooIncrementalWindow } from '../odoo/incremental-watermark.ts';
+import { odooSourceIncrementalWindow } from '../odoo/source-incremental-window.ts';
 import {measureOperationalWork} from './progress.ts';
 import type {OperationalProgressObserver} from './progress.ts';
 import type { OdooSourceConfig } from '../odoo/config.ts';
@@ -37,7 +37,7 @@ export class OdooOperationalSnapshot implements OperationalSnapshot {
  async *records(baseline:OperationalBaseline,cursor:AnalyticsCursor|null,dependencies?:ReceivableDependencyContext,lookups?:LookupDependencyContext) {
   const observation=yield* discoverLookupChanges({pool:this.pool,lease:this.lease,config:this.config,observe:this.references.observeProgress},cursor,lookups);
   // The accepted cursor belongs to the retained facts, not to optional lookup metadata.
-  const window=odooIncrementalWindow(cursor,this.cutoff);
+  const window=await odooSourceIncrementalWindow(this.pool,this.config,{cursor,cutoff:this.cutoff});
   for(const object of ['sale_order','account_move'] as const) {
    const mapping=baseline.mappings.find(mapping=>mapping.measures.some(rule=>rule.sourceObject===object));
    if(!mapping)throw new Error('Approved operational object mapping required');

@@ -3,7 +3,7 @@ import { requiredMeasures,semanticCatalog } from '@el-dabboos/domain';
 import type { AnalyticsCursor,AnalyticsPartition,ProductionFact } from '@el-dabboos/domain';
 import { receivableMeasures } from '../receivable-aging.ts';
 import { odooRevision } from '../odoo/cursor.ts';
-import { odooIncrementalWindow } from '../odoo/incremental-watermark.ts';
+import { odooSourceIncrementalWindow } from '../odoo/source-incremental-window.ts';
 import type { OdooSnapshotLease } from '../odoo/snapshot.ts';
 import type { OdooSourceConfig } from '../odoo/config.ts';
 import type { OperationalBaseline,ExactControl } from './contracts.ts';
@@ -33,7 +33,7 @@ async function sourceTransaction<T>(pool:Pool,lease:OdooSnapshotLease,config:Odo
 }
 /** Poll receivable accounting inputs independently of invoice-header business dates. */
 export async function receivableChangedFrom(pool:Pool,lease:OdooSnapshotLease,config:OdooSourceConfig,cursor:AnalyticsCursor|null):Promise<string|null> {
- const lower=odooIncrementalWindow(cursor,lease.evidence.sourceAsOf).modificationFrom;
+ const lower=(await odooSourceIncrementalWindow(pool,config,{cursor,cutoff:lease.evidence.sourceAsOf})).modificationFrom;
  return sourceTransaction(pool,lease,config,async client=>{
   const result=await client.query(`SELECT min(date)::text date FROM (
    SELECT line.date FROM account_move_line line JOIN account_account account ON account.id=line.account_id
