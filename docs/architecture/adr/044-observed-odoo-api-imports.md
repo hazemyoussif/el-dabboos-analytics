@@ -14,7 +14,7 @@ Copy receipts use `orm-observed-copy-v1:` revisions. The receipt cutoff is never
 
 ## Consequences
 
-The private copy supports existing report families without an Odoo module or new report formulas. Publish the two priority reports first through the current Business mapping with Sales Command enabled, then refresh remaining families using the same sealed copy and existing preparation. Historical mappings must not fabricate historical stock/current-debt observations. No new metric, currency conversion or approval record is implied.
+The private copy supports existing report families without an Odoo module or new report formulas. The initial one-off cutover updates the two priority report periods through the current Business mapping with Sales Command enabled, then uses existing operators for other families. On 26 October the owner rejected recurring full-period rebuilds: the adapter import/refresh entry points now use ordinary incremental sync, without a new multi-family publication workflow. Historical mappings must not fabricate historical stock/current-debt observations. No new metric, currency conversion or approval record is implied.
 
 Independent API calls do not prove transaction-wide consistency or unrestricted record-rule visibility. A local MVCC lease strengthens downstream repeatability only. API observation is not a commit-ordered change stream. Permissions, currencies and exact reconciliation remain fail-closed. A failed copy or preparation leaves the trusted pointer unchanged.
 

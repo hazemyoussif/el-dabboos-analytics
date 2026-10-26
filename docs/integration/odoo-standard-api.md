@@ -15,17 +15,19 @@ pnpm odoo:orm stage:init --tenant el-dabboos-iq
 pnpm odoo:orm import --tenant el-dabboos-iq
 ```
 
-The worker streams a closed 28-model manifest, preserving source numeric tokens and existing many-to-many SQL bridges. Three bounded workers read at most 5,000,000 rows per model with 1,000-row pages, a 2 GiB JSON bound per model and a 30-minute capture deadline. The import reads each model once, then indexes the private copy and makes it available to the existing reconciliation and preparation job. Only model identifiers, phases and counts are logged. The `import` command combines API capture and the existing full-family refresh; `refresh` reuses an already captured copy. Source captions use the API en_US context; translated fields retain an en_US JSON shape, so other source-language translations are not attested. A failed/unsealed schema is never selected; inspect and remove failed private copies explicitly before retrying. Normal access control, tenant isolation and financial reconciliation remain required.
+The worker streams a closed 28-model manifest, preserving source numeric tokens and existing many-to-many SQL bridges. Three bounded workers read at most 5,000,000 rows per model with 1,000-row pages, a 2 GiB JSON bound per model and a 30-minute capture deadline. The import reads each model once, then indexes the private copy and makes it available to the existing reconciliation and preparation job. Only model identifiers, phases and counts are logged. The `import` command captures API inputs and runs the existing incremental sync. `refresh` is a compatibility name for that ordinary sync against already captured input. Neither command reloads report periods. Source captions use the API en_US context; translated fields retain an en_US JSON shape, so other source-language translations are not attested. A failed/unsealed schema is never selected; inspect and remove failed private copies explicitly before retrying. Normal access control, tenant isolation and financial reconciliation remain required.
 
 Select `ANALYTICS_SOURCE_MODE=odoo-orm-observed` only after a copy seals. Optional `ODOO_API_STAGE_SCHEMA=api_<32 hex digits>` pins that exact sealed copy; otherwise composition resolves the newest sealed tenant/source match. The endpoint/database identity must match the configured API. A retained read-only transaction over the copy is explicitly distinguished from an ERP snapshot. The API copy does not inherit the ERP transaction expiry: it remains usable until the owning import closes it or its connection is lost. Background reads use the existing two-minute source-query bound; the adapter-specific fifteen-second limit was removed. The existing systemd worker budget is two hours so API imports can complete. Direct PostgreSQL ERP credentials are not used.
 
-## Publication order and freshness
+## Ordinary sync and explicit period updates
 
-The ordered refresh command pins one sealed copy, prepares the current and previous Business months with Sales Command enabled first, then prepares current review, synchronizes core events and receivable operands, and publishes the observation-day Finance snapshot:
+The adapter changes the source transport. It does not add a full-report rebuild workflow. `refresh` delegates to ordinary incremental sync using the latest captured input:
 
 ```bash
 pnpm odoo:orm refresh --tenant el-dabboos-iq
 ```
+
+The initial company cutover's current/previous Business replacements are one-off operator work. Do not repeat completed periods to resume a later step. Existing review readers require completed months; Finance retains its independent dated source controls. These operations are not dependencies of ordinary sync.
 
 For an individual current-month Business preparation:
 
